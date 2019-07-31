@@ -65,6 +65,7 @@ PlugIn_AIS_Target *Create_PI_AIS_Target(AIS_Target_Data *ptarget);
 
 class PluginListPanel;
 class PluginPanel;
+class QLibrary;
 
 typedef struct {
     QString name;      // name of the plugin
@@ -75,11 +76,11 @@ typedef struct {
 } BlackListedPlugin;
 
 const BlackListedPlugin PluginBlacklist[] = {
-    { _T("aisradar_pi"), 0, 95, true, true },
-    { _T("radar_pi"), 0, 95, true, true },             // GCC alias for aisradar_pi
-    { _T("watchdog_pi"), 1, 00, true, true },
-    { _T("squiddio_pi"), 0, 2, true, true },
-    { _T("objsearch_pi"), 0, 3, true, true },
+    { ("aisradar_pi"), 0, 95, true, true },
+    { ("radar_pi"), 0, 95, true, true },             // GCC alias for aisradar_pi
+    { ("watchdog_pi"), 1, 00, true, true },
+    { ("squiddio_pi"), 0, 2, true, true },
+    { ("objsearch_pi"), 0, 3, true, true },
 #ifdef __WXOSX__
     { ("s63_pi"), 0, 6, true, true },
 #endif    
@@ -89,13 +90,13 @@ const BlackListedPlugin PluginBlacklist[] = {
 // PlugIn Messaging scheme Event
 //----------------------------------------------------------------------------
 
-class OCPN_MsgEvent: public wxEvent
+class OCPN_MsgEvent: public QEvent
 {
 public:
-    OCPN_MsgEvent( wxEventType commandType = wxEVT_NULL, int id = 0 );
+    OCPN_MsgEvent();
 
     OCPN_MsgEvent(const OCPN_MsgEvent & event)
-    : wxEvent(event),
+    : QEvent(event),
     m_MessageID(event.m_MessageID),
     m_MessageText(event.m_MessageText)
     { }
@@ -111,7 +112,7 @@ public:
 
 
     // required for sending with wxPostEvent()
-    wxEvent *Clone() const;
+    QEvent *Clone() const;
 
 private:
     QString    m_MessageID;
@@ -120,7 +121,7 @@ private:
 
 };
 
-extern  const wxEventType wxEVT_OCPN_MSG;
+extern  const QEvent::Type wxEVT_OCPN_MSG;
 
 
 //-----------------------------------------------------------------------------------------------------
@@ -144,26 +145,26 @@ class PlugInContainer
             int               m_cap_flag;             // PlugIn Capabilities descriptor
             QString          m_plugin_file;          // The full file path
             QString          m_plugin_filename;      // The short file path
-            wxDateTime        m_plugin_modification;  // used to detect upgraded plugins
+            QDateTime        m_plugin_modification;  // used to detect upgraded plugins
             destroy_t         *m_destroy_fn;
-            wxDynamicLibrary  *m_plibrary;
+            QLibrary          *m_plibrary;
             QString          m_common_name;            // A common name string for the plugin
             QString          m_short_description;
             QString          m_long_description;
             int               m_api_version;
             int               m_version_major;
             int               m_version_minor;
-            wxBitmap         *m_bitmap;
+            QBitmap         *m_bitmap;
 
 };
 
 //    Declare an array of PlugIn Containers
-WX_DEFINE_ARRAY_PTR(PlugInContainer *, ArrayOfPlugIns);
+typedef QList<PlugInContainer *> ArrayOfPlugIns;
 
 class PlugInMenuItemContainer
 {
       public:
-            wxMenuItem        *pmenu_item;
+            QAction        *pmenu_item;
             opencpn_plugin    *m_pplugin;
             bool              b_viz;
             bool              b_grey;
@@ -172,7 +173,7 @@ class PlugInMenuItemContainer
 };
 
 //    Define an array of PlugIn MenuItem Containers
-WX_DEFINE_ARRAY_PTR(PlugInMenuItemContainer *, ArrayOfPlugInMenuItems);
+typedef QList<PlugInMenuItemContainer*> ArrayOfPlugInMenuItems;
 
 
 class PlugInToolbarToolContainer
@@ -184,17 +185,17 @@ class PlugInToolbarToolContainer
             opencpn_plugin    *m_pplugin;
             int               id;
             QString          label;
-            wxBitmap          *bitmap_day;
-            wxBitmap          *bitmap_dusk;
-            wxBitmap          *bitmap_night;
-            wxBitmap          *bitmap_Rollover_day;
-            wxBitmap          *bitmap_Rollover_dusk;
-            wxBitmap          *bitmap_Rollover_night;
+            QBitmap          *bitmap_day;
+            QBitmap          *bitmap_dusk;
+            QBitmap          *bitmap_night;
+            QBitmap          *bitmap_Rollover_day;
+            QBitmap          *bitmap_Rollover_dusk;
+            QBitmap          *bitmap_Rollover_night;
             
             wxItemKind        kind;
             QString          shortHelp;
             QString          longHelp;
-            wxObject          *clientData;
+            QObject          *clientData;
             int               position;
             bool              b_viz;
             bool              b_toggle;
@@ -206,7 +207,7 @@ class PlugInToolbarToolContainer
 };
 
 //    Define an array of PlugIn ToolbarTool Containers
-WX_DEFINE_ARRAY_PTR(PlugInToolbarToolContainer *, ArrayOfPlugInToolbarTools);
+typedef QList<PlugInToolbarToolContainer *> ArrayOfPlugInToolbarTools;
 
 
 
@@ -243,19 +244,19 @@ public:
       void CloseAllPlugInPanels( int );
 
       ArrayOfPlugInToolbarTools &GetPluginToolbarToolArray(){ return m_PlugInToolbarTools; }
-      int AddToolbarTool(QString label, wxBitmap *bitmap, wxBitmap *bmpRollover,
+      int AddToolbarTool(QString label, QBitmap *bitmap, QBitmap *bmpRollover,
                          wxItemKind kind, QString shortHelp, QString longHelp,
-                         wxObject *clientData, int position,
+                         QObject *clientData, int position,
                          int tool_sel, opencpn_plugin *pplugin );
 
       void RemoveToolbarTool(int tool_id);
       void SetToolbarToolViz(int tool_id, bool viz);
       void SetToolbarItemState(int tool_id, bool toggle);
-      void SetToolbarItemBitmaps(int item, wxBitmap *bitmap, wxBitmap *bmpDisabled);
+      void SetToolbarItemBitmaps(int item, QBitmap *bitmap, QBitmap *bmpDisabled);
       
       int AddToolbarTool(QString label, QString SVGfile, QString SVGRolloverfile, QString SVGToggledfile,
                          wxItemKind kind, QString shortHelp, QString longHelp,
-                         wxObject *clientData, int position,
+                         QObject *clientData, int position,
                          int tool_sel, opencpn_plugin *pplugin );
       
       void SetToolbarItemBitmaps(int item, QString SVGfile,
@@ -267,7 +268,7 @@ public:
       void ShowDeferredBlacklistMessages();
 
       ArrayOfPlugInMenuItems &GetPluginContextMenuItemArray(){ return m_PlugInMenuItems; }
-      int AddCanvasContextMenuItem(wxMenuItem *pitem, opencpn_plugin *pplugin, const char *name = "" );
+      int AddCanvasContextMenuItem(QAction *pitem, opencpn_plugin *pplugin, const char *name = "" );
       void RemoveCanvasContextMenuItem(int item, const char *name = "" );
       void SetCanvasContextMenuItemViz(int item, bool viz, const char *name = "" );
       void SetCanvasContextMenuItemGrey(int item, bool grey, const char *name = "" );
@@ -275,7 +276,7 @@ public:
       void SendNMEASentenceToAllPlugIns(const QString &sentence);
       void SendPositionFixToAllPlugIns(GenericPosDatEx *ppos);
       void SendAISSentenceToAllPlugIns(const QString &sentence);
-      void SendJSONMessageToAllPlugins(const QString &message_id, wxJSONValue v);
+      void SendJSONMessageToAllPlugins(const QString &message_id, QJsonValue v);
       void SendMessageToAllPlugins(const QString &message_id, const QString &message_body);
       int GetJSONMessageTargetCount();
       
@@ -295,7 +296,7 @@ public:
       void SendBaseConfigToAllPlugIns();
       void SendS52ConfigToAllPlugIns( bool bReconfig = false );
       
-      wxArrayString GetPlugInChartClassNameArray(void);
+      QStringList GetPlugInChartClassNameArray(void);
 
       ListOfPI_S57Obj *GetPlugInObjRuleListAtLatLon( ChartPlugInWrapper *target, float zlat, float zlon,
                                                        float SelectRadius, const ViewPort& vp );
@@ -304,12 +305,12 @@ public:
       QString GetLastError();
       MyFrame *GetParentFrame(){ return pParent; }
 
-      void DimeWindow(wxWindow *win);
+      void DimeWindow(QWidget *win);
       
 private:
       bool CheckBlacklistedPlugin(opencpn_plugin* plugin);
       bool DeactivatePlugIn(PlugInContainer *pic);
-      wxBitmap *BuildDimmedToolBitmap(wxBitmap *pbmp_normal, unsigned char dim_ratio);
+      QBitmap *BuildDimmedToolBitmap(QBitmap *pbmp_normal, unsigned char dim_ratio);
       bool UpDateChartDataTypes(void);
       bool CheckPluginCompatibility(QString plugin_file);
       bool LoadPlugInDirectory(const QString &plugin_dir, bool enabled_plugins, bool b_enable_blackdialog);
@@ -326,13 +327,13 @@ private:
 
       int               m_plugin_tool_id_next;
       int               m_plugin_menu_item_id_next;
-      wxBitmap          m_cached_overlay_bm;
+      QBitmap          m_cached_overlay_bm;
 
       bool              m_benable_blackdialog;
       bool              m_benable_blackdialog_done;
-      wxArrayString     m_deferred_blacklist_messages;
+      QStringList     m_deferred_blacklist_messages;
       
-      wxArrayString     m_plugin_order;
+      QStringList     m_plugin_order;
       void SetPluginOrder( QString serialized_names );
       QString GetPluginOrder();
     
@@ -356,11 +357,9 @@ public:
       long m_last_online_chk;
 #endif
 #endif
-
-DECLARE_EVENT_TABLE()
 };
 
-WX_DEFINE_ARRAY_PTR(PluginPanel *, ArrayOfPluginPanel);
+typedef QList<PluginPanel *>    ArrayOfPluginPanel;
 
 class PluginListPanel: public wxScrolledWindow
 {
@@ -396,22 +395,22 @@ public:
       void OnPluginDown( wxCommandEvent& event );
       void SetEnabled( bool enabled );
       bool GetSelected(){ return m_bSelected; }
-      PlugInContainer* GetPluginPtr() { return m_pPlugin; };
+      PlugInContainer* GetPluginPtr() { return m_pPlugin; }
 
 private:
       PluginListPanel *m_PluginListPanel;
       bool             m_bSelected;
       PlugInContainer *m_pPlugin;
-      wxStaticText    *m_pName;
-      wxStaticText    *m_pVersion;
-      wxStaticText    *m_pDescription;
+      QLabel    *m_pName;
+      QLabel    *m_pVersion;
+      QLabel    *m_pDescription;
       wxFlexGridSizer      *m_pButtons;
-      wxButton        *m_pButtonEnable;
-      wxButton        *m_pButtonPreferences;
+      QPushButton        *m_pButtonEnable;
+      QPushButton        *m_pButtonPreferences;
       
       wxBoxSizer      *m_pButtonsUpDown;
-      wxButton        *m_pButtonUp;
-      wxButton        *m_pButtonDown;    
+      QPushButton        *m_pButtonUp;
+      QPushButton        *m_pButtonDown;
 };
 
 
@@ -432,7 +431,7 @@ public:
         LUP = NULL;
         };
         
-    ~S52PLIB_Context(){};
+    ~S52PLIB_Context(){}
     
     wxBoundingBox           BBObj;                  // lat/lon BBox of the rendered object
     bool                    bBBObj_valid;           // set after the BBObj has been calculated once.
@@ -442,7 +441,7 @@ public:
     
     S52_TextC                *FText;
     int                     bFText_Added;
-    wxRect                  rText;
+    QRect                  rText;
     
     LUPrec                  *LUP;
     ObjRazRules             *ChildRazRules;

@@ -53,7 +53,7 @@ QColor GetGlobalColor(QString colorName);
 int GetApplicationMemoryUse(void);
 
 // Helper to create menu label + hotkey string when registering menus
-QString _menuText(QString name, QString shortcut);
+QStringList _menuText(const QString& name, const QString& shortcut);
 
 // The point for anchor watch should really be a class...
 double AnchorDistFix( double const d, double const AnchorPointMinDist, double const AnchorPointMaxDist);   //  pjotrc 2010.02.22

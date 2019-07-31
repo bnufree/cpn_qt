@@ -39,6 +39,7 @@
 #include "vector2D.h"
 #include "SelectItem.h"
 #include "ocpndc.h"
+#include "RoutePoint.h"
 
 enum
 {
@@ -99,9 +100,7 @@ class NavObjectCollection1;
 class NavObjectChanges;
 class TrackPoint;
 class TrackList;
-class RouteList;
 class canvasConfig;
-class RoutePointList;
 class RoutePoint;
 class Track;
 

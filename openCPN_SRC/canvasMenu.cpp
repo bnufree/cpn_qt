@@ -37,11 +37,7 @@
 #include "chartdb.h"
 #include "chart1.h"
 #include "cutil.h"
-#include "MarkInfo.h"
-#include "RoutePropDlgImpl.h"
-#include "TrackPropDlg.h"
 #include "tcmgr.h"
-#include "routemanagerdialog.h"
 #include "pluginmanager.h"
 #include "undo.h"
 #include "tide_time.h"
@@ -87,10 +83,6 @@ extern bool             AnchorAlertOn2;
 extern QString         g_AW1GUID;
 extern QString         g_AW2GUID;
 extern int              g_click_stop;
-extern RouteManagerDialog *pRouteManagerDialog;
-extern MarkInfoDlg     *g_pMarkInfoDialog;
-extern RoutePropDlgImpl *pRoutePropDialog;
-extern TrackPropDlg     *pTrackPropDialog;
 extern ActiveTrack      *g_pActiveTrack;
 extern bool             g_bConfirmObjectDelete;
 extern WayPointman      *pWayPointMan;
@@ -185,6 +177,7 @@ enum
     ID_DEF_MENU_LAST
 };
 
+#include <QMenu>
 //------------------------------------------------------------------------------
 //    CanvasMenuHandler Implementation
 //------------------------------------------------------------------------------
@@ -219,94 +212,112 @@ CanvasMenuHandler::~CanvasMenuHandler()
 //-------------------------------------------------------------------------------
 //          Popup Menu Handling
 //-------------------------------------------------------------------------------
-
-void MenuPrepend1( QMenu *menu, int id, QString label)
+void MenuPrepend1( QMenu *menu, int id, const QStringList& list)
 {
-    wxMenuItem *item = new wxMenuItem(menu, id, label);
-#if defined(__WXMSW__)
-    wxFont *qFont = GetOCPNScaledFont(("Menu"));
-    item->SetFont(*qFont);
-#endif
-    
-#ifdef __OCPN__ANDROID__
-    wxFont sFont = GetOCPNGUIScaledFont(("Menu"));
-    item->SetFont(sFont);
-#endif
-    
-    menu->Prepend(item);
+    if(list.size() == 0) return;
+    if(list.size() == 1)
+    {
+        MenuPrepend1( menu, id, list[0]);
+    } else
+    {
+        MenuPrepend1( menu, id, list[0], list[1]);
+    }
 }
 
-void MenuAppend1( wxMenu *menu, int id, QString label)
+void MenuPrepend1( QMenu *menu, int id, const QString& name, const QString& short_cut = QString())
 {
-    wxMenuItem *item = new wxMenuItem(menu, id, label);
-#if defined(__WXMSW__)
-   
-    wxFont *qFont = GetOCPNScaledFont(_("Menu"));
-    item->SetFont(*qFont);
-#endif
-    
-#ifdef __OCPN__ANDROID__
-    wxFont sFont = GetOCPNGUIScaledFont(("Menu"));
-    item->SetFont(sFont);
-#endif
-    
-    menu->Append(item);
+    if(!menu) return;
+    int count = menu->actions().count();
+    QAction *action = 0;
+    if(count == 0)
+    {
+        action = menu->addAction(name);
+    } else
+    {
+        QAction *before = menu->actions().first();
+        action = new QAction(name, menu);
+        menu->insertAction(before, action);
+    }
+    action->setData(id);
+    if(short_cut.length() > 0)
+    {
+        action->setShortcut(QKeySequence(short_cut));
+    }
 }
 
-void SetMenuItemFont1(wxMenuItem *item)
+void MenuAppend1( QMenu *menu, int id, const QStringList& list)
 {
-#if defined(__WXMSW__) || defined(__OCPN__ANDROID__)
-    
-    wxFont *qFont = GetOCPNScaledFont(_("Menu"));
-    item->SetFont(*qFont);
-#endif
+    if(list.size() == 0) return;
+    if(list.size() == 1)
+    {
+        MenuAppend1( menu, id, list[0]);
+    } else
+    {
+        MenuAppend1( menu, id, list[0], list[1]);
+    }
+}
+
+void MenuAppend1( QMenu *menu, int id, const QString& name, const QString& short_cut = QString())
+{
+    if(!menu) return;
+    QAction *action = menu->addAction(name);
+    action->setData(id);
+    if(short_cut.length() > 0)
+    {
+        action->setShortcut(QKeySequence(short_cut));
+    }
+}
+
+void SetMenuItemFont1(QAction *item)
+{
+    QFont *qFont = GetOCPNScaledFont("Menu");
+    item->setFont(*qFont);
 }
 
 void CanvasMenuHandler::CanvasPopupMenu( int x, int y, int seltype )
 {
-    wxMenu* contextMenu = new wxMenu;
-	wxMenu* menuWaypoint = NULL;
-	wxMenu* menuRoute = NULL;
-	wxMenu* menuTrack = NULL;
-	wxMenu* menuAIS = NULL;
+    QMenu* contextMenu = new QMenu(tr("Main Menu"));
+    QMenu* menuWaypoint = NULL;
+    QMenu* menuRoute = NULL;
+    QMenu* menuTrack = NULL;
+    QMenu* menuAIS = NULL;
 
-    wxMenu *subMenuChart = new wxMenu;
+    QMenu *subMenuChart = new QMenu;
 
-    wxMenu *menuFocus = contextMenu;    // This is the one that will be shown
+    QMenu *menuFocus = contextMenu;    // This is the one that will be shown
 
     popx = x;
     popy = y;
 
     if( seltype == SELTYPE_ROUTECREATE ) {
-        MenuAppend1( contextMenu, ID_RC_MENU_FINISH, _menuText( _( "End Route" ), ("Esc") ) );
+        MenuAppend1( contextMenu, ID_RC_MENU_FINISH, _menuText("End Route" , "Esc" ) );
     }
 
     if( ! parent->m_pMouseRoute ) {
         if( parent->m_bMeasure_Active )
-            MenuPrepend1( contextMenu, ID_DEF_MENU_DEACTIVATE_MEASURE, _menuText( _("Measure Off"), ("Esc") ) );
+            MenuPrepend1( contextMenu, ID_DEF_MENU_DEACTIVATE_MEASURE, _menuText("Measure Off", "Esc" ) );
         else
-            MenuPrepend1( contextMenu, ID_DEF_MENU_ACTIVATE_MEASURE, _menuText( _( "Measure" ), ("M") ) );
-//            contextMenu->Prepend( ID_DEF_MENU_ACTIVATE_MEASURE, _menuText( _( "Measure" ), ("F4") ) );
+            MenuPrepend1( contextMenu, ID_DEF_MENU_ACTIVATE_MEASURE, _menuText( "Measure" , "M" ) );
     }
 
     if( !g_bBasicMenus || (seltype != SELTYPE_ROUTECREATE )) {
         if( parent->undo->AnythingToUndo() ) {
-            QString undoItem;
-            undoItem << _("Undo") << (" ") << parent->undo->GetNextUndoableAction()->Description();
-            MenuPrepend1( contextMenu, ID_UNDO, _menuText( undoItem, ("Ctrl-Z") ) );
+            QStringList undoItem;
+            undoItem << ("Undo") << parent->undo->GetNextUndoableAction()->Description();
+            MenuPrepend1( contextMenu, ID_UNDO, _menuText( undoItem.join(" "), ("Ctrl+Z") ) );
         }
 
         if( parent->undo->AnythingToRedo() ) {
-            QString redoItem;
-            redoItem << _("Redo") << (" ") << parent->undo->GetNextRedoableAction()->Description();
+            QStringList redoItem;
+            redoItem << ("Redo") << parent->undo->GetNextRedoableAction()->Description();
 #ifdef __WXOSX__
-            MenuPrepend1( contextMenu, ID_REDO, _menuText( redoItem, ("Shift-Ctrl-Z") ) );
+            MenuPrepend1( contextMenu, ID_REDO, _menuText( redoItem.join(" "), ("Shift+Ctrl+Z") ) );
 #else
-            MenuPrepend1( contextMenu, ID_REDO, _menuText( redoItem, ("Ctrl-Y") ) );
+            MenuPrepend1( contextMenu, ID_REDO, _menuText( redoItem.join(" "), ("Ctrl+Y") ) );
 #endif
         }
     }
-
+#if 0
     bool ais_areanotice = false;
     if( g_pAIS && parent->GetShowAIS() && g_bShowAreaNotices ) {
 
@@ -355,57 +366,58 @@ void CanvasMenuHandler::CanvasPopupMenu( int x, int y, int seltype )
         }
     }
 
+#endif
     int nChartStack = 0;
     if(parent->GetpCurrentStack())
         nChartStack = parent->GetpCurrentStack()->nEntry;
     
     if( !parent->GetVP().b_quilt ) {
         if( nChartStack > 1 ) {
-            MenuAppend1( contextMenu, ID_DEF_MENU_MAX_DETAIL, _( "Max Detail Here" ) );
-            MenuAppend1( contextMenu, ID_DEF_MENU_SCALE_IN, _menuText( _( "Scale In" ), ("Ctrl-Left") ) );
-            MenuAppend1( contextMenu, ID_DEF_MENU_SCALE_OUT, _menuText( _( "Scale Out" ), ("Ctrl-Right") ) );
+            MenuAppend1( contextMenu, ID_DEF_MENU_MAX_DETAIL, ( "Max Detail Here" ) );
+            MenuAppend1( contextMenu, ID_DEF_MENU_SCALE_IN, _menuText( ( "Scale In" ), ("Ctrl+Left") ) );
+            MenuAppend1( contextMenu, ID_DEF_MENU_SCALE_OUT, _menuText( ( "Scale Out" ), ("Ctrl+Right") ) );
         }
 
-        if( ( parent->m_singleChart && ( parent->m_singleChart->GetChartFamily() == CHART_FAMILY_VECTOR ) ) || ais_areanotice ) {
-            MenuAppend1( contextMenu, ID_DEF_MENU_QUERY, _( "Object Query" ) + ( "..." ) );
+        if( ( parent->m_singleChart && ( parent->m_singleChart->GetChartFamily() == CHART_FAMILY_VECTOR ) )/* || ais_areanotice*/ ) {
+            MenuAppend1( contextMenu, ID_DEF_MENU_QUERY, ( "Object Query ..." ) );
         }
 
     } else {
-        ChartBase *pChartTest = parent->m_pQuilt->GetChartAtPix( parent->GetVP(), wxPoint( x, y ) );
-        if( ( pChartTest && ( pChartTest->GetChartFamily() == CHART_FAMILY_VECTOR ) ) || ais_areanotice ) {
-            MenuAppend1( contextMenu, ID_DEF_MENU_QUERY, _( "Object Query" ) + ( "..." ) );
+        ChartBase *pChartTest = parent->m_pQuilt->GetChartAtPix( parent->GetVP(), QPoint( x, y ) );
+        if( ( pChartTest && ( pChartTest->GetChartFamily() == CHART_FAMILY_VECTOR ) ) /*|| ais_areanotice */) {
+            MenuAppend1( contextMenu, ID_DEF_MENU_QUERY, ( "Object Query ..." ) );
         } else {
 #ifndef __OCPN__ANDROID__            
 if( !g_bBasicMenus && (nChartStack > 1 ) ) {
-                MenuAppend1( contextMenu, ID_DEF_MENU_SCALE_IN, _menuText( _( "Scale In" ), ("Ctrl-Left") ) );
-                MenuAppend1( contextMenu, ID_DEF_MENU_SCALE_OUT, _menuText( _( "Scale Out" ), ("Ctrl-Right") ) );
+                MenuAppend1( contextMenu, ID_DEF_MENU_SCALE_IN, _menuText( ( "Scale In" ), ("Ctrl+Left") ) );
+                MenuAppend1( contextMenu, ID_DEF_MENU_SCALE_OUT, _menuText( ( "Scale Out" ), ("Ctrl+Right") ) );
             }
 #endif            
         }
     }
 
     if( !g_bBasicMenus || (seltype != SELTYPE_ROUTECREATE )) {
-        MenuAppend1( contextMenu, ID_DEF_MENU_DROP_WP, _menuText( _( "Drop Mark" ), ("Ctrl-M") ) );
-        MenuAppend1( contextMenu, ID_DEF_MENU_NEW_RT, _menuText( _( "New Route..." ), ("Ctrl-R") ) );
+        MenuAppend1( contextMenu, ID_DEF_MENU_DROP_WP, _menuText(( "Drop Mark" ), ("Ctrl+M") ) );
+        MenuAppend1( contextMenu, ID_DEF_MENU_NEW_RT, _menuText(( "New Route..." ), ("Ctrl+R") ) );
         
         if( !bGPSValid )
-            MenuAppend1( contextMenu, ID_DEF_MENU_MOVE_BOAT_HERE, _( "Move Boat Here" ) );
+            MenuAppend1( contextMenu, ID_DEF_MENU_MOVE_BOAT_HERE, ( "Move Boat Here" ) );
     }
 
     if( !g_bBasicMenus && (!( g_pRouteMan->GetpActiveRoute() || ( seltype & SELTYPE_MARKPOINT )) ) )
-        MenuAppend1( contextMenu, ID_DEF_MENU_GOTO_HERE, _( "Navigate To Here" ) );
+        MenuAppend1( contextMenu, ID_DEF_MENU_GOTO_HERE, ( "Navigate To Here" ) );
 
     if( !g_bBasicMenus)
-        MenuAppend1( contextMenu, ID_DEF_MENU_GOTOPOSITION, _("Center view") + ("...") );
+        MenuAppend1( contextMenu, ID_DEF_MENU_GOTOPOSITION, ("Center view ...") );
 
     if( !g_bBasicMenus){
         if( !parent->m_bCourseUp )
-            MenuAppend1( contextMenu, ID_DEF_MENU_COGUP, _("Course Up Mode") );
+            MenuAppend1( contextMenu, ID_DEF_MENU_COGUP, ("Course Up Mode") );
         else {
             if( !parent->GetVP().b_quilt && parent->m_singleChart && ( fabs( parent->m_singleChart->GetChartSkew() ) > .01 )
-                && !g_bskew_comp ) MenuAppend1( contextMenu, ID_DEF_MENU_NORTHUP, _("Chart Up Mode") );
+                && !g_bskew_comp ) MenuAppend1( contextMenu, ID_DEF_MENU_NORTHUP, ("Chart Up Mode") );
             else
-                MenuAppend1( contextMenu, ID_DEF_MENU_NORTHUP, _("North Up Mode") );
+                MenuAppend1( contextMenu, ID_DEF_MENU_NORTHUP, ("North Up Mode") );
         }
     }
 
@@ -413,39 +425,39 @@ if( !g_bBasicMenus && (nChartStack > 1 ) ) {
             bool full_toggle_added = false;
 #ifndef __OCPN__ANDROID__
         if(g_btouch){
-            MenuAppend1( contextMenu, ID_DEF_MENU_TOGGLE_FULL, _("Toggle Full Screen") );
+            MenuAppend1( contextMenu, ID_DEF_MENU_TOGGLE_FULL, ("Toggle Full Screen") );
             full_toggle_added = true;
         }
             
         
         if(!full_toggle_added){
             //if(gFrame->IsFullScreen())
-                MenuAppend1( contextMenu, ID_DEF_MENU_TOGGLE_FULL, _("Toggle Full Screen") );
+                MenuAppend1( contextMenu, ID_DEF_MENU_TOGGLE_FULL, ("Toggle Full Screen") );
         }
 #endif            
         
         if ( g_pRouteMan->IsAnyRouteActive() && g_pRouteMan->GetCurrentXTEToActivePoint() > 0. ) 
-            MenuAppend1( contextMenu, ID_DEF_ZERO_XTE, _("Zero XTE") );
+            MenuAppend1( contextMenu, ID_DEF_ZERO_XTE, ("Zero XTE") );
 
         Kml* kml = new Kml;
         int pasteBuffer = kml->ParsePasteBuffer();
         if( pasteBuffer != KML_PASTE_INVALID ) {
             switch( pasteBuffer ) {
                 case KML_PASTE_WAYPOINT: {
-                    MenuAppend1( contextMenu, ID_PASTE_WAYPOINT, _( "Paste Waypoint" ) );
+                    MenuAppend1( contextMenu, ID_PASTE_WAYPOINT, ( "Paste Waypoint" ) );
                     break;
                 }
                 case KML_PASTE_ROUTE: {
-                    MenuAppend1( contextMenu, ID_PASTE_ROUTE, _( "Paste Route" ) );
+                    MenuAppend1( contextMenu, ID_PASTE_ROUTE, ( "Paste Route" ) );
                     break;
                 }
                 case KML_PASTE_TRACK: {
-                    MenuAppend1( contextMenu, ID_PASTE_TRACK, _( "Paste Track" ) );
+                    MenuAppend1( contextMenu, ID_PASTE_TRACK, ( "Paste Track" ) );
                     break;
                 }
                 case KML_PASTE_ROUTE_TRACK: {
-                    MenuAppend1( contextMenu, ID_PASTE_ROUTE, _( "Paste Route" ) );
-                    MenuAppend1( contextMenu, ID_PASTE_TRACK, _( "Paste Track" ) );
+                    MenuAppend1( contextMenu, ID_PASTE_ROUTE, ( "Paste Route" ) );
+                    MenuAppend1( contextMenu, ID_PASTE_TRACK, ( "Paste Track" ) );
                     break;
                 }
             }
@@ -453,7 +465,7 @@ if( !g_bBasicMenus && (nChartStack > 1 ) ) {
         delete kml;
 
         if( !parent->GetVP().b_quilt && parent->m_singleChart && ( parent->m_singleChart->GetChartType() == CHART_TYPE_CM93COMP ) ) {
-            MenuAppend1( contextMenu, ID_DEF_MENU_CM93OFFSET_DIALOG, _( "CM93 Offset Dialog..." ) );
+            MenuAppend1( contextMenu, ID_DEF_MENU_CM93OFFSET_DIALOG, ( "CM93 Offset Dialog..." ) );
         }
 
     }   //if( !g_bBasicMenus){
@@ -464,7 +476,7 @@ if( !g_bBasicMenus && (nChartStack > 1 ) ) {
 //     if( ( parent->GetVP().b_quilt ) && ( pCurrentStack && pCurrentStack->b_valid ) ) {
 //         int dbIndex = parent->m_pQuilt->GetChartdbIndexAtPix( parent->GetVP(), wxPoint( popx, popy ) );
 //         if( dbIndex != -1 )
-//             MenuAppend1( contextMenu, ID_DEF_MENU_QUILTREMOVE, _( "Hide This Chart" ) );
+//             MenuAppend1( contextMenu, ID_DEF_MENU_QUILTREMOVE, ( "Hide This Chart" ) );
 //     }
 #endif
 
@@ -476,31 +488,29 @@ if( !g_bBasicMenus && (nChartStack > 1 ) ) {
 #endif
 
     //  ChartGroup SubMenu
-    wxMenuItem* subItemChart = contextMenu->AppendSubMenu( subMenuChart, _("Chart Groups") );
+    subMenuChart->setTitle("Chart Groups");
+    QAction* subItemChart = contextMenu->addMenu(subMenuChart );
     SetMenuItemFont1(subItemChart);
     
-    if( g_pGroupArray->GetCount() ) {
-
-#ifdef __WXMSW__
-		MenuAppend1(subMenuChart, wxID_CANCEL, _("temporary"));
-#endif
-          wxMenuItem* subItem0 = subMenuChart->AppendRadioItem( ID_DEF_MENU_GROUPBASE ,
-                  _("All Active Charts") );
-
-
-
+    if( g_pGroupArray->count() ) {
+        QActionGroup *grp = new QActionGroup(subMenuChart);
+        QAction* subItem0 = grp->addAction("All Active Charts");
+        subItem0->setData(ID_DEF_MENU_GROUPBASE);
         SetMenuItemFont1(subItem0);
-
-        for( unsigned int i = 0; i < g_pGroupArray->GetCount(); i++ ) {
-            subItem0 = subMenuChart->AppendRadioItem( ID_DEF_MENU_GROUPBASE + i + 1,
-                     g_pGroupArray->Item( i )->m_group_name );
+        for( unsigned int i = 0; i < g_pGroupArray->count(); i++ ) {
+            subItem0 = grp->addAction(g_pGroupArray->at(i)->m_group_name);
+            subItem0->setData(ID_DEF_MENU_GROUPBASE + i + 1);
             SetMenuItemFont1(subItem0);
         }
-        
-#ifdef __WXMSW__
-    subMenuChart->Remove( wxID_CANCEL );
-#endif
-        subMenuChart->Check( ID_DEF_MENU_GROUPBASE + parent->m_groupIndex, true );
+        //获取当前需要选择的菜单
+        for(int i=0; i<grp->actions().size(); i++)
+        {
+            QAction *act = grp->actions().at(i);
+            if(act->data().toInt() == ID_DEF_MENU_GROUPBASE + parent->m_groupIndex)
+            {
+                act->setChecked(true );
+            }
+        }
     }
     
         
@@ -509,121 +519,74 @@ if( !g_bBasicMenus && (nChartStack > 1 ) ) {
     menuFocus = contextMenu;
 
     QString name;
-    if( !g_bBasicMenus || (seltype != SELTYPE_ROUTECREATE )) {
-        if( g_pAIS ) {
-            if( parent->GetShowAIS() && (seltype & SELTYPE_AISTARGET) ) {
-                AIS_Target_Data *myptarget = g_pAIS->Get_Target_Data_From_MMSI( m_FoundAIS_MMSI );
-				if (!g_bBasicMenus && myptarget) {
-					name = myptarget->GetFullName();
-					if (name.IsEmpty())
-						 name.Printf(_T("%d"), m_FoundAIS_MMSI);
-					name.Prepend(_T(" ( ")).Append(_T(" )"));
-				}
-				else
-					name = wxEmptyString;
-				menuAIS = new wxMenu(_("AIS") + name);
-				MenuAppend1(menuAIS, ID_DEF_MENU_AIS_QUERY, _("Target Query..."));
-                if( myptarget && myptarget->bCPA_Valid && (myptarget->n_alert_state != AIS_ALERT_SET) ) {
-                    if( myptarget->b_show_AIS_CPA )
-                        MenuAppend1( menuAIS, ID_DEF_MENU_AIS_CPA, _( "Hide Target CPA" ) );
-                    else
-                        MenuAppend1( menuAIS, ID_DEF_MENU_AIS_CPA, _( "Show Target CPA" ) );
-                }
-                MenuAppend1( menuAIS, ID_DEF_MENU_AISTARGETLIST, _("Target List...") );
-                if ( 1 /*g_bAISShowTracks*/ ) {
-                    if( myptarget && myptarget->b_show_track )
-                        MenuAppend1( menuAIS, ID_DEF_MENU_AISSHOWTRACK, _("Hide Target Track") );
-                    else
-                        MenuAppend1( menuAIS, ID_DEF_MENU_AISSHOWTRACK, _("Show Target Track") );
-                }
-
-                MenuAppend1( menuAIS, ID_DEF_MENU_COPY_MMSI, _("Copy Target MMSI") );
-                menuAIS->AppendSeparator();
-                
-                if( !parent->GetVP().b_quilt ) {
-                    if( ( parent->m_singleChart && ( parent->m_singleChart->GetChartFamily() == CHART_FAMILY_VECTOR ) ) ) {
-                        MenuAppend1( menuAIS, ID_DEF_MENU_QUERY, _( "Object Query..." ) );
-                    }
-                    
-                } else {
-                    ChartBase *pChartTest = parent->m_pQuilt->GetChartAtPix( parent->GetVP(), wxPoint( x, y ) );
-                    if( ( pChartTest && ( pChartTest->GetChartFamily() == CHART_FAMILY_VECTOR ) ) ) {
-                        MenuAppend1( menuAIS, ID_DEF_MENU_QUERY, _( "Object Query..." ) );
-                    }
-                }
-                        
-                
-                menuFocus = menuAIS;
-            }
-			else
-                MenuAppend1(contextMenu, ID_DEF_MENU_AISTARGETLIST, _("AIS target list") + ("..."));
-        }
-    }
-
     if( seltype & SELTYPE_ROUTESEGMENT ) {
-		if (!g_bBasicMenus && m_pSelectedRoute) {
-			name = m_pSelectedRoute->m_RouteNameString;
-			if (name.IsEmpty())
-				name = _("Unnamed Route");
-            name.Prepend((" ( ")).Append((" )"));
-		} else
-			name = wxEmptyString;
+        if (!g_bBasicMenus && m_pSelectedRoute)
+        {
+            name = m_pSelectedRoute->m_RouteNameString;
+            if (name.isEmpty())
+            {
+                name = ("Unnamed Route");
+            } else
+            {
+                name = QString("( %1 )").arg(name);
+            }
+        } else
+        {
+            name = "";
+        }
         bool blay = false;
-        if( m_pSelectedRoute && m_pSelectedRoute->m_bIsInLayer )
-            blay = true;
+        if( m_pSelectedRoute && m_pSelectedRoute->m_bIsInLayer )  blay = true;
 
         if( blay ){
-			menuRoute = new wxMenu(_("Layer Route") + name);
-            MenuAppend1( menuRoute, ID_RT_MENU_PROPERTIES, _( "Properties" ) + ( "..." ) );
+            menuRoute = new QMenu(QString("Layer Route") + name);
+            MenuAppend1( menuRoute, ID_RT_MENU_PROPERTIES, ( "Properties ..." ) );
             if( m_pSelectedRoute ) {
                 if( m_pSelectedRoute->IsActive() ) {
                     int indexActive = m_pSelectedRoute->GetIndexOf( m_pSelectedRoute->m_pRouteActivePoint );
                     if( ( indexActive + 1 ) <= m_pSelectedRoute->GetnPoints() ) {
-                        MenuAppend1( menuRoute, ID_RT_MENU_ACTNXTPOINT, _( "Activate Next Waypoint" ) );
+                        MenuAppend1( menuRoute, ID_RT_MENU_ACTNXTPOINT, ( "Activate Next Waypoint" ) );
                     }
-                    MenuAppend1( menuRoute, ID_RT_MENU_DEACTIVATE, _( "Deactivate" ) );
-                    MenuAppend1( menuRoute, ID_DEF_ZERO_XTE, _( "Zero XTE" ) );
+                    MenuAppend1( menuRoute, ID_RT_MENU_DEACTIVATE, ( "Deactivate" ) );
+                    MenuAppend1( menuRoute, ID_DEF_ZERO_XTE, ( "Zero XTE" ) );
                 }
                 else {
-                    MenuAppend1( menuRoute, ID_RT_MENU_ACTIVATE, _( "Activate" ) );
+                    MenuAppend1( menuRoute, ID_RT_MENU_ACTIVATE, ( "Activate" ) );
                 }
             }
         }
         else {
-			menuRoute = new wxMenu(_("Route") + name);
-            MenuAppend1( menuRoute, ID_RT_MENU_PROPERTIES, _( "Properties" ) + ( "..." ) );
+            menuRoute = new QMenu(("Route") + name);
+            MenuAppend1( menuRoute, ID_RT_MENU_PROPERTIES, ( "Properties ..." ) );
             if( m_pSelectedRoute ) {
                 if( m_pSelectedRoute->IsActive() ) {
                     int indexActive = m_pSelectedRoute->GetIndexOf( m_pSelectedRoute->m_pRouteActivePoint );
                     if( ( indexActive + 1 ) <= m_pSelectedRoute->GetnPoints() ) {
-                        MenuAppend1( menuRoute, ID_RT_MENU_ACTNXTPOINT, _( "Activate Next Waypoint" ) );
+                        MenuAppend1( menuRoute, ID_RT_MENU_ACTNXTPOINT, ( "Activate Next Waypoint" ) );
                     }
-                    MenuAppend1( menuRoute, ID_RT_MENU_DEACTIVATE, _( "Deactivate" ) );
-                    MenuAppend1( menuRoute, ID_DEF_ZERO_XTE, _( "Zero XTE" ) );
+                    MenuAppend1( menuRoute, ID_RT_MENU_DEACTIVATE, ( "Deactivate" ) );
+                    MenuAppend1( menuRoute, ID_DEF_ZERO_XTE, ( "Zero XTE" ) );
                 }
                 else {
-                    MenuAppend1( menuRoute, ID_RT_MENU_ACTIVATE, _( "Activate" ) );
+                    MenuAppend1( menuRoute, ID_RT_MENU_ACTIVATE, ( "Activate" ) );
                 }
             }
-            MenuAppend1( menuRoute, ID_RT_MENU_INSERT, _( "Insert Waypoint" ) );
-            MenuAppend1( menuRoute, ID_RT_MENU_APPEND, _( "Append Waypoint" ) );
-            MenuAppend1( menuRoute, ID_RT_MENU_COPY, _( "Copy as KML" ) + ( "..." ) );
-            MenuAppend1( menuRoute, ID_RT_MENU_DELETE, _( "Delete" ) + ( "..." ) );
-            MenuAppend1( menuRoute, ID_RT_MENU_REVERSE, _( "Reverse..." ) );
+            MenuAppend1( menuRoute, ID_RT_MENU_INSERT, ( "Insert Waypoint" ) );
+            MenuAppend1( menuRoute, ID_RT_MENU_APPEND, ( "Append Waypoint" ) );
+            MenuAppend1( menuRoute, ID_RT_MENU_COPY, ( "Copy as KML ..." ) );
+            MenuAppend1( menuRoute, ID_RT_MENU_DELETE, ( "Delete ..." ) );
+            MenuAppend1( menuRoute, ID_RT_MENU_REVERSE, ( "Reverse..." ) );
 
 #ifndef __OCPN__ANDROID__
             QString port = parent->FindValidUploadPort();
             parent->m_active_upload_port = port;
-            QString item = _( "Send to GPS" );
-            if( !port.IsEmpty() ) {
-                item.Append( (" ( ") );
-                item.Append( port );
-                item.Append((" )") );
+            QString item = ( "Send to GPS" );
+            if( !port.isEmpty() ) {
+                item += QString(" ( %1 ) ").arg(port);
             }
             MenuAppend1( menuRoute, ID_RT_MENU_SENDTOGPS, item );
 
-            if( !port.IsEmpty() ) {
-                QString item = _( "Send to new GPS" );
+            if( !port.isEmpty() ) {
+                QString item = ( "Send to new GPS" );
                 MenuAppend1( menuRoute, ID_RT_MENU_SENDTONEWGPS, item );
             }
 #endif                
@@ -633,25 +596,24 @@ if( !g_bBasicMenus && (nChartStack > 1 ) ) {
 			menuFocus = menuRoute;
     }
 
-    if( seltype & SELTYPERACKSEGMENT ) {
-		name = wxEmptyString;
+    if( seltype & SELTYPE_TRACKSEGMENT ) {
+        name = "";
 		if ( !g_bBasicMenus && m_pSelectedTrack)
-            name = (" ( ") + m_pSelectedTrack->GetName(true) + (" )");
-		else
-			name = wxEmptyString;
+        {
+            name = tr(" ( ") + m_pSelectedTrack->GetName(true) + tr(" )");
+        }
         bool blay = false;
-        if( m_pSelectedTrack && m_pSelectedTrack->m_bIsInLayer )
-            blay = true;
+        if( m_pSelectedTrack && m_pSelectedTrack->m_bIsInLayer ) blay = true;
 
         if( blay ) {
-			menuTrack = new wxMenu(_("Layer Track") + name);
-            MenuAppend1( menuTrack, ID_TK_MENU_PROPERTIES, _( "Properties" ) + _T( "..." ) );
+            menuTrack = new QMenu(tr("Layer Track") + name);
+            MenuAppend1( menuTrack, ID_TK_MENU_PROPERTIES, tr( "Properties" ) + tr( "..." ) );
         }
         else {
-			menuTrack = new wxMenu(_("Track") + name);
-            MenuAppend1( menuTrack, ID_TK_MENU_PROPERTIES, _( "Properties" ) + _T( "..." ) );
-            MenuAppend1( menuTrack, ID_TK_MENU_COPY, _( "Copy as KML" ) );
-            MenuAppend1( menuTrack, ID_TK_MENU_DELETE, _( "Delete" ) + _T( "..." ) );
+            menuTrack = new QMenu(tr("Track") + name);
+            MenuAppend1( menuTrack, ID_TK_MENU_PROPERTIES, tr( "Properties" ) + tr( "..." ) );
+            MenuAppend1( menuTrack, ID_TK_MENU_COPY, tr( "Copy as KML" ) );
+            MenuAppend1( menuTrack, ID_TK_MENU_DELETE, tr( "Delete" ) + tr( "..." ) );
         }
         //Eventually set this menu as the "focused context menu"
 		if ( menuFocus != menuAIS )
@@ -661,57 +623,56 @@ if( !g_bBasicMenus && (nChartStack > 1 ) ) {
     if( seltype & SELTYPE_ROUTEPOINT ) {
 		if ( !g_bBasicMenus && m_pFoundRoutePoint ) {
 			name = m_pFoundRoutePoint->GetName();
-			if ( name.IsEmpty() )
-				name = _("Unnamed Waypoint");
-            name.Prepend((" ( ")).Append((" )"));
+            if ( name.isEmpty() )
+            {
+                name = tr("Unnamed Waypoint");
+            }
+            name = tr(" ( ") + name + tr(" )");
 		} else
-			name = wxEmptyString;
+            name = "";
         bool blay = false;
-        if( m_pFoundRoutePoint && m_pFoundRoutePoint->m_bIsInLayer )
-            blay = true;
+        if( m_pFoundRoutePoint && m_pFoundRoutePoint->m_bIsInLayer )  blay = true;
 
         if( blay ){
-			menuWaypoint = new wxMenu(_("Layer Waypoint") + name);
-            MenuAppend1( menuWaypoint, ID_WP_MENU_PROPERTIES, _( "Properties" ) + ( "..." ) );
+            menuWaypoint = new QMenu(tr("Layer Waypoint") + name);
+            MenuAppend1( menuWaypoint, ID_WP_MENU_PROPERTIES, tr( "Properties" ) + tr( "..." ) );
 
             if( m_pSelectedRoute && m_pSelectedRoute->IsActive() )
-                MenuAppend1( menuWaypoint, ID_RT_MENU_ACTPOINT, _( "Activate" ) );
+                MenuAppend1( menuWaypoint, ID_RT_MENU_ACTPOINT, tr( "Activate" ) );
         }
         else {
-			menuWaypoint = new wxMenu(_("Waypoint") + name);
-            MenuAppend1( menuWaypoint, ID_WP_MENU_PROPERTIES, _( "Properties" ) + ( "..." ) );
+            menuWaypoint = new QMenu(tr("Waypoint") + name);
+            MenuAppend1( menuWaypoint, ID_WP_MENU_PROPERTIES, tr( "Properties" ) + tr( "..." ) );
             if( m_pSelectedRoute && m_pSelectedRoute->IsActive() ) {
                 if(m_pSelectedRoute->m_pRouteActivePoint != m_pFoundRoutePoint )
-                    MenuAppend1( menuWaypoint, ID_RT_MENU_ACTPOINT, _( "Activate" ) );
+                    MenuAppend1( menuWaypoint, ID_RT_MENU_ACTPOINT, tr( "Activate" ) );
             }
 
             if( m_pSelectedRoute && m_pSelectedRoute->IsActive() ) {
                 if(m_pSelectedRoute->m_pRouteActivePoint == m_pFoundRoutePoint ) {
                     int indexActive = m_pSelectedRoute->GetIndexOf( m_pSelectedRoute->m_pRouteActivePoint );
                     if( ( indexActive + 1 ) <= m_pSelectedRoute->GetnPoints() )
-                        MenuAppend1( menuWaypoint, ID_RT_MENU_ACTNXTPOINT, _( "Activate Next Waypoint" ) );
+                        MenuAppend1( menuWaypoint, ID_RT_MENU_ACTNXTPOINT, tr( "Activate Next Waypoint" ) );
                 }
             }
             if( m_pSelectedRoute && m_pSelectedRoute->GetnPoints() > 2 )
-                MenuAppend1( menuWaypoint, ID_RT_MENU_REMPOINT, _( "Remove from Route" ) );
+                MenuAppend1( menuWaypoint, ID_RT_MENU_REMPOINT, tr( "Remove from Route" ) );
 
-            MenuAppend1( menuWaypoint, ID_WPT_MENU_COPY, _( "Copy as KML" ) );
+            MenuAppend1( menuWaypoint, ID_WPT_MENU_COPY, tr( "Copy as KML" ) );
 
             if( m_pFoundRoutePoint && m_pFoundRoutePoint->GetIconName() != ("mob") )
-                MenuAppend1( menuWaypoint, ID_RT_MENU_DELPOINT,  _( "Delete" ) );
+                MenuAppend1( menuWaypoint, ID_RT_MENU_DELPOINT,  tr( "Delete" ) );
 
             QString port = parent->FindValidUploadPort();
             parent->m_active_upload_port = port;
-            QString item = _( "Send to GPS" );
-            if( !port.IsEmpty() ) {
-                item.Append( (" ( ") );
-                item.Append( port );
-                item.Append((" )") );
+            QString item = tr( "Send to GPS" );
+            if( !port.isEmpty() ) {
+                item = QString(" ( %1 ) ").arg(port);
             }
             MenuAppend1( menuWaypoint, ID_WPT_MENU_SENDTOGPS, item );
             
-            if( !port.IsEmpty() ) {
-                QString item = _( "Send to new GPS" );
+            if( !port.isEmpty() ) {
+                QString item = ( "Send to new GPS" );
                 MenuAppend1( menuWaypoint, ID_WPT_MENU_SENDTONEWGPS, item );
             }
             
@@ -725,44 +686,42 @@ if( !g_bBasicMenus && (nChartStack > 1 ) ) {
     if( seltype & SELTYPE_MARKPOINT ) {
 		if (!g_bBasicMenus && m_pFoundRoutePoint) {
 			name = m_pFoundRoutePoint->GetName();
-			if (name.IsEmpty())
-				name = _("Unnamed Waypoint");
-            name.Prepend((" ( ")).Append((" )"));
+            if (name.isEmpty())
+                name = tr("Unnamed Waypoint");
+            name = QString(" ( %1 ) ").arg(name);
 		} else
-			name = wxEmptyString;
+            name = "";
         bool blay = false;
         if( m_pFoundRoutePoint && m_pFoundRoutePoint->m_bIsInLayer )
             blay = true;
 
         if( blay ){
-			menuWaypoint = new wxMenu(_("Layer Waypoint") + name);
-            MenuAppend1( menuWaypoint, ID_WP_MENU_PROPERTIES, _( "Properties" ) + ( "..." ) );
+            menuWaypoint = new QMenu(tr("Layer Waypoint") + name);
+            MenuAppend1( menuWaypoint, ID_WP_MENU_PROPERTIES, tr( "Properties" ) + tr( "..." ) );
         }
         else {
-			menuWaypoint = new wxMenu(_("Waypoint") + name);
-            MenuAppend1( menuWaypoint, ID_WP_MENU_PROPERTIES, _( "Properties" ) + ( "..." ) );
+            menuWaypoint = new QMenu(("Waypoint") + name);
+            MenuAppend1( menuWaypoint, ID_WP_MENU_PROPERTIES, tr( "Properties" ) + tr( "..." ) );
 
             if( !g_pRouteMan->GetpActiveRoute() )
-                MenuAppend1( menuWaypoint, ID_WP_MENU_GOTO, _( "Navigate To This" ) );
+                MenuAppend1( menuWaypoint, ID_WP_MENU_GOTO, tr( "Navigate To This" ) );
 
-            MenuAppend1( menuWaypoint, ID_WPT_MENU_COPY, _( "Copy as KML" ) );
+            MenuAppend1( menuWaypoint, ID_WPT_MENU_COPY, tr( "Copy as KML" ) );
 
             if( m_pFoundRoutePoint && m_pFoundRoutePoint->GetIconName() != ("mob") )
-                MenuAppend1( menuWaypoint, ID_WP_MENU_DELPOINT, _( "Delete" ) );
+                MenuAppend1( menuWaypoint, ID_WP_MENU_DELPOINT, tr( "Delete" ) );
 
             QString port = parent->FindValidUploadPort();
             parent->m_active_upload_port = port;
-            QString item = _( "Send to GPS" );
-            if( !port.IsEmpty() ) {
-                item.Append( (" ( ") );
-                item.Append( port );
-                item.Append((" )") );
+            QString item = ( "Send to GPS" );
+            if( !port.isEmpty() ) {
+                item = QString(" ( %1 ) ").arg(port);
             }
             MenuAppend1( menuWaypoint, ID_WPT_MENU_SENDTOGPS, item );
 
 
             if( ( m_pFoundRoutePoint == pAnchorWatchPoint1 ) || ( m_pFoundRoutePoint == pAnchorWatchPoint2 ) )
-                MenuAppend1( menuWaypoint, ID_WP_MENU_CLEAR_ANCHORWATCH, _( "Clear Anchor Watch" ) );
+                MenuAppend1( menuWaypoint, ID_WP_MENU_CLEAR_ANCHORWATCH, tr( "Clear Anchor Watch" ) );
             else {
                 if( m_pFoundRoutePoint && !( m_pFoundRoutePoint->m_bIsInLayer )
                     && ( ( NULL == pAnchorWatchPoint1 ) || ( NULL == pAnchorWatchPoint2 ) ) ) {
@@ -772,7 +731,7 @@ if( !g_bBasicMenus && (nChartStack > 1 ) ) {
                     DistanceBearingMercator( m_pFoundRoutePoint->m_lat, m_pFoundRoutePoint->m_lon, gLat,
                                          gLon, &brg, &dist );
                     if( dist * 1852. <= g_nAWMax )
-                        MenuAppend1( menuWaypoint,  ID_WP_MENU_SET_ANCHORWATCH,  _( "Set Anchor Watch" ) );
+                        MenuAppend1( menuWaypoint,  ID_WP_MENU_SET_ANCHORWATCH,  tr( "Set Anchor Watch" ) );
                 }
             }
         }
@@ -784,51 +743,53 @@ if( !g_bBasicMenus && (nChartStack > 1 ) ) {
 	enum { WPMENU = 1, TKMENU = 2, RTMENU = 4, MMMENU = 8 };
 	int sub_menu = 0;
 	if ( !g_bBasicMenus && menuFocus != contextMenu) {
-		menuFocus->AppendSeparator();
-		wxMenuItem * subMenu1;
+        menuFocus->addSeparator();
+        QAction * subMenu1 = 0;
 		if ( menuWaypoint && menuFocus != menuWaypoint ) {
-			subMenu1 = menuFocus->AppendSubMenu(menuWaypoint, menuWaypoint->GetTitle());
+            subMenu1 = menuFocus->addMenu(menuWaypoint);
 			SetMenuItemFont1(subMenu1);
 			sub_menu |= WPMENU;
 #ifdef __WXMSW__
-			menuWaypoint->SetTitle(wxEmptyString);
+            menuWaypoint->setTitle("");
 #endif
 		}
 		if ( menuTrack && menuFocus != menuTrack ) {
-			subMenu1 = menuFocus->AppendSubMenu(menuTrack, menuTrack->GetTitle());
+            subMenu1 = menuFocus->addMenu(menuTrack);
 			SetMenuItemFont1(subMenu1);
 			sub_menu |= TKMENU;
 #ifdef __WXMSW__
-			menuTrack->SetTitle(wxEmptyString);
+            menuTrack->setTitle("");
 #endif
 		}
 		if ( menuRoute && menuFocus != menuRoute ) {
-			subMenu1 = menuFocus->AppendSubMenu(menuRoute, menuRoute->GetTitle());
+            subMenu1 = menuFocus->addMenu(menuRoute);
 			SetMenuItemFont1(subMenu1);
 			sub_menu |= RTMENU;
 #ifdef __WXMSW__
-			menuRoute->SetTitle(wxEmptyString);
+            menuRoute->setTitle("");
 #endif
 		}
-		subMenu1 = menuFocus->AppendSubMenu(contextMenu, _("Main Menu"));
+        subMenu1 = menuFocus->addMenu(contextMenu);
 		SetMenuItemFont1(subMenu1);
 		sub_menu |= MMMENU;
 	}
 
-    if( ! subMenuChart->GetMenuItemCount() ) contextMenu->Destroy( subItemChart );
+    if( ! subMenuChart->actions().size())
+    {
+        contextMenu->removeAction( subItemChart );
+    }
 
     //  Add the Tide/Current selections if the item was not activated by shortcut in right-click handlers
     bool bsep = false;
     if( seltype & SELTYPE_TIDEPOINT ){
-        menuFocus->AppendSeparator();
+        menuFocus->addSeparator();
         bsep = true;
-        MenuAppend1( menuFocus, ID_DEF_MENU_TIDEINFO, _( "Show Tide Information" ) );
+        MenuAppend1( menuFocus, ID_DEF_MENU_TIDEINFO, tr( "Show Tide Information" ) );
     }
 
     if( seltype & SELTYPE_CURRENTPOINT ) {
-        if( !bsep )
-            menuFocus->AppendSeparator();
-        MenuAppend1( menuFocus,  ID_DEF_MENU_CURRENTINFO, _( "Show Current Information" ) );
+        if( !bsep ) menuFocus->addSeparator();
+        MenuAppend1( menuFocus,  ID_DEF_MENU_CURRENTINFO, tr( "Show Current Information" ) );
     }
 
     // Give the plugins a chance to update their menu items
@@ -973,10 +934,10 @@ void CanvasMenuHandler::PopupMenuHandler( wxCommandEvent& event )
         pSelect->AddSelectableRouteSegment( gLat, gLon, zlat, zlon, pWP_src, pWP_dest,
                                             temp_route );
 
-        temp_route->m_RouteNameString = _("Temporary GOTO Route");
-        temp_route->m_RouteStartString = _("Here");
+        temp_route->m_RouteNameString = ("Temporary GOTO Route");
+        temp_route->m_RouteStartString = ("Here");
         ;
-        temp_route->m_RouteEndString = _("There");
+        temp_route->m_RouteEndString = ("There");
 
         temp_route->m_bDeleteOnArrival = true;
 
@@ -1028,11 +989,11 @@ void CanvasMenuHandler::PopupMenuHandler( wxCommandEvent& event )
                                             m_pFoundRoutePoint->m_lon, pWP_src, m_pFoundRoutePoint, temp_route );
 
         QString name = m_pFoundRoutePoint->GetName();
-        if( name.IsEmpty() ) name = _("(Unnamed Waypoint)");
-        QString rteName = _("Go to ");
+        if( name.IsEmpty() ) name = ("(Unnamed Waypoint)");
+        QString rteName = ("Go to ");
         rteName.Append( name );
         temp_route->m_RouteNameString = rteName;
-        temp_route->m_RouteStartString = _("Here");
+        temp_route->m_RouteStartString = ("Here");
         ;
         temp_route->m_RouteEndString = name;
         temp_route->m_bDeleteOnArrival = true;
@@ -1234,7 +1195,7 @@ void CanvasMenuHandler::PopupMenuHandler( wxCommandEvent& event )
         if( m_pSelectedRoute->m_bIsInLayer ) break;
 
         int ask_return = OCPNMessageBox( parent, g_pRouteMan->GetRouteReverseMessage(),
-                               _("Rename Waypoints?"), wxYES_NO | wxCANCEL );
+                               ("Rename Waypoints?"), wxYES_NO | wxCANCEL );
 
         if( ask_return != wxID_CANCEL ) {
             pSelect->DeleteAllSelectableRouteSegments( m_pSelectedRoute );
@@ -1257,8 +1218,8 @@ void CanvasMenuHandler::PopupMenuHandler( wxCommandEvent& event )
     case ID_RT_MENU_DELETE: {
         int dlg_return = wxID_YES;
         if( g_bConfirmObjectDelete ) {
-            dlg_return = OCPNMessageBox( parent,  _("Are you sure you want to delete this route?"),
-                _("OpenCPN Route Delete"), (long) wxYES_NO | wxCANCEL | wxYES_DEFAULT );
+            dlg_return = OCPNMessageBox( parent,  ("Are you sure you want to delete this route?"),
+                ("OpenCPN Route Delete"), (long) wxYES_NO | wxCANCEL | wxYES_DEFAULT );
         }
 
         if( dlg_return == wxID_YES ) {
@@ -1392,7 +1353,7 @@ void CanvasMenuHandler::PopupMenuHandler( wxCommandEvent& event )
                  SendToGpsDlg dlg;
                  dlg.SetWaypoint( m_pFoundRoutePoint );
 
-                 dlg.Create( NULL, -1, _( "Send to GPS" ) + ( "..." ), ("") );
+                 dlg.Create( NULL, -1, ( "Send to GPS" ) + ( "..." ), ("") );
                  dlg.ShowModal();
              }
         }
@@ -1403,7 +1364,7 @@ void CanvasMenuHandler::PopupMenuHandler( wxCommandEvent& event )
             SendToGpsDlg dlg;
             dlg.SetWaypoint( m_pFoundRoutePoint );
                 
-            dlg.Create( NULL, -1, _( "Send to GPS" ) + ( "..." ), ("") );
+            dlg.Create( NULL, -1, ( "Send to GPS" ) + ( "..." ), ("") );
             dlg.ShowModal();
         }
         break;
@@ -1416,7 +1377,7 @@ void CanvasMenuHandler::PopupMenuHandler( wxCommandEvent& event )
                 SendToGpsDlg dlg;
                 dlg.SetRoute( m_pSelectedRoute );
 
-                dlg.Create( NULL, -1, _( "Send to GPS" ) + ( "..." ), ("") );
+                dlg.Create( NULL, -1, ( "Send to GPS" ) + ( "..." ), ("") );
                 dlg.ShowModal();
             }
 
@@ -1428,7 +1389,7 @@ void CanvasMenuHandler::PopupMenuHandler( wxCommandEvent& event )
             SendToGpsDlg dlg;
             dlg.SetRoute( m_pSelectedRoute );
                 
-            dlg.Create( NULL, -1, _( "Send to GPS" ) + ( "..." ), ("") );
+            dlg.Create( NULL, -1, ( "Send to GPS" ) + ( "..." ), ("") );
             dlg.ShowModal();
         }
         break;
@@ -1501,7 +1462,7 @@ void CanvasMenuHandler::PopupMenuHandler( wxCommandEvent& event )
         break;
 
     case ID_RT_MENU_PROPERTIES: {
-        parent->ShowRoutePropertiesDialog( _("Route Properties"), m_pSelectedRoute );
+        parent->ShowRoutePropertiesDialog( ("Route Properties"), m_pSelectedRoute );
         break;
     }
 
@@ -1513,8 +1474,8 @@ void CanvasMenuHandler::PopupMenuHandler( wxCommandEvent& event )
     case IDK_MENU_DELETE: {
         int dlg_return = wxID_YES;
         if( g_bConfirmObjectDelete ) {
-            dlg_return = OCPNMessageBox( parent, _("Are you sure you want to delete this track?"),
-                _("OpenCPN Track Delete"), (long) wxYES_NO | wxCANCEL | wxYES_DEFAULT );
+            dlg_return = OCPNMessageBox( parent, ("Are you sure you want to delete this track?"),
+                ("OpenCPN Track Delete"), (long) wxYES_NO | wxCANCEL | wxYES_DEFAULT );
         }
 
         if( dlg_return == wxID_YES ) {

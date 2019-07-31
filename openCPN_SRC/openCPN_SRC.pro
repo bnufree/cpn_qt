@@ -107,7 +107,6 @@ HEADERS += \
     LLRegion.h \
     macutils.h \
     MarkIcon.h \
-    MarkInfo.h \
     mbtiles.h \
     MUIBar.h \
     multiplexer.h \
@@ -138,11 +137,8 @@ HEADERS += \
     RolloverWin.h \
     Route.h \
     routeman.h \
-    routemanagerdialog.h \
     RoutePoint.h \
     routeprintout.h \
-    RoutePropDlg.h \
-    RoutePropDlgImpl.h \
     s52plib.h \
     s52s57.h \
     s52utils.h \
@@ -177,7 +173,6 @@ HEADERS += \
     toolbar.h \
     Track.h \
     trackprintout.h \
-    TrackPropDlg.h \
     TTYScroll.h \
     TTYWindow.h \
     tzdata.h \
@@ -271,8 +266,6 @@ SOURCES += \
     routemanagerdialog.cpp \
     RoutePoint.cpp \
     routeprintout.cpp \
-    RoutePropDlg.cpp \
-    RoutePropDlgImpl.cpp \
     s52cnsy.cpp \
     s52plib.cpp \
     s52utils.cpp \
@@ -316,7 +309,9 @@ SOURCES += \
     iso8211/ddfrecord.cpp \
     iso8211/ddfrecordindex.cpp \
     iso8211/ddfsubfielddefn.cpp \
-    iso8211/ddfutils.cpp
+    iso8211/ddfutils.cpp \
+    RoutePropDlg.cpp \
+    RoutePropDlgImpl.cpp
 
 OBJECTIVE_SOURCES += \
     DarkMode.mm

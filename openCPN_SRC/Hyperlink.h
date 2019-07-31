@@ -25,6 +25,8 @@
 #ifndef __HYPERLINK_H__
 #define __HYPERLINK_H__
 
+#include <QString>
+#include <QList>
 class Hyperlink // toh, 2009.02.14
 {
       public:
@@ -33,6 +35,6 @@ class Hyperlink // toh, 2009.02.14
             QString LType;
 };
 
-WX_DECLARE_LIST(Hyperlink, HyperlinkList);// establish class as list member
+typedef     QList<Hyperlink>    HyperlinkList;// establish class as list member
 
 #endif

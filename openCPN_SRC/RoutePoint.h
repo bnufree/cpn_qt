@@ -25,6 +25,9 @@
 #define __ROUTEPOINT_H__
 
 #include "Hyperlink.h"
+#include <QString>
+#include <QPoint>
+#include <QBitmap>
 
 #define MAX_INT_VAL 2147483647  //max possible integer value before 'rollover'
 #define SCAMIN_MIN 10000        //minimal allowed ScaMin setting. prevents always hiding
@@ -35,21 +38,22 @@
 class ocpnDC;
 class wxDC;
 class ChartCanvas;
+class QProgressBar;
 
 class RoutePoint
 {
 public:
-      RoutePoint(double lat, double lon, const QString& icon_ident, const QString& name, const QString &pGUID = wxEmptyString, bool bAddToList = true);
+      RoutePoint(double lat, double lon, const QString& icon_ident, const QString& name, const QString &pGUID = QString(), bool bAddToList = true);
       RoutePoint( RoutePoint* orig );
       RoutePoint();
       virtual ~RoutePoint(void);
-      void Draw(ocpnDC& dc, ChartCanvas *canvas, wxPoint *rpn = NULL);
+      void Draw(ocpnDC& dc, ChartCanvas *canvas, QPoint *rpn = NULL);
       void ReLoadIcon(void);
       
       void SetPosition(double lat, double lon);
-      double GetLatitude()  { return m_lat; };
-      double GetLongitude() { return m_lon; };
-      void CalculateDCRect(wxDC& dc, ChartCanvas *canvas, wxRect *prect);
+      double GetLatitude()  { return m_lat; }
+      double GetLongitude() { return m_lon; }
+      void CalculateDCRect(wxDC& dc, ChartCanvas *canvas, QRect *prect);
       LLBBox &GetBBox(){ return m_wpBBox; }
       
       bool IsSame(RoutePoint *pOtherRP);        // toh, 2009.02.11
@@ -63,11 +67,11 @@ public:
       virtual QString GetName(void){ return m_MarkName; }
       QString GetDescription(void) { return m_MarkDescription; }
 
-      wxDateTime GetCreateTime(void);
-      void SetCreateTime( wxDateTime dt );
+      QDateTime GetCreateTime(void);
+      void SetCreateTime( QDateTime dt );
 
       QString GetIconName(void){ return m_IconName; }
-      wxBitmap *GetIconBitmap(){ return m_pbmIcon; }
+      QBitmap *GetIconBitmap(){ return m_pbmIcon; }
       void SetIconName( QString name ){ m_IconName = name; }
       
       void *GetSelectNode(void) { return m_SelectNode; }
@@ -79,57 +83,57 @@ public:
       void SetName(const QString & name);
       void CalculateNameExtents(void);
 
-      void SetCourse( double course) { m_routeprop_course = course; };
-      double GetCourse() { return m_routeprop_course; };
-      void SetDistance( double distance) { m_routeprop_distance = distance; };
-      double GetDistance() { return m_routeprop_distance; };
+      void SetCourse( double course) { m_routeprop_course = course; }
+      double GetCourse() { return m_routeprop_course; }
+      void SetDistance( double distance) { m_routeprop_distance = distance; }
+      double GetDistance() { return m_routeprop_distance; }
 
-      void SetWaypointArrivalRadius(double dArrivalDistance) { m_WaypointArrivalRadius = dArrivalDistance; };
-      void SetWaypointArrivalRadius( QString wxArrivalDistance ) { wxArrivalDistance.ToDouble( &m_WaypointArrivalRadius ); };
+      void SetWaypointArrivalRadius(double dArrivalDistance) { m_WaypointArrivalRadius = dArrivalDistance; }
+      void SetWaypointArrivalRadius( QString wxArrivalDistance ) { m_WaypointArrivalRadius = wxArrivalDistance.toDouble(); }
       double GetWaypointArrivalRadius();
-      bool  GetShowWaypointRangeRings(void) { return m_bShowWaypointRangeRings; };
+      bool  GetShowWaypointRangeRings(void) { return m_bShowWaypointRangeRings; }
       int   GetWaypointRangeRingsNumber(void);
       float GetWaypointRangeRingsStep(void);
       int   GetWaypointRangeRingsStepUnits(void);
-      wxColour GetWaypointRangeRingsColour(void);
-      void  SetShowWaypointRangeRings(bool b_showWaypointRangeRings) { m_bShowWaypointRangeRings = b_showWaypointRangeRings; };
-      void  SetWaypointRangeRingsNumber(int i_WaypointRangeRingsNumber) { m_iWaypointRangeRingsNumber = i_WaypointRangeRingsNumber; };
-      void  SetWaypointRangeRingsStep(float f_WaypointRangeRingsStep) { m_fWaypointRangeRingsStep = f_WaypointRangeRingsStep; };
-      void  SetWaypointRangeRingsStepUnits(int i_WaypointRangeRingsStepUnits) { m_iWaypointRangeRingsStepUnits = i_WaypointRangeRingsStepUnits; };
-      void  SetWaypointRangeRingsColour( wxColour wxc_WaypointRangeRingsColour ) { m_wxcWaypointRangeRingsColour = wxc_WaypointRangeRingsColour; };
+      QColor GetWaypointRangeRingsColour(void);
+      void  SetShowWaypointRangeRings(bool b_showWaypointRangeRings) { m_bShowWaypointRangeRings = b_showWaypointRangeRings; }
+      void  SetWaypointRangeRingsNumber(int i_WaypointRangeRingsNumber) { m_iWaypointRangeRingsNumber = i_WaypointRangeRingsNumber; }
+      void  SetWaypointRangeRingsStep(float f_WaypointRangeRingsStep) { m_fWaypointRangeRingsStep = f_WaypointRangeRingsStep; }
+      void  SetWaypointRangeRingsStepUnits(int i_WaypointRangeRingsStepUnits) { m_iWaypointRangeRingsStepUnits = i_WaypointRangeRingsStepUnits; }
+      void  SetWaypointRangeRingsColour( QColor wxc_WaypointRangeRingsColour ) { m_wxcWaypointRangeRingsColour = wxc_WaypointRangeRingsColour; }
       void SetScaMin(QString str);
       void SetScaMin(long val);
-      long GetScaMin(){return m_ScaMin; };
+      long GetScaMin(){return m_ScaMin; }
       void SetScaMax(QString str);
       void SetScaMax(long val);
-      long GetScaMax(){return m_ScaMax; };
-      bool GetUseSca(){return b_UseScamin; };
-      void SetUseSca( bool value ){ b_UseScamin = value; };
-      bool SendToGPS(const QString& com_name, wxGauge *pProgress);
+      long GetScaMax(){return m_ScaMax; }
+      bool GetUseSca(){return b_UseScamin; }
+      void SetUseSca( bool value ){ b_UseScamin = value; }
+      bool SendToGPS(const QString& com_name, QProgressBar* *pProgress);
       void EnableDragHandle(bool bEnable);
       bool IsDragHandleEnabled(){ return m_bDrawDragHandle; }
-      wxPoint2DDouble GetDragHandlePoint( ChartCanvas *canvas );
+      QPointF GetDragHandlePoint( ChartCanvas *canvas );
       void SetPointFromDraghandlePoint(ChartCanvas *canvas, double lat, double lon);
       void SetPointFromDraghandlePoint(ChartCanvas *canvas, int x, int y);
       void PresetDragOffset( ChartCanvas *canvas, int x, int y);
       void ShowScaleWarningMessage(ChartCanvas *canvas);
       void SetPlannedSpeed(double spd);
       double GetPlannedSpeed();
-      wxDateTime GetETD();
-      wxDateTime GetManualETD();
-      void SetETD(const wxDateTime &etd);
+      QDateTime GetETD();
+      QDateTime GetManualETD();
+      void SetETD(const QDateTime &etd);
       bool SetETD(const QString &ts);
-      wxDateTime GetETA();
+      QDateTime GetETA();
       QString GetETE();
-      void SetETE(wxLongLong secs);
+      void SetETE(qint64 secs);
       
       double            m_lat, m_lon;
       double            m_seg_len;              // length in NMI to this point
                                                 // undefined for starting point
       double            m_seg_vmg;
-      wxDateTime        m_seg_etd;
-      wxDateTime        m_seg_eta;
-      wxLongLong        m_seg_ete = 0;
+      QDateTime        m_seg_etd;
+      QDateTime        m_seg_eta;
+      qint64        m_seg_ete = 0;
       bool              m_manual_etd{false};
 
       bool              m_bPtIsSelected;
@@ -148,17 +152,17 @@ public:
       QString          m_MarkDescription;
       QString          m_GUID;
     
-      wxString          m_TideStation;
+      QString          m_TideStation;
 
-      wxFont            *m_pMarkFont;
-      wxColour          m_FontColor;
+      QFont            *m_pMarkFont;
+      QColor          m_FontColor;
 
-      wxSize            m_NameExtents;
+      QSize            m_NameExtents;
 
       bool              m_bBlink;
       bool              m_bDynamicName;
       bool              m_bShowName, m_bShowNameData;
-      wxRect            CurrentRect_in_DC;
+      QRect            CurrentRect_in_DC;
       int               m_NameLocationOffsetX;
       int               m_NameLocationOffsetY;
       bool              m_bIsInLayer;
@@ -173,7 +177,7 @@ public:
       int               m_iWaypointRangeRingsNumber;
       float             m_fWaypointRangeRingsStep;
       int               m_iWaypointRangeRingsStepUnits;
-      wxColour          m_wxcWaypointRangeRingsColour;
+      QColor          m_wxcWaypointRangeRingsColour;
       
 
 #ifdef ocpnUSE_GL
@@ -185,7 +189,7 @@ public:
       double m_wpBBox_view_scale_ppm, m_wpBBox_rotation;
 
       bool m_pos_on_screen;
-      wxPoint2DDouble m_screen_pos; // cached for arrows and points
+      QPointF m_screen_pos; // cached for arrows and points
 #endif
 
       double m_WaypointArrivalRadius;
@@ -193,22 +197,22 @@ public:
 
       QString          m_timestring;
 
-      wxDateTime        m_CreateTimeX;
+      QDateTime        m_CreateTimeX;
 private:
-      wxPoint2DDouble computeDragHandlePoint(ChartCanvas *canvas);
+      QPointF computeDragHandlePoint(ChartCanvas *canvas);
 
       QString          m_MarkName;
-      wxBitmap          *m_pbmIcon;
+      QBitmap          *m_pbmIcon;
       QString          m_IconName;
       
       void              *m_SelectNode;
       void              *m_ManagerNode;
 
       float             m_IconScaleFactor;
-      wxBitmap          m_ScaledBMP;
+      QBitmap          m_ScaledBMP;
       bool              m_bPreScaled;
       bool              m_bDrawDragHandle;
-      wxBitmap          m_dragIcon;
+      QBitmap          m_dragIcon;
       int               m_drag_line_length_man, m_drag_icon_offset;
       double            m_dragHandleLat, m_dragHandleLon;
       int               m_draggingOffsetx, m_draggingOffsety;
@@ -224,6 +228,6 @@ private:
       
 };
 
-WX_DECLARE_LIST(RoutePoint, RoutePointList);// establish class as list member
+typedef QList<RoutePoint> RoutePointList;// establish class as list member
 
 #endif

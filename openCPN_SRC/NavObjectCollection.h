@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -33,7 +33,6 @@
 class Track;
 class TrackList;
 class TrackPoint;
-class RouteList;
 class RoutePointList;
 class Route;
 class RoutePoint;

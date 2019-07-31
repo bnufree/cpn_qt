@@ -49,7 +49,6 @@ extern bool g_bPluginHandleAutopilotRoute;
 
 class Route;
 class RoutePoint;
-class RoutePointList;
 
 //    List definitions for Waypoint Manager Icons
 
@@ -167,6 +166,7 @@ private:
 //----------------------------------------------------------------------------
 //   WayPointman
 //----------------------------------------------------------------------------
+typedef QList<QImage>       QImageList;
 
 class WayPointman
 {
@@ -179,7 +179,7 @@ public:
       int GetIconIndex(const QBitmap *pbm);
       int GetIconImageListIndex(const QBitmap *pbm);
       int GetXIconImageListIndex(const QBitmap *pbm);
-      int GetNumIcons(void){ return m_pIconArray->Count(); }
+      int GetNumIcons(void){ return m_pIconArray->count(); }
       QString CreateGUID(RoutePoint *pRP);
       RoutePoint *GetNearbyWaypoint(double lat, double lon, double radius_meters);
       RoutePoint *GetOtherNearbyWaypoint(double lat, double lon, double radius_meters, const QString &guid);
@@ -199,7 +199,7 @@ public:
       QString *GetIconDescription(int index);
       QString *GetIconKey(int index);
 
-      wxImageList *Getpmarkicon_image_list( int nominal_height );
+      QImageList *Getpmarkicon_image_list( int nominal_height );
       
       bool AddRoutePoint(RoutePoint *prp);
       bool RemoveRoutePoint(RoutePoint *prp);
@@ -208,15 +208,15 @@ public:
       MarkIcon *ProcessIcon(QBitmap pimage, const QString & key, const QString & description);
 private:
       MarkIcon *ProcessLegacyIcon( QString fileName, const QString & key, const QString & description);
-      MarkIcon *ProcessExtendedIcon(wxImage &image, const QString & key, const QString & description);
-      QRect CropImageOnAlpha(wxImage &image);
-      wxImage CreateDimImage( wxImage &image, double factor );
+      MarkIcon *ProcessExtendedIcon(QImage &image, const QString & key, const QString & description);
+      QRect CropImageOnAlpha(QImage &image);
+      QImage CreateDimImage( QImage &image, double factor );
       
       void ProcessUserIcons( ocpnStyle::Style* style );
       RoutePointList    *m_pWayPointList;
       QBitmap *CreateDimBitmap(QBitmap *pBitmap, double factor);
 
-      wxImageList       *pmarkicon_image_list;        // Current wxImageList, updated on colorscheme change
+      QImageList       *pmarkicon_image_list;        // Current QImageList, updated on colorscheme change
       int               m_markicon_image_list_base_count;
       ArrayOfMarkIcon    *m_pIconArray;
 

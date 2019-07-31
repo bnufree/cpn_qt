@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -38,6 +38,7 @@
 #include "OCPNPlatform.h"
 #include "Select.h"
 #include "chart1.h"
+#include <QProgressBar>
 
 extern WayPointman  *pWayPointMan;
 extern bool         g_bIsNewLayer;
@@ -1072,7 +1073,7 @@ bool RoutePoint::IsSame( RoutePoint *pOtherRP )
     return IsSame;
 }
 
-bool RoutePoint::SendToGPS(const wxString & com_name, wxGauge *pProgress)
+bool RoutePoint::SendToGPS(const wxString & com_name, QProgressBar *pProgress)
 {
     int result = 0;
     if( g_pMUX )

@@ -297,10 +297,9 @@ ViewPort CreateCompatibleViewport( const PlugIn_ViewPort &pivp)
 //    PlugIn Messaging scheme Event
 //------------------------------------------------------------------------------
 
-const wxEventType wxEVT_OCPN_MSG = wxNewEventType();
+const wxEventType wxEVT_OCPN_MSG = QEvent::registerEventType();
 
-OCPN_MsgEvent::OCPN_MsgEvent( wxEventType commandType, int id )
-:wxEvent(id, commandType)
+OCPN_MsgEvent::OCPN_MsgEvent():QEvent(wxEVT_OCPN_MSG)
 {
 }
 
@@ -308,7 +307,7 @@ OCPN_MsgEvent::~OCPN_MsgEvent( )
 {
 }
 
-wxEvent* OCPN_MsgEvent::Clone() const
+QEvent* OCPN_MsgEvent::Clone() const
 {
     OCPN_MsgEvent *newevent=new OCPN_MsgEvent(*this);
     newevent->m_MessageID=this->m_MessageID.c_str();  // this enforces a deep copy of the string data

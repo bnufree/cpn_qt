@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -82,8 +82,8 @@ private:
 
 };
 
-WX_DECLARE_LIST( QuiltPatch, PatchList );
-WX_DEFINE_SORTED_ARRAY( QuiltCandidate *, ArrayOfSortedQuiltCandidates );
+typedef QList<QuiltPatch>   atchList;
+typedef QList< QuiltCandidate*> ArrayOfSortedQuiltCandidates;
 
 class Quilt
 {
@@ -141,8 +141,8 @@ public:
     bool RenderQuiltRegionViewOnDCTextOnly( wxMemoryDC &dc, ViewPort &vp, OCPNRegion &chart_region );
     
     bool IsVPBlittable( ViewPort &VPoint, int dx, int dy, bool b_allow_vector = false );
-    ChartBase *GetChartAtPix( ViewPort &VPoint, wxPoint p );
-    ChartBase *GetOverlayChartAtPix( ViewPort &VPoint, wxPoint p );
+    ChartBase *GetChartAtPix( ViewPort &VPoint, const QPoint& p );
+    ChartBase *GetOverlayChartAtPix( ViewPort &VPoint, const QPoint& p );
     int GetChartdbIndexAtPix( ViewPort &VPoint, wxPoint p );
     void InvalidateAllQuiltPatchs( void );
     void Invalidate( void )

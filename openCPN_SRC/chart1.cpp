@@ -5515,11 +5515,10 @@ void MyFrame::ApplyGlobalSettings( bool bnewtoolbar )
 }
 
 
-wxString _menuText( wxString name, wxString shortcut ) {
-    wxString menutext;
-    menutext << name;
-    if(!g_bresponsive)
-        menutext << _T("\t") << shortcut;
+QStringList _menuText( const QString& name, const QString& shortcut) {
+    QStringList menutext;
+    menutext.append(name);
+    if(!g_bresponsive) menutext.append(shortcut);
     return menutext;
 }
 

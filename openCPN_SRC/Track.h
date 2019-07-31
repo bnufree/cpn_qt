@@ -102,7 +102,7 @@ public:
 
     void ClearHighlights();
     
-    wxString GetName( bool auto_if_empty = false ) const {
+    QString GetName( bool auto_if_empty = false ) const {
         if( !auto_if_empty || !m_TrackNameString.IsEmpty() ) {
             return m_TrackNameString;
         } else {
@@ -113,7 +113,7 @@ public:
             if( rp && rp->GetCreateTime().IsValid() ) name = rp->GetCreateTime().FormatISODate() + (" ")
                 + rp->GetCreateTime().FormatISOTime();   //name = rp->m_CreateTime.Format();
             else
-                name = _("(Unnamed Track)");
+                name = ("(Unnamed Track)");
             return name;
         }
     }
