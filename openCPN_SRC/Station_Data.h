@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -32,7 +32,7 @@ public:
     Station_Data();
     ~Station_Data();
     char        *station_name;
-    wxChar      station_type;            // T or C
+    char      station_type;            // T or C
     double      *amplitude;
     double      *epoch;
     double      DATUM;
@@ -45,6 +45,6 @@ public:
     int         have_BOGUS;
 };
 
-WX_DECLARE_OBJARRAY(Station_Data, ArrayOfStationData);
+typedef QList<Station_Data> ArrayOfStationData;
 
 #endif

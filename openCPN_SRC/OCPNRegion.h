@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -31,6 +31,7 @@
 #ifndef _OCPN_REGION_H_
 #define _OCPN_REGION_H_
 
+#include <QRegion>
 
 //#if defined(__WXOSX__)
 #define USE_NEW_REGION
@@ -43,29 +44,30 @@
 
 class OCPNRegion : public
 #ifdef USE_NEW_REGION
- wxObject
+ QObject
 #else
- wxRegion 
+ QRegion
 #endif
 {
+    Q_OBJECT
 public:
     OCPNRegion() { }
 
-    OCPNRegion( wxCoord x, wxCoord y, wxCoord w, wxCoord h );
-    OCPNRegion( const wxPoint& topLeft, const wxPoint& bottomRight );
-    OCPNRegion( const wxRect& rect );
-    OCPNRegion( const wxRegion& region );
-    OCPNRegion( size_t n, const wxPoint *points, int fillStyle = wxODDEVEN_RULE );
+    OCPNRegion( int x, int y, int w, int h );
+    OCPNRegion( const QPoint& topLeft, const QPoint& bottomRight );
+    OCPNRegion( const QRect& rect );
+    OCPNRegion( const QRegion& region );
+    OCPNRegion( size_t n, const QPoint *points, int fillStyle = Qt::OddEvenFill );
     
     virtual ~OCPNRegion();
     
-    wxRegion *GetNew_wxRegion() const;
+    QRegion *GetNew_QRegion() const;
     
     
 #ifdef USE_NEW_REGION    
 
     // common part of ctors for a rectangle region
-    void InitRect(wxCoord x, wxCoord y, wxCoord w, wxCoord h);
+    void InitRect(int x, int y, int w, int h);
  
      // operators
     // ---------
@@ -76,22 +78,22 @@ public:
     bool Ok() const { return IsOk(); }
     
     // Get the bounding box
-    bool GetBox(wxCoord& x, wxCoord& y, wxCoord& w, wxCoord& h) const
+    bool GetBox(int& x, int& y, int& w, int& h) const
     { return ODoGetBox(x, y, w, h); }
-    wxRect GetBox() const
+    QRect GetBox() const
     {
-        wxCoord x, y, w, h;
-        return ODoGetBox(x, y, w, h) ? wxRect(x, y, w, h) : wxRect();
+        int x, y, w, h;
+        return ODoGetBox(x, y, w, h) ? QRect(x, y, w, h) : QRect();
     }
 
     // Test if the given point or rectangle is inside this region
-    wxRegionContain Contains(wxCoord x, wxCoord y) const
+    QRegionContain Contains(int x, int y) const
     { return ODoContainsPoint(x, y); }
-    wxRegionContain Contains(const wxPoint& pt) const
+    QRegionContain Contains(const QPoint& pt) const
     { return ODoContainsPoint(pt.x, pt.y); }
-    wxRegionContain Contains(wxCoord x, wxCoord y, wxCoord w, wxCoord h) const
-    { return ODoContainsRect(wxRect(x, y, w, h)); }
-    wxRegionContain Contains(const wxRect& rect) const
+    QRegionContain Contains(int x, int y, int w, int h) const
+    { return ODoContainsRect(QRect(x, y, w, h)); }
+    QRegionContain Contains(const QRect& rect) const
     { return ODoContainsRect(rect); }
     
  // Is region equal (i.e. covers the same area as another one)?
@@ -107,12 +109,12 @@ public:
 
     void *GetRegion() const;
 
-    bool Offset(wxCoord x, wxCoord y)   { return ODoOffset(x, y); }
-    bool Offset(const wxPoint& pt)      { return ODoOffset(pt.x, pt.y); }
+    bool Offset(int x, int y)   { return ODoOffset(x, y); }
+    bool Offset(const QPoint& pt)      { return ODoOffset(pt.x, pt.y); }
     bool Intersect(const OCPNRegion& region) { return ODoIntersect(region); }
     bool Union(const OCPNRegion& region) { return ODoUnionWithRegion(region); }
-            bool Union(wxCoord x, wxCoord y, wxCoord w, wxCoord h) { return ODoUnionWithRect(wxRect(x, y, w, h)); }
-    bool Union(const wxRect& rect) { return ODoUnionWithRect(rect); }
+            bool Union(int x, int y, int w, int h) { return ODoUnionWithRect(QRect(x, y, w, h)); }
+    bool Union(const QRect& rect) { return ODoUnionWithRect(rect); }
     bool Subtract(const OCPNRegion& region) { return ODoSubtract(region); }
     
 protected:
@@ -120,14 +122,14 @@ protected:
     virtual wxObjectRefData *CreateRefData() const;
     virtual wxObjectRefData *CloneRefData(const wxObjectRefData *data) const;
 
-    // wxRegionBase pure virtuals
+    // QRegionBase pure virtuals
     virtual bool ODoIsEqual(const OCPNRegion& region) const;
-    virtual bool ODoGetBox(wxCoord& x, wxCoord& y, wxCoord& w, wxCoord& h) const;
-    virtual wxRegionContain ODoContainsPoint(wxCoord x, wxCoord y) const;
-    virtual wxRegionContain ODoContainsRect(const wxRect& rect) const;
+    virtual bool ODoGetBox(int& x, int& y, int& w, int& h) const;
+    virtual QRegionContain ODoContainsPoint(int x, int y) const;
+    virtual QRegionContain ODoContainsRect(const QRect& rect) const;
 
-    virtual bool ODoOffset(wxCoord x, wxCoord y);
-    virtual bool ODoUnionWithRect(const wxRect& rect);
+    virtual bool ODoOffset(int x, int y);
+    virtual bool ODoUnionWithRect(const QRect& rect);
     virtual bool ODoUnionWithRegion(const OCPNRegion& region);
     virtual bool ODoIntersect(const OCPNRegion& region);
     virtual bool ODoSubtract(const OCPNRegion& region);
@@ -137,7 +139,7 @@ protected:
 #endif
     
 private:
-    DECLARE_DYNAMIC_CLASS(OCPNRegion)
+    DECLARE_DYNAMIC_CLASS(OCPNRegion);
 };
 
 // ----------------------------------------------------------------------------
@@ -156,7 +158,7 @@ public:
 
     bool HaveRects() const;
     void NextRect(void);
-    wxRect GetRect() const;
+    QRect GetRect() const;
 
 private:
 #ifdef USE_NEW_REGION
@@ -166,10 +168,10 @@ private:
     size_t   m_current;
     OCPNRegion m_region;
 
-    wxRect *m_rects;
+    QRect *m_rects;
     size_t  m_numRects;
 #else
-    wxRegionIterator *m_ri;
+    QRegionIterator *m_ri;
 #endif
 };
 

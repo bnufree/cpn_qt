@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Tide and Current Manager
@@ -90,8 +90,8 @@ public:
     TCMgr();
     ~TCMgr();
 
-    TC_Error_Code LoadDataSources(wxArrayString &sources);
-    wxArrayString GetDataSet( void ) {
+    TC_Error_Code LoadDataSources(QStringList &sources);
+    QStringList GetDataSet( void ) {
         return m_sourcefile_array;
     }
 
@@ -113,7 +113,7 @@ public:
 
     int Get_max_IDX() const
 	{
-        return m_Combined_IDX_array.GetCount()-1;
+        return m_Combined_IDX_array.count()-1;
     }
 
     std::map<double, const IDX_entry*> GetStationsForLL(double xlat, double xlon) const;
@@ -133,7 +133,7 @@ private:
     QString pmru_file_name;
 
     ArrayOfTCDSources   m_source_array;
-    wxArrayString       m_sourcefile_array;
+    QStringList       m_sourcefile_array;
 
     ArrayOfIDXEntry     m_Combined_IDX_array;
 

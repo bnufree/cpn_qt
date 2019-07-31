@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S52 Presentation Library
@@ -35,15 +35,12 @@ class wxGLContext;
 #include "LLRegion.h"
 #include "ocpn_types.h"
 
+typedef QHash<QString, Rule*> RuleHash;
+typedef QHash<int, QString>  MyNatsurHash;
 
-class RuleHash;
+typedef QList<LUPrec *> wxArrayOfLUPrec;
 
-WX_DECLARE_HASH_MAP( QString, Rule*, QStringHash, QStringEqual, RuleHash );
-WX_DECLARE_HASH_MAP( int, QString, wxIntegerHash, wxIntegerEqual, MyNatsurHash );
-
-WX_DEFINE_SORTED_ARRAY( LUPrec *, wxArrayOfLUPrec );
-
-WX_DECLARE_LIST( S52_TextC, TextObjList );
+typedef QList<S52_TextC> TextObjList;
 
 struct CARC_Buffer {
     unsigned char color[3][4];
@@ -53,8 +50,8 @@ struct CARC_Buffer {
     int size;
     float *data;
 };
-WX_DECLARE_STRING_HASH_MAP( CARC_Buffer, CARC_Hash );
-WX_DECLARE_STRING_HASH_MAP( int, CARC_DL_Hash );
+typedef QHash<QString, CARC_Buffer> CARC_Hash;
+typedef QHash<QString, int> CARC_DL_Hash;
 
 class ViewPort;
 class PixelCache;
@@ -68,7 +65,7 @@ public:
     char obj[7];
 };
 
-WX_DECLARE_OBJARRAY(noshow_element, ArrayOfNoshow);
+typedef QList<noshow_element> ArrayOfNoshow;
 
 //-----------------------------------------------------------------------------
 //      LUP Array container, and friends
@@ -78,7 +75,7 @@ typedef struct _LUPHashIndex {
     int count;
 } LUPHashIndex;
 
-WX_DECLARE_STRING_HASH_MAP( LUPHashIndex*, LUPArrayIndexHash );
+typedef QHash<QString, LUPHashIndex*> LUPArrayIndexHash;
 
 class LUPArrayContainer {
 public:
@@ -114,7 +111,7 @@ public:
         S57Obj *pObj, bool bStrict = 0 );
     int _LUP2rules( LUPrec *LUP, S57Obj *pObj );
     S52color* getColor( const char *colorName );
-    wxColour getwxColour( const QString &colorName );
+    QColor getwxColour( const QString &colorName );
 
     void UpdateMarinerParams( void );
     void ClearCNSYLUPArray( void );
@@ -210,7 +207,7 @@ public:
     int RenderAreaToGL( const wxGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
     int RenderObjectToGLText( const wxGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
     
-    void RenderPolytessGL( ObjRazRules *rzRules, ViewPort *vp,double z_clip_geom, wxPoint *ptp );
+    void RenderPolytessGL( ObjRazRules *rzRules, ViewPort *vp,double z_clip_geom, QPoint *ptp );
     
     bool EnableGLLS(bool benable);
 
@@ -218,8 +215,8 @@ public:
     void AddObjNoshow( const char *objcl);
     void RemoveObjNoshow( const char *objcl);
     void ClearNoshow(void);
-    void SaveObjNoshow() { m_saved_noshow = m_noshow_array; };
-    void RestoreObjNoshow() { m_noshow_array = m_saved_noshow; };
+    void SaveObjNoshow() { m_saved_noshow = m_noshow_array; }
+    void RestoreObjNoshow() { m_noshow_array = m_saved_noshow; }
     
     //Todo accessors
     LUPname m_nSymbolStyle;
@@ -264,7 +261,7 @@ public:
     RuleHash *_symb_sym; // symbol symbolisation rules
     MyNatsurHash m_natsur_hash;     // hash table for cacheing NATSUR string values from int attributes
 
-    wxRect m_last_clip_rect;
+    QRect m_last_clip_rect;
     int m_myConfig;
     
     double lastLightLat;
@@ -305,7 +302,7 @@ private:
     
     void UpdateOBJLArray( S57Obj *obj );
 
-    int reduceLOD( double LOD_meters, int nPoints, double *source, wxPoint2DDouble **dest);
+    int reduceLOD( double LOD_meters, int nPoints, double *source, QPointF **dest);
     
     int RenderLSLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp );
     int RenderLCLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp );
@@ -321,33 +318,33 @@ private:
         S52color *c, render_canvas_parms *pb_spec,
         render_canvas_parms *patt_spec, ViewPort *vp );
 
-    void draw_lc_poly( wxDC *pdc, wxColor &color, int width, wxPoint *ptp,
+    void draw_lc_poly( wxDC *pdc, QColor &color, int width, QPoint *ptp,
         int npt, float sym_len, float sym_factor, Rule *draw_rule,
         ViewPort *vp );
 
-    bool RenderHPGL( ObjRazRules *rzRules, Rule * rule_in, wxPoint &r,
+    bool RenderHPGL( ObjRazRules *rzRules, Rule * rule_in, QPoint &r,
         ViewPort *vp, float rot_angle = 0. );
-    bool RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, wxPoint &r,
+    bool RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, QPoint &r,
         ViewPort *vp, float rot_angle = 0. );
-    wxImage RuleXBMToImage( Rule *prule );
+    QImage RuleXBMToImage( Rule *prule );
 
-    bool RenderText( wxDC *pdc, S52extC *ptext, int x, int y,
-        wxRect *pRectDrawn, S57Obj *pobj, bool bCheckOverlap, ViewPort *vp );
+    bool RenderText( wxDC *pdc, S52_TextC *ptext, int x, int y,
+        QRect *pRectDrawn, S57Obj *pobj, bool bCheckOverlap, ViewPort *vp );
 
-    bool CheckTextRectList( const wxRect &test_rect, S52extC *ptext );
+    bool CheckTextRectList( const QRect &test_rect, S52_TextC *ptext );
     int RenderT_All( ObjRazRules *rzRules, Rules *rules, ViewPort *vp,	bool bTX );
 
     int PrioritizeLineFeature( ObjRazRules *rzRules, int npriority );
 
-    int dda_tri( wxPoint *ptp, S52color *c, render_canvas_parms *pb_spec,
+    int dda_tri( QPoint *ptp, S52color *c, render_canvas_parms *pb_spec,
         render_canvas_parms *pPatt_spec );
-    int dda_trap( wxPoint *segs, int lseg, int rseg, int ytop, int ybot,
+    int dda_trap( QPoint *segs, int lseg, int rseg, int ytop, int ybot,
         S52color *c, render_canvas_parms *pb_spec, render_canvas_parms *pPatt_spec );
 
     LUPrec *FindBestLUP( wxArrayOfLUPrec *LUPArray, unsigned int startIndex, unsigned int count,
                               S57Obj *pObj, bool bStrict );
     
-    void SetGLClipRect(const ViewPort &vp, const wxRect &rect);
+    void SetGLClipRect(const ViewPort &vp, const QRect &rect);
     
     char *_getParamVal( ObjRazRules *rzRules, char *str, char *buf, int bsz );
     S52_TextC *S52_PL_parseTX( ObjRazRules *rzRules, Rules *rules, char *cmd );
@@ -363,10 +360,10 @@ private:
     void DestroyLUPArray( wxArrayOfLUPrec *pLUPArray );
 
     bool TextRenderCheck( ObjRazRules *rzRules );
-    bool inter_tri_rect( wxPoint *ptp, render_canvas_parms *pb_spec );
+    bool inter_tri_rect( QPoint *ptp, render_canvas_parms *pb_spec );
 
-    bool GetPointPixArray( ObjRazRules *rzRules, wxPoint2DDouble* pd, wxPoint *pp, int nv, ViewPort *vp );
-    bool GetPointPixSingle( ObjRazRules *rzRules, float north, float east, wxPoint *r, ViewPort *vp );
+    bool GetPointPixArray( ObjRazRules *rzRules, QPointF* pd, QPoint *pp, int nv, ViewPort *vp );
+    bool GetPointPixSingle( ObjRazRules *rzRules, float north, float east, QPoint *r, ViewPort *vp );
     void GetPixPointSingle( int pixx, int pixy, double *plat, double *plon, ViewPort *vp );
     void GetPixPointSingleNoRotate( int pixx, int pixy, double *plat, double *plon, ViewPort *vpt );
     
@@ -376,7 +373,7 @@ private:
     double m_rv_scale_factor;
     
     S52color m_unused_color;
-    wxColor m_unused_wxColor;
+    QColor m_unused_QColor;
 
     bool bUseRasterSym;
     bool useLegacyRaster;
@@ -445,15 +442,15 @@ public:
 #if wxUSE_GRAPHICS_CONTEXT
     void SetTargetGCDC( wxGCDC* gdc );
 #endif
-    bool Render(char *str, char *col, wxPoint &r, wxPoint &pivot, wxPoint origin, float scale, double rot_angle, bool bSymbol);
+    bool Render(char *str, char *col, QPoint &r, QPoint &pivot, QPoint origin, float scale, double rot_angle, bool bSymbol);
 
 private:
     const char* findColorNameInRef( char colorCode, char* col );
-    void RotatePoint( wxPoint& point, wxPoint origin, double angle );
-    wxPoint ParsePoint( QString& argument );
+    void RotatePoint( QPoint& point, QPoint origin, double angle );
+    QPoint ParsePoint( QString& argument );
     void SetPen();
-    void Line( wxPoint from, wxPoint to );
-    void Circle( wxPoint center, int radius, bool filled = false );
+    void Line( QPoint from, QPoint to );
+    void Circle( QPoint center, int radius, bool filled = false );
     void Polygon();
 
     s52plib* plib;
@@ -464,15 +461,15 @@ private:
     wxGCDC* targetGCDC;
 #endif
 
-    wxColor penColor;
-    wxPen* pen;
-    wxColor brushColor;
-    wxBrush* brush;
+    QColor penColor;
+    QPen* pen;
+    QColor brushColor;
+    QBrush* brush;
     long penWidth;
     int transparency;
     
     int noPoints;
-    wxPoint polygon[100];
+    QPoint polygon[100];
     
     float m_currentColor[4];
 

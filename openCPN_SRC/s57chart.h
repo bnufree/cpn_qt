@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -43,6 +43,7 @@
 #include "viewport.h"
 #include "SencManager.h"
 #include <memory>
+#include <QGLContext>
 
 class ChartCanvas;
 // ----------------------------------------------------------------------------
@@ -89,13 +90,13 @@ class connector_segment;
 
 
 // Declare the Array of S57Obj
-WX_DECLARE_OBJARRAY(S57Obj, ArrayOfS57Obj);
+typedef QList<S57Obj> ArrayOfS57Obj;
 
 // And also a list
-WX_DECLARE_LIST(S57Obj, ListOfS57Obj);
+typedef QList<S57Obj> ListOfS57Obj;
 
 
-WX_DECLARE_LIST(ObjRazRules, ListOfObjRazRules);
+typedef QList<ObjRazRules> ListOfObjRazRules;
 
 //----------------------------------------------------------------------------
 // s57 Chart object class
@@ -129,8 +130,8 @@ public:
       virtual void GetValidCanvasRegion(const ViewPort& VPoint, OCPNRegion *pValidRegion);
       virtual LLRegion GetValidRegion();
 
-      virtual void GetPointPix(ObjRazRules *rzRules, float rlat, float rlon, wxPoint *r);
-      virtual void GetPointPix(ObjRazRules *rzRules, wxPoint2DDouble *en, wxPoint *r, int nPoints);
+      virtual void GetPointPix(ObjRazRules *rzRules, float rlat, float rlon, QPoint *r);
+      virtual void GetPointPix(ObjRazRules *rzRules, QPoint2DDouble *en, QPoint *r, int nPoints);
       virtual void GetPixPoint(int pixx, int pixy, double *plat, double *plon, ViewPort *vpt);
 
       virtual void SetVPParms(const ViewPort &vpt);
@@ -213,10 +214,10 @@ public:
 
       virtual void ClearDepthContourArray(void);
       virtual void BuildDepthContourArray(void);
-      int ValidateAndCountUpdates( const wxFileName file000, const QString CopyDir,
+      int ValidateAndCountUpdates( const QString& file000, const QString CopyDir,
                                    QString &LastUpdateDate, bool b_copyfiles);
-      static int GetUpdateFileArray(const wxFileName file000, wxArrayString *UpFiles,
-                                    wxDateTime date000, QString edtn000 );
+      static int GetUpdateFileArray(const QString& file000, QStringList *UpFiles,
+                                    QDateTime date000, QString edtn000 );
       QString GetISDT(void);
       InitReturn PostInit( ChartInitFlag flags, ColorScheme cs );
 
@@ -247,8 +248,8 @@ private:
 
       bool DoRenderRegionViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint, const OCPNRegion &Region, bool b_overlay);
 
-      int DCRenderRect(wxMemoryDC& dcinput, const ViewPort& vp, wxRect *rect);
-      bool DCRenderLPB(wxMemoryDC& dcinput, const ViewPort& vp, wxRect* rect);
+      int DCRenderRect(wxMemoryDC& dcinput, const ViewPort& vp, QRect *rect);
+      bool DCRenderLPB(wxMemoryDC& dcinput, const ViewPort& vp, QRect* rect);
       bool DCRenderText(wxMemoryDC& dcinput, const ViewPort& vp);
       
 
@@ -273,9 +274,9 @@ private:
       void FreeObjectsAndRules();
       const char *getName(OGRFeature *feature);
 
-      bool DoRenderOnGL(const wxGLContext &glc, const ViewPort& VPoint);
-      bool DoRenderOnGLText(const wxGLContext &glc, const ViewPort& VPoint);
-      bool DoRenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& VPoint,
+      bool DoRenderOnGL(const QGLContext &glc, const ViewPort& VPoint);
+      bool DoRenderOnGLText(const QGLContext &glc, const ViewPort& VPoint);
+      bool DoRenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
                                   const OCPNRegion &RectRegion, const LLRegion &Region, bool b_overlay);
 
       void BuildLineVBO( void );
@@ -290,20 +291,20 @@ private:
       QString    m_SENCFileName;
 
 
-      wxArrayString *m_tmpup_array;
+      QStringList *m_tmpup_array;
       std::unique_ptr<PixelCache> pDIB;
 
-      std::unique_ptr<wxBitmap> m_pCloneBM;
+      std::unique_ptr<QBitmap> m_pCloneBM;
 
       bool         bGLUWarningSent;
 
-      wxBitmap    *m_pDIBThumbDay;
-      wxBitmap    *m_pDIBThumbDim;
-      wxBitmap    *m_pDIBThumbOrphan;
+      QBitmap    *m_pDIBThumbDay;
+      QBitmap    *m_pDIBThumbDim;
+      QBitmap    *m_pDIBThumbOrphan;
       bool        m_bneed_new_thumbnail;
 
       bool        m_bbase_file_attr_known;
-      wxDateTime  m_date000;                    // extracted from DSID:ISDT
+      QDateTime  m_date000;                    // extracted from DSID:ISDT
       QString    m_edtn000;                    // extracted from DSID:EDTN
       int         m_nGeoRecords;                // extracted from DSSI:NOGR
       int         m_native_scale;               // extracted from DSPM:CSCL
@@ -323,7 +324,7 @@ private:
       
       bool        m_blastS57TextRender;
       QString    m_lastColorScheme;
-      wxRect      m_last_vprect;
+      QRect      m_last_vprect;
       long        m_plib_state_hash;
       bool        m_btex_mem;
       char        m_usage_char;
@@ -337,7 +338,7 @@ private:
       std::vector<connector_segment *> m_pcs_vector;
       std::vector<VE_Element *> m_pve_vector;
       
-      wxString    m_TempFilePath;
+      QString    m_TempFilePath;
       bool        m_disableBackgroundSENC;
 protected:      
       sm_parms    vp_transform;

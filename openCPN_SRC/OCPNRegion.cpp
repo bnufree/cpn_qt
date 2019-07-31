@@ -40,15 +40,9 @@
 // headers
 // ----------------------------------------------------------------------------
 
-// For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
-
-#include "wx/region.h"
 #include "OCPNRegion.h"
 
-#ifndef WX_PRECOMP
-    #include "<wx/zchxlog.h>"
-#endif
+#include "zchxlog.h"
 
 
 typedef enum

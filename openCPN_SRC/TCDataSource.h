@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -26,6 +26,7 @@
 
 
 #include "TC_Error_Code.h"
+#include <QList>
 
 class IDX_entry;
 class TCDataFactory;
@@ -54,6 +55,6 @@ private:
 };
 
 
-WX_DECLARE_OBJARRAY(TCDataSource, ArrayOfTCDSources);
+typedef QList<TCDataSource> ArrayOfTCDSources;
 
 #endif

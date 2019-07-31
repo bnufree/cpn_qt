@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  cm93 Chart Object
@@ -6721,14 +6721,14 @@ enum
 //---------------------------------------------------------------------------------------
 class OCPNOffsetListCtrl: public wxListCtrl
 {
-      public:
-            OCPNOffsetListCtrl ( CM93OffsetDialog* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style );
-            ~OCPNOffsetListCtrl();
+public:
+    OCPNOffsetListCtrl ( CM93OffsetDialog* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style );
+    ~OCPNOffsetListCtrl();
 
-            wxString OnGetItemText ( long item, long column ) const;
-            int OnGetItemColumnImage ( long item, long column ) const;
+    wxString OnGetItemText ( long item, long column ) const;
+    int OnGetItemColumnImage ( long item, long column ) const;
 
-            CM93OffsetDialog     *m_parent;
+    CM93OffsetDialog     *m_parent;
 
 
 };
@@ -6748,54 +6748,54 @@ OCPNOffsetListCtrl::~OCPNOffsetListCtrl()
 wxString  OCPNOffsetListCtrl::OnGetItemText ( long item, long column ) const
 {
 
-      wxString ret;
-      M_COVR_Desc *pmcd = m_parent->m_pcovr_array[item];
+    wxString ret;
+    M_COVR_Desc *pmcd = m_parent->m_pcovr_array[item];
 
-      switch ( column )
-      {
-            case tlCELL:
-            {
-                  ret.Printf ( _T ( "%d" ), pmcd->m_cell_index );
-                  if ( ( ( int ) '0' ) == pmcd->m_subcell )
-                        ret.Prepend ( _T ( "0" ) );
-                  else
-                  {
-                        char t = ( char ) pmcd->m_subcell;
-                        wxString p;
-                        p.Printf ( _T ( "%c" ), t );
-                        ret.Prepend ( p );
-                  }
+    switch ( column )
+    {
+    case tlCELL:
+    {
+        ret.Printf ( _T ( "%d" ), pmcd->m_cell_index );
+        if ( ( ( int ) '0' ) == pmcd->m_subcell )
+            ret.Prepend ( _T ( "0" ) );
+        else
+        {
+            char t = ( char ) pmcd->m_subcell;
+            wxString p;
+            p.Printf ( _T ( "%c" ), t );
+            ret.Prepend ( p );
+        }
 
-                  break;
-            }
-            case tlMCOVR:
-                  ret.Printf ( _T ( "%d" ), pmcd->m_object_id );
-                  break;
+        break;
+    }
+    case tlMCOVR:
+        ret.Printf ( _T ( "%d" ), pmcd->m_object_id );
+        break;
 
-            case tlSCALE:
-                  ret = m_parent->m_selected_chart_scale_char;
-                  break;
+    case tlSCALE:
+        ret = m_parent->m_selected_chart_scale_char;
+        break;
 
-            case tlXOFF:
-                  ret.Printf ( _T ( "%g" ), pmcd->transform_WGS84_offset_x );
-                  break;
+    case tlXOFF:
+        ret.Printf ( _T ( "%g" ), pmcd->transform_WGS84_offset_x );
+        break;
 
-            case tlYOFF:
-                  ret.Printf ( _T ( "%g" ), pmcd->transform_WGS84_offset_y );
-                  break;
+    case tlYOFF:
+        ret.Printf ( _T ( "%g" ), pmcd->transform_WGS84_offset_y );
+        break;
 
-            case tlUXOFF:
-                  ret.Printf ( _T ( "%6.0f" ), pmcd->user_xoff * pmcd->m_centerlat_cos );
-                  break;
+    case tlUXOFF:
+        ret.Printf ( _T ( "%6.0f" ), pmcd->user_xoff * pmcd->m_centerlat_cos );
+        break;
 
-            case tlUYOFF:
-                  ret.Printf ( _T ( "%6.0f" ), pmcd->user_yoff * pmcd->m_centerlat_cos );
-                  break;
+    case tlUYOFF:
+        ret.Printf ( _T ( "%6.0f" ), pmcd->user_yoff * pmcd->m_centerlat_cos );
+        break;
 
-            default:
-                  break;
-      }
-      return ret;
+    default:
+        break;
+    }
+    return ret;
 }
 
 
@@ -6810,97 +6810,92 @@ int OCPNOffsetListCtrl::OnGetItemColumnImage ( long item, long column ) const
 //          CM93OffsetDialog Implementation
 //---------------------------------------------------------------------------------------
 
-IMPLEMENT_CLASS ( CM93OffsetDialog, wxDialog )
-
-BEGIN_EVENT_TABLE ( CM93OffsetDialog, wxDialog )
-      EVT_CLOSE ( CM93OffsetDialog::OnClose )
-END_EVENT_TABLE()
-
-
-CM93OffsetDialog::CM93OffsetDialog ( wxWindow *parent )
+CM93OffsetDialog::CM93OffsetDialog ( QWidget *parent ) : QDialog(parent)
 {
-      m_pparent = parent;
-      m_pcompchart = NULL;
+    m_pparent = parent;
+    m_pcompchart = NULL;
 
-      m_xoff = 0;
-      m_yoff = 0;
+    m_xoff = 0;
+    m_yoff = 0;
 
-      m_selected_list_index = -1;
+    m_selected_list_index = -1;
+    setWindowTitle(tr("OpenCPN CM93 Cell Offset Adjustments"));
+    resize(800, 200);
 
-      long wstyle = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER;
-      wxDialog::Create ( parent, -1, _ ( "OpenCPN CM93 Cell Offset Adjustments" ), wxPoint ( 0, 0 ), wxSize ( 800, 200 ), wstyle );
-
-
-
-// A top-level sizer
-      wxBoxSizer* topSizer = new wxBoxSizer ( wxHORIZONTAL );
-      SetSizer ( topSizer );
+//    long wstyle = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER;
+//    wxDialog::Create ( parent, -1, _ ( ), wxPoint ( 0, 0 ), wxSize ( 800, 200 ), wstyle );
 
 
-      int width;
 
-      m_pListCtrlMCOVRs = new OCPNOffsetListCtrl ( this, -1, wxDefaultPosition, wxDefaultSize,
-              wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_HRULES|wxLC_VRULES|wxBORDER_SUNKEN|wxLC_VIRTUAL );
-
-      m_pListCtrlMCOVRs->Connect ( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler ( CM93OffsetDialog::OnCellSelected ), NULL, this );
-
-      width = 80;
-      m_pListCtrlMCOVRs->InsertColumn ( tlCELL, _ ( "Cell" ), wxLIST_FORMAT_LEFT, width );
-
-      width = 80;
-      m_pListCtrlMCOVRs->InsertColumn ( tlMCOVR, _ ( "M_COVR ID" ), wxLIST_FORMAT_CENTER, width );
-
-      width = 80;
-      m_pListCtrlMCOVRs->InsertColumn ( tlSCALE, _ ( "Cell Scale" ), wxLIST_FORMAT_CENTER, width );
-
-      width = 90;
-      m_pListCtrlMCOVRs->InsertColumn ( tlXOFF, _ ( "wgsox" ), wxLIST_FORMAT_CENTER, width );
-
-      width = 90;
-      m_pListCtrlMCOVRs->InsertColumn ( tlYOFF, _ ( "wgsoy" ), wxLIST_FORMAT_CENTER, width );
-
-      width = 90;
-      m_pListCtrlMCOVRs->InsertColumn ( tlUXOFF, _ ( "User X Offset" ), wxLIST_FORMAT_CENTER, width );
-
-      width = 90;
-      m_pListCtrlMCOVRs->InsertColumn ( tlUYOFF, _ ( "User Y Offset" ), wxLIST_FORMAT_CENTER, width );
+    // A top-level sizer
+    wxBoxSizer* topSizer = new wxBoxSizer ( wxHORIZONTAL );
+    SetSizer ( topSizer );
 
 
-      topSizer->Add ( m_pListCtrlMCOVRs, 1, wxEXPAND|wxALL, 0 );
+    int width;
 
-      wxBoxSizer* boxSizer02 = new wxBoxSizer ( wxVERTICAL );
-      boxSizer02->AddSpacer ( 22 );
+    m_pListCtrlMCOVRs = new OCPNOffsetListCtrl ( this, -1, wxDefaultPosition, wxDefaultSize,
+                                                 wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_HRULES|wxLC_VRULES|wxBORDER_SUNKEN|wxLC_VIRTUAL );
 
-      wxStaticText *pStaticTextXoff = new wxStaticText ( this, wxID_ANY, wxString::Format(_T( "%s (%s)" ), _( "User X Offset" ), _( "meters" ) ), wxDefaultPosition, wxDefaultSize, 0 );
-      boxSizer02->Add ( pStaticTextXoff, 0, wxALL, 0 );
+    m_pListCtrlMCOVRs->Connect ( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler ( CM93OffsetDialog::OnCellSelected ), NULL, this );
 
-      m_pSpinCtrlXoff = new wxSpinCtrl ( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize ( 50, -1 ), wxSP_ARROW_KEYS, -10000, 10000, 0 );
-      m_pSpinCtrlXoff->Connect ( wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler ( CM93OffsetDialog::OnOffSetSet ), NULL, this );
-      boxSizer02->Add ( m_pSpinCtrlXoff, 0, wxEXPAND|wxALL, 0 );
+    width = 80;
+    m_pListCtrlMCOVRs->InsertColumn ( tlCELL, _ ( "Cell" ), wxLIST_FORMAT_LEFT, width );
 
-      wxStaticText *pStaticTextYoff = new wxStaticText ( this, wxID_ANY, wxString::Format(_T( "%s (%s)" ), _( "User Y Offset" ), _( "meters" ) ), wxDefaultPosition, wxDefaultSize, 0 );
-      boxSizer02->Add ( pStaticTextYoff, 0, wxALL, 0 );
+    width = 80;
+    m_pListCtrlMCOVRs->InsertColumn ( tlMCOVR, _ ( "M_COVR ID" ), wxLIST_FORMAT_CENTER, width );
 
-      m_pSpinCtrlYoff = new wxSpinCtrl ( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize ( 50, -1 ), wxSP_ARROW_KEYS, -10000, 10000, 0 );
-      m_pSpinCtrlYoff->Connect ( wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler ( CM93OffsetDialog::OnOffSetSet ), NULL, this );
-      boxSizer02->Add ( m_pSpinCtrlYoff, 0, wxEXPAND|wxALL, 0 );
+    width = 80;
+    m_pListCtrlMCOVRs->InsertColumn ( tlSCALE, _ ( "Cell Scale" ), wxLIST_FORMAT_CENTER, width );
 
-      m_OKButton = new wxButton ( this, wxID_ANY, _ ( "OK" ), wxDefaultPosition, wxDefaultSize, 0 );
-      m_OKButton->Connect ( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler ( CM93OffsetDialog::OnOK ), NULL, this );
-      boxSizer02->Add ( m_OKButton, 0, wxALL, 5 );
-      m_OKButton->SetDefault();
+    width = 90;
+    m_pListCtrlMCOVRs->InsertColumn ( tlXOFF, _ ( "wgsox" ), wxLIST_FORMAT_CENTER, width );
 
-      topSizer->Add ( boxSizer02, 0, wxEXPAND|wxALL, 2 );
-      topSizer->Layout();
+    width = 90;
+    m_pListCtrlMCOVRs->InsertColumn ( tlYOFF, _ ( "wgsoy" ), wxLIST_FORMAT_CENTER, width );
 
-      //    This is silly, but seems to be required for __WXMSW__ build
-      //    If not done, the SECOND invocation of dialog fails to expand the list to the full wxSizer size....
-      SetSize ( GetSize().x, GetSize().y-1 );
+    width = 90;
+    m_pListCtrlMCOVRs->InsertColumn ( tlUXOFF, _ ( "User X Offset" ), wxLIST_FORMAT_CENTER, width );
 
-      SetColorScheme();
+    width = 90;
+    m_pListCtrlMCOVRs->InsertColumn ( tlUYOFF, _ ( "User Y Offset" ), wxLIST_FORMAT_CENTER, width );
 
-//      GetSizer()->SetSizeHints(this);
-      Centre();
+
+    topSizer->Add ( m_pListCtrlMCOVRs, 1, wxEXPAND|wxALL, 0 );
+
+    wxBoxSizer* boxSizer02 = new wxBoxSizer ( wxVERTICAL );
+    boxSizer02->AddSpacer ( 22 );
+
+    wxStaticText *pStaticTextXoff = new wxStaticText ( this, wxID_ANY, wxString::Format(_T( "%s (%s)" ), _( "User X Offset" ), _( "meters" ) ), wxDefaultPosition, wxDefaultSize, 0 );
+    boxSizer02->Add ( pStaticTextXoff, 0, wxALL, 0 );
+
+    m_pSpinCtrlXoff = new wxSpinCtrl ( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize ( 50, -1 ), wxSP_ARROW_KEYS, -10000, 10000, 0 );
+    m_pSpinCtrlXoff->Connect ( wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler ( CM93OffsetDialog::OnOffSetSet ), NULL, this );
+    boxSizer02->Add ( m_pSpinCtrlXoff, 0, wxEXPAND|wxALL, 0 );
+
+    wxStaticText *pStaticTextYoff = new wxStaticText ( this, wxID_ANY, wxString::Format(_T( "%s (%s)" ), _( "User Y Offset" ), _( "meters" ) ), wxDefaultPosition, wxDefaultSize, 0 );
+    boxSizer02->Add ( pStaticTextYoff, 0, wxALL, 0 );
+
+    m_pSpinCtrlYoff = new wxSpinCtrl ( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize ( 50, -1 ), wxSP_ARROW_KEYS, -10000, 10000, 0 );
+    m_pSpinCtrlYoff->Connect ( wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler ( CM93OffsetDialog::OnOffSetSet ), NULL, this );
+    boxSizer02->Add ( m_pSpinCtrlYoff, 0, wxEXPAND|wxALL, 0 );
+
+    m_OKButton = new wxButton ( this, wxID_ANY, _ ( "OK" ), wxDefaultPosition, wxDefaultSize, 0 );
+    m_OKButton->Connect ( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler ( CM93OffsetDialog::OnOK ), NULL, this );
+    boxSizer02->Add ( m_OKButton, 0, wxALL, 5 );
+    m_OKButton->SetDefault();
+
+    topSizer->Add ( boxSizer02, 0, wxEXPAND|wxALL, 2 );
+    topSizer->Layout();
+
+    //    This is silly, but seems to be required for __WXMSW__ build
+    //    If not done, the SECOND invocation of dialog fails to expand the list to the full wxSizer size....
+    SetSize ( GetSize().x, GetSize().y-1 );
+
+    SetColorScheme();
+
+    //      GetSizer()->SetSizeHints(this);
+    Centre();
 
 
 }
@@ -6912,28 +6907,28 @@ CM93OffsetDialog::~CM93OffsetDialog( )
 
 void CM93OffsetDialog::OnClose ( wxCloseEvent& event )
 {
-      if ( m_pcompchart )
-      {
-            m_pcompchart->SetSpecialOutlineCellIndex ( 0, 0, 0 );
+    if ( m_pcompchart )
+    {
+        m_pcompchart->SetSpecialOutlineCellIndex ( 0, 0, 0 );
 
-            m_pcompchart->InvalidateCache();
+        m_pcompchart->InvalidateCache();
 
-            if ( m_pparent ) {
-                  m_pparent->Refresh ( true );
-                  gFrame->InvalidateAllGL();
-            }
-      }
+        if ( m_pparent ) {
+            m_pparent->Refresh ( true );
+            gFrame->InvalidateAllGL();
+        }
+    }
 
-      if ( m_pListCtrlMCOVRs->GetItemCount() > m_selected_list_index )
-            m_pListCtrlMCOVRs->SetItemState ( m_selected_list_index, 0, wxLIST_STATE_SELECTED );
+    if ( m_pListCtrlMCOVRs->GetItemCount() > m_selected_list_index )
+        m_pListCtrlMCOVRs->SetItemState ( m_selected_list_index, 0, wxLIST_STATE_SELECTED );
 
-      Hide();
+    Hide();
 }
 
 
 void CM93OffsetDialog::OnOK ( wxCommandEvent& event )
 {
-      Close();
+    Close();
 }
 
 void CM93OffsetDialog::SetCM93Chart( cm93compchart *pchart )
@@ -6946,35 +6941,35 @@ void CM93OffsetDialog::OnOffSetSet ( wxCommandEvent& event )
     m_xoff = m_pSpinCtrlXoff->GetValue() / m_centerlat_cos;
     m_yoff = m_pSpinCtrlYoff->GetValue() / m_centerlat_cos;
 
-      UpdateOffsets();
+    UpdateOffsets();
 
 }
 
 void CM93OffsetDialog::UpdateOffsets ( void )
 {
-      if ( m_pcompchart )
-      {
-            //    Set the offsets of the selected cell/object
-            m_pcompchart->SetSpecialCellIndexOffset ( m_selected_cell_index, m_selected_object_id, m_selected_subcell, m_xoff, m_yoff );
+    if ( m_pcompchart )
+    {
+        //    Set the offsets of the selected cell/object
+        m_pcompchart->SetSpecialCellIndexOffset ( m_selected_cell_index, m_selected_object_id, m_selected_subcell, m_xoff, m_yoff );
 
-            //    Closing the current cell will record the offsets in the M_COVR cache file
-            //    Re-opening will then refresh the M_COVRs in the cover set
-            OCPNPlatform::ShowBusySpinner();
-            m_pcompchart->CloseandReopenCurrentSubchart();
-            OCPNPlatform::HideBusySpinner();
+        //    Closing the current cell will record the offsets in the M_COVR cache file
+        //    Re-opening will then refresh the M_COVRs in the cover set
+        OCPNPlatform::ShowBusySpinner();
+        m_pcompchart->CloseandReopenCurrentSubchart();
+        OCPNPlatform::HideBusySpinner();
 
-            if ( m_pparent ) {
-                  m_pparent->Refresh ( true );
-                  gFrame->InvalidateAllGL();
-            }
-      }
+        if ( m_pparent ) {
+            m_pparent->Refresh ( true );
+            gFrame->InvalidateAllGL();
+        }
+    }
 }
 
 
 void CM93OffsetDialog::SetColorScheme()
 {
 
-      DimeControl(this);
+    DimeControl(this);
 
 }
 
@@ -6984,37 +6979,37 @@ void CM93OffsetDialog::OnCellSelected ( wxListEvent &event )
 {
     if ( m_pcompchart ){
         
-      m_selected_list_index = event.GetIndex();
+        m_selected_list_index = event.GetIndex();
 
-      M_COVR_Desc *mcd =  m_pcovr_array.Item ( event.GetIndex() );
+        M_COVR_Desc *mcd =  m_pcovr_array.Item ( event.GetIndex() );
 
-      if ( m_selected_list_index > m_pListCtrlMCOVRs->GetItemCount() )
+        if ( m_selected_list_index > m_pListCtrlMCOVRs->GetItemCount() )
             return;            // error
 
-      cm93chart *pchart = m_pcompchart->GetCurrentSingleScaleChart();
-      if ( pchart )
-      {
+        cm93chart *pchart = m_pcompchart->GetCurrentSingleScaleChart();
+        if ( pchart )
+        {
             M_COVR_Desc *cached_mcd = pchart->GetCoverSet()->Find_MCD ( mcd->m_cell_index, mcd->m_object_id, mcd->m_subcell );
             if ( cached_mcd )
             {
                 m_pSpinCtrlXoff->SetValue ( wxRound ( cached_mcd->user_xoff * cached_mcd->m_centerlat_cos ) );
                 m_pSpinCtrlYoff->SetValue ( wxRound ( cached_mcd->user_yoff * cached_mcd->m_centerlat_cos ) );
             }
-      }
+        }
 
-      m_pcompchart->SetSpecialOutlineCellIndex ( mcd->m_cell_index, mcd->m_object_id, mcd->m_subcell );
+        m_pcompchart->SetSpecialOutlineCellIndex ( mcd->m_cell_index, mcd->m_object_id, mcd->m_subcell );
 
-      m_selected_cell_index = mcd->m_cell_index;
-      m_selected_object_id  = mcd->m_object_id;
-      m_selected_subcell = mcd->m_subcell;
-      m_centerlat_cos = mcd->m_centerlat_cos;
-      
-      m_pcompchart->InvalidateCache();
+        m_selected_cell_index = mcd->m_cell_index;
+        m_selected_object_id  = mcd->m_object_id;
+        m_selected_subcell = mcd->m_subcell;
+        m_centerlat_cos = mcd->m_centerlat_cos;
 
-      if ( m_pparent ) {
+        m_pcompchart->InvalidateCache();
+
+        if ( m_pparent ) {
             m_pparent->Refresh ( true );
             gFrame->InvalidateAllGL();
-      }
+        }
     }
 }
 
@@ -7022,74 +7017,74 @@ void CM93OffsetDialog::OnCellSelected ( wxListEvent &event )
 
 void CM93OffsetDialog::UpdateMCOVRList ( const ViewPort &vpt )
 {
-      if ( m_pcompchart )
-      {
-            //    In single chart mode, there is but one cm93chart (i.e. one "scale value") shown at any one time
-            cm93chart *pchart = m_pcompchart->GetCurrentSingleScaleChart();
+    if ( m_pcompchart )
+    {
+        //    In single chart mode, there is but one cm93chart (i.e. one "scale value") shown at any one time
+        cm93chart *pchart = m_pcompchart->GetCurrentSingleScaleChart();
 
-            if ( pchart )
+        if ( pchart )
+        {
+            m_selected_chart_scale_char = pchart->GetScaleChar();
+
+            m_pcovr_array.Clear();
+
+            //    Get an array of cell indicies at the current viewport
+            std::vector<int> cell_array = pchart->GetVPCellArray ( vpt );
+
+            ViewPort vp;
+            vp = vpt;
+
+            //    Get the cover set for the cm93chart
+            //    and walk the set looking for matches to the viewport referenced cell array
+            //    This will give us the covr descriptors of interest
+            covr_set *pcover = pchart->GetCoverSet();
+
+            for ( unsigned int im=0 ; im < pcover->GetCoverCount() ; im++ )
             {
-                  m_selected_chart_scale_char = pchart->GetScaleChar();
+                M_COVR_Desc *mcd = pcover->GetCover ( im );
 
-                  m_pcovr_array.Clear();
+                for ( unsigned int icell=0 ; icell < cell_array.size() ; icell++ )
+                {
+                    if ( cell_array[icell] == mcd->m_cell_index )
+                    {
+                        wxPoint *pwp = pchart->GetDrawBuffer ( mcd->m_nvertices );
+                        OCPNRegion rgn = mcd->GetRegion ( vp, pwp );
 
-                  //    Get an array of cell indicies at the current viewport
-                  std::vector<int> cell_array = pchart->GetVPCellArray ( vpt );
-
-                  ViewPort vp;
-                  vp = vpt;
-
-                  //    Get the cover set for the cm93chart
-                  //    and walk the set looking for matches to the viewport referenced cell array
-                  //    This will give us the covr descriptors of interest
-                  covr_set *pcover = pchart->GetCoverSet();
-
-                  for ( unsigned int im=0 ; im < pcover->GetCoverCount() ; im++ )
-                  {
-                        M_COVR_Desc *mcd = pcover->GetCover ( im );
-
-                        for ( unsigned int icell=0 ; icell < cell_array.size() ; icell++ )
-                        {
-                              if ( cell_array[icell] == mcd->m_cell_index )
-                              {
-                                    wxPoint *pwp = pchart->GetDrawBuffer ( mcd->m_nvertices );
-                                    OCPNRegion rgn = mcd->GetRegion ( vp, pwp );
-
-//                                    if( !vp.GetBBox().IntersectOut(mcd->m_covr_bbox))
-                                    if ( rgn.Contains ( 0, 0, vpt.pix_width, vpt.pix_height ) != wxOutRegion )
-                                          m_pcovr_array.Add ( mcd );
-                              }
-                        }
-                  }
-
-                  //    Try to find and maintain the correct list selection, even though the list contents may have changed
-                  int sel_index = -1;
-                  for ( unsigned int im=0 ; im < m_pcovr_array.size() ; im++ )
-                  {
-                        M_COVR_Desc *mcd = m_pcovr_array[im];
-                        if ( ( m_selected_cell_index == mcd->m_cell_index ) &&
-                                ( m_selected_object_id == mcd->m_object_id ) &&
-                                ( m_selected_subcell == mcd->m_subcell ) )
-                        {
-                              sel_index = im;
-                              break;
-                        }
-                  }
-
-                  m_pListCtrlMCOVRs->SetItemCount ( m_pcovr_array.GetCount() );
-                  if ( -1 != sel_index )
-                        m_pListCtrlMCOVRs->SetItemState ( sel_index, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED );
-                  else
-                        m_pListCtrlMCOVRs->SetItemState ( sel_index, 0, wxLIST_STATE_SELECTED );   // deselect all
-
-                  m_pListCtrlMCOVRs->Refresh ( true );
-
-
+                        //                                    if( !vp.GetBBox().IntersectOut(mcd->m_covr_bbox))
+                        if ( rgn.Contains ( 0, 0, vpt.pix_width, vpt.pix_height ) != wxOutRegion )
+                            m_pcovr_array.Add ( mcd );
+                    }
+                }
             }
+
+            //    Try to find and maintain the correct list selection, even though the list contents may have changed
+            int sel_index = -1;
+            for ( unsigned int im=0 ; im < m_pcovr_array.size() ; im++ )
+            {
+                M_COVR_Desc *mcd = m_pcovr_array[im];
+                if ( ( m_selected_cell_index == mcd->m_cell_index ) &&
+                     ( m_selected_object_id == mcd->m_object_id ) &&
+                     ( m_selected_subcell == mcd->m_subcell ) )
+                {
+                    sel_index = im;
+                    break;
+                }
+            }
+
+            m_pListCtrlMCOVRs->SetItemCount ( m_pcovr_array.GetCount() );
+            if ( -1 != sel_index )
+                m_pListCtrlMCOVRs->SetItemState ( sel_index, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED );
+            else
+                m_pListCtrlMCOVRs->SetItemState ( sel_index, 0, wxLIST_STATE_SELECTED );   // deselect all
+
+            m_pListCtrlMCOVRs->Refresh ( true );
+
+
+        }
 #ifdef __WXMSW__
-            m_pListCtrlMCOVRs->Refresh ( false );
+        m_pListCtrlMCOVRs->Refresh ( false );
 #endif
-      }
+    }
 
 }
 

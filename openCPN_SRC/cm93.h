@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  CM93 Chart Object
@@ -41,7 +41,7 @@ void Get_CM93_Cell_Origin(int cellindex, int scale, double *lat, double *lon);
 
 //    Fwd definitions
 class covr_set;
-class wxSpinCtrl;
+class QSpinBox;
 class ChartCanvas;
 
 class M_COVR_Desc
@@ -54,7 +54,7 @@ class M_COVR_Desc
       bool     WriteWKB(void *p);
       int      ReadWKB(wxFFileInputStream &ifs);
       void     Update(M_COVR_Desc *pmcd);
-      OCPNRegion GetRegion(const ViewPort &vp, wxPoint *pwp);
+      OCPNRegion GetRegion(const ViewPort &vp, QPoint *pwp);
 
 
       int         m_cell_index;
@@ -84,10 +84,10 @@ class M_COVR_Desc
 
 };
 
-WX_DECLARE_OBJARRAY(M_COVR_Desc, Array_Of_M_COVR_Desc);
-WX_DEFINE_ARRAY_PTR(M_COVR_Desc *, Array_Of_M_COVR_Desc_Ptr);
+typedef QList<M_COVR_Desc> Array_Of_M_COVR_Desc;
+typedef QList<M_COVR_Desc *> Array_Of_M_COVR_Desc_Ptr;
 
-WX_DECLARE_LIST(M_COVR_Desc, List_Of_M_COVR_Desc);
+typedef QList<M_COVR_Desc> List_Of_M_COVR_Desc;
 
 //    Georeferencing constants
 
@@ -251,8 +251,8 @@ class cm93_dictionary
       private:
             int               m_max_class;
             int               m_max_attr;
-            wxArrayString     *m_S57ClassArray;
-            wxArrayString     *m_AttrArray;
+            QStringList     *m_S57ClassArray;
+            QStringList     *m_AttrArray;
             int               *m_GeomTypeArray;
             char              *m_ValTypeArray;
             bool              m_ok;
@@ -323,8 +323,8 @@ class cm93chart : public s57chart
 
             bool AdjustVP(ViewPort &vp_last, ViewPort &vp_proposed);
             void SetVPParms(const ViewPort &vpt);
-            void GetPointPix(ObjRazRules *rzRules, float northing, float easting, wxPoint *r);
-            void GetPointPix(ObjRazRules *rzRules, wxPoint2DDouble *en, wxPoint *r, int nPoints);
+            void GetPointPix(ObjRazRules *rzRules, float northing, float easting, QPoint *r);
+            void GetPointPix(ObjRazRules *rzRules, QPointF *en, QPoint *r, int nPoints);
             void GetPixPoint(int pixx, int pixy, double *plat, double *plon, ViewPort *vpt);
 
             void SetCM93Dict(cm93_dictionary *pDict){m_pDict = pDict;}
@@ -345,7 +345,7 @@ class cm93chart : public s57chart
             void SetUserOffsets(int cell_index, int object_id, int subcell, int xoff, int yoff);
             QString GetScaleChar(){ return m_scalechar; }
 
-            wxPoint *GetDrawBuffer(int nSize);
+            QPoint *GetDrawBuffer(int nSize);
 
             OCPNRegion          m_render_region;
 
@@ -370,10 +370,10 @@ class cm93chart : public s57chart
             void Transform(cm93_point *s, double trans_x, double trans_y, double *lat, double *lon);
 
             int loadcell_in_sequence(int, char);
-            int loadsubcell(int, wxChar);
+            int loadsubcell(int, char);
             void ProcessVectorEdges(void);
 
-            wxPoint2DDouble FindM_COVROffset(double lat, double lon);
+            QPointF FindM_COVROffset(double lat, double lon);
             M_COVR_Desc *FindM_COVR_InWorkingSet(double lat, double lon);
 
 
@@ -393,18 +393,18 @@ class cm93chart : public s57chart
             int               *m_pcontour_array;
             int               m_ncontour_alloc;
             ViewPort          m_vp_current;
-            wxChar            m_loadcell_key;
+            char            m_loadcell_key;
             double            m_dval;
 
             covr_set          *m_pcovr_set;
 
-            wxPoint     *m_pDrawBuffer;               // shared outline drawing buffer
+            QPoint     *m_pDrawBuffer;               // shared outline drawing buffer
             int         m_nDrawBufferSize;
 
             QString          m_LastFileName;
 
             LLRegion            m_region;
-            wxArrayString       m_noFindArray;
+            QStringList       m_noFindArray;
 };
 
 //----------------------------------------------------------------------------
@@ -447,9 +447,9 @@ class cm93compchart : public s57chart
 
             bool RenderNextSmallerCellOutlines( ocpnDC &dc, ViewPort& vp, ChartCanvas *cc);
 
-            void GetPointPix(ObjRazRules *rzRules, float rlat, float rlon, wxPoint *r);
+            void GetPointPix(ObjRazRules *rzRules, float rlat, float rlon, QPoint *r);
             void GetPixPoint(int pixx, int pixy, double *plat, double *plon, ViewPort *vpt);
-            void GetPointPix(ObjRazRules *rzRules, wxPoint2DDouble *en, wxPoint *r, int nPoints);
+            void GetPointPix(ObjRazRules *rzRules, QPointF *en, QPoint *r, int nPoints);
 
 
             ListOfObjRazRules *GetObjRuleListAtLatLon(float lat, float lon, float select_radius,
@@ -489,7 +489,7 @@ class cm93compchart : public s57chart
             bool DoRenderRegionViewOnGL (const wxGLContext &glc, const ViewPort& VPoint,
                                          const OCPNRegion &RectRegion, const LLRegion &Region );
 
-            bool RenderCellOutlinesOnDC( ocpnDC &dc, ViewPort& vp, wxPoint *pwp, M_COVR_Desc *mcd );
+            bool RenderCellOutlinesOnDC( ocpnDC &dc, ViewPort& vp, QPoint *pwp, M_COVR_Desc *mcd );
             void RenderCellOutlinesOnGL( ViewPort& vp, M_COVR_Desc *mcd );
 
             //    Data members
@@ -524,47 +524,48 @@ class OCPNOffsetListCtrl;
 //----------------------------------------------------------------------------------------------------------
 //    CM93OffsetDialog Specification
 //----------------------------------------------------------------------------------------------------------
-class CM93OffsetDialog: public wxDialog
+class QPushButton;
+
+class CM93OffsetDialog: public QDialog
 {
-      DECLARE_CLASS( CM93OffsetDialog )
-      DECLARE_EVENTABLE()
+    Q_OBJECT
+public:
+    CM93OffsetDialog( QWidget *parent = 0 );
+    ~CM93OffsetDialog( );
 
-      public:
-            CM93OffsetDialog( wxWindow *parent );
-            ~CM93OffsetDialog( );
+    void OnClose(wxCloseEvent& event);
+    void OnOK(wxCommandEvent& event);
 
-            void OnClose(wxCloseEvent& event);
-            void OnOK(wxCommandEvent& event);
+    void SetCM93Chart( cm93compchart *pchart );
+    void SetColorScheme( );
+    void UpdateMCOVRList( const ViewPort &vpt );     // Rebuild MCOVR list
 
-            void SetCM93Chart( cm93compchart *pchart );
-            void SetColorScheme( );
-            void UpdateMCOVRList( const ViewPort &vpt );     // Rebuild MCOVR list
+    OCPNOffsetListCtrl            *m_pListCtrlMCOVRs;
+    Array_Of_M_COVR_Desc_Ptr      m_pcovr_array;
 
-            OCPNOffsetListCtrl            *m_pListCtrlMCOVRs;
-            Array_Of_M_COVR_Desc_Ptr      m_pcovr_array;
+    QString                      m_selected_chart_scale_char;
 
-            QString                      m_selected_chart_scale_char;
+private:
+    void OnCellSelected( wxListEvent &event );
+    void OnOffSetSet( wxCommandEvent& event );
+    void UpdateOffsets(void);
 
-      private:
-            void OnCellSelected( wxListEvent &event );
-            void OnOffSetSet( wxCommandEvent& event );
+private:
 
-            void UpdateOffsets(void);
+    QSpinBox        *m_pSpinCtrlXoff;
+    QSpinBox        *m_pSpinCtrlYoff;
+    QPushButton          *m_OKButton;
 
-            wxSpinCtrl        *m_pSpinCtrlXoff;
-            wxSpinCtrl        *m_pSpinCtrlYoff;
-            wxButton          *m_OKButton;
+    QWidget          *m_pparent;
+    cm93compchart     *m_pcompchart;
 
-            wxWindow          *m_pparent;
-            cm93compchart     *m_pcompchart;
-
-            int               m_xoff;
-            int               m_yoff;
-            int               m_selected_cell_index;
-            int               m_selected_object_id;
-            int               m_selected_subcell;
-            int               m_selected_list_index;
-            double            m_centerlat_cos;
+    int               m_xoff;
+    int               m_yoff;
+    int               m_selected_cell_index;
+    int               m_selected_object_id;
+    int               m_selected_subcell;
+    int               m_selected_list_index;
+    double            m_centerlat_cos;
 
 };
 

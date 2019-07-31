@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -25,6 +25,7 @@
 #ifndef __IDX_ENTRY_H__
 #define __IDX_ENTRY_H__
 
+#include <QList>
 
 #define MAXNAMELEN 90
 
@@ -102,6 +103,6 @@ public:
 
 };
 
-WX_DECLARE_OBJARRAY(IDX_entry, ArrayOfIDXEntry);
+typedef QList<IDX_entry> ArrayOfIDXEntry;
 
 #endif

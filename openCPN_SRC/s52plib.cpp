@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S52 Presentation Library
@@ -88,7 +88,7 @@ WX_DEFINE_LIST( TextObjList );
 WX_DEFINE_OBJARRAY(ArrayOfNoshow);
 
 //  S52_TextC Implementation
-S52_TextC::S52_TextC()
+S52_TextC::()
 { 
     pcol = NULL;
     pFont = NULL;
