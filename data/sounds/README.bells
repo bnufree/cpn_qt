@@ -1,0 +1,48 @@
+/***************************************************************************
+ *
+ * Project:  OpenCPN
+ * Purpose:  OpenCPN ship bell sounds
+ * Author:   David Register
+ *
+ ***************************************************************************
+ *   Copyright (C) 2016 Sojan
+ *   Copyright (C) 2019 by David S. Register                               *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
+ **************************************************************************/
+
+Ship's Bells Sounds Set for OpenCPN 5.0 (Open Chart Plotter-Navigator obtainable at https://opencpn.org)
+
+This set of .wav files contains the recording of the bell obtained from https://freesound.org/people/Sojan/sounds/353233/ and https://freesound.org/people/Sojan/sounds/353232/ and licensed under the Creative Commons 0 License (https://creativecommons.org/publicdomain/zero/1.0/)
+
+OpenCPN implements the modern way of playing the bells, consisting of striking 1 bell more for every half-hour passed in 4-hour cycles:
+
+0000 - 8 bells
+0030 - 1 bell
+0100 - 2 bells
+0130 - 3 bells
+...
+0330 - 7 bells
+0400 - 8 bells
+0430 - 1 bell
+0500 - 2 bells
+...
+2300 - 6 bells
+2330 - 7 bells
+
+Installation
+
+The files 1bells, 2bells..., 8bells should be placed in the "sounds" directory under the main OpenCPN installation directory. The sounds are enabled by selecting the appropriate option in the Toolbox->Etc dialog.

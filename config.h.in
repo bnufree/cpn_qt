@@ -1,0 +1,50 @@
+#ifndef OCPN_CONFIG_H
+#define OCPN_CONFIG_H
+
+#cmakedefine LINUX_CRASHRPT
+#cmakedefine OCPN_USE_CRASHRPT
+#cmakedefine OCPN_HAVE_X11
+
+// Garmin Host Mode support
+#cmakedefine USE_GARMINHOST
+
+#cmakedefine OCPN_USE_LZMA
+
+#cmakedefine OCPN_USE_CURL
+
+#cmakedefine USE_LIBELF
+
+#cmakedefine USE_GARMINHOST
+
+#cmakedefine OCPN_USE_NEWSERIAL
+
+// Enable dark mode on modern MacOS.
+#cmakedefine OCPN_USE_DARKMODE
+
+#cmakedefine ocpnUSE_GLES
+
+
+#ifndef TIXML_USE_STL
+#cmakedefine TIXML_USE_STL
+#endif
+
+
+#cmakedefine OPENGL_FOUND
+#cmakedefine HAVE_PORTAUDIO
+#cmakedefine HAVE_SYSTEM_CMD_SOUND
+#cmakedefine HAVE_SNDFILE
+
+// Command line to play a sound in system(3), like "aplay %s".
+#define SYSTEM_SOUND_CMD  ${SYSTEM_SOUND_CMD}
+
+// Flag for ancient compilers without C++11 support
+#cmakedefine COMPILER_SUPPORTS_CXX11
+
+
+#define VERSION_MAJOR ${VERSION_MAJOR}
+#define VERSION_MINOR ${VERSION_MINOR}
+#define VERSION_PATCH ${VERSION_PATCH}
+#define VERSION_DATE "${VERSION_DATE}"
+#define VERSION_FULL "${PACKAGE_VERSION}"
+
+#endif  // OCPN_CONFIG_H
