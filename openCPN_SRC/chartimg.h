@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  ChartBaseBSB and Friends
@@ -35,6 +35,7 @@
 #include "georef.h"                 // for GeoRef type
 #include "OCPNRegion.h"
 #include "viewport.h"
+#include <QMutex>
 
 typedef enum ScaleTypeEnum
 {
@@ -44,7 +45,7 @@ typedef enum ScaleTypeEnum
 
 
 
-class WXDLLEXPORT ChartImg;
+//class WXDLLEXPORT ChartImg;
 
 //-----------------------------------------------------------------------------
 //    Constants, etc.
@@ -173,13 +174,13 @@ class  ChartBaseBSB     :public ChartBase
 
       void SetColorScheme(ColorScheme cs, bool bApplyImmediate);
 
-      wxImage *GetImage();
+      QImage *GetImage();
 
       void SetVPRasterParms(const ViewPort &vpt);
 
-      virtual void ComputeSourceRectangle(const ViewPort &vp, wxRect *pSourceRect);
+      virtual void ComputeSourceRectangle(const ViewPort &vp, QRect *pSourceRect);
       virtual double GetRasterScaleFactor(const ViewPort &vp);
-      virtual bool GetChartBits( wxRect& source, unsigned char *pPix, int sub_samp );
+      virtual bool GetChartBits( QRect& source, unsigned char *pPix, int sub_samp );
       virtual int GetSize_X(){ return Size_X;}
       virtual int GetSize_Y(){ return Size_Y;}
 
@@ -191,16 +192,16 @@ class  ChartBaseBSB     :public ChartBase
 protected:
 //    Methods
 
-      wxRect GetSourceRect(){ return Rsrc; }
+      QRect GetSourceRect(){ return Rsrc; }
 
       virtual bool GetAndScaleData(unsigned char *ppn, size_t data_size,
-                                   wxRect& source, int source_stride, wxRect& dest, int dest_stride,
+                                   QRect& source, int source_stride, QRect& dest, int dest_stride,
                                    double scale_factor, ScaleTypeEnum scale_type);
       bool RenderViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint);
 
       bool IsCacheValid(){ return cached_image_ok; }
       void InvalidateCache(){cached_image_ok = 0;}
-      bool IsRenderCacheable( wxRect& source, wxRect& dest );
+      bool IsRenderCacheable( QRect& source, QRect& dest );
 
       void CreatePaletteEntry(char *buffer, int palette_index);
       PaletteDir GetPaletteDir(void);
@@ -212,16 +213,16 @@ protected:
       virtual bool CreateLineIndex(void);
 
 
-      virtual wxBitmap *CreateThumbnail(int tnx, int tny, ColorScheme cs);
+      virtual QBitmap *CreateThumbnail(int tnx, int tny, ColorScheme cs);
       virtual int BSBGetScanline( unsigned char *pLineBuf, int y, int xs, int xl, int sub_samp);
 
 
-      bool GetViewUsingCache( wxRect& source, wxRect& dest, const OCPNRegion& Region, ScaleTypeEnum scale_type );
-      bool GetView( wxRect& source, wxRect& dest, ScaleTypeEnum scale_type );
+      bool GetViewUsingCache( QRect& source, QRect& dest, const OCPNRegion& Region, ScaleTypeEnum scale_type );
+      bool GetView( QRect& source, QRect& dest, ScaleTypeEnum scale_type );
 
 
-      virtual int BSBScanScanline(wxInputStream *pinStream);
-      virtual int ReadBSBHdrLine( wxInputStream*, char *, int );
+      virtual int BSBScanScanline(QDataStream *pinStream);
+      virtual int ReadBSBHdrLine( QDataStream*, char *, int );
       virtual int AnalyzeRefpoints(bool b_testSolution = true);
       virtual bool AnalyzeSkew(void);
       
@@ -254,15 +255,15 @@ protected:
       double      m_dtm_lon;
 
 
-      wxRect      cache_rect;
-      wxRect      cache_rect_scaled;
+      QRect      cache_rect;
+      QRect      cache_rect_scaled;
       bool        cached_image_ok;
       ScaleTypeEnum cache_scale_method;
       double      m_cached_scale_ppm;
-      wxRect      m_last_vprect;
+      QRect      m_last_vprect;
 
 
-      wxRect      Rsrc;                   // Current chart source rectangle
+      QRect      Rsrc;                   // Current chart source rectangle
       double      m_raster_scale_factor;
 
       int         nRefpoint;
@@ -274,9 +275,9 @@ protected:
 
       CachedLine  *pLineCache;
 
-      wxInputStream    *ifs_hdr;
-      wxInputStream    *ifss_bitmap;
-      wxBufferedInputStream *ifs_bitmap;
+      QDataStream    *ifs_hdr;
+      QDataStream    *ifss_bitmap;
+      QDataStream    *ifs_bitmap;
 
       QString          *pBitmapFilePath;
 
@@ -326,8 +327,8 @@ protected:
 
       ViewPort  m_vp_render_last;
       
-      wxCriticalSection m_critSect;
-      wxULongLong m_filesize;
+      QMutex     m_critSect;
+      quint64    m_filesize;
       
       
 };
@@ -421,9 +422,9 @@ class ChartPlugInWrapper : public ChartBaseBSB
             
             //    The following set of methods apply to BSB (i.e. Raster) type PlugIn charts only
             //    and need not be implemented if the ChartFamily is not CHART_FAMILY_RASTER
-            virtual void ComputeSourceRectangle(const ViewPort &vp, wxRect *pSourceRect);
+            virtual void ComputeSourceRectangle(const ViewPort &vp, QRect *pSourceRect);
             virtual double GetRasterScaleFactor(const ViewPort &vp);
-            virtual bool GetChartBits( wxRect& source, unsigned char *pPix, int sub_samp );
+            virtual bool GetChartBits( QRect& source, unsigned char *pPix, int sub_samp );
             virtual int GetSize_X();
             virtual int GetSize_Y();
             virtual void latlong_to_chartpix(double lat, double lon, double &pixx, double &pixy);
@@ -446,11 +447,12 @@ class ChartPlugInWrapper : public ChartBaseBSB
             virtual void ClearPLIBTextList();
             
       private:
-            PlugInChartBase *m_ppicb;
-            wxObject          *m_ppo;
-            wxCriticalSection m_critSect;
-            bool              m_overlayENC;
-            wxMask           *m_pMask;
+            PlugInChartBase     *m_ppicb;
+            QObject             *m_ppo;
+            QMutex              m_critSect;
+            bool                m_overlayENC;
+//            wxMask              *m_pMask;  //wxmask 将黑白单色位图进行封装  mask的区域为黑色,没有mask的区域为白色.绘制时,白色区域绘制,黑色区域不绘制
+            QBitmap             *m_pMask;
 };
 
 #endif

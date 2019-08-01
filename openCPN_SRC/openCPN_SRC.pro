@@ -189,7 +189,8 @@ HEADERS += \
     _def.h \
     ocpn_plugin.h \
     iso8211/iso8211.h \
-    opencpn_global.h
+    opencpn_global.h \
+    objectfactory.h
 
 SOURCES += \
     bbox.cpp \
@@ -315,4 +316,7 @@ SOURCES += \
 
 OBJECTIVE_SOURCES += \
     DarkMode.mm
+
+FORMS += \
+    sendtogpsdlg.ui
 

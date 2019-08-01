@@ -1,38 +1,19 @@
-﻿/***************************************************************************
- *
- * Project:  OpenCPN
- *
- ***************************************************************************
- *   Copyright (C) 2010 by David S. Register                               *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
- ***************************************************************************
- */
+﻿#ifndef SENDTOGPSDLG_H
+#define SENDTOGPSDLG_H
 
-#ifndef __SENDTOGPSDLG_H__
-#define __SENDTOGPSDLG_H__
+#include <QDialog>
 
+#include <QComboBox>
+#include <QProgressBar>
+#include <QPushButton>
 
 //    Constants for SendToGps... Dialog
 #define ID_STGDIALOG 10005
-#define SYMBOL_STG_STYLE wxCAPTION|wxRESIZE_BORDER|wxSYSTEM_MENU|wxCLOSE_BOX|wxFRAME_FLOAT_ON_PARENT
-#define SYMBOL_STG_TITLE _("Send to GPS")
+#define SYMBOL_STG_STYLE    Qt::Dialog|Qt::WindowCloseButtonHint|Qt::WindowStaysOnTopHint|Qt::WindowSystemMenuHint
+#define SYMBOL_STG_TITLE ("Send to GPS")
 #define SYMBOL_STG_IDNAME ID_STGDIALOG
-#define SYMBOL_STG_SIZE wxSize(500, 500)
-#define SYMBOL_STG_POSITION wxDefaultPosition
+#define SYMBOL_STG_SIZE_WIDTH   500
+#define SYMBOL_STG_SIZE_HEIGHT  500
 
 enum {
       ID_STG_CANCEL =            10000,
@@ -42,42 +23,34 @@ enum {
 
 class Route;
 class RoutePoint;
-//class wxButton;
-//class wxGauge;
-//class wxComboBox;
 
-/**
- * Route "Send to GPS..." Dialog Definition
- */
-class SendToGpsDlg : public wxDialog
+namespace Ui {
+class SendToGpsDlg;
+}
+
+class SendToGpsDlg : public QDialog
 {
-      DECLARE_DYNAMIC_CLASS( SendToGpsDlg )
-      DECLARE_EVENT_TABLE()
+    Q_OBJECT
 
- public:
-       SendToGpsDlg();
-       SendToGpsDlg(  wxWindow* parent, wxWindowID id, const QString& caption, const QString& hint, const wxPoint& pos, const wxSize& size, long style );
-       ~SendToGpsDlg( );
-
-       bool Create( wxWindow* parent, wxWindowID id = SYMBOL_STG_IDNAME, const QString& caption = SYMBOL_STGITLE, const QString& hint = SYMBOL_STGITLE,
-                    const wxPoint& pos = SYMBOL_STG_POSITION, const wxSize& size = SYMBOL_STG_SIZE,
-                    long style = SYMBOL_STG_STYLE);
-       void SetRoute(Route *pRoute){m_pRoute = pRoute;}
-       void SetWaypoint(RoutePoint *pRoutePoint){m_pRoutePoint = pRoutePoint;}
+public:
+    explicit SendToGpsDlg(QWidget *parent = 0);
+    ~SendToGpsDlg();
+    SendToGpsDlg(const QString& caption, const QString& hint, const QSize& size, long style, QWidget* parent = 0);
+    bool Create(const QString& caption = SYMBOL_STG_TITLE, const QString& hint = SYMBOL_STG_TITLE, const QSize& size = QSize(SYMBOL_STG_SIZE_WIDTH, SYMBOL_STG_SIZE_HEIGHT), long style = SYMBOL_STG_STYLE);
+    void SetRoute(Route *pRoute){m_pRoute = pRoute;}
+    void SetWaypoint(RoutePoint *pRoutePoint){m_pRoutePoint = pRoutePoint;}
+private slots:
+    void OnCancelClick();
+    void OnSendClick();
 
 private:
-      void CreateControls(const QString& hint);
-
-      void OnCancelClick( wxCommandEvent& event );
-      void OnSendClick( wxCommandEvent& event );
-
-      Route       *m_pRoute;
-      RoutePoint  *m_pRoutePoint;
-      wxComboBox  *m_itemCommListBox;
-      wxGauge     *m_pgauge;
-      wxButton    *m_CancelButton;
-      wxButton    *m_SendButton;
-
+    Ui::SendToGpsDlg *ui;
+    Route               *m_pRoute;
+    RoutePoint          *m_pRoutePoint;
+    QComboBox           *m_itemCommListBox;
+    QProgressBar        *m_pgauge;
+    QPushButton         *m_CancelButton;
+    QPushButton         *m_SendButton;
 };
 
-#endif
+#endif // SENDTOGPSDLG_H

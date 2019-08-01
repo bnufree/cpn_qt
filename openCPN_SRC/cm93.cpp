@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  cm93 Chart Object
@@ -2712,7 +2712,7 @@ InitReturn cm93chart::Init ( const wxString& name, ChartInitFlag flags )
 
 }
 
-Extended_Geometry *cm93chart::BuildGeom ( Object *pobject, wxFileOutputStream *postream, int iobject )
+Extended_Geometry *cm93chart::BuildGeom ( Object *pobject,/* wxFileOutputStream *postream,*/ int iobject )
 
 {
       wxString s;
@@ -6725,7 +6725,7 @@ public:
     OCPNOffsetListCtrl ( CM93OffsetDialog* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style );
     ~OCPNOffsetListCtrl();
 
-    wxString OnGetItemText ( long item, long column ) const;
+    QString OnGetItemText ( long item, long column ) const;
     int OnGetItemColumnImage ( long item, long column ) const;
 
     CM93OffsetDialog     *m_parent;

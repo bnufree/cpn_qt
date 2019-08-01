@@ -40,6 +40,8 @@
 #include "SelectItem.h"
 #include "ocpndc.h"
 #include "RoutePoint.h"
+#include "Track.h"
+#include "Route.h"
 
 enum
 {
@@ -99,7 +101,6 @@ class ocpnDC;
 class NavObjectCollection1;
 class NavObjectChanges;
 class TrackPoint;
-class TrackList;
 class canvasConfig;
 class RoutePoint;
 class Track;

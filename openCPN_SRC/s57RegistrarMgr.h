@@ -25,14 +25,10 @@
 #ifndef __S57REGISTRARMGR_H__
 #define __S57REGISTRARMGR_H__
 
+#include <QHash>
 
-WX_DECLARE_STRING_HASH_MAP( int, CSVHash1 );
-
-WX_DECLARE_HASH_MAP( int,
-                     std::string,
-                     wxIntegerHash,
-                     wxIntegerEqual,
-                     CSVHash2 );
+typedef QHash<QString, int> CSVHash1;
+typedef QHash<int, std::string> CSVHash2;
 
 
 /**

@@ -26,7 +26,7 @@
 
 #include "FontDesc.h"
 
-class OCPNwxFontList;
+class OCPNQFontList;
 
 /**
  * Manages the font list.
@@ -39,9 +39,9 @@ class FontMgr
         static FontMgr & Get();
     
         void SetLocale( QString &newLocale );
-        wxFont *GetFont(const QString &TextElement, int default_size = 0);
-        wxColour GetFontColor( const QString &TextElement ) const;
-        bool SetFontColor( const QString &TextElement, const wxColour color ) const;
+        QFont *GetFont(const QString &TextElement, int default_size = 0);
+        QColor GetFontColor( const QString &TextElement ) const;
+        bool SetFontColor( const QString &TextElement, const QColor color ) const;
     
         int GetNumFonts(void) const;
         const QString & GetConfigString(int i) const;
@@ -50,25 +50,25 @@ class FontMgr
         QString GetFullConfigDesc( int i ) const;
         static QString GetFontConfigKey( const QString &description );
         
-        wxArrayString &GetAuxKeyArray(){ return m_AuxKeyArray; }
+        QStringList &GetAuxKeyArray(){ return m_AuxKeyArray; }
         bool AddAuxKey( QString key );
         
         void LoadFontNative(QString *pConfigString, QString *pNativeDesc);
-        bool SetFont(const QString &TextElement, wxFont *pFont, wxColour color);
+        bool SetFont(const QString &TextElement, QFont *pFont, QColor color);
         void ScrubList( );
         MyFontDesc *FindFontByConfigString( QString pConfigString );
         
-        wxFont* FindOrCreateFont( int point_size, wxFontFamily family, 
-                    wxFontStyle style, wxFontWeight weight, bool underline = false,
+        QFont* FindOrCreateFont( int point_size, QFontFamily family,
+                    QFontStyle style, QFontWeight weight, bool underline = false,
                     const QString &facename = wxEmptyString,
-                    wxFontEncoding encoding = wxFONTENCODING_DEFAULT );
+                    QFontEncoding encoding = QFontENCODING_DEFAULT );
         // For wxWidgets 2.8 compatability
-        wxFont *FindOrCreateFont(int pointSize, int family, int style, int weight,
+        QFont *FindOrCreateFont(int pointSize, int family, int style, int weight,
                                  bool underline = false,
                                  const QString& face = wxEmptyString,
-                                 wxFontEncoding encoding = wxFONTENCODING_DEFAULT)
-            { return FindOrCreateFont(pointSize, (wxFontFamily)family, (wxFontStyle)style,
-                (wxFontWeight)weight, underline, face, encoding); }
+                                 QFontEncoding encoding = QFontENCODING_DEFAULT)
+            { return FindOrCreateFont(pointSize, (QFontFamily)family, (QFontStyle)style,
+                (QFontWeight)weight, underline, face, encoding); }
         
         static void Shutdown();
         
@@ -83,10 +83,10 @@ class FontMgr
     
         static FontMgr * instance;
 
-        OCPNwxFontList  *m_wxFontCache;
+        OCPNQFontList  *m_QFontCache;
         FontList *m_fontlist;
-        wxFont   *pDefFont;
-        wxArrayString m_AuxKeyArray;
+        QFont   *pDefFont;
+        QStringList m_AuxKeyArray;
 };
 
 #endif

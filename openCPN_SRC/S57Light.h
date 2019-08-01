@@ -25,11 +25,13 @@
 #ifndef __S57LIGHT_H__
 #define __S57LIGHT_H__
 
+#include <QStringList>
+
 class S57Light
 {
 public:
-      wxArrayString attributeNames;
-      wxArrayString attributeValues;
+      QStringList attributeNames;
+      QStringList attributeValues;
       QString position;
       bool hasSectors;
 };

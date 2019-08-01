@@ -33,8 +33,10 @@
 #include <vector>
 #include <list>
 #include <deque>
+#include <QDateTime>
+#include "Hyperlink.h"
+#include "LLRegion.h"
 
-class HyperlinkList;
 class ChartCanvas;
 class ViewPort;
 
@@ -50,12 +52,12 @@ class TrackPoint
 {
 public:
       TrackPoint(double lat, double lon, QString ts="");
-      TrackPoint(double lat, double lon, wxDateTime dt);
+      TrackPoint(double lat, double lon, QDateTime dt);
       TrackPoint( TrackPoint* orig );
       ~TrackPoint();
 
-      wxDateTime GetCreateTime(void);
-      void SetCreateTime( wxDateTime dt );
+      QDateTime GetCreateTime(void);
+      void SetCreateTime( QDateTime dt );
       void Draw(ChartCanvas *cc, ocpnDC& dc );
       const char *GetTimeString() { return m_timestring; }
       
@@ -85,7 +87,7 @@ public:
     TrackPoint *GetLastPoint();
     void AddPoint( TrackPoint *pNewPoint );
     void AddPointFinalized( TrackPoint *pNewPoint );
-    TrackPoint* AddNewPoint( vector2D point, wxDateTime time );
+    TrackPoint* AddNewPoint( vector2D point, QDateTime time );
     
     void SetListed(bool listed = true) { m_bListed = listed; }
     virtual bool IsRunning() { return false; }
@@ -103,33 +105,37 @@ public:
     void ClearHighlights();
     
     QString GetName( bool auto_if_empty = false ) const {
-        if( !auto_if_empty || !m_TrackNameString.IsEmpty() ) {
+        if( !auto_if_empty || !m_TrackNameString.isEmpty() ) {
             return m_TrackNameString;
         } else {
             QString name;
             TrackPoint *rp = NULL;
             if((int) TrackPoints.size() > 0)
                 rp = TrackPoints[0];
-            if( rp && rp->GetCreateTime().IsValid() ) name = rp->GetCreateTime().FormatISODate() + (" ")
-                + rp->GetCreateTime().FormatISOTime();   //name = rp->m_CreateTime.Format();
+            if( rp && rp->GetCreateTime().isValid() )
+            {
+                name = rp->GetCreateTime().toString("yyyy-MM-dd hh:mm:ss sss");
+            }
             else
-                name = ("(Unnamed Track)");
-            return name;
+            {
+                name = QObject::tr("(Unnamed Track)");
+                return name;
+            }
         }
     }
-    void SetName( const wxString name ) { m_TrackNameString = name; }
+    void SetName( const QString name ) { m_TrackNameString = name; }
     
     QString    m_GUID;
     bool        m_bIsInLayer;
     int         m_LayerID;
 
-    wxString    m_TrackDescription;
+    QString    m_TrackDescription;
 
-    wxString    m_TrackStartString;
-    wxString    m_TrackEndString;
+    QString    m_TrackStartString;
+    QString    m_TrackEndString;
 
     int         m_width;
-    wxPenStyle  m_style;
+    Qt::PenStyle  m_style;
     QString    m_Colour;
 
     bool m_bVisible;
@@ -144,7 +150,7 @@ public:
     void Clone( Track *psourcetrack, int start_nPoint, int end_nPoint, const QString & suffix);
 
 protected:
-    void Segments( ChartCanvas *cc, std::list< std::list<wxPoint> > &pointlists, const LLBBox &box, double scale);
+    void Segments( ChartCanvas *cc, std::list< std::list<QPoint> > &pointlists, const LLBBox &box, double scale);
     void DouglasPeuckerReducer( std::vector<TrackPoint*>& list,
                                 std::vector<bool> & keeplist,
                                 int from, int to, double delta );
@@ -155,71 +161,72 @@ protected:
     std::vector<std::vector <SubTrack> > SubTracks;
 
 private:
-    void GetPointLists(ChartCanvas *cc, std::list< std::list<wxPoint> > &pointlists,
+    void GetPointLists(ChartCanvas *cc, std::list< std::list<QPoint> > &pointlists,
                        ViewPort &VP, const LLBBox &box );
     void Finalize();
     double ComputeScale(int left, int right);
     void InsertSubTracks(LLBBox &box, int level, int pos);
 
-    void AddPointToList(ChartCanvas *cc, std::list< std::list<wxPoint> > &pointlists, int n);
-    void AddPointToLists(ChartCanvas *cc, std::list< std::list<wxPoint> > &pointlists, int &last, int n);
+    void AddPointToList(ChartCanvas *cc, std::list< std::list<QPoint> > &pointlists, int n);
+    void AddPointToLists(ChartCanvas *cc, std::list< std::list<QPoint> > &pointlists, int &last, int n);
 
-    void Assemble( ChartCanvas *cc, std::list< std::list<wxPoint> > &pointlists, const LLBBox &box, double scale, int &last, int level, int pos);
+    void Assemble( ChartCanvas *cc, std::list< std::list<QPoint> > &pointlists, const LLBBox &box, double scale, int &last, int level, int pos);
     
-    wxString    m_TrackNameString;
+    QString    m_TrackNameString;
 };
 
-WX_DECLARE_LIST(Track, TrackList); // establish class Route as list member
+typedef QList<Track> TrackList; // establish class Route as list member
 
 class Route;
-class ActiveTrack : public wxEvtHandler, public Track
+class ActiveTrack : public QObject, public Track
 {
-      public:
-            ActiveTrack();
-            ~ActiveTrack();
+    Q_OBJECT
+public:
+    ActiveTrack();
+    ~ActiveTrack();
 
-            void SetPrecision(int precision);
+    void SetPrecision(int precision);
 
-            void Start(void);
-            void Stop(bool do_add_point = false);
-            Track *DoExtendDaily();
-            bool IsRunning(){ return m_bRunning; }
-            
-            void AdjustCurrentTrackPoint( TrackPoint *prototype );
-            
-      private:
-            void OnTimerTrack(wxTimerEvent& event);
-            void AddPointNow(bool do_add_point = false);
+    void Start(void);
+    void Stop(bool do_add_point = false);
+    Track *DoExtendDaily();
+    bool IsRunning(){ return m_bRunning; }
 
-            bool              m_bRunning;
-            wxTimer           m_TimerTrack;
+    void AdjustCurrentTrackPoint( TrackPoint *prototype );
+public slots:
+    void OnTimerTrack();
 
-            int               m_nPrecision;
-            double            m_TrackTimerSec;
-            double            m_allowedMaxXTE;
-            double            m_allowedMaxAngle;
+private:
 
-            vector2D          m_lastAddedPoint;
-            double            m_prev_dist;
-            wxDateTime        m_prev_time;
+    void AddPointNow(bool do_add_point = false);
 
-            TrackPoint        *m_lastStoredTP;
-            TrackPoint        *m_removeTP;
-            TrackPoint        *m_prevFixedTP;
-            TrackPoint        *m_fixedTP;
-            int               m_track_run;
-            double            m_minTrackpoint_delta;
-            
-            enum eTrackPointState {
-                firstPoint,
-                secondPoint,
-                potentialPoint
-            } trackPointState;
+    bool              m_bRunning;
+    QTimer            *m_TimerTrack;
 
-            std::deque<vector2D> skipPoints;
-            std::deque<wxDateTime> skipTimes;
+    int               m_nPrecision;
+    double            m_TrackTimerSec;
+    double            m_allowedMaxXTE;
+    double            m_allowedMaxAngle;
 
-DECLARE_EVENT_TABLE()
+    vector2D          m_lastAddedPoint;
+    double            m_prev_dist;
+    QDateTime        m_prev_time;
+
+    TrackPoint        *m_lastStoredTP;
+    TrackPoint        *m_removeTP;
+    TrackPoint        *m_prevFixedTP;
+    TrackPoint        *m_fixedTP;
+    int               m_track_run;
+    double            m_minTrackpoint_delta;
+
+    enum eTrackPointState {
+        firstPoint,
+        secondPoint,
+        potentialPoint
+    } trackPointState;
+
+    std::deque<vector2D> skipPoints;
+    std::deque<QDateTime> skipTimes;
 };
 
 #endif

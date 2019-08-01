@@ -36,6 +36,9 @@
 
 #define     MAXSTACK          100
 
+#include <QDomDocument>
+#include <QMutex>
+
 
 
 // ----------------------------------------------------------------------------
@@ -141,7 +144,7 @@ public:
       void LockCache(){m_b_locked = true;}
       void UnLockCache(){m_b_locked = false;}
       bool IsCacheLocked(){ return m_b_locked; }
-      wxXmlDocument GetXMLDescription(int dbIndex, bool b_getGeom);
+      QDomDocument GetXMLDescription(int dbIndex, bool b_getGeom);
 
       bool LockCacheChart( int index );
       bool IsChartLocked( int index );
@@ -154,7 +157,7 @@ public:
 
       bool IsBusy(){ return m_b_busy; }
 protected:
-      virtual ChartBase *GetChart(const wxChar *theFilePath, ChartClassDescriptor &chart_desc) const;
+      virtual ChartBase *GetChart(const char *theFilePath, ChartClassDescriptor &chart_desc) const;
 
 private:
       InitReturn CreateChartTableEntry(QString full_name, ChartTableEntry *pEntry);
@@ -164,8 +167,8 @@ private:
       bool CheckPositionWithinChart(int index, float lat, float lon);
       ChartBase *OpenChartUsingCache(int dbindex, ChartInitFlag init_flag);
       CacheEntry *FindOldestDeleteCandidate( bool blog );
-      void DeleteCacheEntry(int i, bool bDelTexture = false, const QString &msg = wxEmptyString);
-      void DeleteCacheEntry(CacheEntry *pce, bool bDelTexture = false, const QString &msg = wxEmptyString);
+      void DeleteCacheEntry(int i, bool bDelTexture = false, const QString &msg = QString());
+      void DeleteCacheEntry(CacheEntry *pce, bool bDelTexture = false, const QString &msg = QString());
       
       
       wxArrayPtrVoid    *pChartCache;
@@ -174,8 +177,8 @@ private:
       bool              m_b_locked;
       bool              m_b_busy;
 
-      wxCriticalSection m_critSect;
-      wxMutex           m_cache_mutex;
+      QMutex             m_critSect;
+      QMutex           m_cache_mutex;
 };
 
 

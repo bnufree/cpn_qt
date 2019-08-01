@@ -1,165 +1,123 @@
-/***************************************************************************
- *
- * Project:  OpenCPN
- *
- ***************************************************************************
- *   Copyright (C) 2010 by David S. Register                               *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
- ***************************************************************************
- */
-
-#include <wx/combobox.h>
-
-#include "SendToGpsDlg.h"
+﻿#include "sendtogpsdlg.h"
+#include "ui_sendtogpsdlg.h"
 #include "Route.h"
 #include "RoutePoint.h"
 #include "chart1.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 
-extern wxString g_uploadConnection;
 
-IMPLEMENT_DYNAMIC_CLASS(SendToGpsDlg, wxDialog)
+extern QString g_uploadConnection;
 
-BEGIN_EVENT_TABLE( SendToGpsDlg, wxDialog ) EVT_BUTTON( ID_STG_CANCEL, SendToGpsDlg::OnCancelClick )
-	EVT_BUTTON( ID_STG_OK, SendToGpsDlg::OnSendClick )
-END_EVENT_TABLE()
 
-SendToGpsDlg::SendToGpsDlg()
+SendToGpsDlg::SendToGpsDlg(QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::SendToGpsDlg)
 {
+    ui->setupUi(this);
     m_itemCommListBox = NULL;
     m_pgauge = NULL;
     m_SendButton = NULL;
     m_CancelButton = NULL;
     m_pRoute = NULL;
     m_pRoutePoint = NULL;
-}
-
-SendToGpsDlg::SendToGpsDlg( wxWindow* parent, wxWindowID id, const wxString& caption,
-        const wxString& hint, const wxPoint& pos, const wxSize& size, long style )
-{
-    Create( parent, id, caption, hint, pos, size, style );
+    Create();
 }
 
 SendToGpsDlg::~SendToGpsDlg()
 {
-    delete m_itemCommListBox;
-    delete m_pgauge;
-    delete m_SendButton;
-    delete m_CancelButton;
+    delete ui;
 }
 
-bool SendToGpsDlg::Create( wxWindow* parent, wxWindowID id, const wxString& caption,
-        const wxString& hint, const wxPoint& pos, const wxSize& size, long style )
+
+SendToGpsDlg::SendToGpsDlg(const QString& caption, const QString& hint, const QSize& size, long style, QWidget* parent) :
+    QDialog(parent),
+    ui(new Ui::SendToGpsDlg)
 {
-    SetExtraStyle( GetExtraStyle() | wxWS_EX_BLOCK_EVENTS );
-    wxDialog::Create( parent, id, caption, pos, size, style );
-
-    CreateControls( hint );
-    GetSizer()->Fit( this );
-    GetSizer()->SetSizeHints( this );
-    Centre();
-
-    return TRUE;
+    ui->setupUi(this);
+    m_itemCommListBox = NULL;
+    m_pgauge = NULL;
+    m_SendButton = NULL;
+    m_CancelButton = NULL;
+    m_pRoute = NULL;
+    m_pRoutePoint = NULL;
+    Create( caption, hint, size, style );
 }
 
-void SendToGpsDlg::CreateControls( const wxString& hint )
+bool SendToGpsDlg::Create( const QString& caption, const QString& hint, const QSize& size, long style)
 {
-    SendToGpsDlg* itemDialog1 = this;
+    this->setWindowFlags(style);
+    this->setWindowTitle(caption);
+    this->setFixedSize(size);
 
-    wxBoxSizer* itemBoxSizer2 = new wxBoxSizer( wxVERTICAL );
-    itemDialog1->SetSizer( itemBoxSizer2 );
+    QVBoxLayout *total_layout = new QVBoxLayout(this);
+    total_layout->setSpacing(20);
+    this->setLayout(total_layout);
 
-//      Create the ScrollBox list of available com ports in a labeled static box
-    wxStaticBox* comm_box = new wxStaticBox( this, wxID_ANY, _("GPS/Plotter Port") );
-
-    wxStaticBoxSizer* comm_box_sizer = new wxStaticBoxSizer( comm_box, wxVERTICAL );
-    itemBoxSizer2->Add( comm_box_sizer, 0, wxEXPAND | wxALL, 5 );
-
-    wxArrayString *pSerialArray = EnumerateSerialPorts();
-
-    m_itemCommListBox = new wxComboBox( this, ID_STG_CHOICE_COMM );
+    QHBoxLayout *com_layout = new QHBoxLayout(this);
+    total_layout->addLayout(com_layout);
+    com_layout->addWidget(new QLabel(tr("GPS/Plotter Port"), this);
+    QStringList *pSerialArray = EnumerateSerialPorts();
+    m_itemCommListBox = new  QComboBox( this);
+    com_layout->addWidget(m_itemCommListBox);
 
     //    Fill in the listbox with all detected serial ports
-    for( unsigned int iPortIndex = 0; iPortIndex < pSerialArray->GetCount(); iPortIndex++ ) {
-        wxString full_port = pSerialArray->Item( iPortIndex );
-        full_port.Prepend(_T("Serial:"));
-        m_itemCommListBox->Append( full_port );
+    if(pSerialArray )
+    {
+        for( unsigned int iPortIndex = 0; iPortIndex < pSerialArray->count(); iPortIndex++ ) {
+            QString full_port = tr("Serial:") + pSerialArray->at(iPortIndex);
+            m_itemCommListBox->addItem(full_port);
+        }
+        delete pSerialArray;
     }
 
-    delete pSerialArray;
-
     //    Make the proper inital selection
-    if( !g_uploadConnection.IsEmpty() )
-        m_itemCommListBox->SetValue( g_uploadConnection );
-    else
-        m_itemCommListBox->SetSelection( 0 );
+    if( !g_uploadConnection.isEmpty() )
+    {
+        m_itemCommListBox->setCurrentText(g_uploadConnection );
+    } else
+    {
+        m_itemCommListBox->setCurrentIndex(0);
+    }
 
-    comm_box_sizer->Add( m_itemCommListBox, 0, wxEXPAND | wxALL, 5 );
+    total_layout->addWidget( new QLabel(tr("Prepare GPS for Route/Waypoint upload and press Send..."), this ));
 
-    //    Add a reminder text box
-    itemBoxSizer2->AddSpacer( 20 );
+    QHBoxLayout *process_layout = new QHBoxLayout(this);
+    total_layout->addLayout(process_layout);
+    process_layout->addWidget(new QLabel(tr("Progress..."), this);
+    m_pgauge = new QProgressBar( this);
+    m_pgauge->setOrientation(Qt::Horizontal);
+    m_pgauge->setRange(0, 100);
+    m_pgauge->setValue(-1);
 
-    wxStaticText *premtext = new wxStaticText( this, -1,
-            _("Prepare GPS for Route/Waypoint upload and press Send...") );
-    itemBoxSizer2->Add( premtext, 0, wxEXPAND | wxALL, 10 );
 
-    //    Create a progress gauge
-    wxStaticBox* prog_box = new wxStaticBox( this, wxID_ANY, _("Progress...") );
-
-    wxStaticBoxSizer* prog_box_sizer = new wxStaticBoxSizer( prog_box, wxVERTICAL );
-    itemBoxSizer2->Add( prog_box_sizer, 0, wxEXPAND | wxALL, 5 );
-
-    m_pgauge = new wxGauge( this, -1, 100 );
-    prog_box_sizer->Add( m_pgauge, 0, wxEXPAND | wxALL, 5 );
-
-    //    OK/Cancel/etc.
-    wxBoxSizer* itemBoxSizer16 = new wxBoxSizer( wxHORIZONTAL );
-    itemBoxSizer2->Add( itemBoxSizer16, 0, wxALIGN_RIGHT | wxALL, 5 );
-
-    m_CancelButton = new wxButton( itemDialog1, ID_STG_CANCEL, _("Cancel"), wxDefaultPosition,
-            wxDefaultSize, 0 );
-    itemBoxSizer16->Add( m_CancelButton, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5 );
-
-    m_SendButton = new wxButton( itemDialog1, ID_STG_OK, _("Send"), wxDefaultPosition,
-            wxDefaultSize, 0 );
-    itemBoxSizer16->Add( m_SendButton, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5 );
-    m_SendButton->SetDefault();
+    QHBoxLayout *btn_layout = new QHBoxLayout(this);
+    total_layout->addLayout(btn_layout);
+    m_CancelButton = new QPushButton(tr("Cancel"), this);
+    m_SendButton = new QPushButton(tr("Send"), this);
+    btn_layout->addWidget(m_CancelButton);
+    btn_layout->addWidget(m_SendButton);
+    connect(m_CancelButton, SIGNAL(clicked(bool)), this, SLOT(OnCancelClick()));
+    connect(m_SendButton, SIGNAL(clicked(bool)), this, SLOT(OnSendClick()));
+    m_SendButton->setDefault(true);
 
 }
 
-void SendToGpsDlg::OnSendClick( wxCommandEvent& event )
+void SendToGpsDlg::OnSendClick()
 {
     //    Get the selected comm port
-    wxString src = m_itemCommListBox->GetValue();
+    QString src = m_itemCommListBox->currentText();
     g_uploadConnection = src;                   // save for persistence
-
     //    And send it out
-    if( m_pRoute ) m_pRoute->SendToGPS( src.BeforeFirst(' '), true, m_pgauge );
-    if( m_pRoutePoint ) m_pRoutePoint->SendToGPS( src.BeforeFirst(' '), m_pgauge );
-
-//    Show( false );
-//    event.Skip();
-    Close();
+    if( m_pRoute ) m_pRoute->SendToGPS( src, true, m_pgauge );
+    if( m_pRoutePoint ) m_pRoutePoint->SendToGPS( src, m_pgauge );
+    close();
 }
 
-void SendToGpsDlg::OnCancelClick( wxCommandEvent& event )
+void SendToGpsDlg::OnCancelClick()
 {
-//    Show( false );
-//    event.Skip();
-    Close();
+    close();
 }
+
 
 

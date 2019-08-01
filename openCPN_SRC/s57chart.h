@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -131,7 +131,7 @@ public:
       virtual LLRegion GetValidRegion();
 
       virtual void GetPointPix(ObjRazRules *rzRules, float rlat, float rlon, QPoint *r);
-      virtual void GetPointPix(ObjRazRules *rzRules, QPoint2DDouble *en, QPoint *r, int nPoints);
+      virtual void GetPointPix(ObjRazRules *rzRules, QPointF *en, QPoint *r, int nPoints);
       virtual void GetPixPoint(int pixx, int pixy, double *plat, double *plon, ViewPort *vpt);
 
       virtual void SetVPParms(const ViewPort &vpt);

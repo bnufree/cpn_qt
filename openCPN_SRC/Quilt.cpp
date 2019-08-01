@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -37,8 +37,6 @@
 
 #include "s57chart.h"
 
-#include <wx/listimpl.cpp>
-WX_DEFINE_LIST( PatchList );
 
 extern ChartDB *ChartData;
 extern std::vector<int> g_quilt_noshow_index_array;

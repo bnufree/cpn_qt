@@ -25,21 +25,25 @@
 #ifndef __FONTDESC_H__
 #define __FONTDESC_H__
 
+#include <QString>
+#include <QFont>
+#include <QColor>
+
 class MyFontDesc
 {
 public:
 
-      MyFontDesc(QString DialogString, QString ConfigString, wxFont *pFont, wxColour color);
+      MyFontDesc(QString DialogString, QString ConfigString, QFont *pFont, QColor color);
       ~MyFontDesc();
 
       QString    m_dialogstring;
       QString    m_configstring;
       QString    m_nativeInfo;
-      wxFont      *m_font;
-      wxColour    m_color;
+      QFont      *m_font;
+      QColor     m_color;
 };
 
 
-WX_DECLARE_LIST(MyFontDesc, FontList);
+typedef QList<MyFontDesc> FontList;
 
 #endif

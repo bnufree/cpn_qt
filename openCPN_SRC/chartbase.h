@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  ChartBase Definition
@@ -75,7 +75,7 @@ public:
     ThumbData();
     virtual ~ThumbData();
 
-      wxBitmap    *pDIBThumb;
+      QBitmap    *pDIBThumb;
       int         ShipX;
       int         ShipY;
       int         Thumb_Size_X;
@@ -139,8 +139,8 @@ public:
 
       virtual InitReturn Init( const QString& name, ChartInitFlag init_flags) = 0;
 
-      virtual void Activate(void) {};
-      virtual void Deactivate(void) {};
+      virtual void Activate(void) {}
+      virtual void Deactivate(void) {}
 
 //    Accessors
       virtual ThumbData *GetThumbData(int tnx, int tny, float lat, float lon) = 0;
@@ -154,7 +154,7 @@ public:
 
 
       virtual OcpnProjType GetChartProjectionType(){ return m_projection;}
-      virtual wxDateTime GetEditionDate(void){ return m_EdDate;}
+      virtual QDateTime GetEditionDate(void){ return m_EdDate;}
 
       virtual QString GetPubDate(){ return m_PubYear;}
       virtual int GetNativeScale(){ return m_Chart_Scale;}
@@ -177,7 +177,7 @@ public:
       virtual ChartDepthUnitType GetDepthUnitType(void) { return m_depth_unit_id;}
 
       virtual bool IsReadyToRender(){ return bReadyToRender;}
-      virtual bool RenderRegionViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint,
                                         const OCPNRegion &Region) = 0;
 
       virtual bool RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& VPoint,
@@ -222,7 +222,7 @@ protected:
       OcpnProjType      m_projection;
       ChartDepthUnitType m_depth_unit_id;
 
-      wxDateTime        m_EdDate;
+      QDateTime        m_EdDate;
 
       ThumbData         *pThumbData;
 
@@ -278,7 +278,7 @@ public:
 
       virtual bool GetChartExtent(Extent *pext);
 
-      virtual bool RenderRegionViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint,
                                         const OCPNRegion &Region);
 
       virtual bool RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& VPoint,
@@ -294,9 +294,9 @@ public:
       virtual double GetNearestPreferredScalePPM(double target_scale_ppm){ return target_scale_ppm; }
 
 private:
-      bool RenderViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint);
+      bool RenderViewOnDC(QPainter* dc, const ViewPort& VPoint);
 
-      wxBitmap    *m_pBM;
+      QBitmap    *m_pBM;
 };
 
 

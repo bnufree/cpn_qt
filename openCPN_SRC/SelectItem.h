@@ -25,6 +25,8 @@
 #ifndef __SELECTITEM_H__
 #define __SELECTITEM_H__
 
+#include <QList>
+
 class SelectItem
 {
 public:
@@ -46,6 +48,7 @@ public:
       int   m_Data4;
 };
 
-WX_DECLARE_LIST(SelectItem, SelectableItemList);// establish class as list member
+typedef QList<SelectItem> SelectableItemList;// establish class as list member
+typedef SelectItem          SelectableItemListNode;
 
 #endif

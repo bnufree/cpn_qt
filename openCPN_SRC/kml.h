@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Read and write KML Format (http://en.wikipedia.org/wiki/Keyhole_Markup_Language)
@@ -80,13 +80,16 @@ private:
 };
 
 //---------------------------------------------------------------------------
+#include <QWidget>
+#include <QButtonGroup>
 
-class KmlFormatDialog : public wxDialog{
+class KmlFormatDialog : public QWidget{
+    Q_OBJECT
 private:
-    std::vector<wxRadioButton*> choices;
+    QButtonGroup* choices;
 
 public:
-    KmlFormatDialog( wxWindow* parent );
+    KmlFormatDialog( QWidget* parent );
     int GetSelectedFormat();
 };
 

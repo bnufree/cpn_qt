@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  CM93 Chart Object
@@ -352,7 +352,7 @@ class cm93chart : public s57chart
       private:
             InitReturn CreateHeaderDataFromCM93Cell(void);
             int read_header_and_populate_cib(header_struct *ph, Cell_Info_Block *pCIB);
-            Extended_Geometry *BuildGeom(Object *pobject, wxFileOutputStream *postream, int iobject);
+            Extended_Geometry *BuildGeom(Object *pobject,/* wxFileOutputStream *postream, */int iobject);
 
             S57Obj *CreateS57Obj( int cell_index, int iobject, int subcell, Object *pobject, cm93_dictionary *pDict,
                                   Extended_Geometry *xgeom, double ref_lat, double ref_lon, double scale,
@@ -507,7 +507,7 @@ class cm93compchart : public s57chart
 
             int               m_current_cell_pub_date;      // the (integer) publish date of the cell at the current VP
 
-            wxBitmap          *m_pDummyBM;
+            QBitmap          *m_pDummyBM;
             int               m_cell_index_special_outline;
             int               m_object_id_special_outline;
             int               m_subcell_special_outline;
@@ -526,15 +526,12 @@ class OCPNOffsetListCtrl;
 //----------------------------------------------------------------------------------------------------------
 class QPushButton;
 
-class CM93OffsetDialog: public QDialog
+class CM93OffsetDialog: public QWidget
 {
     Q_OBJECT
 public:
     CM93OffsetDialog( QWidget *parent = 0 );
     ~CM93OffsetDialog( );
-
-    void OnClose(wxCloseEvent& event);
-    void OnOK(wxCommandEvent& event);
 
     void SetCM93Chart( cm93compchart *pchart );
     void SetColorScheme( );
@@ -545,9 +542,13 @@ public:
 
     QString                      m_selected_chart_scale_char;
 
+public slots:
+    void OnClose();
+    void OnOK();
+    void OnCellSelected();
+    void OnOffSetSet();
 private:
-    void OnCellSelected( wxListEvent &event );
-    void OnOffSetSet( wxCommandEvent& event );
+
     void UpdateOffsets(void);
 
 private:
@@ -555,6 +556,7 @@ private:
     QSpinBox        *m_pSpinCtrlXoff;
     QSpinBox        *m_pSpinCtrlYoff;
     QPushButton          *m_OKButton;
+    QPushButton          *m_CloseButton;
 
     QWidget          *m_pparent;
     cm93compchart     *m_pcompchart;

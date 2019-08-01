@@ -33,6 +33,8 @@
 #include "nmea0183.h"
 
 #include <QBitmap>
+#include "Route.h"
+#include "RoutePoint.h"
 
 //----------------------------------------------------------------------------
 //   constants

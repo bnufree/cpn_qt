@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -41,7 +41,7 @@
 // ----------------------------------------------------------------------------
 // OCPNRegion
 // ----------------------------------------------------------------------------
-
+class OGdkRegion;
 class OCPNRegion : public
 #ifdef USE_NEW_REGION
  QObject
@@ -74,7 +74,7 @@ public:
     bool operator==(const OCPNRegion& region) const { return ODoIsEqual(region); }
     bool operator!=(const OCPNRegion& region) const { return !(*this == region); }
     
-    bool IsOk() const { return m_refData != NULL; }
+    bool IsOk() const { return m_region != NULL; }
     bool Ok() const { return IsOk(); }
     
     // Get the bounding box
@@ -87,13 +87,13 @@ public:
     }
 
     // Test if the given point or rectangle is inside this region
-    QRegionContain Contains(int x, int y) const
+    bool Contains(int x, int y) const
     { return ODoContainsPoint(x, y); }
-    QRegionContain Contains(const QPoint& pt) const
-    { return ODoContainsPoint(pt.x, pt.y); }
-    QRegionContain Contains(int x, int y, int w, int h) const
+    bool Contains(const QPoint& pt) const
+    { return ODoContainsPoint(pt.x(), pt.y()); }
+    bool Contains(int x, int y, int w, int h) const
     { return ODoContainsRect(QRect(x, y, w, h)); }
-    QRegionContain Contains(const QRect& rect) const
+    bool Contains(const QRect& rect) const
     { return ODoContainsRect(rect); }
     
  // Is region equal (i.e. covers the same area as another one)?
@@ -110,7 +110,7 @@ public:
     void *GetRegion() const;
 
     bool Offset(int x, int y)   { return ODoOffset(x, y); }
-    bool Offset(const QPoint& pt)      { return ODoOffset(pt.x, pt.y); }
+    bool Offset(const QPoint& pt)      { return ODoOffset(pt.x(), pt.y()); }
     bool Intersect(const OCPNRegion& region) { return ODoIntersect(region); }
     bool Union(const OCPNRegion& region) { return ODoUnionWithRegion(region); }
             bool Union(int x, int y, int w, int h) { return ODoUnionWithRect(QRect(x, y, w, h)); }
@@ -119,14 +119,14 @@ public:
     
 protected:
     // ref counting code
-    virtual wxObjectRefData *CreateRefData() const;
-    virtual wxObjectRefData *CloneRefData(const wxObjectRefData *data) const;
+//    virtual wxObjectRefData *CreateRefData() const;
+//    virtual wxObjectRefData *CloneRefData(const wxObjectRefData *data) const;
 
     // QRegionBase pure virtuals
     virtual bool ODoIsEqual(const OCPNRegion& region) const;
     virtual bool ODoGetBox(int& x, int& y, int& w, int& h) const;
-    virtual QRegionContain ODoContainsPoint(int x, int y) const;
-    virtual QRegionContain ODoContainsRect(const QRect& rect) const;
+    virtual bool ODoContainsPoint(int x, int y) const;
+    virtual bool ODoContainsRect(const QRect& rect) const;
 
     virtual bool ODoOffset(int x, int y);
     virtual bool ODoUnionWithRect(const QRect& rect);
@@ -134,6 +134,9 @@ protected:
     virtual bool ODoIntersect(const OCPNRegion& region);
     virtual bool ODoSubtract(const OCPNRegion& region);
 //    virtual bool DoXor(const OCPNRegion& region);
+
+private:
+    OGdkRegion*             m_region;
     
 
 #endif

@@ -26,12 +26,9 @@
 #define __NAVOBJECTCOLLECTION_H__
 
 #include "pugixml.hpp"
-#include <wx/string.h>
-#include <wx/checkbox.h>
 #include "bbox.h"
 
 class Track;
-class TrackList;
 class TrackPoint;
 class RoutePointList;
 class Route;

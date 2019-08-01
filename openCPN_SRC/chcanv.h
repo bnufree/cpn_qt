@@ -41,6 +41,8 @@
 #include "emboss_data.h"
 #include "S57Sector.h"
 #include "gshhs.h"
+#include <QTimer>
+
 
 class wxGLContext;
 class GSHHSChart;

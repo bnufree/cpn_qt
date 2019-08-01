@@ -82,8 +82,9 @@ private:
 
 };
 
-typedef QList<QuiltPatch>   atchList;
+typedef QList<QuiltPatch>   PatchList;
 typedef QList< QuiltCandidate*> ArrayOfSortedQuiltCandidates;
+typedef QuiltPatch         PatchListNode;
 
 class Quilt
 {
@@ -131,7 +132,7 @@ public:
     }
 
     int GetnCharts() {
-        return m_PatchList.GetCount();
+        return m_PatchList.count();
     }
     double GetBestStartScale(int dbi_ref_hint, const ViewPort &vp_in);
     
@@ -143,7 +144,7 @@ public:
     bool IsVPBlittable( ViewPort &VPoint, int dx, int dy, bool b_allow_vector = false );
     ChartBase *GetChartAtPix( ViewPort &VPoint, const QPoint& p );
     ChartBase *GetOverlayChartAtPix( ViewPort &VPoint, const QPoint& p );
-    int GetChartdbIndexAtPix( ViewPort &VPoint, wxPoint p );
+    int GetChartdbIndexAtPix( ViewPort &VPoint, QPoint p );
     void InvalidateAllQuiltPatchs( void );
     void Invalidate( void )
     {
@@ -247,10 +248,10 @@ private:
     OCPNRegion m_rendered_region; // used only in dc mode
 
     PatchList m_PatchList;
-    wxBitmap *m_pBM;
+    QBitmap *m_pBM;
 
     bool m_bcomposed;
-    wxPatchListNode *cnode;
+    PatchListNode *cnode;
     bool m_bbusy;
     int m_quilt_proj;
 
