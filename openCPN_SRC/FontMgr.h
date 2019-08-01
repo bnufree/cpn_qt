@@ -58,17 +58,13 @@ class FontMgr
         void ScrubList( );
         MyFontDesc *FindFontByConfigString( QString pConfigString );
         
-        QFont* FindOrCreateFont( int point_size, QFontFamily family,
-                    QFontStyle style, QFontWeight weight, bool underline = false,
-                    const QString &facename = wxEmptyString,
-                    QFontEncoding encoding = QFontENCODING_DEFAULT );
+        QFont* FindOrCreateFont( int point_size, QString family,
+                    QFont::Style style, int weight, bool underline = false);
         // For wxWidgets 2.8 compatability
-        QFont *FindOrCreateFont(int pointSize, int family, int style, int weight,
-                                 bool underline = false,
-                                 const QString& face = wxEmptyString,
-                                 QFontEncoding encoding = QFontENCODING_DEFAULT)
-            { return FindOrCreateFont(pointSize, (QFontFamily)family, (QFontStyle)style,
-                (QFontWeight)weight, underline, face, encoding); }
+        QFont *FindOrCreateFont(int pointSize, QString family, int style, int weight,
+                                 bool underline = false)
+            { return FindOrCreateFont(pointSize, family, (QFont::Style)style,
+                weight, underline); }
         
         static void Shutdown();
         

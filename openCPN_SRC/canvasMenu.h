@@ -89,6 +89,11 @@ public:
  
       void CanvasPopupMenu( int x, int y, int seltype );
       static int GetNextContextMenuId();
+private:
+      void MenuPrepend1( QMenu *menu, int id, const QStringList& list);
+      void MenuPrepend1( QMenu *menu, int id, const QString& name, const QString& short_cut = QString());
+      void MenuAppend1( QMenu *menu, int id, const QStringList& list);
+      void MenuAppend1( QMenu *menu, int id, const QString& name, const QString& short_cut = QString());
 public slots:
       void PopupMenuHandler();
  private:

@@ -212,19 +212,16 @@ CanvasMenuHandler::~CanvasMenuHandler()
 //-------------------------------------------------------------------------------
 //          Popup Menu Handling
 //-------------------------------------------------------------------------------
-void MenuPrepend1( QMenu *menu, int id, const QStringList& list)
+void CanvasMenuHandler::MenuPrepend1( QMenu *menu, int id, const QStringList& list)
 {
     if(list.size() == 0) return;
-    if(list.size() == 1)
-    {
-        MenuPrepend1( menu, id, list[0]);
-    } else
-    {
-        MenuPrepend1( menu, id, list[0], list[1]);
-    }
+    QString name = list[0];
+    QString short_cut = "";
+    if(list.size() > 1) short_cut = list[1];
+    MenuPrepend1(menu, id, name, short_cut);
 }
 
-void MenuPrepend1( QMenu *menu, int id, const QString& name, const QString& short_cut = QString())
+void CanvasMenuHandler::CanvasMenuHandler::MenuPrepend1( QMenu *menu, int id, const QString& name, const QString& short_cut)
 {
     if(!menu) return;
     int count = menu->actions().count();
@@ -245,19 +242,16 @@ void MenuPrepend1( QMenu *menu, int id, const QString& name, const QString& shor
     }
 }
 
-void MenuAppend1( QMenu *menu, int id, const QStringList& list)
+void CanvasMenuHandler::CanvasMenuHandler::MenuAppend1( QMenu *menu, int id, const QStringList& list)
 {
     if(list.size() == 0) return;
-    if(list.size() == 1)
-    {
-        MenuAppend1( menu, id, list[0]);
-    } else
-    {
-        MenuAppend1( menu, id, list[0], list[1]);
-    }
+    QString name = list[0];
+    QString short_cut = "";
+    if(list.size() > 1) short_cut = list[1];
+    MenuAppend1(menu, id, name, short_cut);
 }
 
-void MenuAppend1( QMenu *menu, int id, const QString& name, const QString& short_cut = QString())
+void CanvasMenuHandler::CanvasMenuHandler::MenuAppend1( QMenu *menu, int id, const QString& name, const QString& short_cut)
 {
     if(!menu) return;
     QAction *action = menu->addAction(name);
@@ -798,10 +792,9 @@ if( !g_bBasicMenus && (nChartStack > 1 ) ) {
     //  Add PlugIn Context Menu items
     ArrayOfPlugInMenuItems item_array = g_pi_manager->GetPluginContextMenuItemArray();
 
-    for( unsigned int i = 0; i < item_array.GetCount(); i++ ) {
+    for( unsigned int i = 0; i < item_array.count(); i++ ) {
         PlugInMenuItemContainer *pimis = item_array[i];
-        if( !pimis->b_viz )
-            continue;
+        if(!pimis || !pimis->b_viz ) continue;
 
         wxMenu *submenu = NULL;
         if(pimis->pmenu_item->GetSubMenu()) {
