@@ -291,7 +291,7 @@ public:
       void SendVectorChartObjectInfo(const QString &chart, const QString &feature, const QString &objname, double &lat, double &lon, double &scale, int &nativescale);
 
       bool SendMouseEventToPlugins( wxMouseEvent &event);
-      bool SendKeyEventToPlugins( wxKeyEvent &event);
+      bool SendKeyEventToPlugins( QKeyEvent* event);
 
       void SendBaseConfigToAllPlugIns();
       void SendS52ConfigToAllPlugIns( bool bReconfig = false );

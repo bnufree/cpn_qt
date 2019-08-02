@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  OpenCPN Platform specific support utilities
@@ -26,16 +26,10 @@
 #ifndef OCPNPLATFORM_H
 #define OCPNPLATFORM_H
 
-#include "wx/wxprec.h"
 
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif //precompiled headers
-
-#include <wx/zchxlog.h>
-#include <wx/stdpaths.h>
-
+#include <zchxlog.h>
 #include <stdio.h>
+#include <QFileDialog>
 
 class MyConfig;
 
@@ -67,7 +61,7 @@ public:
 
     static bool hasInternalBT(QString profile = (""));       // Bluetooth
     bool startBluetoothScan();
-    wxArrayString getBluetoothScanResults();
+    QStringList getBluetoothScanResults();
     bool stopBluetoothScan();
     
 //  Per-Platform initialization support    
@@ -98,7 +92,7 @@ public:
     static void ShowBusySpinner( void );
     static void HideBusySpinner( void );
     double getFontPointsperPixel( void );
-    wxSize getDisplaySize();
+    QSize getDisplaySize();
     double GetDisplaySizeMM();
     void SetDisplaySizeMM( double size );
     double GetDisplayDPmm();
@@ -107,10 +101,10 @@ public:
     double GetCompassScaleFactor( int GUIScaleFactor );
     void onStagedResizeFinal();
     
-    wxFileDialog *AdjustFileDialogFont(wxWindow *container, wxFileDialog *dlg);
-    wxDirDialog  *AdjustDirDialogFont(wxWindow *container,  wxDirDialog *dlg);
+    QFileDialog *AdjustFileDialogFont(QWidget *container, QFileDialog *dlg);
+    QFileDialog  *AdjustDirDialogFont(QWidget *container,  QFileDialog *dlg);
 
-    void PositionAISAlert( wxWindow *alert_window);
+    void PositionAISAlert( QWidget *alert_window);
     float getChartScaleFactorExp( float scale_linear );
     int GetStatusBarFieldCount();
     bool GetFullscreen();
@@ -122,7 +116,7 @@ public:
 //      Per-Platform file/directory support
 //--------------------------------------------------------------------------
 
-    wxStandardPaths& GetStdPaths();
+    QString &GetStdPaths();
     QString &GetHomeDir();
     QString &GetExePath();
     QString &GetSharedDataDir();
@@ -138,10 +132,10 @@ public:
     QString GetSupplementalLicenseString();
     QString NormalizePath(const QString &full_path); //Adapt for portable use
     
-    int DoFileSelectorDialog( wxWindow *parent, QString *file_spec, QString Title, QString initDir,
+    int DoFileSelectorDialog( QWidget *parent, QString *file_spec, QString Title, QString initDir,
                                 QString suggestedName, QString wildcard);
-    int DoDirSelectorDialog( wxWindow *parent, QString *file_spec, QString Title, QString initDir);
-    
+    int DoDirSelectorDialog( QWidget *parent, QString *file_spec, QString Title, QString initDir);
+
     bool InitializeLogFile( void );
     void CloseLogFile( void );
     QString    &GetLargeLogMessage( void ){ return large_log_message; }
@@ -182,13 +176,12 @@ private:
     QString    m_PrivateDataDir;
     QString    m_PluginsDir;
     QString    m_config_file_name;
-    
+
     QString    mlog_file;
     FILE        *flog;
-    wxLog       *m_Oldlogger;
     QString    large_log_message;
-    wxSize      m_displaySize;
-    wxSize      m_displaySizeMM;
+    QSize      m_displaySize;
+    QSize      m_displaySizeMM;
     int         m_displaySizeMMOverride;
     
     int         m_monitorWidth, m_monitorHeight;

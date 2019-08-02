@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  OpenCPN Main wxWidgets Program
@@ -47,7 +47,7 @@ public:
       void SetScaleFactor( float factor);
       
       void Move(const wxPoint &pt) { m_rect.SetPosition(pt); }
-      wxRect GetRect(void) const { return m_rect; }
+      QRect GetRect(void) const { return m_rect; }
 private:
       void CreateBmp( bool bnew = false );
 
@@ -65,7 +65,7 @@ private:
       int m_yoffset;
       float m_scale;
 
-      wxRect m_rect;
+      QRect m_rect;
       bool m_shown;
       bool m_bshowGPS;
       ColorScheme m_cs;

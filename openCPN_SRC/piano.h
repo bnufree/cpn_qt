@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Bar Window
@@ -58,7 +58,7 @@ public:
       void Paint(int y, ocpnDC &dc, wxDC *shapeDC=NULL);
       void DrawGL(int y);
       void FormatKeys(void);
-      bool MouseEvent(wxMouseEvent& event);
+      bool MouseEvent(QMouseEvent* event);
       void SetColorScheme(ColorScheme cs);
       void SetKeyArray(std::vector<int> piano_chart_index_array);
       void SetActiveKey(int iactive) { m_iactive = iactive; }

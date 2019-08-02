@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Options Dialog
@@ -26,29 +26,11 @@
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
-#include <wx/listbook.h>
-#include <wx/dirctrl.h>
-#include <wx/spinctrl.h>
-#include <wx/listctrl.h>
-#include <wx/choice.h>
-#include <wx/collpane.h>
-#include <wx/clrpicker.h>
-#if wxCHECK_VERSION(2, 9, 0)
- #include <wx/timectrl.h>
-#endif
-#ifdef __WXGTK__
-//wxTimePickerCtrl is completely broken in Gnome based desktop environments as of wxGTK 3.0
+
 #include "time_textbox.h"
-#endif
 #include <vector>
 
-#if wxCHECK_VERSION(2, 9, 0)
-#include <wx/frame.h>
-#else
 #include "scrollingdialog.h"
-#endif
-
-#include "datastream.h"
 
 #ifndef __OCPN__ANDROID__
 #define __OCPN__OPTIONS_USE_LISTBOOK__
@@ -224,7 +206,6 @@ enum {
 #define wxFIXED_MINSIZE 0
 #endif
 
-#include <wx/arrimpl.cpp>
 WX_DEFINE_ARRAY_PTR(wxGenericDirCtrl *, ArrayOfDirCtrls);
 
 class Uncopyable {
@@ -253,9 +234,6 @@ class options : private Uncopyable,
                    long style = SYMBOL_OPTIONS_STYLE);
 
   ~options(void);
-#if wxCHECK_VERSION(3,0,0)
-  bool SendIdleEvents(wxIdleEvent &event );
-#endif  
   void SetInitialPage(int page_sel, int sub_page = -1);
   void Finish(void);
 
@@ -571,13 +549,6 @@ class options : private Uncopyable,
   wxCheckBox *pTransparentToolbar;
   wxCheckBox *pAdvanceRouteWaypointOnArrivalOnly, *pTrackShowIcon;
   wxCheckBox *pTrackDaily, *pTrackHighlite;
-#if wxCHECK_VERSION(2, 9, 0)
-#ifdef __WXGTK__
-  TimeCtrl *pTrackRotateTime;
-#else
-  wxTimePickerCtrl *pTrackRotateTime;
-#endif
-#endif  
   wxRadioButton *pTrackRotateComputerTime, *pTrackRotateUTC, *pTrackRotateLMT;
   wxColourPickerCtrl *m_colourWaypointRangeRingsColour;
   wxChoice *pSoundDeviceIndex;
@@ -593,21 +564,14 @@ class options : private Uncopyable,
 
  private:
   void Init(void);
-  void CreatePanel_MMSI(size_t parent, int border_size, int group_item_spacing);
-  void CreatePanel_AIS(size_t parent, int border_size, int group_item_spacing);
-  void CreatePanel_Ownship(size_t parent, int border_size, int group_item_spacing);
-  void CreatePanel_NMEA(size_t parent, int border_size, int group_item_spacing);
-  void CreatePanel_NMEA_Compact(size_t parent, int border_size, int group_item_spacing);
   void CreatePanel_ChartsLoad(size_t parent, int border_size, int group_item_spacing);
   void CreatePanel_VectorCharts(size_t parent, int border_size, int group_item_spacing);
-  void CreatePanel_TidesCurrents(size_t parent, int border_size, int group_item_spacing);
   void CreatePanel_ChartGroups(size_t parent, int border_size, int group_item_spacing);
   void CreatePanel_Display(size_t parent, int border_size, int group_item_spacing);
   void CreatePanel_UI(size_t parent, int border_size, int group_item_spacing);
   void CreatePanel_Units(size_t parent, int border_size, int group_item_spacing);
   void CreatePanel_Advanced(size_t parent, int border_size, int group_item_spacing);
   void CreatePanel_Configs(size_t parent, int border_size, int group_item_spacing);
-  void CreatePanel_Routes(size_t parent, int border_size, int group_item_spacing);
 
   void UpdateTemplateTitleText();
   void CheckDeviceAccess(QString &path);
@@ -663,8 +627,6 @@ class options : private Uncopyable,
   wxBoxSizer *m_boxSizerConfigs;
   wxColour m_panelBackgroundUnselected;
   QString m_selectedConfigPanelGUID;
-  
-  DECLARE_EVENT_TABLE()
 };
 
 class CanvasConfigSelect: public wxPanel
@@ -686,8 +648,7 @@ private:
     wxColour m_boxColour;
     wxBitmap m_bmpNormal;
     int m_borderWidth;
-    
-    DECLARE_EVENT_TABLE()
+
 };
 
 class ChartGroupsUI : private Uncopyable, public wxScrolledWindow {
@@ -744,102 +705,9 @@ class ChartGroupsUI : private Uncopyable, public wxScrolledWindow {
   ChartGroupArray *m_pGroupArray;
 
   int m_border_size, m_group_item_spacing, m_GroupSelectedPage;
-  
-  DECLARE_EVENT_TABLE()
 };
 
-#if wxUSE_XLOCALE || !wxCHECK_VERSION(3, 0, 0)
-static int lang_list[] = {
-    wxLANGUAGE_DEFAULT, wxLANGUAGE_ABKHAZIAN, wxLANGUAGE_AFAR,
-    wxLANGUAGE_AFRIKAANS, wxLANGUAGE_ALBANIAN, wxLANGUAGE_AMHARIC,
-    wxLANGUAGE_ARABIC, wxLANGUAGE_ARABIC_ALGERIA, wxLANGUAGE_ARABIC_BAHRAIN,
-    wxLANGUAGE_ARABIC_EGYPT, wxLANGUAGE_ARABIC_IRAQ, wxLANGUAGE_ARABIC_JORDAN,
-    wxLANGUAGE_ARABIC_KUWAIT, wxLANGUAGE_ARABIC_LEBANON,
-    wxLANGUAGE_ARABIC_LIBYA, wxLANGUAGE_ARABIC_MOROCCO, wxLANGUAGE_ARABIC_OMAN,
-    wxLANGUAGE_ARABIC_QATAR, wxLANGUAGE_ARABIC_SAUDI_ARABIA,
-    wxLANGUAGE_ARABIC_SUDAN, wxLANGUAGE_ARABIC_SYRIA, wxLANGUAGE_ARABIC_TUNISIA,
-    //    wxLANGUAGE_ARABIC_UAE,
-    wxLANGUAGE_ARABIC_YEMEN, wxLANGUAGE_ARMENIAN, wxLANGUAGE_ASSAMESE,
-    wxLANGUAGE_AYMARA, wxLANGUAGE_AZERI, wxLANGUAGE_AZERI_CYRILLIC,
-    wxLANGUAGE_AZERI_LATIN, wxLANGUAGE_BASHKIR, wxLANGUAGE_BASQUE,
-    wxLANGUAGE_BELARUSIAN, wxLANGUAGE_BENGALI, wxLANGUAGE_BHUTANI,
-    wxLANGUAGE_BIHARI, wxLANGUAGE_BISLAMA, wxLANGUAGE_BRETON,
-    wxLANGUAGE_BULGARIAN, wxLANGUAGE_BURMESE, wxLANGUAGE_CAMBODIAN,
-    wxLANGUAGE_CATALAN,
-    //    wxLANGUAGE_CHINESE,
-    //    wxLANGUAGE_CHINESE_SIMPLIFIED,
-    //    wxLANGUAGE_CHINESE_TRADITIONAL,
-    //    wxLANGUAGE_CHINESE_HONGKONG,
-    //    wxLANGUAGE_CHINESE_MACAU,
-    //    wxLANGUAGE_CHINESE_SINGAPORE,
-    wxLANGUAGE_CHINESE_TAIWAN, wxLANGUAGE_CORSICAN, wxLANGUAGE_CROATIAN,
-    wxLANGUAGE_CZECH, wxLANGUAGE_DANISH, wxLANGUAGE_DUTCH,
-    wxLANGUAGE_DUTCH_BELGIAN, wxLANGUAGE_ENGLISH, wxLANGUAGE_ENGLISH_UK,
-    wxLANGUAGE_ENGLISH_US, wxLANGUAGE_ENGLISH_AUSTRALIA,
-    wxLANGUAGE_ENGLISH_BELIZE, wxLANGUAGE_ENGLISH_BOTSWANA,
-    wxLANGUAGE_ENGLISH_CANADA, wxLANGUAGE_ENGLISH_CARIBBEAN,
-    wxLANGUAGE_ENGLISH_DENMARK, wxLANGUAGE_ENGLISH_EIRE,
-    wxLANGUAGE_ENGLISH_JAMAICA, wxLANGUAGE_ENGLISH_NEW_ZEALAND,
-    wxLANGUAGE_ENGLISH_PHILIPPINES, wxLANGUAGE_ENGLISH_SOUTH_AFRICA,
-    wxLANGUAGE_ENGLISH_TRINIDAD, wxLANGUAGE_ENGLISH_ZIMBABWE,
-    wxLANGUAGE_ESPERANTO, wxLANGUAGE_ESTONIAN, wxLANGUAGE_FAEROESE,
-    wxLANGUAGE_FARSI, wxLANGUAGE_FIJI, wxLANGUAGE_FINNISH, wxLANGUAGE_FRENCH,
-    wxLANGUAGE_FRENCH_BELGIAN, wxLANGUAGE_FRENCH_CANADIAN,
-    wxLANGUAGE_FRENCH_LUXEMBOURG, wxLANGUAGE_FRENCH_MONACO,
-    wxLANGUAGE_FRENCH_SWISS, wxLANGUAGE_FRISIAN, wxLANGUAGE_GALICIAN,
-    wxLANGUAGE_GEORGIAN, wxLANGUAGE_GERMAN, wxLANGUAGE_GERMAN_AUSTRIAN,
-    wxLANGUAGE_GERMAN_BELGIUM, wxLANGUAGE_GERMAN_LIECHTENSTEIN,
-    wxLANGUAGE_GERMAN_LUXEMBOURG, wxLANGUAGE_GERMAN_SWISS, wxLANGUAGE_GREEK,
-    wxLANGUAGE_GREENLANDIC, wxLANGUAGE_GUARANI, wxLANGUAGE_GUJARATI,
-    wxLANGUAGE_HAUSA, wxLANGUAGE_HEBREW, wxLANGUAGE_HINDI, wxLANGUAGE_HUNGARIAN,
-    wxLANGUAGE_ICELANDIC, wxLANGUAGE_INDONESIAN, wxLANGUAGE_INTERLINGUA,
-    wxLANGUAGE_INTERLINGUE, wxLANGUAGE_INUKTITUT, wxLANGUAGE_INUPIAK,
-    wxLANGUAGE_IRISH, wxLANGUAGE_ITALIAN, wxLANGUAGE_ITALIAN_SWISS,
-    wxLANGUAGE_JAPANESE, wxLANGUAGE_JAVANESE, wxLANGUAGE_KANNADA,
-    wxLANGUAGE_KASHMIRI, wxLANGUAGE_KASHMIRI_INDIA, wxLANGUAGE_KAZAKH,
-    wxLANGUAGE_KERNEWEK, wxLANGUAGE_KINYARWANDA, wxLANGUAGE_KIRGHIZ,
-    wxLANGUAGE_KIRUNDI,
-    //    wxLANGUAGE_KONKANI,
-    wxLANGUAGE_KOREAN, wxLANGUAGE_KURDISH, wxLANGUAGE_LAOTHIAN,
-    wxLANGUAGE_LATIN, wxLANGUAGE_LATVIAN, wxLANGUAGE_LINGALA,
-    wxLANGUAGE_LITHUANIAN, wxLANGUAGE_MACEDONIAN, wxLANGUAGE_MALAGASY,
-    wxLANGUAGE_MALAY, wxLANGUAGE_MALAYALAM, wxLANGUAGE_MALAY_BRUNEI_DARUSSALAM,
-    wxLANGUAGE_MALAY_MALAYSIA, wxLANGUAGE_MALTESE,
-    //    wxLANGUAGE_MANIPURI,
-    wxLANGUAGE_MAORI, wxLANGUAGE_MARATHI, wxLANGUAGE_MOLDAVIAN,
-    wxLANGUAGE_MONGOLIAN, wxLANGUAGE_NAURU, wxLANGUAGE_NEPALI,
-    wxLANGUAGE_NEPALI_INDIA, wxLANGUAGE_NORWEGIAN_BOKMAL,
-    wxLANGUAGE_NORWEGIAN_NYNORSK, wxLANGUAGE_OCCITAN, wxLANGUAGE_ORIYA,
-    wxLANGUAGE_OROMO, wxLANGUAGE_PASHTO, wxLANGUAGE_POLISH,
-    wxLANGUAGE_PORTUGUESE, wxLANGUAGE_PORTUGUESE_BRAZILIAN, wxLANGUAGE_PUNJABI,
-    wxLANGUAGE_QUECHUA, wxLANGUAGE_RHAETO_ROMANCE, wxLANGUAGE_ROMANIAN,
-    wxLANGUAGE_RUSSIAN, wxLANGUAGE_RUSSIAN_UKRAINE, wxLANGUAGE_SAMOAN,
-    wxLANGUAGE_SANGHO, wxLANGUAGE_SANSKRIT, wxLANGUAGE_SCOTS_GAELIC,
-    wxLANGUAGE_SERBIAN, wxLANGUAGE_SERBIAN_CYRILLIC, wxLANGUAGE_SERBIAN_LATIN,
-    wxLANGUAGE_SERBO_CROATIAN, wxLANGUAGE_SESOTHO, wxLANGUAGE_SETSWANA,
-    wxLANGUAGE_SHONA, wxLANGUAGE_SINDHI, wxLANGUAGE_SINHALESE,
-    wxLANGUAGE_SISWATI, wxLANGUAGE_SLOVAK, wxLANGUAGE_SLOVENIAN,
-    wxLANGUAGE_SOMALI, wxLANGUAGE_SPANISH, wxLANGUAGE_SPANISH_ARGENTINA,
-    wxLANGUAGE_SPANISH_BOLIVIA, wxLANGUAGE_SPANISH_CHILE,
-    wxLANGUAGE_SPANISH_COLOMBIA, wxLANGUAGE_SPANISH_COSTA_RICA,
-    wxLANGUAGE_SPANISH_DOMINICAN_REPUBLIC, wxLANGUAGE_SPANISH_ECUADOR,
-    wxLANGUAGE_SPANISH_EL_SALVADOR, wxLANGUAGE_SPANISH_GUATEMALA,
-    wxLANGUAGE_SPANISH_HONDURAS, wxLANGUAGE_SPANISH_MEXICAN,
-    //    wxLANGUAGE_SPANISH_MODERN,
-    wxLANGUAGE_SPANISH_NICARAGUA, wxLANGUAGE_SPANISH_PANAMA,
-    wxLANGUAGE_SPANISH_PARAGUAY, wxLANGUAGE_SPANISH_PERU,
-    wxLANGUAGE_SPANISH_PUERTO_RICO, wxLANGUAGE_SPANISH_URUGUAY,
-    wxLANGUAGE_SPANISH_US, wxLANGUAGE_SPANISH_VENEZUELA, wxLANGUAGE_SUNDANESE,
-    wxLANGUAGE_SWAHILI, wxLANGUAGE_SWEDISH, wxLANGUAGE_SWEDISH_FINLAND,
-    wxLANGUAGE_TAGALOG, wxLANGUAGE_TAJIK, wxLANGUAGE_TAMIL, wxLANGUAGE_TATAR,
-    wxLANGUAGE_TELUGU, wxLANGUAGE_THAI, wxLANGUAGE_TIBETAN, wxLANGUAGE_TIGRINYA,
-    wxLANGUAGE_TONGA, wxLANGUAGE_TSONGA, wxLANGUAGE_TURKISH, wxLANGUAGE_TURKMEN,
-    wxLANGUAGE_TWI, wxLANGUAGE_UIGHUR, wxLANGUAGE_UKRAINIAN, wxLANGUAGE_URDU,
-    wxLANGUAGE_URDU_INDIA, wxLANGUAGE_URDU_PAKISTAN, wxLANGUAGE_UZBEK,
-    wxLANGUAGE_UZBEK_CYRILLIC, wxLANGUAGE_UZBEK_LATIN, wxLANGUAGE_VIETNAMESE,
-    wxLANGUAGE_VOLAPUK, wxLANGUAGE_WELSH, wxLANGUAGE_WOLOF, wxLANGUAGE_XHOSA,
-    wxLANGUAGE_YIDDISH, wxLANGUAGE_YORUBA, wxLANGUAGE_ZHUANG, wxLANGUAGE_ZULU};
-#endif
+
 
 class SentenceListDlg : private Uncopyable, public wxDialog {
  public:
@@ -893,11 +761,9 @@ class OpenGLOptionsDlg : private Uncopyable, public wxDialog {
 
   bool m_brebuild_cache;
 
-  DECLARE_EVENT_TABLE()
 };
 #endif
 
-#define ID_MMSI_PROPS_LIST 10073
 
 enum {
     mlMMSI = 0,
@@ -909,73 +775,8 @@ enum {
     mlShipName
 };  // MMSIListCtrl Columns;
 
-class MMSIListCtrl : private Uncopyable, public wxListCtrl {
- public:
-  explicit MMSIListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
-                        const wxSize &size, long style);
-  ~MMSIListCtrl(void);
 
-  QString OnGetItemText(long item, long column) const;
-  void OnListItemClick(wxListEvent &event);
-  void OnListItemActivated(wxListEvent &event);
-  void OnListItemRightClick(wxListEvent &event);
-  void PopupMenuHandler(wxCommandEvent &event);
 
-  wxWindow *m_parent;
-  int m_context_item;
-  
-  DECLARE_EVENT_TABLE()
-};
-
-#define ID_MMSIEDIT_OK 8191
-#define ID_MMSIEDIT_CANCEL 8192
-#define ID_MMSI_CTL 8193
-#define ID_DEF_MENU_MMSI_EDIT 8194
-#define ID_DEF_MENU_MMSI_DELETE 8195
-
-class MMSIEditDialog : private Uncopyable, public wxDialog {
- public:
-  explicit MMSIEditDialog(MMSIProperties *props, wxWindow *parent,
-                          wxWindowID id = wxID_ANY,
-                          const QString &caption = wxEmptyString,
-                          const wxPoint &pos = wxDefaultPosition,
-                          const wxSize &size = wxDefaultSize, long style = 0);
-  ~MMSIEditDialog(void);
-
-  void SetColorScheme(ColorScheme cs);
-  void CreateControls(void);
-  void OnMMSIEditCancelClick(wxCommandEvent &event);
-  void OnMMSIEditOKClick(wxCommandEvent &event);
-  void OnCtlUpdated(wxCommandEvent &event);
-
-  MMSIProperties *m_props;
-  wxTextCtrl *m_MMSICtl, m_ShipNameCtl; //Has ToDo take away?
-  wxRadioButton *m_rbTypeTrackDefault, *m_rbTypeTrackAlways;
-  wxRadioButton *m_rbTypeTrackNever;
-  wxCheckBox *m_cbTrackPersist, *m_IgnoreButton, *m_MOBButton, *m_VDMButton, *m_FollowerButton;
-  wxButton *m_CancelButton, *m_OKButton;
-
-private:
-    void Persist();
-
-  DECLARE_EVENT_TABLE()
-};
-
-class MMSI_Props_Panel : private Uncopyable, public wxPanel {
- public:
-  explicit MMSI_Props_Panel(wxWindow *parent);
-  ~MMSI_Props_Panel();
-
-  void OnNewButton(wxCommandEvent &event);
-  void SetColorScheme(ColorScheme cs);
-  void UpdateMMSIList(void);
-
-  MMSIListCtrl *m_pListCtrlMMSI;
-  wxButton *m_pButtonNew;
-
- private:
-  wxWindow *m_pparent;
-};
 
 class ConfigCreateDialog : private Uncopyable, public wxDialog
 {
@@ -995,7 +796,6 @@ public:
     wxTextCtrl *m_TitleCtl, *m_DescriptionCtl; 
     wxButton *m_CancelButton, *m_OKButton;
     wxString m_createdTemplateGUID;
-    DECLARE_EVENT_TABLE()
 };
 
 #endif

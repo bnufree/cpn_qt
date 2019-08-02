@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Canvas
@@ -23,19 +23,6 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  **************************************************************************/
 
-// For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif //precompiled headers
-#include "wx/image.h"
-#include <wx/graphics.h>
-#include <wx/listbook.h>
-#include <wx/clipbrd.h>
-#include <wx/aui/aui.h>
-#include "wx/progdlg.h"
-
 #include "config.h"
 #include "dychart.h"
 #include "OCPNPlatform.h"
@@ -44,7 +31,6 @@
 #include "DarkMode.h"
 #endif
 
-#include <wx/listimpl.cpp>
 
 #include "chcanv.h"
 #include "TCWin.h"
@@ -60,11 +46,7 @@
 #include "chartimg.h"
 #include "chart1.h"
 #include "cutil.h"
-#include "MarkInfo.h"
-#include "RoutePropDlgImpl.h"
-#include "TrackPropDlg.h"
 #include "tcmgr.h"
-#include "routemanagerdialog.h"
 #include "pluginmanager.h"
 #include "ocpn_pixel.h"
 #include "ocpndc.h"
@@ -79,14 +61,10 @@
 #include "SelectItem.h"
 #include "Select.h"
 #include "FontMgr.h"
-#include "AIS_Decoder.h"
-#include "AIS_Target_Data.h"
-#include "AISTargetAlertDialog.h"
 #include "SendToGpsDlg.h"
 #include "compass.h"
 #include "OCPNRegion.h"
 #include "gshhs.h"
-#include "canvasMenu.h"
 #include "wx28compat.h"
 #include "Track.h"
 #include "Route.h"
@@ -95,6 +73,7 @@
 #include "CanvasConfig.h"
 #include "CanvasOptions.h"
 #include "mbtiles.h"
+
 
 #ifdef __OCPN__ANDROID__
 #include "androidUTIL.h"
@@ -109,8 +88,6 @@
 #include "s52plib.h"
 #include "s52utils.h"
 
-#include "ais.h"
-
 #ifdef __MSVC__
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
@@ -122,6 +99,9 @@
 #ifndef __WXMSW__
 #include <signal.h>
 #include <setjmp.h>
+
+#include <QMenu>
+#include <QKeyEvent>
 
 
 extern struct sigaction sa_all;
@@ -2116,7 +2096,7 @@ void ChartCanvas::SetupCanvasQuiltMode( void )
 
 bool ChartCanvas::IsTempMenuBarEnabled()
 {
-#ifdef __WXMSW__
+#ifdef __WIN32__
     int major;
     wxGetOsVersion(&major);
     return (major > 5);   //  For Windows, function is only available on Vista and above
@@ -2576,7 +2556,7 @@ void ChartCanvas::OnDeferredFocusTimerEvent( wxTimerEvent &event)
 
 }
 
-void ChartCanvas::OnKeyChar( wxKeyEvent &event )
+void ChartCanvas::OnKeyChar( Qt::KeyeyEvent &event )
 {
     if(g_pi_manager)
         if(g_pi_manager->SendKeyEventToPlugins( event ))
@@ -2604,26 +2584,24 @@ void ChartCanvas::OnKeyChar( wxKeyEvent &event )
     event.Skip();
 }    
 
-void ChartCanvas::OnKeyDown( wxKeyEvent &event )
+void ChartCanvas::keyPressEvent(QKeyEvent* event)
 {
-    if(g_pi_manager)
-        if(g_pi_manager->SendKeyEventToPlugins( event ))
-            return;                     // PlugIn did something, and does not want the canvas to do anything else
+    if(g_pi_manager && g_pi_manager->SendKeyEventToPlugins( event )) return; // PlugIn did something, and does not want the canvas to do anything else
             
     bool b_handled = false;
     
-    m_modkeys = event.GetModifiers();
+    m_modkeys = event->modifiers();
 
-    int panspeed = m_modkeys == wxMOD_ALT ? 2 : 100;
+    int panspeed = (m_modkeys == Qt::AltModifier ? 2 : 100);
 
 #ifdef OCPN_ALT_MENUBAR        
 #ifndef __WXOSX__
     // If the permanent menubar is disabled, we show it temporarily when Alt is pressed or when
     // Alt + a letter is presssed (for the top-menu-level hotkeys).
     // The toggling normally takes place in OnKeyUp, but here we handle some special cases.
-    if ( IsTempMenuBarEnabled() && event.AltDown()  &&  !g_bShowMenuBar ) {
+    if ( IsTempMenuBarEnabled() /*&& event.AltDown()  */&&  !g_bShowMenuBar ) {
         // If Alt + a letter is pressed, and the menubar is hidden, show it now
-        if ( event.GetKeyCode() >= 'A' && event.GetKeyCode() <= 'Z' ) {
+        if ( event->key() >= 'A' && event->key() <= 'Z' ) {
             if ( !g_bTempShowMenuBar ) {
                 g_bTempShowMenuBar = true;
                 parent_frame->ApplyGlobalSettings(false);
@@ -2633,7 +2611,7 @@ void ChartCanvas::OnKeyDown( wxKeyEvent &event )
             return;
         }
         // If another key is pressed while Alt is down, do NOT toggle the menus when Alt is released
-        if ( event.GetKeyCode() != WXK_ALT ) {
+        if ( event->key() != Qt::Key_Alt) {
             m_bMayToggleMenuBar = false;
         }
     }
@@ -2641,13 +2619,13 @@ void ChartCanvas::OnKeyDown( wxKeyEvent &event )
 #endif
 
     // HOTKEYS
-    switch( event.GetKeyCode() ) {
+    switch( event->key() ) {
         
-    case WXK_TAB:
+    case Qt::Key_Tab:
         //parent_frame->SwitchKBFocus( this );
         break;
             
-    case WXK_MENU:
+    case Qt::Key_Menu:
         int x, y;
         event.GetPosition( &x, &y );
         m_FinishRouteOnKillFocus = false;
@@ -2655,15 +2633,15 @@ void ChartCanvas::OnKeyDown( wxKeyEvent &event )
         m_FinishRouteOnKillFocus = true;
         break;
 
-    case WXK_ALT:
+    case Qt::Key_Alt:
         m_modkeys |= wxMOD_ALT;
         break;
 
-    case WXK_CONTROL:
+    case Qt::Key_Control:
         m_modkeys |= wxMOD_CONTROL;
         break;
 
-    case WXK_LEFT:
+    case Qt::Key_Left:
         if( m_modkeys == wxMOD_CONTROL ) parent_frame->DoStackDown( this );
         else if(g_bsmoothpanzoom) {
             StartTimedMovement();
@@ -2674,7 +2652,7 @@ void ChartCanvas::OnKeyDown( wxKeyEvent &event )
         b_handled = true;
         break;
 
-    case WXK_UP:
+    case Qt::Key_Up:
         if(g_bsmoothpanzoom) {
             StartTimedMovement();
             m_pany = -1;
@@ -2683,7 +2661,7 @@ void ChartCanvas::OnKeyDown( wxKeyEvent &event )
         b_handled = true;
         break;
 
-    case WXK_RIGHT:
+    case Qt::Key_Right:
         if( m_modkeys == wxMOD_CONTROL ) parent_frame->DoStackUp( this );
         else if(g_bsmoothpanzoom) {
             StartTimedMovement();
@@ -2694,7 +2672,7 @@ void ChartCanvas::OnKeyDown( wxKeyEvent &event )
         
         break;
 
-    case WXK_DOWN:
+    case Qt::Key_Down:
         if(g_bsmoothpanzoom) {
             StartTimedMovement();
             m_pany = 1;
@@ -2703,17 +2681,17 @@ void ChartCanvas::OnKeyDown( wxKeyEvent &event )
         b_handled = true;
         break;
 
-    case WXK_F2:
+    case Qt::Key_F2:
         TogglebFollow();
         break;
 
-    case WXK_F3: {
+    case Qt::Key_F3: {
         SetShowENCText( !GetShowENCText() );
         Refresh(true);
         InvalidateGL();
         break;
     }
-    case WXK_F4:
+    case Qt::Key_F4:
         if( !m_bMeasure_Active ) {
             if (event.ShiftDown())
                 m_bMeasure_DistCircle = true;
@@ -2734,13 +2712,13 @@ void ChartCanvas::OnKeyDown( wxKeyEvent &event )
         
         break;
 
-    case WXK_F5:
+    case Qt::Key_F5:
         parent_frame->ToggleColorScheme();
         gFrame->Raise();
         TriggerDeferredFocus(); 
         break;
 
-    case WXK_F6: {
+    case Qt::Key_F6: {
         int mod = m_modkeys & wxMOD_SHIFT;
         if( mod != m_brightmod ) {
             m_brightmod = mod;
@@ -2770,26 +2748,26 @@ void ChartCanvas::OnKeyDown( wxKeyEvent &event )
         break;
     }
 
-    case WXK_F7:
+    case Qt::Key_F7:
         parent_frame->DoStackDown( this );
         break;
 
-    case WXK_F8:
+    case Qt::Key_F8:
         parent_frame->DoStackUp( this );
         break;
 
 #ifndef __WXOSX__        
-    case WXK_F9:
+    case Qt::Key_F9:
         ToggleCanvasQuiltMode();
         break;
 #endif        
         
-    case WXK_F11:
+    case Qt::Key_F11:
         parent_frame->ToggleFullScreen();
         b_handled = true;
         break;
 
-    case WXK_F12: {
+    case Qt::Key_F12: {
         if( m_modkeys == wxMOD_ALT )
             m_nMeasureState = *(volatile int *)(0);     // generate a fault for testing
 
@@ -2797,23 +2775,23 @@ void ChartCanvas::OnKeyDown( wxKeyEvent &event )
         break;
     }
 
-    case WXK_PAUSE:                   // Drop MOB
+    case Qt::Key_Pause:                   // Drop MOB
          parent_frame->ActivateMOB();
          break;
 
     //NUMERIC PAD
-    case WXK_NUMPAD_ADD:              // '+' on NUM PAD
-    case WXK_PAGEUP:{
+    case Qt::Key_NUMPAD_ADD:              // '+' on NUM PAD
+    case Qt::Key_PAGEUP:{
         ZoomCanvas( 2.0, false );
         break;
     }
-    case WXK_NUMPAD_SUBTRACT:   // '-' on NUM PAD
-    case WXK_PAGEDOWN:{
+    case Qt::Key_NUMPAD_SUBTRACT:   // '-' on NUM PAD
+    case Qt::Key_PAGEDOWN:{
         ZoomCanvas( .5, false );
         break;
     }
-	case WXK_DELETE:
-	case WXK_BACK:
+    case Qt::Key_DELETE:
+    case Qt::Key_BACK:
 		if (m_bMeasure_Active) {
             if (m_nMeasureState > 2) {
                 m_pMeasureRoute->DeletePoint(m_pMeasureRoute->GetLastPoint());
@@ -3163,43 +3141,41 @@ void ChartCanvas::OnKeyDown( wxKeyEvent &event )
 #endif
 }
 
-void ChartCanvas::OnKeyUp( wxKeyEvent &event )
+void ChartCanvas::keyReleaseEvent(QKeyEvent* event)
 {
-    if(g_pi_manager)
-        if(g_pi_manager->SendKeyEventToPlugins( event ))
-            return;                     // PlugIn did something, and does not want the canvas to do anything else
-            
-    switch( event.GetKeyCode() ) {
-    case WXK_TAB:
+    if(g_pi_manager && g_pi_manager->SendKeyEventToPlugins( event ))  return;                     // PlugIn did something, and does not want the canvas to do anything else
+
+    switch( event->key() ) {
+    case Qt::Key_Tab:
         parent_frame->SwitchKBFocus( this );
         break;
                 
-    case WXK_LEFT:
-    case WXK_RIGHT:
+    case Qt::Key_Left:
+    case Qt::Key_Right:
         m_panx = 0;
         if(!m_pany)
             m_panspeed = 0;
         break;
 
-    case WXK_UP:
-    case WXK_DOWN:
+    case Qt::Key_Up:
+    case Qt::Key_Down:
         m_pany = 0;
         if(!m_panx)
             m_panspeed = 0;
         break;
 
-    case WXK_NUMPAD_ADD:              // '+' on NUM PAD
-    case WXK_NUMPAD_SUBTRACT:   // '-' on NUM PAD
-    case WXK_PAGEUP:
-    case WXK_PAGEDOWN:
+//    case Qt::Key_NUMPAD_ADD:              // '+' on NUM PAD
+//    case Qt::Key_NUMPAD_SUBTRACT:   // '-' on NUM PAD
+    case Qt::Key_PageUp:
+    case Qt::Key_PageDown:
         if(m_mustmove)
             DoMovement(m_mustmove);
 
         m_zoom_factor = 1;
         break;
 
-    case WXK_ALT:
-        m_modkeys &= ~wxMOD_ALT;
+    case Qt::Key_Alt:
+        m_modkeys &= ~Qt::AltModifier;
 #ifdef OCPN_ALT_MENUBAR        
 #ifndef __WXOSX__
         // If the permanent menu bar is disabled, and we are not in the middle of another key combo,
@@ -3213,15 +3189,15 @@ void ChartCanvas::OnKeyUp( wxKeyEvent &event )
 #endif        
         break;
 
-    case WXK_CONTROL:
-        m_modkeys &= ~wxMOD_CONTROL;
+    case Qt::Key_Control:
+        m_modkeys &= ~Qt::ControlModifier;
         break;
 
     }
 
-    if( event.GetKeyCode() < 128 )            //ascii
+    if( event->key() < 128 )            //ascii
     {
-        int key_char = event.GetKeyCode();
+        int key_char = event->key();
 
         //      Handle both QWERTY and AZERTY keyboard separately for a few control codes
         if( !g_b_assume_azerty ) {
@@ -6750,10 +6726,10 @@ void ChartCanvas::MouseTimedEvent( wxTimerEvent& event )
 bool leftIsDown;
 
 
-bool ChartCanvas::MouseEventOverlayWindows( wxMouseEvent& event )
+bool ChartCanvas::MouseEventOverlayWindows(  QMouseEvent* event  )
 {
     if (!m_bChartDragging && !m_bDrawingRoute) {
-        if(m_Compass && m_Compass->IsShown() && m_Compass->GetRect().Contains(event.GetPosition())) { 
+        if(m_Compass && m_Compass->IsShown() && m_Compass->GetRect().contains(event->pos())) {
             if (m_Compass->MouseEvent( event )) {
                 cursor_region = CENTER;
                 if( !g_btouch )
@@ -6769,21 +6745,18 @@ bool ChartCanvas::MouseEventOverlayWindows( wxMouseEvent& event )
 }
 
 
-bool ChartCanvas::MouseEventChartBar( wxMouseEvent& event )
+bool ChartCanvas::MouseEventChartBar( QMouseEvent* event )
 {
-    if(!g_bShowChartBar)
-        return false;
+    if(!g_bShowChartBar)  return false;
 
-    if (! m_Piano->MouseEvent(event) )
-        return false;
+    if (! m_Piano->MouseEvent(event) )    return false;
 
     cursor_region = CENTER;
-    if( !g_btouch )
-        SetCanvasCursor( event );
+    if( !g_btouch )  SetCanvasCursor( event );
     return true;
 }
 
-bool ChartCanvas::MouseEventSetup( wxMouseEvent& event,  bool b_handle_dclick )
+bool ChartCanvas::MouseEventSetup( QMouseEvent* event,  bool b_handle_dclick )
 {
     int x, y;
     int mx, my;
@@ -6793,7 +6766,6 @@ bool ChartCanvas::MouseEventSetup( wxMouseEvent& event,  bool b_handle_dclick )
     event.GetPosition( &x, &y );
     
     m_MouseDragging = event.Dragging();
-    
     //  Some systems produce null drag events, where the pointer position has not changed from the previous value.
     //  Detect this case, and abort further processing (FS#1748)
 #ifdef __WXMSW__    
@@ -8471,17 +8443,17 @@ bool ChartCanvas::MouseEventProcessCanvas( wxMouseEvent& event )
             factor = 1/factor;
         
         if(g_bsmoothpanzoom){
-            if( (m_wheelstopwatch.Time() < m_wheelzoom_stop_oneshot) ) {
+            if( (m_wheelstopwatch.elapsed() < m_wheelzoom_stop_oneshot) ) {
                 if( wheel_dir == m_last_wheel_dir ) {
                     m_wheelzoom_stop_oneshot += mouse_wheel_oneshot;
                     //                    m_zoom_target /= factor;
                 }
-                else 
+                else
                     StopMovement( );
             }
-            else {    
+            else {
                 m_wheelzoom_stop_oneshot = mouse_wheel_oneshot;
-                m_wheelstopwatch.Start(0);
+                m_wheelstopwatch.start();
                 //                m_zoom_target =  VPoint.chart_scale / factor;
             }
         }
@@ -12791,34 +12763,36 @@ void ChartCanvas::PianoPopupMenu( int x, int y, int selected_index, int selected
     menu_selected_dbIndex = selected_dbIndex;
     menu_selected_index = selected_index;
 
-    m_piano_ctx_menu = new wxMenu();
+    m_piano_ctx_menu = new QMenu();
 
     //    Search the no-show array
     bool b_is_in_noshow = false;
     for( unsigned int i = 0; i < g_quilt_noshow_index_array.size(); i++ ) {
         if( g_quilt_noshow_index_array[i] == selected_dbIndex ) // chart is in the noshow list
-                {
+        {
             b_is_in_noshow = true;
             break;
         }
     }
 
-    if( b_is_in_noshow ) {
-        m_piano_ctx_menu->Append( ID_PIANO_ENABLE_QUILT_CHART, _("Show This Chart") );
-        Connect( ID_PIANO_ENABLE_QUILT_CHART, wxEVT_COMMAND_MENU_SELECTED,
-                wxCommandEventHandler(ChartCanvas::OnPianoMenuEnableChart) );
-    } else
-        if( GetpCurrentStack()->nEntry > 1 ) {
-            m_piano_ctx_menu->Append( ID_PIANO_DISABLE_QUILT_CHART, _("Hide This Chart") );
-            Connect( ID_PIANO_DISABLE_QUILT_CHART, wxEVT_COMMAND_MENU_SELECTED,
-                    wxCommandEventHandler(ChartCanvas::OnPianoMenuDisableChart) );
-        }
+    QAction * act = NULL;
+    if( b_is_in_noshow )
+    {
+        act = m_piano_ctx_menu->addAction(tr("Show This Chart"));
+        act->setData(ID_PIANO_ENABLE_QUILT_CHART);
+        connect(act, SIGNAL(triggered(bool)), this, SLOT(OnPianoMenuEnableChart()))
+    } else if( GetpCurrentStack()->nEntry > 1 ) {
+        act = m_piano_ctx_menu->addAction(tr("Hide This Chart"));
+        act->setData(ID_PIANO_DISABLE_QUILT_CHART);
+        connect(act, SIGNAL(triggered(bool)), this, SLOT(OnPianoMenuDisableChart()))
+    }
 
-    wxPoint pos = wxPoint(x, y - 30);
-
+    QPoint pos = QPoint(x, y - 30);
 //        Invoke the drop-down menu
-    if( m_piano_ctx_menu->GetMenuItems().GetCount() )
-        PopupMenu( m_piano_ctx_menu, pos );
+    if( m_piano_ctx_menu->actions().size() > 0)
+    {
+        m_piano_ctx_menu->popup(pos);
+    }
 
     delete m_piano_ctx_menu;
     m_piano_ctx_menu = NULL;
@@ -12831,7 +12805,7 @@ void ChartCanvas::PianoPopupMenu( int x, int y, int selected_index, int selected
     ReloadVP();
 }
 
-void ChartCanvas::OnPianoMenuEnableChart( wxCommandEvent& event )
+void ChartCanvas::OnPianoMenuEnableChart()
 {
     for( unsigned int i = 0; i < g_quilt_noshow_index_array.size(); i++ ) {
         if( g_quilt_noshow_index_array[i] == menu_selected_dbIndex ) // chart is in the noshow list
@@ -12842,7 +12816,7 @@ void ChartCanvas::OnPianoMenuEnableChart( wxCommandEvent& event )
     }
 }
 
-void ChartCanvas::OnPianoMenuDisableChart( wxCommandEvent& event )
+void ChartCanvas::OnPianoMenuDisableChart( )
 {
     if( !GetpCurrentStack() ) return;
     if( !ChartData ) return;

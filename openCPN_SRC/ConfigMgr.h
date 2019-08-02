@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -24,10 +24,6 @@
 #ifndef __CONFIGMGR_H__
 #define __CONFIGMGR_H__
 
-#include "wx/wxprec.h"
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif //precompiled headers
 
 #include "pugixml.hpp"
 

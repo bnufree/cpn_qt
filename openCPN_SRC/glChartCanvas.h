@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -25,7 +25,7 @@
 #ifndef __GLCHARTCANVAS_H__
 #define __GLCHARTCANVAS_H__
 
-#include <wx/glcanvas.h>
+//#include <wx/glcanvas.h>
 
 #include "dychart.h"
 

@@ -42,6 +42,8 @@
 #include "S57Sector.h"
 #include "gshhs.h"
 #include <QTimer>
+#include <QPainter>.
+#include <QResizeEvent>
 
 
 class wxGLContext;
@@ -146,18 +148,20 @@ protected:
       void keyPressEvent(QKeyEvent *event);
       void keyReleaseEvent(QKeyEvent *event);
       void paintEvent(QPaintEvent* event);
+      void focusInEvent(QFocusEvent *);
+      void focusOutEvent(QFocusEvent *);
 public slots:
       void OnToolLeftClick();
-      bool MouseEventOverlayWindows( wxMouseEvent& event );
-      bool MouseEventChartBar( wxMouseEvent& event );
-      bool MouseEventSetup( wxMouseEvent& event, bool b_handle_dclick = true );
-      bool MouseEventProcessObjects( wxMouseEvent& event );
-      bool MouseEventProcessCanvas( wxMouseEvent& event );
-      void SetCanvasCursor( wxMouseEvent& event );
-      void OnKillFocus( wxFocusEvent& WXUNUSED(event) );
-      void OnSetFocus( wxFocusEvent& WXUNUSED(event) );
+      bool MouseEventOverlayWindows( QMouseEvent* event );
+      bool MouseEventChartBar( QMouseEvent* event );
+      bool MouseEventSetup( QMouseEvent* event, bool b_handle_dclick = true );
+      bool MouseEventProcessObjects( QMouseEvent* event );
+      bool MouseEventProcessCanvas( QMouseEvent* event );
+      void SetCanvasCursor( QMouseEvent* event );
+      void OnKillFocus(QFocusEvent* e );
+      void OnSetFocus( QFocusEvent* e );
       
-      void PopupMenuHandler(wxCommandEvent& event);
+//      void PopupMenuHandler(wxCommandEvent& event);
       bool IsPrimaryCanvas(){ return (m_canvasIndex == 0); }
       
       bool SetUserOwnship();
@@ -170,7 +174,7 @@ public slots:
       virtual void Refresh( bool eraseBackground = true, const QRect *rect = (const QRect *) NULL );
       virtual void Update();
 
-      void LostMouseCapture(wxMouseCaptureLostEvent& event);
+//      void LostMouseCapture(wxMouseCaptureLostEvent& event);
       
       void CancelMouseRoute();
       void SetDisplaySizeMM( double size );
@@ -352,8 +356,11 @@ public slots:
       void UpdateCanvasControlBar( void );
       void FormatPianoKeys( void );
       void PianoPopupMenu ( int x, int y, int selected_index, int selected_dbIndex );
-      void OnPianoMenuDisableChart(wxCommandEvent& event);
-      void OnPianoMenuEnableChart(wxCommandEvent& event);
+
+public slots:
+      void OnPianoMenuDisableChart();
+      void OnPianoMenuEnableChart();
+public:
       bool IsPianoContextMenuActive(){ return m_piano_ctx_menu != 0; }
       void SetCanvasToolbarItemState( int tool_id, bool state );
       bool DoCanvasCOGSet( void );
@@ -511,7 +518,7 @@ public slots:
       QString GetAlertString(){ return m_alertString; }
       
       QRect GetScaleBarRect(){ return m_scaleBarRect; }
-      void RenderAlertMessage( wxDC &dc, const ViewPort &vp);
+      void RenderAlertMessage(QPainter* dc, const ViewPort &vp);
 
 private:
       int AdjustQuiltRefChart();
@@ -598,7 +605,7 @@ private:
       double      m_absolute_min_scale_ppm;
 
       bool singleClickEventIsValid;
-      wxMouseEvent singleClickEvent;
+      QMouseEvent* singleClickEvent;
 
       std::vector<s57Sector_t> extendedSectorLegs;
       QFont m_overzoomFont;
@@ -606,10 +613,10 @@ private:
       int m_overzoomTextHeight;
 
       //    Methods
-      void OnActivate(wxActivateEvent& event);
-      void OnSize(QSizeEvent& event);
+      void OnActivate(/*wxActivateEvent& event*/);
+      void OnSize(QResizeEvent& event);
       void MouseTimedEvent(QTimerEvent& event);
-      void MouseEvent(wxMouseEvent& event);
+      void MouseEvent(QMouseEvent& event);
       void ShipDraw(ocpnDC& dc);
       void DrawArrow(ocpnDC& dc, int x, int y, double rot_angle, double scale);
       void OnRolloverPopupTimerEvent ( QTimerEvent& event );
@@ -644,7 +651,7 @@ private:
       void GridDraw(ocpnDC& dc); // Display lat/lon Grid in chart display
       void ScaleBarDraw( ocpnDC& dc );
 
-      void DrawOverlayObjects ( ocpnDC &dc, const wxRegion& ru );
+      void DrawOverlayObjects ( ocpnDC &dc, const QRegion& ru );
 
       emboss_data *EmbossDepthScale();
       emboss_data *CreateEmbossMapData(QFont &font, int width, int height, const QString &str, ColorScheme cs);
@@ -656,7 +663,7 @@ private:
       void SetOverzoomFont();
 
 //      void CreateCM93OffsetEmbossMapData(ColorScheme cs);
-//      void EmbossCM93Offset ( wxMemoryDC *pdc);
+//      void EmbossCM93Offset ( QPainter *pdc);
 
       void DrawEmboss ( ocpnDC &dc, emboss_data *pemboss );
 
@@ -674,7 +681,7 @@ private:
 
       QPoint     last_drag;
 
-      wxMemoryDC  *pmemdc;
+      QPainter  *pmemdc;
 
       int         warp_x, warp_y;
       bool        warp_flag;
@@ -692,7 +699,7 @@ private:
 
       int         m_wheelzoom_stop_oneshot;
       int         m_last_wheel_dir;
-      wxStopWatch m_wheelstopwatch;
+      QTime       m_wheelstopwatch;
       double      m_zoom_target;
       
       int         m_curtrack_timer_msec;
@@ -702,7 +709,7 @@ private:
 
       ChartBaseBSB *pCBSB;
       QBitmap    *pss_overlay_bmp;
-      wxMask      *pss_overlay_mask;
+      QBitmap      *pss_overlay_mask;
 
       QRect      ship_draw_rect;
       QRect      ship_draw_last_rect;
@@ -710,7 +717,7 @@ private:
       QRect      alert_draw_rect;          // pjotrc 2010.02.22
 
       QBitmap    *proute_bm;          // a bitmap and dc used to calculate route bounding box
-      wxMemoryDC  m_dc_route;         // seen in mouse->edit->route
+      QPainter  m_dc_route;         // seen in mouse->edit->route
 
 
       emboss_data *m_pEM_Feet;                // maps for depth unit emboss pattern

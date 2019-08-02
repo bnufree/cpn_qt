@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -25,9 +25,9 @@
 #ifndef __GLTEXTCACHE_H__
 #define __GLTEXTCACHE_H__
 
-#include <wx/glcanvas.h>
-#include <wx/ffile.h>
-#include <wx/timer.h>
+//#include <wx/glcanvas.h>
+//#include <wx/ffile.h>
+//#include <wx/timer.h>
 #include <stdint.h>
 
 #include "ocpn_types.h"

@@ -57,25 +57,16 @@
 #include "options.h"
 #include "thumbwin.h"
 #include "tcmgr.h"
-#include "chartimg.h"               // for ChartBaseBSB
-#include "MarkInfo.h"
-#include "RoutePropDlgImpl.h"
+#include "chartimg.h"
 #include "toolbar.h"
 #include "compass.h"
-#include "datastream.h"
-#include "OCPN_DataStreamEvent.h"
-#include "multiplexer.h"
-#include "routeprintout.h"
 #include "Select.h"
 #include "FontMgr.h"
 #include "NMEALogWindow.h"
 #include "Layer.h"
 #include "NavObjectCollection.h"
-#include "OCP_DataStreamInput_Thread.h"
-#include "TrackPropDlg.h"
 #include "gshhs.h"
 #include "cutil.h"
-#include "routemanagerdialog.h"
 #include "pluginmanager.h"
 #include "OCPNPlatform.h"
 #include "S57QueryDialog.h"
@@ -604,9 +595,9 @@ bool                      g_bPreserveScaleOnX;
 
 AboutFrameImpl            *g_pAboutDlg;
 
-#if wxUSE_XLOCALE || !wxCHECK_VERSION(3,0,0)
-wxLocale                  *plocale_def_lang;
-#endif
+//#if wxUSE_XLOCALE || !wxCHECK_VERSION(3,0,0)
+//wxLocale                  *plocale_def_lang;
+//#endif
 
 wxString                  g_locale;
 wxString                  g_localeOverride;
@@ -1027,7 +1018,7 @@ BEGIN_EVENT_TABLE(MyApp, wxApp)
 EVT_ACTIVATE_APP(MyApp::OnActivateApp)
 END_EVENT_TABLE()
 
-#include "wx/dynlib.h"
+//#include "wx/dynlib.h"
 
 #if wxUSE_CMDLINE_PARSER
 void MyApp::OnInitCmdLine( wxCmdLineParser& parser )
@@ -1602,11 +1593,70 @@ void ParseAllENC(wxWindow* parent)
         delete prog;
 }
 
+
+void logMessageOutputQt5(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    static QString log_file_name = QApplication::applicationDirPath() + QString("/log/opencpn.log");
+    static qint64 max = 10485760;//10 * 1024 * 1024;
+    static QMutex mutex;
+    static qint64 log_file_lenth = 0;
+    mutex.lock();
+    QString text;
+    switch (type) {
+    case QtDebugMsg:
+        text = QString("Debug:");
+        break;
+    case QtWarningMsg:
+        text = QString("Warning:");
+        break;
+    case QtCriticalMsg:
+        text = QString("Critical:");
+        break;
+    case QtFatalMsg:
+        text = QString("Fatal:");
+        abort();
+    default:
+        break;
+    }
+    QString message = QString("[%1] %2 [%3] [%4] %5").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"))
+            .arg(text).arg(context.file).arg(context.line).arg(msg);
+
+    QDir dir(QCoreApplication::applicationDirPath() + QString("/log"));
+    if(!dir.exists())
+    {
+        dir.mkpath(dir.path());
+    }
+    QFile file(log_file_name);
+    if(log_file_length > max)
+    {
+        if(file.exists()) file.remove();
+    }
+
+    if(file.open(QIODevice::ReadWrite | QIODevice::Append))
+    {
+        QTextStream text_stream(&file);
+        text_stream << message << endl;
+        file.flush();
+        file.close();
+        log_file_lenth = file.size();
+    } else
+    {
+        std::cout <<"open file failed...........";
+    }
+    mutex.unlock();
+
+    message = QString("[%1] %2 [%3] [%4] ").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"))
+            .arg(text).arg(context.file).arg(context.line);
+    std::cout << "\033[31m" << message.toStdString();
+    std::cout << "\033[32m" << msg.toUtf8().toStdString() <<std::endl;
+}
+
 int main(int argc, char argv[])
 {
     QApplication a(argc, argv);
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF8"));
 
+    qInstallMessageHandler(logMessageOutputQt5);
     QSharedMemory mem("OPENCPN");
     if (!mem.create(1))
     {
@@ -1698,12 +1748,7 @@ bool MyApp::OnInit()
 
     //  Perform first stage initialization
     OCPNPlatform::Initialize_1( );
-
-#if wxCHECK_VERSION(3,0,0)
-    // Set the name of the app as displayed to the user.
-    // This is necessary at least on OS X, for the capitalisation to be correct in the system menus.
     MyApp::SetAppDisplayName("OpenCPN");
-#endif
 
 
     //  Seed the random number generator
@@ -2637,7 +2682,7 @@ void MyApp::TrackOff( void )
 
 
 
-#include <wx/power.h>
+//#include <wx/power.h>
 
 //------------------------------------------------------------------------------
 // MyFrame

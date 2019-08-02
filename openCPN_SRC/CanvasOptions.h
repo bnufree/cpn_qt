@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Canvas Options Window/Dialog
@@ -29,7 +29,7 @@
 #define __canvasoption_H__
 
 #include "chart1.h"
-
+#include <QScrollArea>
 //----------------------------------------------------------------------------
 //   constants
 //----------------------------------------------------------------------------
@@ -58,51 +58,52 @@ enum {
 
 class MyFrame;
 class ChartCanvas;
+class QCheckBox;
+class QLineEdit;
+class QSlider;
+class QRadioButton;
+class QComboBox;
 
 //----------------------------------------------------------------------------
 // CanvasOptions
 //----------------------------------------------------------------------------
 
-class  CanvasOptions: public wxDialog
+class  CanvasOptions: public QWidget
 {
-
+    Q_OBJECT
 public:
-    CanvasOptions(wxWindow *parent);
-
-    void OnClose( wxCloseEvent& event );
-    void OnOptionChange( wxCommandEvent &event);
-    
+    CanvasOptions(QWidget *parent = 0);
     void RefreshControlValues( void );
     void UpdateCanvasOptions( void );
-    void OnEraseBackground( wxEraseEvent& event );
     void SetENCAvailable( bool avail );
+public slots:
+    void OnClose();
+    void OnOptionChange();
     
 private:
     int m_style;
     bool m_ENCAvail;
-    wxScrolledWindow *m_sWindow;
+    QScrollArea *m_sWindow;
     
-    wxCheckBox *pShowStatusBar, *pShowMenuBar, *pShowChartBar, *pShowCompassWin;
-    wxCheckBox *pPrintShowIcon, *pCDOOutlines, *pSDepthUnits, *pSDisplayGrid;
-    wxCheckBox *pAutoAnchorMark, *pCDOQuilting, *pCBRaster, *pCBVector;
-    wxCheckBox *pCBCM93, *pCBLookAhead, *pSkewComp, *pOpenGL, *pSmoothPanZoom;
-    wxCheckBox *pFullScreenQuilt, *pMobile, *pResponsive, *pOverzoomEmphasis;
-    wxCheckBox *pOZScaleVector, *pToolbarAutoHideCB, *pInlandEcdis, *pDarkDecorations;
-    wxTextCtrl *pCOGUPUpdateSecs, *m_pText_OSCOG_Predictor, *pScreenMM;
-    wxTextCtrl *pToolbarHideSecs, *m_pText_OSHDT_Predictor;
-    wxChoice *m_pShipIconType, *m_pcTCDatasets;
-    wxSlider *m_pSlider_Zoom, *m_pSlider_GUI_Factor, *m_pSlider_Chart_Factor, *m_pSlider_Ship_Factor;
-    wxSlider *m_pSlider_Zoom_Vector;
-    wxRadioButton *pCBCourseUp, *pCBNorthUp, *pRBSizeAuto, *pRBSizeManual;
-    wxCheckBox *pEnableZoomToCursor, *pPreserveScale;
+    QCheckBox *pShowStatusBar, *pShowMenuBar, *pShowChartBar, *pShowCompassWin;
+    QCheckBox *pPrintShowIcon, *pCDOOutlines, *pSDepthUnits, *pSDisplayGrid;
+    QCheckBox *pAutoAnchorMark, *pCDOQuilting, *pCBRaster, *pCBVector;
+    QCheckBox *pCBCM93, *pCBLookAhead, *pSkewComp, *pOpenGL, *pSmoothPanZoom;
+    QCheckBox *pFullScreenQuilt, *pMobile, *pResponsive, *pOverzoomEmphasis;
+    QCheckBox *pOZScaleVector, *pToolbarAutoHideCB, *pInlandEcdis, *pDarkDecorations;
+    QLineEdit *pCOGUPUpdateSecs, *m_pText_OSCOG_Predictor, *pScreenMM;
+    QLineEdit *pToolbarHideSecs, *m_pText_OSHDT_Predictor;
+    QComboBox *m_pShipIconType, *m_pcTCDatasets;
+    QSlider *m_pSlider_Zoom, *m_pSlider_GUI_Factor, *m_pSlider_Chart_Factor, *m_pSlider_Ship_Factor;
+    QSlider *m_pSlider_Zoom_Vector;
+    QRadioButton *pCBCourseUp, *pCBNorthUp, *pRBSizeAuto, *pRBSizeManual;
+    QCheckBox *pEnableZoomToCursor, *pPreserveScale;
     
-    wxCheckBox *pCDOTides, *pCDOCurrents;
-    wxCheckBox *pCDOENCText, *pCBToolbar;
-    wxChoice *m_pDispCat;
-    wxCheckBox *pCBENCDepth, *pCBENCLightDesc, *pCBENCBuoyLabels, *pCBENCLights, *pCBENCAnchorDetails;
-    wxCheckBox *pCBShowAIS, *pCBAttenAIS;
-    
-        DECLARE_EVENT_TABLE()
+    QCheckBox *pCDOTides, *pCDOCurrents;
+    QCheckBox *pCDOENCText, *pCBToolbar;
+    QComboBox *m_pDispCat;
+    QCheckBox *pCBENCDepth, *pCBENCLightDesc, *pCBENCBuoyLabels, *pCBENCLights, *pCBENCAnchorDetails;
+    QCheckBox *pCBShowAIS, *pCBAttenAIS;
 
 };
 

@@ -527,7 +527,7 @@ public:
     opencpn_plugin_113(void *pmgr);
     virtual ~opencpn_plugin_113();
     
-    virtual bool KeyboardEventHook( QKeyEvent &event );
+    virtual bool KeyboardEventHook( QKeyEvent* event );
     virtual void OnToolbarToolDownCallback(int id);
     virtual void OnToolbarToolUpCallback(int id);
 };

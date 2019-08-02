@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Canvas Options Window/Dialog
@@ -25,16 +25,6 @@
  *
  *
  */
-
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif //precompiled headers
-
-#include "wx/artprov.h"
-#include <wx/statline.h>
-
 
 #include "dychart.h"
 
@@ -67,199 +57,157 @@ extern OCPNPlatform              *g_Platform;
 //------------------------------------------------------------------------------
 //    CanvasOptions
 //------------------------------------------------------------------------------
+#include <QCheckBox>
+#include <QComboBox>
+#include <QRadioButton>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QScrollArea>
+#include <QLabel>
+#include <QGroupBox>
+#include <QButtonGroup>
 
-BEGIN_EVENT_TABLE(CanvasOptions, wxDialog)
-EVT_CLOSE(CanvasOptions::OnClose)
-//EVT_CHECKBOX(ID_QUILTCHECKBOX1, CanvasOptions::OnOptionChange)
-END_EVENT_TABLE()
-
-CanvasOptions::CanvasOptions( wxWindow *parent)
- :wxDialog()
+CanvasOptions::CanvasOptions( QWidget *parent) : QWidget(parent)
 
 {
+    this->setWindowFlags(Qt::SubWindow);
+    this->setWindowTitle(tr("CanvasOptions"));
     m_ENCAvail = true;
     
-    wxFont *qFont = GetOCPNScaledFont(_("Dialog"));
-    SetFont( *qFont );
+    QVBoxLayout * total_layout = new QVBoxLayout(this);
+    this->setLayout(total_layout);
+    
+    m_sWindow = new QScrollArea(this);
+    m_sWindow->setWidget(new QWidget(this));
+    total_layout->addWidget(m_sWindow);
 
-    //SetBackgroundStyle( wxBG_STYLE_TRANSPARENT );
-    long mstyle = wxNO_BORDER | wxFRAME_NO_TASKBAR | wxFRAME_SHAPED;
-    wxDialog::Create(parent, wxID_ANY, _T(""), wxDefaultPosition, wxDefaultSize, mstyle);
-    
-    wxBoxSizer *topsizer = new wxBoxSizer( wxVERTICAL );
-    SetSizer(topsizer);
-    
-    m_sWindow = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxSUNKEN_BORDER);
-    topsizer->Add(m_sWindow, 1, wxEXPAND );
-    
-    m_sWindow->SetScrollRate(0, 5);
-    
-    int border_size = 4;
-    int group_item_spacing = 0;
-    int interGroupSpace = border_size * 2;
-    
-    wxSizerFlags verticleInputFlags = wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, group_item_spacing);
-    wxSizerFlags inputFlags = wxSizerFlags(0).Align(wxALIGN_LEFT | wxALIGN_CENTRE_VERTICAL).Border(wxALL, group_item_spacing);
-    
-    wxScrolledWindow *pDisplayPanel = m_sWindow;
-
-    wxBoxSizer* generalSizer = new wxBoxSizer(wxVERTICAL);
-    pDisplayPanel->SetSizer(generalSizer);
-
-    
+    QVBoxLayout * scrolled_layout = new QVBoxLayout(this);
+    scrolled_layout->setSpacing(10);
+    m_sWindow->widget()->setLayout(scrolled_layout);
     //  Options Label
-    wxStaticText* optionsLabelBox = new wxStaticText(pDisplayPanel, wxID_ANY, _("Chart Panel Options"));
-    generalSizer->Add(optionsLabelBox, 0, wxALL | wxEXPAND , border_size);
-    wxStaticLine *m_staticLine121 = new wxStaticLine(pDisplayPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    generalSizer->Add(m_staticLine121, 0, wxALL | wxEXPAND , border_size);
-    
-    // spacer
-    generalSizer->Add(0, interGroupSpace);
+    QVBoxLayout* label_layout = new QVBoxLayout(this);
+    scrolled_layout->addLayout(label_layout);
+    label_layout->addWidget(new QLabel(tr("Chart Panel Options"), this));
+    QFrame * line   = new QFrame(this);
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    label_layout->addWidget(line);
 
-    // Control Options
-//    wxStaticBoxSizer* boxCont = new wxStaticBoxSizer(new wxStaticBox(pDisplayPanel, wxID_ANY, _("Control Options")), wxVERTICAL);
-//    generalSizer->Add(boxCont, 0, wxALL | wxEXPAND, border_size);
-    
-//     pCBToolbar = new wxCheckBox(pDisplayPanel, ID_TOOLBARCHECKBOX, _("Show Toolbar"));
-//     boxCont->Add(pCBToolbar, verticleInputFlags);
-//     pCBToolbar->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
-// 
-//     // spacer
-//     generalSizer->Add(0, interGroupSpace);
-    
-    // Nav Mode
-    wxStaticBoxSizer* boxNavMode = new wxStaticBoxSizer(new wxStaticBox(pDisplayPanel, wxID_ANY, _("Navigation Mode")), wxVERTICAL);
-    generalSizer->Add(boxNavMode, 0, wxALL | wxEXPAND, border_size);
-    
-    wxBoxSizer* rowOrientation = new wxBoxSizer(wxHORIZONTAL);
-    boxNavMode->Add(rowOrientation);
+    // 导航模式
+    QGroupBox* navGroup = new QGroupBox(tr("Navigation Mode"), this);
+    navGroup->setLayout(new QVBoxLayout(this));
+    scrolled_layout->addWidget(navGroup);
 
-    pCBNorthUp = new wxRadioButton(pDisplayPanel, wxID_ANY, _("North Up"));
-    rowOrientation->Add(pCBNorthUp, inputFlags);
-    pCBNorthUp->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
+    QHBoxLayout *navModeLayout = new QHBoxLayout(this);
+    pCBNorthUp = new QRadioButton(tr("North Up"), this);
+    pCBCourseUp = new QRadioButton(tr("Course Up"), this);
+    navModeLayout->addWidget(pCBNorthUp);
+    navModeLayout->addWidget(pCBCourseUp);
+    ((QVBoxLayout*)(navGroup->layout()))->addLayout(navModeLayout);
 
-    pCBCourseUp = new wxRadioButton(pDisplayPanel, ID_COURSEUPCHECKBOX, _("Course Up"));
-    rowOrientation->Add(pCBCourseUp, wxSizerFlags(0).Align(wxALIGN_CENTRE_VERTICAL).Border(wxLEFT, group_item_spacing * 2));
-    pCBCourseUp->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
+    QButtonGroup* btngrp = new QButtonGroup(this);
+    btngrp->addButton(pCBNorthUp);
+    btngrp->addButton(pCBCourseUp);
+    btngrp->setExclusive(true);
+    connect(btngrp, SIGNAL(buttonClicked(int)), this, SLOT(OnOptionChange()));
     
-    pCBLookAhead = new wxCheckBox(pDisplayPanel, ID_CHECK_LOOKAHEAD, _("Look Ahead Mode"));
-    boxNavMode->Add(pCBLookAhead, verticleInputFlags);
-    pCBLookAhead->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
-    
-    // spacer
-    generalSizer->Add(0, interGroupSpace);
+    pCBLookAhead = new QCheckBox(tr("Look Ahead Mode"), this);
+    ((QVBoxLayout*)(navGroup->layout()))->addWidget(pCBLookAhead);
+    connect(pCBLookAhead, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));\
 
+
+    // 显示选项
+    QGroupBox*  display_option_grp = new QGroupBox(tr("Display Options"), this);
+    display_option_grp->setLayout(new QVBoxLayout(this));
+    scrolled_layout->addWidget(display_option_grp);
     
-    // Display Options
-    wxStaticBoxSizer* boxDisp = new wxStaticBoxSizer(new wxStaticBox(pDisplayPanel, wxID_ANY, _("Display Options")), wxVERTICAL);
-    generalSizer->Add(boxDisp, 0, wxALL | wxEXPAND, border_size);
+    pCDOQuilting = new QCheckBox(tr("Enable Chart Quilting"), this);
+    display_option_grp->layout()->addWidget(pCDOQuilting);
+    connect(pCDOQuilting, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
     
-    pCDOQuilting = new wxCheckBox(pDisplayPanel, ID_QUILTCHECKBOX1, _("Enable Chart Quilting"));
-    boxDisp->Add(pCDOQuilting, verticleInputFlags);
-    pCDOQuilting->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
+    pSDisplayGrid = new QCheckBox(tr("Show Grid"), this);
+    display_option_grp->layout()->addWidget(pSDisplayGrid);
+    connect(pSDisplayGrid, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
     
-    pSDisplayGrid = new wxCheckBox(pDisplayPanel, ID_CHECK_DISPLAYGRID, _("Show Grid"));
-    boxDisp->Add(pSDisplayGrid, verticleInputFlags);
-    pSDisplayGrid->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
-    
-    pCDOOutlines = new wxCheckBox(pDisplayPanel, ID_OUTLINECHECKBOX1, _("Show Chart Outlines"));
-    boxDisp->Add(pCDOOutlines, verticleInputFlags);
-    pCDOOutlines->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
-    
-    pSDepthUnits = new wxCheckBox(pDisplayPanel, ID_SHOWDEPTHUNITSBOX1, _("Show Depth Units"));
-    boxDisp->Add(pSDepthUnits, verticleInputFlags);
-    pSDepthUnits->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
+    pCDOOutlines = new QCheckBox(tr("Show Chart Outlines"), this);
+    display_option_grp->layout()->addWidget(pCDOOutlines);
+    connect(pCDOOutlines, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
+
+    pSDepthUnits = new QCheckBox(tr("Show Depth Units"), this);
+    display_option_grp->layout()->addWidget(pSDepthUnits);
+    connect(pSDepthUnits, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
 
     // AIS Options
-    wxStaticBoxSizer* boxAIS = new wxStaticBoxSizer(new wxStaticBox(pDisplayPanel, wxID_ANY, _("AIS")), wxVERTICAL);
-    generalSizer->Add(boxAIS, 0, wxALL | wxEXPAND, border_size);
+    QGroupBox*  ais_option_grp = new QGroupBox(tr("AIS"), this);
+    ais_option_grp->setLayout(new QVBoxLayout(this));
+    scrolled_layout->addWidget(ais_option_grp);
     
-    pCBShowAIS = new wxCheckBox(pDisplayPanel, ID_SHOW_AIS_CHECKBOX, _("Show AIS targets"));
-    boxAIS->Add(pCBShowAIS, verticleInputFlags);
-    pCBShowAIS->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
-    
-    pCBAttenAIS = new wxCheckBox(pDisplayPanel, ID_ATTEN_AIS_CHECKBOX, _("Minimize less critical targets"));
-    boxAIS->Add(pCBAttenAIS, verticleInputFlags);
-    pCBAttenAIS->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
-    
-    
-    
-    // spacer
-    generalSizer->Add(0, interGroupSpace);
-    
+    pCBShowAIS = new QCheckBox(tr("Show AIS targets"), this);
+    ais_option_grp->layout()->addWidget(pCBShowAIS);
+    connect(pCBShowAIS, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
+    pCBAttenAIS = new QCheckBox(tr("Minimize less critical targets"), this);
+    display_option_grp->layout()->addWidget(pCBAttenAIS);
+    connect(pCBAttenAIS, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
+
     // Tide/Current Options
-    wxStaticBoxSizer* boxTC = new wxStaticBoxSizer(new wxStaticBox(pDisplayPanel, wxID_ANY, _("Tides and Currents")), wxVERTICAL);
-    generalSizer->Add(boxTC, 0, wxALL | wxEXPAND, border_size);
-    
-    pCDOTides = new wxCheckBox(pDisplayPanel, ID_TIDES_CHECKBOX, _("Show Tide stations"));
-    boxTC->Add(pCDOTides, verticleInputFlags);
-    pCDOTides->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
-    
-    pCDOCurrents = new wxCheckBox(pDisplayPanel, ID_CURRENTS_CHECKBOX, _("Show Currents"));
-    boxTC->Add(pCDOCurrents, verticleInputFlags);
-    pCDOCurrents->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
-    
-    // spacer
-    generalSizer->Add(0, interGroupSpace);
+    QGroupBox*  tc_option_grp = new QGroupBox(tr("Tides And Currents"), this);
+    tc_option_grp->setLayout(new QVBoxLayout(this));
+    scrolled_layout->addWidget(tc_option_grp);
+    pCDOTides = new QCheckBox(tr("Show Tide stations"), this);
+    tc_option_grp->layout()->addWidget(pCDOTides);
+    connect(pCDOTides, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
+    pCDOCurrents = new QCheckBox(tr("Show Currents"), this);
+    tc_option_grp->layout()->addWidget(pCDOCurrents);
+    connect(pCDOCurrents, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
+
  
     // ENC Options
-    wxStaticBoxSizer* boxENC = new wxStaticBoxSizer(new wxStaticBox(pDisplayPanel, wxID_ANY, _("Vector Charts")), wxVERTICAL);
-    generalSizer->Add(boxENC, 0, wxALL | wxEXPAND, border_size);
-    
-    pCDOENCText = new wxCheckBox(pDisplayPanel, ID_ENCTEXT_CHECKBOX1, _("Show text"));
-    boxENC->Add(pCDOENCText, verticleInputFlags);
-    pCDOENCText->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
+    QGroupBox*  enc_option_grp = new QGroupBox(tr("Vector Charts"), this);
+    enc_option_grp->setLayout(new QVBoxLayout(this));
+    scrolled_layout->addWidget(enc_option_grp);
+    pCDOENCText = new QCheckBox(tr("Show text"), this);
+    enc_option_grp->layout()->addWidget(pCDOENCText);
+    connect(pCDOENCText, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
 
-    pCBENCDepth = new wxCheckBox(pDisplayPanel, ID_ENCDEPTH_CHECKBOX1, _("Show depths"));
-    boxENC->Add(pCBENCDepth, verticleInputFlags);
-    pCBENCDepth->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
+    pCBENCDepth = new QCheckBox(tr("Show depths"), this);
+    enc_option_grp->layout()->addWidget(pCBENCDepth);
+    connect(pCBENCDepth, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
     
-    pCBENCBuoyLabels = new wxCheckBox(pDisplayPanel, ID_ENCBUOYLABEL_CHECKBOX1, _("Buoy/Light Labels"));
-    boxENC->Add(pCBENCBuoyLabels, verticleInputFlags);
-    pCBENCBuoyLabels->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
+    pCBENCBuoyLabels = new QCheckBox(tr("Buoy/Light Labels"), this);
+    enc_option_grp->layout()->addWidget(pCBENCBuoyLabels);
+    connect(pCBENCBuoyLabels, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
  
-    pCBENCLights = new wxCheckBox(pDisplayPanel, ID_ENCBUOYLABEL_CHECKBOX1, _("Lights"));
-    boxENC->Add(pCBENCLights, verticleInputFlags);
-    pCBENCLights->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
+    pCBENCLights = new QCheckBox(tr("Lights"), this);
+    enc_option_grp->layout()->addWidget(pCBENCLights);
+    connect(pCBENCLights, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
  
-    pCBENCLightDesc = new wxCheckBox(pDisplayPanel, ID_ENCBUOY_CHECKBOX1, _("Light Descriptions"));
-    boxENC->Add(pCBENCLightDesc, verticleInputFlags);
-    pCBENCLightDesc->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
+    pCBENCLightDesc = new QCheckBox(tr("Light Descriptions"), this);
+    enc_option_grp->layout()->addWidget(pCBENCLightDesc);
+    connect(pCBENCLightDesc, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
     
-    pCBENCAnchorDetails = new wxCheckBox(pDisplayPanel, ID_ENCANCHOR_CHECKBOX1, _("Anchoring Info"));
-    boxENC->Add(pCBENCAnchorDetails, verticleInputFlags);
-    pCBENCAnchorDetails->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
-    
-        // spacer
-    boxENC->Add(0, interGroupSpace);
+    pCBENCAnchorDetails = new QCheckBox(tr("Anchoring Info"), this);
+    enc_option_grp->layout()->addWidget(pCBENCAnchorDetails);
+    connect(pCBENCAnchorDetails, SIGNAL(clicked(bool)), this, SLOT(OnOptionChange()));
 
     // display category
-    boxENC->Add( new wxStaticText(pDisplayPanel, wxID_ANY, _("Display Category")), verticleInputFlags);
-    wxString pDispCatStrings[] = {_("Base"), _("Standard"), _("All"), _("User Standard")};
-    m_pDispCat = new wxChoice(pDisplayPanel, ID_CODISPCAT, wxDefaultPosition,  wxDefaultSize, 4, pDispCatStrings);
-    boxENC->Add(m_pDispCat, 0, wxLEFT, 4*GetCharWidth());
-    m_pDispCat->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( CanvasOptions::OnOptionChange ), NULL, this );
-    
+    enc_option_grp->layout()->addWidget(new QLabel(tr("Display Category"), this));
+    QStringList pDispCatStrings;
+    pDispCatStrings << tr("Base") << tr("Standard") << tr("All") << tr("User Standard");
+    m_pDispCat = new QComboBox(this);
+    enc_option_grp->layout()->addWidget(m_pDispCat);
+    m_pDispCat->addItems(pDispCatStrings);
+    connect(m_pDispCat, SIGNAL(currentIndexChanged(int)), this, SLOT(OnOptionChange()));
+
     RefreshControlValues();
-    
-    SetAutoLayout( true );
-    
-    topsizer->Fit( this );
-    
 }
 
-void CanvasOptions::OnEraseBackground( wxEraseEvent& event )
+
+
+void CanvasOptions::OnClose( )
 {
 }
 
-
-void CanvasOptions::OnClose( wxCloseEvent& event )
-{
-//     SetReturnCode(wxID_CANCEL);
-//     EndModal( wxID_CANCEL );
-}
-
-void CanvasOptions::OnOptionChange( wxCommandEvent &event)
+void CanvasOptions::OnOptionChange()
 {
     UpdateCanvasOptions();
 }
@@ -268,39 +216,34 @@ void CanvasOptions::OnOptionChange( wxCommandEvent &event)
 
 void CanvasOptions::RefreshControlValues( void )
 {
-    ChartCanvas *parentCanvas = wxDynamicCast(m_parent, ChartCanvas);
-    if(!parentCanvas)
-        return;
-
-    // Control options
-//    pCBToolbar->SetValue(parentCanvas->GetToolbarEnable());
-
+    ChartCanvas *parentCanvas = dynamic_cast<ChartCanvas*> (parentWidget());
+    if(!parentCanvas) return;
     // Navigation Mode
-    pCBNorthUp->SetValue(!parentCanvas->GetCourseUP());
-    pCBCourseUp->SetValue(parentCanvas->GetCourseUP());
-    pCBLookAhead->SetValue(parentCanvas->GetLookahead());
+    pCBNorthUp->setChecked(!parentCanvas->GetCourseUP());
+    pCBCourseUp->setChecked(parentCanvas->GetCourseUP());
+    pCBLookAhead->setChecked(parentCanvas->GetLookahead());
     
     //  Display options
-    pCDOQuilting->SetValue(parentCanvas->GetQuiltMode());
-    pSDisplayGrid->SetValue(parentCanvas->GetShowGrid());
-    pCDOOutlines->SetValue(parentCanvas->GetShowOutlines());
-    pSDepthUnits->SetValue(parentCanvas->GetShowDepthUnits());
+    pCDOQuilting->setChecked(parentCanvas->GetQuiltMode());
+    pSDisplayGrid->setChecked(parentCanvas->GetShowGrid());
+    pCDOOutlines->setChecked(parentCanvas->GetShowOutlines());
+    pSDepthUnits->setChecked(parentCanvas->GetShowDepthUnits());
  
     // AIS Options
-    pCBShowAIS->SetValue(parentCanvas->GetShowAIS());
-    pCBAttenAIS->SetValue(parentCanvas->GetAttenAIS());
+    pCBShowAIS->setChecked(parentCanvas->GetShowAIS());
+    pCBAttenAIS->setChecked(parentCanvas->GetAttenAIS());
     
     // Tide/Current
-    pCDOTides->SetValue(parentCanvas->GetbShowTide());
-    pCDOCurrents->SetValue(parentCanvas->GetbShowCurrent());;
+    pCDOTides->setChecked(parentCanvas->GetbShowTide());
+    pCDOCurrents->setChecked(parentCanvas->GetbShowCurrent());;
     
     //ENC Options
-    pCDOENCText->SetValue(parentCanvas->GetShowENCText());
-    pCBENCDepth->SetValue(parentCanvas->GetShowENCDepth());
-    pCBENCLightDesc->SetValue(parentCanvas->GetShowENCLightDesc());
-    pCBENCBuoyLabels->SetValue(parentCanvas->GetShowENCBuoyLabels());
-    pCBENCLights->SetValue(parentCanvas->GetShowENCLights());
-    pCBENCAnchorDetails->SetValue(parentCanvas->GetShowENCAnchor());
+    pCDOENCText->setChecked(parentCanvas->GetShowENCText());
+    pCBENCDepth->setChecked(parentCanvas->GetShowENCDepth());
+    pCBENCLightDesc->setChecked(parentCanvas->GetShowENCLightDesc());
+    pCBENCBuoyLabels->setChecked(parentCanvas->GetShowENCBuoyLabels());
+    pCBENCLights->setChecked(parentCanvas->GetShowENCLights());
+    pCBENCAnchorDetails->setChecked(parentCanvas->GetShowENCAnchor());
 
     //pCBENCLightDesc->Enable(parentCanvas->GetShowENCLights());
     
@@ -324,28 +267,28 @@ void CanvasOptions::RefreshControlValues( void )
             nset = 3;
             break;
     }
-    m_pDispCat->SetSelection(nset);
+    m_pDispCat ->setCurrentIndex(nset);
     
     // If no ENCs are available in the current canvas group, then disable the ENC related options.
-    pCDOENCText->Enable(m_ENCAvail);
-    pCBENCDepth->Enable(m_ENCAvail);
-    pCBENCLightDesc->Enable(m_ENCAvail && parentCanvas->GetShowENCLights());
-    pCBENCBuoyLabels->Enable(m_ENCAvail);
-    pCBENCLights->Enable(m_ENCAvail);
+    pCDOENCText->setEnabled(m_ENCAvail);
+    pCBENCDepth->setEnabled(m_ENCAvail);
+    pCBENCLightDesc->setEnabled(m_ENCAvail && parentCanvas->GetShowENCLights());
+    pCBENCBuoyLabels->setEnabled(m_ENCAvail);
+    pCBENCLights->setEnabled(m_ENCAvail);
     
     //  Anchor conditions are only available if display category is "All" or "User Standard"
-    pCBENCAnchorDetails->Enable(m_ENCAvail && (nset > 1));  
+    pCBENCAnchorDetails->setEnabled(m_ENCAvail && (nset > 1));
 
     //  Many options are not valid if display category is "Base"
     if(nset == 0){
-        pCDOENCText->Disable();
-        pCBENCDepth->Disable();
-        pCBENCLightDesc->Disable();
-        pCBENCBuoyLabels->Disable();
-        pCBENCLights->Disable();
+        pCDOENCText->setEnabled(false);
+        pCBENCDepth->setEnabled(false);
+        pCBENCLightDesc->setEnabled(false);
+        pCBENCBuoyLabels->setEnabled(false);
+        pCBENCLights->setEnabled(false);
     }
         
-    m_pDispCat->Enable(m_ENCAvail);
+    m_pDispCat->setEnabled(m_ENCAvail);
     
 }
 
@@ -357,9 +300,8 @@ void CanvasOptions::SetENCAvailable( bool avail )
 
 void CanvasOptions::UpdateCanvasOptions( void )
 {
-    ChartCanvas *parentCanvas = wxDynamicCast(m_parent, ChartCanvas);
-    if(!parentCanvas)
-        return;
+    ChartCanvas *parentCanvas = dynamic_cast<ChartCanvas*> (parentWidget());
+    if(!parentCanvas) return;
     
     bool b_needRefresh = false;
     bool b_needReLoad = false;
@@ -369,81 +311,81 @@ void CanvasOptions::UpdateCanvasOptions( void )
 //         b_needRefresh = true;
 //     }
     
-    if(pCDOQuilting->GetValue() != parentCanvas->GetQuiltMode()){
+    if(pCDOQuilting->isChecked() != parentCanvas->GetQuiltMode()){
         parentCanvas->ToggleCanvasQuiltMode();
     }
     
-    if(pSDisplayGrid->GetValue() != parentCanvas->GetShowGrid()){
-        parentCanvas->SetShowGrid(pSDisplayGrid->GetValue());
+    if(pSDisplayGrid->isChecked() != parentCanvas->GetShowGrid()){
+        parentCanvas->SetShowGrid(pSDisplayGrid->isChecked());
         b_needRefresh = true;
     }
     
-    if(pCDOOutlines->GetValue() != parentCanvas->GetShowOutlines()){
-        parentCanvas->SetShowOutlines(pCDOOutlines->GetValue());
+    if(pCDOOutlines->isChecked() != parentCanvas->GetShowOutlines()){
+        parentCanvas->SetShowOutlines(pCDOOutlines->isChecked());
         b_needRefresh = true;
     }
-    if(pSDepthUnits->GetValue() != parentCanvas->GetShowDepthUnits()){
-        parentCanvas->SetShowDepthUnits(pSDepthUnits->GetValue());
+    if(pSDepthUnits->isChecked() != parentCanvas->GetShowDepthUnits()){
+        parentCanvas->SetShowDepthUnits(pSDepthUnits->isChecked());
         b_needRefresh = true;
     }
 
-    if(pCBShowAIS->GetValue() != parentCanvas->GetShowAIS()){
-        parentCanvas->SetShowAIS(pCBShowAIS->GetValue());
+    if(pCBShowAIS->isChecked() != parentCanvas->GetShowAIS()){
+        parentCanvas->SetShowAIS(pCBShowAIS->isChecked());
         b_needRefresh = true;
     }
     
-    if(pCBAttenAIS->GetValue() != parentCanvas->GetAttenAIS()){
-        parentCanvas->SetAttenAIS(pCBAttenAIS->GetValue());
+    if(pCBAttenAIS->isChecked() != parentCanvas->GetAttenAIS()){
+        parentCanvas->SetAttenAIS(pCBAttenAIS->isChecked());
         b_needRefresh = true;
     }
     
-    if(pCDOTides->GetValue() != parentCanvas->GetbShowTide()){
-        parentCanvas->ShowTides(pCDOTides->GetValue());
+    if(pCDOTides->isChecked() != parentCanvas->GetbShowTide()){
+        parentCanvas->ShowTides(pCDOTides->isChecked());
         b_needRefresh = true;
     }
-    if(pCDOCurrents->GetValue() != parentCanvas->GetbShowCurrent()){
-        parentCanvas->ShowCurrents(pCDOCurrents->GetValue());
+    if(pCDOCurrents->isChecked() != parentCanvas->GetbShowCurrent()){
+        parentCanvas->ShowCurrents(pCDOCurrents->isChecked());
         b_needRefresh = true;
     }
 
     //  ENC Options
-    if(pCDOENCText->GetValue() != parentCanvas->GetShowENCText()){
-        parentCanvas->SetShowENCText(pCDOENCText->GetValue());
+    if(pCDOENCText->isChecked() != parentCanvas->GetShowENCText()){
+        parentCanvas->SetShowENCText(pCDOENCText->isChecked());
         b_needReLoad = true;
     }
 
-    if(pCBENCDepth->GetValue() != parentCanvas->GetShowENCDepth()){
-        parentCanvas->SetShowENCDepth(pCBENCDepth->GetValue());
+    if(pCBENCDepth->isChecked() != parentCanvas->GetShowENCDepth()){
+        parentCanvas->SetShowENCDepth(pCBENCDepth->isChecked());
         b_needReLoad = true;
     }
     
-    if(pCBENCLightDesc->GetValue() != parentCanvas->GetShowENCLightDesc()){
-        parentCanvas->SetShowENCLightDesc(pCBENCLightDesc->GetValue());
+    if(pCBENCLightDesc->isChecked() != parentCanvas->GetShowENCLightDesc()){
+        parentCanvas->SetShowENCLightDesc(pCBENCLightDesc->isChecked());
         b_needReLoad = true;
     }
     
-    if(pCBENCBuoyLabels->GetValue() != parentCanvas->GetShowENCBuoyLabels()){
-        parentCanvas->SetShowENCBuoyLabels(pCBENCBuoyLabels->GetValue());
+    if(pCBENCBuoyLabels->isChecked() != parentCanvas->GetShowENCBuoyLabels()){
+        parentCanvas->SetShowENCBuoyLabels(pCBENCBuoyLabels->isChecked());
         b_needReLoad = true;
     }
 
-    if(pCBENCLights->GetValue() != parentCanvas->GetShowENCLights()){
-        parentCanvas->SetShowENCLights(pCBENCLights->GetValue());
+    if(pCBENCLights->isChecked() != parentCanvas->GetShowENCLights()){
+        parentCanvas->SetShowENCLights(pCBENCLights->isChecked());
         b_needReLoad = true;
     }
     
-    if(pCBENCAnchorDetails->GetValue() != parentCanvas->GetShowENCAnchor()){
-        parentCanvas->SetShowENCAnchor(pCBENCAnchorDetails->GetValue());
+    if(pCBENCAnchorDetails->isChecked() != parentCanvas->GetShowENCAnchor()){
+        parentCanvas->SetShowENCAnchor(pCBENCAnchorDetails->isChecked());
         b_needReLoad = true;
     }
     
-    bool setcourseUp = pCBCourseUp->GetValue();
+    bool setcourseUp = pCBCourseUp->isChecked();
     if(setcourseUp != parentCanvas->GetCourseUP()){
         parentCanvas->ToggleCourseUp();
         b_needReLoad = true;
     }
 
-    if(pCBLookAhead->GetValue() != parentCanvas->GetLookahead()){
+    if(pCBLookAhead->isChecked() != parentCanvas->GetLookahead()){
         parentCanvas->ToggleLookahead();
         parentCanvas->UpdateFollowButtonState();
         b_needReLoad = true;
@@ -459,9 +401,9 @@ void CanvasOptions::UpdateCanvasOptions( void )
     }
     
     
-    if(m_pDispCat->GetSelection() != nset){
+    if(m_pDispCat->currentIndex() != nset){
         int valSet = STANDARD;
-        int newSet = m_pDispCat->GetSelection();
+        int newSet = m_pDispCat->currentIndex();
         switch(newSet){
             case 0: valSet = DISPLAYBASE; break;
             case 1: valSet = STANDARD; break;
@@ -473,7 +415,7 @@ void CanvasOptions::UpdateCanvasOptions( void )
         b_needReLoad = true;
         
         //  Anchor conditions are only available if display category is "All" or "User Standard"
-        pCBENCAnchorDetails->Enable(newSet > 1);
+        pCBENCAnchorDetails->setEnabled(newSet > 1);
 
     }
     

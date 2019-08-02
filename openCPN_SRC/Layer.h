@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -25,10 +25,8 @@
 #ifndef __LAYER_H__
 #define __LAYER_H__
 
-#include <wx/string.h>
-#include <wx/list.h>
-#include <wx/datetime.h>
-
+#include <QString>
+#include <QDateTime>
 class Layer
 {
 public:
@@ -39,12 +37,12 @@ public:
       void SetVisibleOnChart(bool viz = true){ m_bIsVisibleOnChart = viz; }
       bool IsVisibleOnListing() { return m_bIsVisibleOnListing; }
       void SetVisibleOnListing(bool viz = true){ m_bIsVisibleOnListing = viz; }
-      wxCheckBoxState HasVisibleNames() { return m_bHasVisibleNames; }
-      void SetVisibleNames(wxCheckBoxState viz = wxCHK_UNDETERMINED){ m_bHasVisibleNames = viz; }
+      Qt::CheckState HasVisibleNames() { return m_bHasVisibleNames; }
+      void SetVisibleNames(Qt::CheckState viz = Qt::Unchecked){ m_bHasVisibleNames = viz; }
 
       bool m_bIsVisibleOnChart;
       bool m_bIsVisibleOnListing;
-      wxCheckBoxState m_bHasVisibleNames;
+      Qt::CheckState m_bHasVisibleNames;
       long m_NoOfItems;
       int m_LayerID;
     
@@ -52,7 +50,7 @@ public:
       QString          m_LayerFileName;
       QString          m_LayerDescription;
       QString          m_LayerType;
-      wxDateTime        m_CreateTime;
+      QDateTime        m_CreateTime;
 };
 
 WX_DECLARE_LIST(Layer, LayerList);// establish class as list member

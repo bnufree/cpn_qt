@@ -1700,7 +1700,7 @@ bool PlugInManager::SendMouseEventToPlugins( wxMouseEvent &event)
     return bret;;
 }
 
-bool PlugInManager::SendKeyEventToPlugins( wxKeyEvent &event)
+bool PlugInManager::SendKeyEventToPlugins(QKeyEvent* event)
 {
     bool bret = false;
     for(unsigned int i = 0 ; i < plugin_array.GetCount() ; i++)

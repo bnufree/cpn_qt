@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Bar Window
@@ -924,7 +924,7 @@ wxPoint Piano::GetKeyOrigin( int key_index )
         return wxPoint( -1, -1 );
 }
 
-bool Piano::MouseEvent( wxMouseEvent& event )
+bool Piano::MouseEvent( QMouseEvent* event )
 {
 
     int x, y;

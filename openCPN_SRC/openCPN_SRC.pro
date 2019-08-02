@@ -62,7 +62,6 @@ DEFINES *= ZCHX_OPENCPN_PLUGIN ocpnUSE_GL
 HEADERS += \
     bbox.h \
     CanvasConfig.h \
-    canvasMenu.h \
     CanvasOptions.h \
     chart1.h \
     chartbase.h \
@@ -81,7 +80,6 @@ HEADERS += \
     crashprint.h \
     cutil.h \
     DarkMode.h \
-    datastream.h \
     DetailSlider.h \
     dsPortType.h \
     dychart.h \
@@ -109,7 +107,6 @@ HEADERS += \
     MarkIcon.h \
     mbtiles.h \
     MUIBar.h \
-    multiplexer.h \
     mygeom.h \
     NavObjectCollection.h \
     navutil.h \
@@ -117,7 +114,6 @@ HEADERS += \
     OCP_DataStreamInputhread.h \
     ocpCursor.h \
     OCPN_AUIManager.h \
-    OCPN_DataStreamEvent.h \
     ocpn_pixel.h \
     ocpn_types.h \
     ocpndc.h \
@@ -138,7 +134,6 @@ HEADERS += \
     Route.h \
     routeman.h \
     RoutePoint.h \
-    routeprintout.h \
     s52plib.h \
     s52s57.h \
     s52utils.h \
@@ -195,7 +190,6 @@ HEADERS += \
 SOURCES += \
     bbox.cpp \
     CanvasConfig.cpp \
-    canvasMenu.cpp \
     CanvasOptions.cpp \
     chart1.cpp \
     ChartDataInputStream.cpp \
@@ -213,7 +207,6 @@ SOURCES += \
     ConnectionParams.cpp \
     crashprint.cpp \
     cutil.cpp \
-    datastream.cpp \
     DetailSlider.cpp \
     FlexHash.cpp \
     FontDesc.cpp \
@@ -245,7 +238,6 @@ SOURCES += \
     OCP_DataStreamInputhread.cpp \
     ocpCursor.cpp \
     OCPN_AUIManager.cpp \
-    OCPN_DataStreamEvent.cpp \
     ocpn_pixel.cpp \
     ocpndc.cpp \
     OCPNListCtrl.cpp \
@@ -266,7 +258,6 @@ SOURCES += \
     routeman.cpp \
     routemanagerdialog.cpp \
     RoutePoint.cpp \
-    routeprintout.cpp \
     s52cnsy.cpp \
     s52plib.cpp \
     s52utils.cpp \
@@ -310,9 +301,7 @@ SOURCES += \
     iso8211/ddfrecord.cpp \
     iso8211/ddfrecordindex.cpp \
     iso8211/ddfsubfielddefn.cpp \
-    iso8211/ddfutils.cpp \
-    RoutePropDlg.cpp \
-    RoutePropDlgImpl.cpp
+    iso8211/ddfutils.cpp
 
 OBJECTIVE_SOURCES += \
     DarkMode.mm

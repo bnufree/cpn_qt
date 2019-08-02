@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  * 
  * Project:  OpenCPN
  * Purpose:  OCPN_AUIManager
@@ -23,11 +23,11 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  **************************************************************************/
 
-#ifndef WX_PRECOMP
-    #include "wx/wx.h"
-#endif
+//#ifndef WX_PRECOMP
+//    #include "wx/wx.h"
+//#endif
 
-#include <wx/aui/aui.h>
+//#include <wx/aui/aui.h>
 
 class OCPN_AUIManager : public wxAuiManager
 {
@@ -44,7 +44,5 @@ public:
     void SetDockSize( wxAuiDockInfo *d, int size);
     
     wxRect  m_0actionHintRect;
-    
-    DECLARE_EVENT_TABLE()
     
 };
