@@ -76,7 +76,6 @@ HEADERS += \
     compass.h \
     concanv.h \
     ConfigMgr.h \
-    ConnectionParams.h \
     crashprint.h \
     cutil.h \
     DarkMode.h \
@@ -204,7 +203,6 @@ SOURCES += \
     compasswin.cpp \
     concanv.cpp \
     ConfigMgr.cpp \
-    ConnectionParams.cpp \
     crashprint.cpp \
     cutil.cpp \
     DetailSlider.cpp \
