@@ -184,7 +184,9 @@ HEADERS += \
     ocpn_plugin.h \
     iso8211/iso8211.h \
     opencpn_global.h \
-    objectfactory.h
+    objectfactory.h \
+    zchxoptionsdlg.h \
+    zchxopengloptiondlg.h
 
 SOURCES += \
     bbox.cpp \
@@ -299,11 +301,15 @@ SOURCES += \
     iso8211/ddfrecord.cpp \
     iso8211/ddfrecordindex.cpp \
     iso8211/ddfsubfielddefn.cpp \
-    iso8211/ddfutils.cpp
+    iso8211/ddfutils.cpp \
+    zchxoptionsdlg.cpp \
+    zchxopengloptiondlg.cpp
 
 OBJECTIVE_SOURCES += \
     DarkMode.mm
 
 FORMS += \
-    sendtogpsdlg.ui
+    sendtogpsdlg.ui \
+    zchxoptionsdlg.ui \
+    zchxopengloptiondlg.ui
 

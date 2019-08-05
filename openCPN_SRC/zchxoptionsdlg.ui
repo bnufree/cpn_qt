@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>zchxOptionsDlg</class>
+ <widget class="QDialog" name="zchxOptionsDlg">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>715</width>
+    <height>501</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Options</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>695</width>
+        <height>481</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QGroupBox" name="display_genaral">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="title">
+          <string>General</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QCheckBox" name="pSmoothPanZoom">
+            <property name="text">
+             <string>Smooth Panning / Zooming</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="pEnableZoomToCursor">
+            <property name="text">
+             <string>Zoom to Cursor</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="display_unit">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="title">
+          <string>Units</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>Depth</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1" colspan="2">
+           <widget class="QComboBox" name="pDepthUnitSelect">
+            <item>
+             <property name="text">
+              <string>Feet</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Meters</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Fathoms</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>Lat/Long</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4" colspan="2">
+           <widget class="QComboBox" name="pSDMMFormat">
+            <item>
+             <property name="text">
+              <string>Degrees, Decimal Minutes</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Decimal Degrees</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Degrees, Minutes, Seconds</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="2" column="0" colspan="5">
+           <widget class="QCheckBox" name="pCBTrueShow">
+            <property name="text">
+             <string>Show true bearings and headings</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0" colspan="2">
+           <widget class="QCheckBox" name="pCBMagShow">
+            <property name="text">
+             <string>Show magnetic bearings and headings.</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Distance</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1" colspan="2">
+           <widget class="QComboBox" name="pDistanceFormat">
+            <item>
+             <property name="text">
+              <string>Nautical miles</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Statute miles</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Kilometers</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Meters</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Speed</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4" colspan="2">
+           <widget class="QComboBox" name="pSpeedFormat">
+            <item>
+             <property name="text">
+              <string>Knots</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Mph</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>km/h</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>m/s</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="display_advanced">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="title">
+          <string>Advanced</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QLabel" name="label_5">
+              <property name="text">
+               <string>Chart Display</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="pSkewComp">
+              <property name="text">
+               <string>Show Skewed Raster Charts as North-Up</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>Chart Rotation Averaging Time(seconds)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="pCOGUPUpdateSecs">
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="groupBox">
+            <property name="title">
+             <string>Chart Zoom/Scale Weighting</string>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_2">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_7">
+               <property name="text">
+                <string>Raster</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1" colspan="2">
+              <widget class="QSlider" name="m_pSlider_Zoom">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSlider" name="m_pSlider_Zoom_Vector">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_8">
+               <property name="text">
+                <string>Vector</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0" colspan="2">
+              <widget class="QLabel" name="label_9">
+               <property name="text">
+                <string>With a lower value, the same zoom level shows a less detailed chart.With a higher value, the same zoom level shows a more detailed chart.</string>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+            <zorder>label_7</zorder>
+            <zorder>m_pSlider_Zoom</zorder>
+            <zorder>m_pSlider_Zoom_Vector</zorder>
+            <zorder>label_7</zorder>
+            <zorder>label_8</zorder>
+            <zorder>label_9</zorder>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="screen_frame">
+            <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <item>
+              <widget class="QLabel" name="label_10">
+               <property name="text">
+                <string>Physical Screen Width</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="pRBSizeAuto">
+               <property name="text">
+                <string>Auto</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="pRBSizeManual">
+               <property name="text">
+                <string>Manual</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="pScreenMM"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_11">
+               <property name="text">
+                <string>mm</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <widget class="QCheckBox" name="pOpenGL">
+              <property name="text">
+               <string>Use Accelerated Graphics (OpenGL)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="bOpenGL">
+              <property name="text">
+               <string>Options...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

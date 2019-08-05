@@ -701,7 +701,7 @@ bool             g_bEffects = true;
 int              g_memUsed;
 SENCThreadManager *g_SencThreadManager;
 
-WX_DEFINE_ARRAY_PTR(ChartCanvas*, arrayofCanvasPtr);
+typedef QList<ChartCanvas*> arrayofCanvasPtr;
 
 arrayofCanvasPtr   g_canvasArray;
 arrayofCanvasConfigPtr g_canvasConfigArray;
@@ -953,21 +953,7 @@ Please click \"OK\" to agree and proceed, \"Cancel\" to quit.\n") );
 
 QString newPrivateFileName(QString home_locn, const char *name, const char *windowsName)
 {
-    QString fname = QString::FromUTF8(name);
-    QString fwname = QString::FromUTF8(windowsName);
-    QString filePathAndName;
-
-    filePathAndName = g_Platform->GetPrivateDataDir();
-    if (filePathAndName.Last() != wxFileName::GetPathSeparator())
-       filePathAndName.Append(wxFileName::GetPathSeparator());
-
-#ifdef __WXMSW__
-     filePathAndName.Append( fwname );
-#else
-     filePathAndName.Append( fname );
-#endif
-
-     return filePathAndName;
+    return MAP_DATA_DIR + QString::fromUtf8(windowsName);
 }
 
 bool isSingleChart(ChartBase *chart)
@@ -976,8 +962,8 @@ bool isSingleChart(ChartBase *chart)
        return false;
 
    // ..For each canvas...
-   for(unsigned int i=0 ; i < g_canvasArray.GetCount() ; i++){
-      ChartCanvas *cc = g_canvasArray.Item(i);
+   for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
+      ChartCanvas *cc = g_canvasArray[i];
       if(cc && cc->m_singleChart == chart){
          return true;
       }
@@ -990,13 +976,13 @@ bool isSingleChart(ChartBase *chart)
 //------------------------------------------------------------------------------
 // MyApp
 //------------------------------------------------------------------------------
-#ifndef OCPN_USE_WRAPPER
-IMPLEMENT_APP( MyApp )
-#endif
+//#ifndef OCPN_USE_WRAPPER
+//IMPLEMENT_APP( MyApp )
+//#endif
 
-BEGIN_EVENT_TABLE(MyApp, wxApp)
-EVT_ACTIVATE_APP(MyApp::OnActivateApp)
-END_EVENT_TABLE()
+//BEGIN_EVENT_TABLE(MyApp, wxApp)
+//EVT_ACTIVATE_APP(MyApp::OnActivateApp)
+//END_EVENT_TABLE()
 
 //#include "wx/dynlib.h"
 
@@ -1052,30 +1038,6 @@ bool MyApp::OnExceptionInMainLoop()
 }
 #endif
 
-void MyApp::OnActivateApp( wxActivateEvent& event )
-{
-    return;
-//    Code carefully in this method.
-//    It is called in some unexpected places,
-//    such as on closure of dialogs, etc.
-
-    if( !event.GetActive() ) {
-
-        //  Remove a temporary Menubar when the application goes inactive
-        //  This is one way to handle properly ALT-TAB navigation on the Windows desktop
-        //  without accidentally leaving an unwanted Menubar shown.
-#ifdef __WXMSW__
-        if( g_bTempShowMenuBar ) {
-            g_bTempShowMenuBar = false;
-            if(gFrame)
-                gFrame->ApplyGlobalSettings(false);
-        }
-#endif
-
-
-    }    
-    event.Skip();
-}
 
 void LoadS57()
 {
@@ -2535,7 +2497,7 @@ extern ocpnGLOptions g_GLOptions;
 
 int MyApp::OnExit()
 {
-    ZCHX_LOGMSG( _T("opencpn::MyApp starting exit.") );
+    ZCHX_LOGMSG("opencpn::MyApp starting exit.");
 
     //  Send current nav status data to log file   // pjotrc 2010.02.09
 

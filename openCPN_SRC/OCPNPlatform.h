@@ -55,14 +55,6 @@ public:
     OCPNPlatform();
     ~OCPNPlatform();
 
-
-//      Internal Device Support
-    static bool hasInternalGPS(QString profile = (""));      // GPS
-
-    static bool hasInternalBT(QString profile = (""));       // Bluetooth
-    bool startBluetoothScan();
-    QStringList getBluetoothScanResults();
-    bool stopBluetoothScan();
     
 //  Per-Platform initialization support    
     
@@ -124,9 +116,6 @@ public:
     QString GetWritableDocumentsDir();
     QString &GetPluginDir();
     QString &GetConfigFileName();
-    QString *GetPluginDirPtr();
-    QString *GetSharedDataDirPtr();
-    QString *GetPrivateDataDirPtr();
     QString &GetLogFileName(){ return mlog_file; }
     MyConfig *GetConfigObject();
     QString GetSupplementalLicenseString();
@@ -141,16 +130,9 @@ public:
     QString    &GetLargeLogMessage( void ){ return large_log_message; }
     FILE        *GetLogFilePtr(){ return flog; }
 
-    
-    
-//--------------------------------------------------------------------------
-//      Per-Platform Utility support
-//--------------------------------------------------------------------------
-    void setChartTypeMaskSel(int mask, QString &indicator);
-    bool isPlatformCapable( int flag);
+
 #define PLATFORM_CAP_PLUGINS   1
 #define PLATFORM_CAP_FASTPAN   2
-    void LaunchLocalHelp();
 
     void SetLocaleSearchPrefixes( void );
     QString GetDefaultSystemLocale();
@@ -168,23 +150,13 @@ public:
     bool IsGLCapable();
 
 private:
-    bool        GetWindowsMonitorSize( int *width, int *height);
-    
-    QString    m_homeDir;
-    QString    m_exePath;
-    QString    m_SData_Dir;
-    QString    m_PrivateDataDir;
-    QString    m_PluginsDir;
-    QString    m_config_file_name;
-
+    bool        GetWindowsMonitorSize( int& width, int& height);
     QString    mlog_file;
     FILE        *flog;
     QString    large_log_message;
     QSize      m_displaySize;
     QSize      m_displaySizeMM;
     int         m_displaySizeMMOverride;
-    
-    int         m_monitorWidth, m_monitorHeight;
     bool        m_bdisableWindowsDisplayEnum;
 };
 

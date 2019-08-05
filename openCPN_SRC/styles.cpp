@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Symbols
@@ -23,25 +23,12 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  **************************************************************************/
 #include "config.h"
-
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif
-
-#include <wx/filename.h>
-#include <wx/dir.h>
 #include <stdlib.h>
 #include "OCPNPlatform.h"
 
 #include "styles.h"
 #include "chart1.h"
 #include "wx28compat.h"
-
-#ifdef ocpnUSE_SVG
-#include "wxSVG/svg.h"
-#endif // ocpnUSE_SVG
 
 extern OCPNPlatform     *g_Platform;
 

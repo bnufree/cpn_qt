@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  OpenCPN Platform specific support utilities
@@ -22,31 +22,18 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  **************************************************************************/
-
-
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif //precompiled headers
-
-#include <wx/app.h>
-#include <wx/apptrait.h>
-#include "wx/stdpaths.h"
-#include <wx/filename.h>
-
 #include "config.h"
-
 #include "dychart.h"
 #include "OCPNPlatform.h"
 #include "chart1.h"
 #include "cutil.h"
 #include "styles.h"
 #include "navutil.h"
-#include "ConnectionParams.h"
 #include "FontMgr.h"
 #include "s52s57.h"
 #include "Select.h"
+#include "_def.h"
+#include <QDesktopWidget>
 
 #ifdef __OCPN__ANDROID__
 #include "androidUTIL.h"
@@ -90,9 +77,7 @@
 
 #include <cstdlib>
 
-DECLARE_APP(MyApp)
-
-void appendOSDirSlash( wxString* pString );
+void appendOSDirSlash( QString* pString );
 
 
 #ifndef __WXMSW__
@@ -108,7 +93,6 @@ extern bool                      g_bUpgradeInProcess;
 
 extern int                       quitflag;
 extern MyFrame                   *gFrame;
-extern bool                      g_bportable;
 
 extern MyConfig                  *pConfig;
 
@@ -146,7 +130,7 @@ extern int                       g_pNavAidRadarRingsStepUnits;
 extern int                       g_iWaypointRangeRingsNumber;
 extern float                     g_fWaypointRangeRingsStep;
 extern int                       g_iWaypointRangeRingsStepUnits;
-extern wxColour                  g_colourWaypointRangeRingsColour;
+extern QColor                       g_colourWaypointRangeRingsColour;
 extern bool                      g_bWayPointPreventDragging;
 extern bool                      g_bConfirmObjectDelete;
 
@@ -167,7 +151,7 @@ extern bool                      g_bAISShowTracks;
 extern double                    g_AISShowTracks_Mins;
 extern bool                      g_bHideMoored;
 extern double                    g_ShowMoored_Kts;
-extern wxString                  g_sAIS_Alert_Sound_File;
+extern QString                  g_sAIS_Alert_Sound_File;
 extern bool                      g_bAIS_CPA_Alert_Suppress_Moored;
 extern bool                      g_bAIS_ACK_Timeout;
 extern double                    g_AckTimeout_Mins;
@@ -226,12 +210,11 @@ extern bool                     g_bresponsive;
 extern bool                     g_bShowStatusBar;
 extern int                      g_cm93_zoom_factor;
 extern int                      g_GUIScaleFactor;
-extern wxArrayOfConnPrm         *g_pConnectionParams;
 extern bool                     g_fog_overzoom;
 extern double                   g_overzoom_emphasis_base;
 extern bool                     g_oz_vector_scale;
 extern int                      g_nTrackPrecision;
-extern wxString                 g_toolbarConfig;
+extern QString                 g_toolbarConfig;
 extern bool                     g_bPreserveScaleOnX;
 
 extern Select                    *pSelect;
@@ -242,20 +225,6 @@ extern Select                    *pSelectAIS;
 extern ocpnGLOptions            g_GLOptions;
 #endif
 extern int                      g_default_font_size;
-
-wxLog       *g_logger;
-bool         g_bEmailCrashReport;
-extern int                       g_ais_alert_dialog_x, g_ais_alert_dialog_y;
-extern int                       g_ais_alert_dialog_sx, g_ais_alert_dialog_sy;
-
-#if wxUSE_XLOCALE || !wxCHECK_VERSION(3,0,0)
-extern wxLocale                  *plocale_def_lang;
-
-extern wxString                  g_locale;
-extern wxString                  g_localeOverride;
-extern wxArrayString             g_locale_catalog_array;
-
-#endif
 extern int                       options_lastPage;
 
 
@@ -268,8 +237,8 @@ OCPNPlatform::OCPNPlatform()
 {
     m_pt_per_pixel = 0;                 // cached value
     m_bdisableWindowsDisplayEnum = false;
-    m_displaySize = wxSize(0,0);
-    m_displaySizeMM = wxSize(0,0);
+    m_displaySize = QSize(0,0);
+    m_displaySizeMM = QSize(0,0);
     m_monitorWidth = m_monitorHeight = 0;
     m_displaySizeMMOverride = 0;
 }
@@ -1249,165 +1218,31 @@ wxString OCPNPlatform::GetWritableDocumentsDir()
 }
 
 
-wxString &OCPNPlatform::GetSharedDataDir()
+QString &OCPNPlatform::GetSharedDataDir()
 {
-    if(m_SData_Dir.IsEmpty()){
-        //      Establish a "shared data" location
-        /*  From the wxWidgets documentation...
-         * 
-         *     wxStandardPaths::GetDataDir
-         *     wxString GetDataDir() const
-         *     Return the location of the applications global, i.e. not user-specific, data files.
-         * Unix: prefix/share/appname
-         * Windows: the directory where the executable file is located
-         * Mac: appname.app/Contents/SharedSupport bundle subdirectory
-         */
-        wxStandardPaths& std_path = GetStdPaths();
-        m_SData_Dir = std_path.GetDataDir();
-        appendOSDirSlash( &m_SData_Dir );
-        
-#ifdef __OCPN__ANDROID__
-        m_SData_Dir = androidGetSharedDir();
-#endif
-        
-        if( g_bportable )
-            m_SData_Dir = GetHomeDir();
-    }
-    
-    return m_SData_Dir;
-    
+    return MAP_DIR;
 }
 
-wxString &OCPNPlatform::GetPrivateDataDir()
+QString &OCPNPlatform::GetPrivateDataDir()
 {
-    if(m_PrivateDataDir.IsEmpty()){
-        //      Establish the prefix of the location of user specific data files
-        wxStandardPaths& std_path = GetStdPaths();
-        
-#ifdef __WXMSW__
-        m_PrivateDataDir = GetHomeDir();                     // should be {Documents and Settings}\......
-#elif defined __WXOSX__
-        m_PrivateDataDir = std_path.GetUserConfigDir();     // should be ~/Library/Preferences
-        appendOSDirSlash(&m_PrivateDataDir);
-        m_PrivateDataDir.Append(_T("opencpn"));
-#else
-        m_PrivateDataDir = std_path.GetUserDataDir();       // should be ~/.opencpn
-#endif
-        
-        if( g_bportable ){
-            m_PrivateDataDir = GetHomeDir();
-        }
-        
-#ifdef __OCPN__ANDROID__
-        m_PrivateDataDir = androidGetPrivateDir();
-#endif
-    }
-    
-    return m_PrivateDataDir;
+    return MAP_DIR;
 }
 
 
-wxString &OCPNPlatform::GetPluginDir()
+QString &OCPNPlatform::GetPluginDir()
 {
-    if(m_PluginsDir.IsEmpty()){
-
-        wxStandardPaths& std_path = GetStdPaths();
-        
-        //  Get the PlugIns directory location
-        m_PluginsDir = std_path.GetPluginsDir();   // linux:   {prefix}/lib/opencpn
-        // Mac:     appname.app/Contents/PlugIns
-#ifdef __WXMSW__
-        m_PluginsDir += _T("\\plugins");             // Windows: {exe dir}/plugins
-#endif
-        if( g_bportable ) {
-            m_PluginsDir = GetHomeDir();
-            m_PluginsDir += _T("plugins");
-        }
-        
-#ifdef __OCPN__ANDROID__
-        // something like: data/data/org.opencpn.opencpn
-        wxFileName fdir = wxFileName::DirName(std_path.GetUserConfigDir());
-        fdir.RemoveLastDir();
-        m_PluginsDir = fdir.GetPath();
-#endif        
-        
-        
-    }
-    
-    return m_PluginsDir;
+    return PLUGIN_DIR;
 }
 
-wxString OCPNPlatform::NormalizePath(const wxString &full_path) {
-  if (!g_bportable) {
+QString OCPNPlatform::NormalizePath(const QString &full_path) {
     return full_path;
-  } else {
-    wxString path(full_path);
-    wxFileName f(path);
-    // If not on another voulme etc. make the portable relative path
-    if (f.MakeRelativeTo(g_Platform->GetPrivateDataDir())) {
-      path = f.GetFullPath();
-    }
-    return path;
-  }
 }
 
-wxString &OCPNPlatform::GetConfigFileName()
+QString &OCPNPlatform::GetConfigFileName()
 {
-    if(m_config_file_name.IsEmpty()){
-        //      Establish the location of the config file
-        wxStandardPaths& std_path = GetStdPaths();
-        
-#ifdef __WXMSW__
-        m_config_file_name = _T("opencpn.ini");
-        m_config_file_name.Prepend( GetHomeDir() );
-        
-#elif defined __WXOSX__
-        m_config_file_name = std_path.GetUserConfigDir(); // should be ~/Library/Preferences
-        appendOSDirSlash(&m_config_file_name);
-        m_config_file_name.Append(_T("opencpn"));
-        appendOSDirSlash(&m_config_file_name);
-        m_config_file_name.Append(_T("opencpn.ini"));
-#else
-        m_config_file_name = std_path.GetUserDataDir(); // should be ~/.opencpn
-        appendOSDirSlash(&m_config_file_name);
-        m_config_file_name.Append(_T("opencpn.conf"));
-#endif
-        
-        if( g_bportable ) {
-            m_config_file_name = GetHomeDir();
-#ifdef __WXMSW__
-            m_config_file_name += _T("opencpn.ini");
-#elif defined __WXOSX__
-            m_config_file_name +=_T("opencpn.ini");
-#else
-            m_config_file_name += _T("opencpn.conf");
-#endif
-            
-        }
-        
-#ifdef __OCPN__ANDROID__
-        m_config_file_name = androidGetPrivateDir();
-        appendOSDirSlash(&m_config_file_name);
-        m_config_file_name += _T("opencpn.conf");
-#endif
-        
-    }
-    
-    return m_config_file_name;
+    return QString("%1/opencpn.ini").arg(MAP_DIR);
 }
 
-wxString *OCPNPlatform::GetPluginDirPtr()
-{
-    return &m_PluginsDir;
-}
-wxString *OCPNPlatform::GetSharedDataDirPtr()
-{
-    return &m_SData_Dir;
-}
-wxString *OCPNPlatform::GetPrivateDataDirPtr()
-{
-    return &m_PrivateDataDir;
-}
 
 int OCPNPlatform::DoFileSelectorDialog( wxWindow *parent, wxString *file_spec, wxString Title, wxString initDir,
                           wxString suggestedName, wxString wildcard)
@@ -1689,10 +1524,10 @@ int OCPNPlatform::GetStatusBarFieldCount()
     wxFont* templateFont = FontMgr::Get().GetFont( _("StatusBar"), 0 );
     dc.SetFont(*templateFont);
     
-    wxSize sz = dc.GetTextExtent(_T("WWWWWW"));
+    QSize sz = dc.GetTextExtent(_T("WWWWWW"));
     double font_size_pix = (double)sz.x / 6.0;
     
-    wxSize dispSize = getDisplaySize();
+    QSize dispSize = getDisplaySize();
     
     double nChars = dispSize.x / font_size_pix;
     
@@ -1730,7 +1565,7 @@ double OCPNPlatform::getFontPointsperPixel( void )
                                                 wxString( _T ( "" ) ), wxFONTENCODING_SYSTEM );
         dc.SetFont(*f);
     
-        wxSize sz = dc.GetTextExtent(_T("H"));
+        QSize sz = dc.GetTextExtent(_T("H"));
         if(sz.y > 0)
             m_pt_per_pixel = 12.0 / (double)sz.y;
     }
@@ -1742,7 +1577,7 @@ double OCPNPlatform::getFontPointsperPixel( void )
     
 }
 
-wxSize OCPNPlatform::getDisplaySize()
+QSize OCPNPlatform::getDisplaySize()
 {
 #ifdef __OCPN__ANDROID__
     return getAndroidDisplayDimensions();
@@ -1766,7 +1601,7 @@ double  OCPNPlatform::GetDisplaySizeMM()
     
 #ifdef __WXGTK__
     GdkScreen *screen = gdk_screen_get_default();
-    wxSize resolution = getDisplaySize();
+    QSize resolution = getDisplaySize();
     double gdk_monitor_mm;
     double ratio = (double)resolution.GetWidth() / (double)resolution.GetHeight();
     if( std::abs(ratio - 32.0/10.0) < std::abs(ratio - 16.0/10.0) ) {
@@ -1785,7 +1620,7 @@ double  OCPNPlatform::GetDisplaySizeMM()
     
     if( !m_bdisableWindowsDisplayEnum){
         if(GetWindowsMonitorSize( &w, &h) && (w > 100) ){             // sanity check
-            m_displaySizeMM == wxSize(w, h);
+            m_displaySizeMM == QSize(w, h);
             ret = w;
         }
         else
@@ -1888,8 +1723,8 @@ wxDirDialog* OCPNPlatform::AdjustDirDialogFont(wxWindow *container, wxDirDialog*
         dlg->SetSize( container->GetSize());
         dlg->Centre();
         
-        wxSize sds = dlg->GetSize();
-        wxSize ss = container->GetSize();
+        QSize sds = dlg->GetSize();
+        QSize ss = container->GetSize();
         
         
         if(sds.x > ss.x){
@@ -1926,8 +1761,8 @@ wxFileDialog* OCPNPlatform::AdjustFileDialogFont(wxWindow *container, wxFileDial
             dlg->SetSize( container->GetSize());
             dlg->Centre();
             
-            wxSize sds = dlg->GetSize();
-            wxSize ss = container->GetSize();
+            QSize sds = dlg->GetSize();
+            QSize ss = container->GetSize();
             
             
             if(sds.x > ss.x){
@@ -1967,7 +1802,7 @@ double OCPNPlatform::GetToolbarScaleFactor( int GUIScaleFactor )
     
     //  Get the basic size of a tool icon
     ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
-    wxSize style_tool_size = style->GetToolSize();
+    QSize style_tool_size = style->GetToolSize();
     double tool_size = style_tool_size.x;
     
     // unless overridden by user, we declare the "best" tool size
@@ -2000,7 +1835,7 @@ double OCPNPlatform::GetToolbarScaleFactor( int GUIScaleFactor )
     if(g_bresponsive){
     //  Get the basic size of a tool icon
         ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
-        wxSize style_tool_size = style->GetToolSize();
+        QSize style_tool_size = style->GetToolSize();
         double tool_size = style_tool_size.x;
 
     // unless overridden by user, we declare the "best" tool size
@@ -2027,40 +1862,11 @@ double OCPNPlatform::GetToolbarScaleFactor( int GUIScaleFactor )
 double OCPNPlatform::GetCompassScaleFactor( int GUIScaleFactor )
 {
     double rv = 1.0;
-#ifdef __OCPN__ANDROID__
-    
-    // We try to arrange matters so that at GUIScaleFactor=0, the compass icon is approximately 9 mm in size
-    // and that the value may range from 0.5 -> 2.0
-    
-    if(g_bresponsive ){
-        //  Get the basic size of a tool icon
-        ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
-        wxSize style_tool_size = style->GetToolSize();
-        double compass_size = style_tool_size.x;
-        
-        // We declare the "nominal best" icon size
-        // to be roughly the same as the ActionBar height.
-        //  This may be approximated in a device orientation-independent way as:
-        //   28pixels * DENSITY
-        double premult = wxMax(28 * getAndroidDisplayDensity(), 50) / compass_size;
-        
-        //Adjust the scale factor using the global GUI scale parameter
-        double postmult =  exp( GUIScaleFactor * (0.693 / 5.0) );       //  exp(2)
-        rv = wxMin(rv, 1.5);      //  Clamp at 1.5
-        
-        rv = premult * postmult;
-        rv = wxMin(rv, 3.0);      //  Clamp at 3.0
-    }
-    
-    
-    
-#else
     double premult = 1.0;
-
     if(g_bresponsive ){
         
         ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
-        wxSize style_tool_size = style->GetToolSize();
+        QSize style_tool_size = style->GetToolSize();
         double compass_size = style_tool_size.x;
 
         // We declare the "best" tool size to be roughly 6 mm.
@@ -2075,328 +1881,43 @@ double OCPNPlatform::GetCompassScaleFactor( int GUIScaleFactor )
     rv = premult * postmult;
     rv = wxMin(rv, 3.0);      //  Clamp at 3.0
     rv = wxMax(rv, 0.5);
-    
-#endif
-    
     return rv;
 }
 
 float OCPNPlatform::getChartScaleFactorExp( float scale_linear )
 {
     double factor = 1.0;
-#ifndef __OCPN__ANDROID__
-    factor =  exp( scale_linear * (log(3.0) / 5.0) );       
-
-#else
-    // the idea here is to amplify the scale factor for higher density displays, in a measured way....
-    factor =  exp( scale_linear * (0.693 / 5.0) * getAndroidDisplayDensity());
-#endif
-    
-    factor = wxMax(factor, .5);
-    factor = wxMin(factor, 4.);
-    
+    factor =  exp( scale_linear * (log(3.0) / 5.0) );
+    factor = qMax(factor, .5);
+    factor = qMin(factor, 4.);
 
     return factor;
-}
+}        
 
-        
-#ifdef __WXMSW__
 
-#define NAME_SIZE 128
 
-const GUID GUID_CLASS_MONITOR = {0x4d36e96e, 0xe325, 0x11ce, 0xbf, 0xc1, 0x08, 0x00, 0x2b, 0xe1, 0x03, 0x18};
-
-// Assumes hDevRegKey is valid
-bool GetMonitorSizeFromEDID(const HKEY hDevRegKey, int *WidthMm, int *HeightMm)
+bool OCPNPlatform::GetWindowsMonitorSize( int &width, int &height)
 {
-    DWORD dwType, AcutalValueNameLength = NAME_SIZE;
-    TCHAR valueName[NAME_SIZE];
-    
-    BYTE EDIDdata[1024];
-    DWORD edidsize=sizeof(EDIDdata);
-    
-    for (LONG i = 0, retValue = ERROR_SUCCESS; retValue != ERROR_NO_MORE_ITEMS; ++i)
-    {
-        retValue = RegEnumValue ( hDevRegKey, i, &valueName[0],
-                                  &AcutalValueNameLength, NULL, &dwType,
-                                  EDIDdata, // buffer
-                                  &edidsize); // buffer size
-        
-        if (retValue != ERROR_SUCCESS || 0 != _tcscmp(valueName,_T("EDID")))
-            continue;
-        
-        *WidthMm  = ((EDIDdata[68] & 0xF0) << 4) + EDIDdata[66];
-        *HeightMm = ((EDIDdata[68] & 0x0F) << 8) + EDIDdata[67];
-        
-        return true; // valid EDID found
-    }
-    
-    return false; // EDID not found
-}
-
-bool GetSizeForDevID(wxString &TargetDevID, int *WidthMm, int *HeightMm)
-{
-    HDEVINFO devInfo = SetupDiGetClassDevsEx(
-        &GUID_CLASS_MONITOR, //class GUID
-        NULL, //enumerator
-        NULL, //HWND
-        DIGCF_PRESENT, // Flags //DIGCF_ALLCLASSES|
-        NULL, // device info, create a new one.
-        NULL, // machine name, local machine
-        NULL);// reserved
-    
-    if (NULL == devInfo)
-        return false;
-    
-    bool bRes = false;
-    
-    for (ULONG i=0; ERROR_NO_MORE_ITEMS != GetLastError(); ++i)
-    {
-        SP_DEVINFO_DATA devInfoData;
-        memset(&devInfoData,0,sizeof(devInfoData));
-        devInfoData.cbSize = sizeof(devInfoData);
-        
-        if (SetupDiEnumDeviceInfo(devInfo,i,&devInfoData))
-        {
-            wchar_t    Instance[80];
-            SetupDiGetDeviceInstanceId(devInfo, &devInfoData, Instance, MAX_PATH, NULL);
-            wxString instance(Instance);
-            if(instance.Upper().Find( TargetDevID.Upper() ) == wxNOT_FOUND )
-                continue;
-            
-            HKEY hDevRegKey = SetupDiOpenDevRegKey(devInfo,&devInfoData,
-                                                   DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
-            
-            if(!hDevRegKey || (hDevRegKey == INVALID_HANDLE_VALUE))
-                continue;
-            
-            bRes = GetMonitorSizeFromEDID(hDevRegKey, WidthMm, HeightMm);
-            
-            RegCloseKey(hDevRegKey);
-        }
-    }
-    SetupDiDestroyDeviceInfoList(devInfo);
-    return bRes;
-}
-
-bool OCPNPlatform::GetWindowsMonitorSize( int *width, int *height)
-{
-    bool bFoundDevice = true;
-    
-    if(m_monitorWidth < 10){
-            
-        int WidthMm = 0;
-        int HeightMm = 0;
-        
-        DISPLAY_DEVICE dd;
-        dd.cb = sizeof(dd);
-        DWORD dev = 0; // device index
-        int id = 1; // monitor number, as used by Display Properties > Settings
-        
-        wxString DeviceID;
-        bFoundDevice = false;
-        while (EnumDisplayDevices(0, dev, &dd, 0) && !bFoundDevice)
-        {
-            DISPLAY_DEVICE ddMon;
-            ZeroMemory(&ddMon, sizeof(ddMon));
-            ddMon.cb = sizeof(ddMon);
-            DWORD devMon = 0;
-            
-            while (EnumDisplayDevices(dd.DeviceName, devMon, &ddMon, 0) && !bFoundDevice)
-            {
-                if (ddMon.StateFlags & DISPLAY_DEVICE_ACTIVE &&
-                    !(ddMon.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER))
-                {
-                    DeviceID = wxString(ddMon.DeviceID, wxConvUTF8);
-                    DeviceID = DeviceID.Mid (8);
-                    DeviceID = DeviceID.Mid (0, DeviceID.Find ( '\\' ));
-                    
-                    bFoundDevice = GetSizeForDevID(DeviceID, &WidthMm, &HeightMm);
-                }
-                devMon++;
-                
-                ZeroMemory(&ddMon, sizeof(ddMon));
-                ddMon.cb = sizeof(ddMon);
-            }
-            
-            ZeroMemory(&dd, sizeof(dd));
-            dd.cb = sizeof(dd);
-            dev++;
-            
-        }
-        m_monitorWidth = WidthMm;
-        m_monitorHeight = HeightMm;
-        
-    }
-    
-    if(width)
-        *width = m_monitorWidth;
-    if(height)
-        *height = m_monitorHeight;
-    
-    return bFoundDevice;
-}
-
-
-#endif
-
-
-
-
-//--------------------------------------------------------------------------
-//      Internal Bluetooth Support
-//--------------------------------------------------------------------------
-
-bool OCPNPlatform::hasInternalBT(wxString profile)
-{
-#ifdef __OCPN__ANDROID__
-    bool t = androidDeviceHasBlueTooth();
-//    qDebug() << "androidDeviceHasBluetooth" << t;
-    return t;
-#else
-    
-    return false;
-#endif    
-}
-
-bool OCPNPlatform::startBluetoothScan()
-{
-#ifdef __OCPN__ANDROID__
-    return androidStartBluetoothScan();
-#else
-    
-    return false;
-#endif    
-}
-
-bool OCPNPlatform::stopBluetoothScan()
-{
-#ifdef __OCPN__ANDROID__
-    return androidStopBluetoothScan();
-#else
-    
-    return false;
-#endif    
-}
-
-
-wxArrayString OCPNPlatform::getBluetoothScanResults()
-{
-    wxArrayString ret_val;
-#ifdef __OCPN__ANDROID__
-    return androidGetBluetoothScanResults();
-#else
-
-    ret_val.Add(_T("line 1"));
-    ret_val.Add(_T("line 2"));
-    ret_val.Add(_T("line 3"));
-    return ret_val;
-    
-#endif    
-    
-}
-
-
-//--------------------------------------------------------------------------
-//      Per-Platform Utility support
-//--------------------------------------------------------------------------
-
-void OCPNPlatform::setChartTypeMaskSel(int mask, wxString &indicator)
-{
-#ifdef __OCPN__ANDROID__
-    return androidSetChartTypeMaskSel(mask, indicator);
-#endif
-    
-}
-
-#ifdef __OCPN__ANDROID__
-QString g_qtStyleSheet;
-
-bool LoadQtStyleSheet(wxString &sheet_file)
-{
-    if(wxFileExists( sheet_file )){
-        //        QApplication qApp = getqApp();
-        if(qApp){
-            QString file(sheet_file.c_str());
-            QFile File(file);
-            File.open(QFile::ReadOnly);
-            g_qtStyleSheet = QLatin1String(File.readAll());
-            
- //           qApp->setStyleSheet(g_qtStyleSheet);
-            return true;
-        }
-        else
-            return false;
-    }
-    else
-        return false;
-}
-
-QString getQtStyleSheet( void )
-{
-    return g_qtStyleSheet;
-}
-
-#endif
-
-
-PlatSpec android_plat_spc;
-
-bool OCPNPlatform::isPlatformCapable( int flag){
-
-#ifndef __OCPN__ANDROID__
+    if(QDesktopWidget::screenCount() <= 0) return false;
+    width = QDesktopWidget::screenGeometry().width();
+    height = QDesktopWidget::screenGeometry().height();
     return true;
-#else
-    if(flag == PLATFORM_CAP_PLUGINS){
-        long platver;
-        wxString tsdk(android_plat_spc.msdk);
-        if(tsdk.ToLong(&platver)){
-            if(platver >= 11)
-                return true;
-        }
-    }
-    else if(flag == PLATFORM_CAP_FASTPAN){
-        long platver;
-        wxString tsdk(android_plat_spc.msdk);
-        if(tsdk.ToLong(&platver)){
-            if(platver >= 14)
-                return true;
-        }
-    }
-    
-    return false;
-#endif    
-}    
-    
-    
-void OCPNPlatform::LaunchLocalHelp( void ) {
- 
-#ifdef __OCPN__ANDROID__
-    androidLaunchHelpView();
-#else
-    wxString def_lang_canonical = _T("en_US");
-    
-    #if wxUSE_XLOCALE
-    if(plocale_def_lang)
-        def_lang_canonical = plocale_def_lang->GetCanonicalName();
-    #endif
-        
-        wxString help_locn = g_Platform->GetSharedDataDir() + _T("doc/help_");
-        
-        wxString help_try = help_locn + def_lang_canonical + _T(".html");
-        
-        if( ! ::wxFileExists( help_try ) ) {
-            help_try = help_locn + _T("en_US") + _T(".html");
-            
-            if( ! ::wxFileExists( help_try ) ) {
-                help_try = help_locn + _T("web") + _T(".html");
-            }
-            
-            if( ! ::wxFileExists( help_try ) ) return;
-        }
-        
-        wxLaunchDefaultBrowser(wxString( _T("file:///") ) + help_try );
-#endif        
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+
 
 

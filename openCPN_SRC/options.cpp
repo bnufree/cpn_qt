@@ -28,26 +28,6 @@
 #include <unistd.h>
 #endif
 
-// For compilers that support precompilation, includes "wx/wx.h".
-#include "wx/wxprec.h"
-
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-
-#include <wx/progdlg.h>
-#include <wx/radiobox.h>
-#include <wx/listbox.h>
-#include <wx/imaglist.h>
-#include <wx/display.h>
-#include <wx/choice.h>
-#include <wx/dirdlg.h>
-#include <wx/clrpicker.h>
-#include <wx/stdpaths.h>
-#include "wx/tokenzr.h"
-#include <wx/mediactrl.h>
-#include "wx/dir.h"
-#include <wx/statline.h>
 
 #if wxCHECK_VERSION(2, 9, \
                     4) /* does this work in 2.8 too.. do we need a test? */
@@ -74,8 +54,6 @@ extern GLuint g_raster_format;
 #include "chartdbs.h"
 #include "options.h"
 #include "styles.h"
-#include "datastream.h"
-#include "multiplexer.h"
 #include "FontMgr.h"
 #include "OCPN_Sound.h"
 #include "SoundFactory.h"
@@ -84,12 +62,6 @@ extern GLuint g_raster_format;
 #include "wx28compat.h"
 #include "routeman.h"
 #include "chcanv.h"
-#include "MarkInfo.h"
-
-#include "ais.h"
-#include "AIS_Decoder.h"
-#include "AIS_Target_Data.h"
-
 #include "navutil.h"
 
 #include "s52plib.h"
@@ -272,8 +244,6 @@ extern bool g_oz_vector_scale;
 extern bool g_bShowStatusBar;
 
 extern s52plib* ps52plib;
-
-extern wxString g_locale;
 extern bool g_bportable;
 extern bool g_bdisable_opengl;
 
@@ -289,12 +259,6 @@ extern bool g_bGLexpert;
 #define ID_CHOICE_NMEA wxID_HIGHEST + 1
 
 extern wxArrayString* EnumerateSerialPorts(void);  // in chart1.cpp
-
-extern wxArrayString TideCurrentDataSet;
-extern wxString g_TCData_Dir;
-
-extern AIS_Decoder* g_pAIS;
-extern bool g_bserial_access_checked;
 
 options* g_pOptions;
 

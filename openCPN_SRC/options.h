@@ -206,7 +206,7 @@ enum {
 #define wxFIXED_MINSIZE 0
 #endif
 
-WX_DEFINE_ARRAY_PTR(wxGenericDirCtrl *, ArrayOfDirCtrls);
+typedef QList<wxGenericDirCtrl*> ArrayOfDirCtrls;
 
 class Uncopyable {
  protected:
