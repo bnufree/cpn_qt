@@ -30,7 +30,6 @@
 #define _S52S57_H_
 
 #include "bbox.h"
-#include "ocpn_types.h"
 
 #include <vector>
 #include <QList>

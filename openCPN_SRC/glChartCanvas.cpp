@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Authors:  David Register
@@ -497,34 +497,11 @@ static void GetglEntryPoints( void )
     
 }
 
-int test_attribs[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 16, WX_GL_STENCIL_SIZE, 8, 0 };
-
-glTestCanvas::glTestCanvas( wxWindow *parent ) :
-    wxGLCanvas( parent, wxID_ANY, test_attribs, wxDefaultPosition, wxSize( 2, 2 ) )
+glChartCanvas::glChartCanvas(QOpenGLContext* ctx, ChartCanvas* parentCavas) : QOpenGLWindow(ctx, QOpenGLWindow::NoPartialUpdate, 0)
+    , m_bsetup( false )
+    , m_pParentCanvas(parentCavas)
 {
-}
-
-
-// This attribute set works OK with vesa software only OpenGL renderer
-int attribs[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 16, WX_GL_STENCIL_SIZE, 8, 0 };
-BEGIN_EVENT_TABLE ( glChartCanvas, wxGLCanvas ) EVT_PAINT ( glChartCanvas::OnPaint )
-    EVT_ACTIVATE ( glChartCanvas::OnActivate )
-    EVT_SIZE ( glChartCanvas::OnSize )
-    EVT_MOUSE_EVENTS ( glChartCanvas::MouseEvent )
-END_EVENT_TABLE()
-
-glChartCanvas::glChartCanvas( wxWindow *parent ) :
-#if !wxCHECK_VERSION(3,0,0)
-    wxGLCanvas( parent, wxID_ANY, wxDefaultPosition, wxSize( 256, 256 ),
-            wxFULL_REPAINT_ON_RESIZE | wxBG_STYLE_CUSTOM, _T(""), attribs ),
-#else
-    wxGLCanvas( parent, wxID_ANY, attribs, wxDefaultPosition, wxSize( 256, 256 ),
-                        wxFULL_REPAINT_ON_RESIZE | wxBG_STYLE_CUSTOM, _T("") ),
-#endif
-                        
-    m_bsetup( false )
-{
-    m_pParentCanvas = dynamic_cast<ChartCanvas *>( GetParent() );
+//    m_pParentCanvas = dynamic_cast<ChartCanvas *>( GetParent() );
     
     SetBackgroundStyle ( wxBG_STYLE_CUSTOM );  // on WXMSW, this prevents flashing
     
@@ -587,78 +564,92 @@ void glChartCanvas::FlushFBO( void )
 }
 
 
-void glChartCanvas::OnActivate( wxActivateEvent& event )
+void glChartCanvas::OnActivate( /*wxActivateEvent& event*/ )
 {
-    m_pParentCanvas->OnActivate( event );
+    if(m_pParentCanvas) m_pParentCanvas->OnActivate( /*event*/ );
 }
 
-void glChartCanvas::OnSize( wxSizeEvent& event )
+void glChartCanvas::initializeGL()
 {
-    if( !g_bopengl ) {
-        SetSize( GetSize().x, GetSize().y );
-        event.Skip();
-        return;
-    }
 
-    
-    // this is also necessary to update the context on some platforms
-    // OnSize can be called with a different OpenGL context (when a plugin uses a different GL context).
-    if( m_bsetup && m_pcontext && IsShown()) {
-        SetCurrent(*m_pcontext);
-    }
-
-    /* expand opengl widget to fill viewport */
-     if( GetSize() != m_pParentCanvas->GetSize() ) {
-         SetSize( m_pParentCanvas->GetSize() );
-         if( m_bsetup )
-             BuildFBO();
-     }
-
-    GetClientSize( &m_pParentCanvas->m_canvas_width, &m_pParentCanvas->m_canvas_height );
 }
 
-void glChartCanvas::MouseEvent( wxMouseEvent& event )
+void glChartCanvas::resizeGL(int w, int h)
 {
-    if(m_pParentCanvas->MouseEventOverlayWindows( event ))
-        return;
 
-#ifndef __OCPN__ANDROID__
-        if(m_pParentCanvas->MouseEventSetup( event )) 
-        return;                 // handled, no further action required
-        
-        bool obj_proc = m_pParentCanvas->MouseEventProcessObjects( event );
+}
+
+void glChartCanvas::paintGL()
+{
+
+}
+
+//void glChartCanvas::OnSize( QSize& event )
+//{
+//    if( !g_bopengl ) {
+//        SetSize( GetSize().x, GetSize().y );
+//        event.Skip();
+//        return;
+//    }
+
     
-        if(!obj_proc && !m_pParentCanvas->singleClickEventIsValid ) 
-            m_pParentCanvas->MouseEventProcessCanvas( event );
+//    // this is also necessary to update the context on some platforms
+//    // OnSize can be called with a different OpenGL context (when a plugin uses a different GL context).
+//    if( m_bsetup && m_pcontext && IsShown()) {
+//        SetCurrent(*m_pcontext);
+//    }
+
+//    /* expand opengl widget to fill viewport */
+//     if( GetSize() != m_pParentCanvas->GetSize() ) {
+//         SetSize( m_pParentCanvas->GetSize() );
+//         if( m_bsetup )
+//             BuildFBO();
+//     }
+
+//    GetClientSize( &m_pParentCanvas->m_canvas_width, &m_pParentCanvas->m_canvas_height );
+//}
+
+void glChartCanvas::mouseDoubleClickEvent(QMouseEvent* evnt)
+{
+    QOpenGLWindow::mouseDoubleClickEvent(event);
+    MouseEvent(*evnt);
+}
+
+void glChartCanvas::mouseMoveEvent(QMouseEvent* event)
+{
+    QOpenGLWindow::mouseMoveEvent(event);
+    MouseEvent(*evnt);
+}
+
+void glChartCanvas::mousePressEvent(QMouseEvent* event)
+{
+    QOpenGLWindow::mousePressEvent(event);
+    MouseEvent(*evnt);
+}
+
+void glChartCanvas::mouseReleaseEvent(QMouseEvent* event)
+{
+    QOpenGLWindow::mouseReleaseEvent(event);
+    MouseEvent(*evnt);
+}
+
+void glChartCanvas::MouseEvent( QMouseEvent& event )
+{
+    if(m_pParentCanvas->MouseEventOverlayWindows( event )) return;
+    if(m_pParentCanvas->MouseEventSetup( event )) return;
+
+    bool obj_proc = m_pParentCanvas->MouseEventProcessObjects( event );
     
-    if( !g_btouch )
-        m_pParentCanvas->SetCanvasCursor( event );
- 
-#else
-
-    if(m_bgestureGuard){
-        m_pParentCanvas->r_rband.x = 0;             // turn off rubberband temporarily
-        return;
-    }
-        
-            
-    if(m_pParentCanvas->MouseEventSetup( event, false )) {
-        if(!event.LeftDClick()){
-            return;                 // handled, no further action required
-        }
-    }
-
-    m_pParentCanvas->MouseEventProcessObjects( event );
+    if(!obj_proc && !m_pParentCanvas->singleClickEventIsValid )
+        m_pParentCanvas->MouseEventProcessCanvas( event );
     
+    if( !g_btouch ) m_pParentCanvas->SetCanvasCursor( event );
 
-#endif    
-        
 }
 
 void glChartCanvas::BuildFBO( )
 {
-    if(IsShown())
-        SetCurrent(*m_pcontext);
+    if(IsShown())SetCurrent(*m_pcontext);
     
     if( m_b_BuiltFBO ) {
         glDeleteTextures( 2, m_cache_tex );

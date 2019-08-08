@@ -890,6 +890,8 @@ private:
       bool         m_bShowCompassWin;
 };
 
+typedef QList<ChartCanvas*> arrayofCanvasPtr;
+
 // CUSTOMIZATION - FORMAT MINUTES
 
 QString minutesToHoursDays(float timeInMinutes);

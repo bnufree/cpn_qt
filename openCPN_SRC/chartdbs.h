@@ -30,9 +30,9 @@
 #include <memory>
 #include <vector>
 
-#include "ocpn_types.h"
 #include "bbox.h"
 #include "LLRegion.h"
+#include "_def.h"
 
 class wxGenericProgressDialog;
 class ChartBase;

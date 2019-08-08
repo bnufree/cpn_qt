@@ -29,7 +29,6 @@
 #include "dychart.h"
 
 #include "bbox.h"
-#include "ocpn_types.h"
 #include "LLRegion.h"
 
 //----------------------------------------------------------------------------
@@ -155,6 +154,8 @@ public:
 
       virtual OcpnProjType GetChartProjectionType(){ return m_projection;}
       virtual QDateTime GetEditionDate(void){ return m_EdDate;}
+      virtual QDateTime getModifyTime(void);
+      virtual quint32   getFileSize(void);
 
       virtual QString GetPubDate(){ return m_PubYear;}
       virtual int GetNativeScale(){ return m_Chart_Scale;}

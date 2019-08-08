@@ -25,13 +25,11 @@
 #ifndef __GLTEXTCACHE_H__
 #define __GLTEXTCACHE_H__
 
-//#include <wx/glcanvas.h>
-//#include <wx/ffile.h>
-//#include <wx/timer.h>
 #include <stdint.h>
-
-#include "ocpn_types.h"
+//#include "ocpn_types.h"
+#include "_def.h"
 #include "bbox.h"
+#include <QFile>
 
 class glTextureDescriptor;
 
@@ -85,7 +83,7 @@ public:
     
 };
 
-WX_DEFINE_ARRAY(CatalogEntry*, ArrayOfCatalogEntries);
+typedef QList<CatalogEntry> ArrayOfCatalogEntries;
 
 class glTexTile
 {
@@ -93,7 +91,7 @@ public:
     glTexTile() { m_coords = m_texcoords = NULL;  m_ncoords = 0;}
     virtual ~glTexTile() { delete [] m_coords; delete [] m_texcoords; }
 
-    wxRect rect;
+    QRect rect;
     LLBBox box;
 //    LLRegion region;
 
@@ -103,24 +101,25 @@ public:
 
 #define MAX_TEX_LEVEL 10
 
+class ChartBase;
 class glTexFactory
 {
 public:
     glTexFactory(ChartBase *chart, int raster_format);
     ~glTexFactory();
 
-    glTextureDescriptor *GetOrCreateTD(const wxRect &rect);
-    bool BuildTexture(glTextureDescriptor *ptd, int base_level, const wxRect &rect);
-    bool PrepareTexture( int base_level, const wxRect &rect, ColorScheme color_scheme, int mem_used );
-    int GetTextureLevel( glTextureDescriptor *ptd, const wxRect &rect, int level,  ColorScheme color_scheme );
-    bool UpdateCacheAllLevels( const wxRect &rect, ColorScheme color_scheme, unsigned char **compcomp_array, int *compcomp_size);
-    bool IsLevelInCache( int level, const wxRect &rect, ColorScheme color_scheme );
+    glTextureDescriptor *GetOrCreateTD(const QRect &rect);
+    bool BuildTexture(glTextureDescriptor *ptd, int base_level, const QRect &rect);
+    bool PrepareTexture( int base_level, const QRect &rect, ColorScheme color_scheme, int mem_used );
+    int GetTextureLevel( glTextureDescriptor *ptd, const QRect &rect, int level,  ColorScheme color_scheme );
+    bool UpdateCacheAllLevels( const QRect &rect, ColorScheme color_scheme, unsigned char **compcomp_array, int *compcomp_size);
+    bool IsLevelInCache( int level, const QRect &rect, ColorScheme color_scheme );
     QString GetChartPath(){ return m_ChartPath; }
     QString GetHashKey(){ return m_HashKey; }
     void SetHashKey( QString key ){ m_HashKey = key; }
     bool OnTimer();
     void AccumulateMemStatistics(int &map_size, int &comp_size, int &compcomp_size);
-    void DeleteTexture(const wxRect &rect);
+    void DeleteTexture(const QRect &rect);
     void DeleteAllTextures( void );
     void DeleteSomeTextures( long target );
     void DeleteAllDescriptors( void );
@@ -131,7 +130,7 @@ public:
     void FreeSome( long target );
     void FreeIfCached();
 
-    glTextureDescriptor *GetpTD( wxRect & rect );
+    glTextureDescriptor *GetpTD( QRect & rect );
 
     void PrepareTiles(const ViewPort &vp, bool use_norm_vp, ChartBase *pChart);
     glTexTile** GetTiles(int &num) { num = m_ntex; return m_tiles; }
@@ -142,20 +141,20 @@ private:
     bool LoadHeader(void);
     bool WriteCatalogAndHeader();
 
-    bool UpdateCachePrecomp(unsigned char *data, int data_size, const wxRect &rect, int level,
+    bool UpdateCachePrecomp(unsigned char *data, int data_size, const QRect &rect, int level,
                                           ColorScheme color_scheme, bool write_catalog = true);
-    bool UpdateCacheLevel( const wxRect &rect, int level, ColorScheme color_scheme, unsigned char *data, int size);
+    bool UpdateCacheLevel( const QRect &rect, int level, ColorScheme color_scheme, unsigned char *data, int size);
     
     void DeleteSingleTexture( glTextureDescriptor *ptd );
 
     CatalogEntryValue *GetCacheEntryValue(int level, int x, int y, ColorScheme color_scheme);
     bool AddCacheEntryValue(const CatalogEntry &p);
     int  ArrayIndex(int x, int y) const { return ((y / m_tex_dim) * m_stride) + (x / m_tex_dim); } 
-    void  ArrayXY(wxRect *r, int index) const;
+    void  ArrayXY(QRect *r, int index) const;
 
     int         n_catalog_entries;
 
-    CatalogEntryValue *m_cache[N_COLOR_SCHEMES][MAXEX_LEVEL];
+    CatalogEntryValue *m_cache[N_COLOR_SCHEMES][MAX_TEX_LEVEL];
 
 
 
@@ -170,7 +169,8 @@ private:
 
     bool	m_catalogCorrupted;
     
-    wxFFile     *m_fs;
+//    FILE     *m_fs;
+    QFile*       m_fs;
     uint32_t    m_chart_date_binary;
     uint32_t    m_chartfile_date_binary;
     uint32_t    m_chartfile_size;

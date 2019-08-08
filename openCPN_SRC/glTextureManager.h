@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Authors:  David Register
@@ -27,72 +27,72 @@
 #ifndef __GLTEXTUREMANAGER_H__
 #define __GLTEXTUREMANAGER_H__
 
-const wxEventType wxEVT_OCPN_COMPRESSIONTHREAD = wxNewEventType();
+#include <QString>
+#include <QList>
+#include <QThread>
+#include <QHash>
+#include <QTimer>
 
-class JobTicket;
-class wxGenericProgressDialog;
-
-WX_DECLARE_LIST(JobTicket, JobList);
-
-class ProgressInfoItem;
-WX_DECLARE_LIST(ProgressInfoItem, ProgressInfoList);
-
+class QProgressDialog;
 class ProgressInfoItem
 {
 public:
-    ProgressInfoItem(){};
-    ~ProgressInfoItem(){};
+    ProgressInfoItem(){}
+    ~ProgressInfoItem(){}
     
     QString file_path;
     QString msgx;
 };
+typedef QList<ProgressInfoItem>      ProgressInfoList;
 
-
-
-class CompressionPoolThread : public wxThread
+class JobTicket;
+struct OCPN_CompressionThreadMsg
 {
 public:
-    CompressionPoolThread(JobTicket *ticket, wxEvtHandler *message_target);
-    void *Entry();
-    
-    wxEvtHandler        *m_pMessageTarget;
+    int        type;
+    int        nstat;
+    int        nstat_max;
+    JobTicket  * m_ticket;
+
+    OCPN_CompressionThreadMsg()
+    {
+        m_ticket = 0;
+    }
+};
+
+Q_DECLARE_METATYPE(OCPN_CompressionThreadMsg)
+
+class CompressionPoolThread : public QThread
+{
+    Q_OBJECT
+public:
+    CompressionPoolThread(JobTicket *ticket = 0);
+    void run();
+signals:
+    void signalSendCompressionMsg(const OCPN_CompressionThreadMsg& msg);
+private:
+
     JobTicket           *m_ticket;
 };
 
 
 
-class OCPN_CompressionThreadEvent: public wxEvent
-{
-public:
-    OCPN_CompressionThreadEvent( wxEventType commandType = wxEVT_NULL, int id = 0 );
-    ~OCPN_CompressionThreadEvent( );
-    
-    // accessors
-    void SetTicket( JobTicket *ticket ){m_ticket = ticket;}
-    JobTicket *GetTicket(void){ return m_ticket; }
-    
-    // required for sending with wxPostEvent()
-    wxEvent *Clone() const;
 
-    int        type;
-    int        nstat;
-    int        nstat_max;
-    
-private:
-    JobTicket  * m_ticket;
-};
+
+
 
 class CompressionPoolThread;
+class glTexFactory;
 class JobTicket
 {
 public:
     JobTicket();
     ~JobTicket() { free(level0_bits); }
     bool DoJob();
-    bool DoJob(const wxRect &rect);
+    bool DoJob(const QRect &rect);
     
     glTexFactory *pFact;
-    wxRect      m_rect;
+    QRect      m_rect;
     int         level_min_request;
     int         ident;
     bool        b_throttle;
@@ -110,26 +110,27 @@ public:
     bool        b_inCompressAll;
 };
 
+typedef QList<JobTicket*>    JobList;
 
 //      This is a hashmap with Chart full path as key, and glTexFactory as value
-WX_DECLARE_STRING_HASH_MAP( glTexFactory*, ChartPathHashTexfactType );
+typedef QHash<QString, glTexFactory*> ChartPathHashTexfactType;
 
 //      glTextureManager Definition
-class glTextureManager : public wxEvtHandler
+class ChartBase;
+class glTextureManager : public QObject
 {
+    Q_OBJECT
 public:
     glTextureManager();
     ~glTextureManager();
 
-    void OnEvtThread( OCPN_CompressionThreadEvent & event );
-    void OnTimer(wxTimerEvent &event);
-    bool ScheduleJob( glTexFactory *client, const wxRect &rect, int level_min,
+    bool ScheduleJob( glTexFactory *client, const QRect &rect, int level_min,
                       bool b_throttle_thread, bool b_nolimit, bool b_postZip, bool b_inplace);
 
-    int GetRunningJobCount(){ return running_list.GetCount(); }
-    int GetJobCount(){ return GetRunningJobCount() + todo_list.GetCount(); }
+    int GetRunningJobCount(){ return running_list.count(); }
+    int GetJobCount(){ return GetRunningJobCount() + todo_list.count(); }
     bool AsJob( QString const &chart_path ) const;
-    void PurgeJobList( QString chart_path = wxEmptyString );
+    void PurgeJobList( QString chart_path = QString() );
     void ClearJobList();
     void ClearAllRasterTextures(void);
     bool PurgeChartTextures(ChartBase *pc, bool b_purge_factory = false);
@@ -141,6 +142,9 @@ public:
     //    key is Chart full path
     //    Value is glTexFactory*
     ChartPathHashTexfactType   m_chart_texfactory_hash;
+public slots:
+    void OnEvtThread( const OCPN_CompressionThreadMsg& event );
+    void OnTimer();
 
 private:    
     bool DoJob( JobTicket *pticket );
@@ -153,9 +157,9 @@ private:
 
     int		m_prevMemUsed;
 
-    wxTimer     m_timer;
+    QTimer*     m_timer;
     size_t      m_ticks;
-    wxGenericProgressDialog *m_progDialog;
+    QProgressDialog *m_progDialog;
     QString    m_progMsg;
     unsigned int  m_jcnt;
     ProgressInfoList    progList;
@@ -165,7 +169,7 @@ private:
 };
 
 class glTextureDescriptor;
-void GetFullMap( glTextureDescriptor *ptd,  const wxRect &rect, QString chart_path, int level);
+void GetFullMap( glTextureDescriptor *ptd,  const QRect &rect, QString chart_path, int level);
 int TextureDim(int level);
 int TextureTileSize(int level, bool compressed);
 

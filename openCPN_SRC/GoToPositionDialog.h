@@ -25,7 +25,6 @@
 #ifndef __GOTOPOSITIONDIALOG_H__
 #define __GOTOPOSITIONDIALOG_H__
 
-#include "ocpn_types.h"
 #include <QSize>
 #include <QPoint>
 #include <QDialog>

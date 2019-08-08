@@ -1611,7 +1611,7 @@ int main(int argc, char argv[])
 
 
     //make size as 9:16
-    Dialog w;
+    zchxf w;
     w.showMaximized();
 
     return a.exec();

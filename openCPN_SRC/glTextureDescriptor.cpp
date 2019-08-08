@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -23,9 +23,9 @@
  */
 
 #include "glTextureDescriptor.h"
-#include <wx/thread.h>
+#include <QMutex>
 
-wxCriticalSection gs_critSect;
+QMutex gs_critSect;
 
 glTextureDescriptor::glTextureDescriptor()
 {

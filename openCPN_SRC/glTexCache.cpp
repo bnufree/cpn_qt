@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Authors:  David Register
@@ -23,12 +23,6 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  ***************************************************************************
  */
-
-#include <wx/wxprec.h>
-#include <wx/tokenzr.h>
-#include <wx/filename.h>
-#include <wx/wx.h>
-
 #include <stdint.h>
 
 #include "config.h"
@@ -68,7 +62,7 @@ extern ColorScheme global_color_scheme;
 
 extern ChartDB      *ChartData;
 extern ocpnGLOptions    g_GLOptions;
-extern wxString         g_PrivateDataDir;
+extern QString         g_PrivateDataDir;
 
 extern int              g_tile_size;
 extern int              g_uncompressed_tile_size;
@@ -76,7 +70,7 @@ extern int              g_uncompressed_tile_size;
 extern PFNGLCOMPRESSEDTEXIMAGE2DPROC s_glCompressedTexImage2D;
 extern PFNGLGENERATEMIPMAPEXTPROC          s_glGenerateMipmap;
 
-extern wxString CompressedCachePath(wxString path);
+extern QString CompressedCachePath(const QString& path);
 extern glTextureManager   *g_glTextureManager;
 
 //      CatalogEntry implementation
@@ -136,10 +130,12 @@ glTexFactory::glTexFactory(ChartBase *chart, int raster_format)
 //    m_pchart = chart;
     n_catalog_entries = 0;
     m_catalog_offset = sizeof(CompressedCacheHeader);
-    wxDateTime ed = chart->GetEditionDate();
-    m_chart_date_binary = (uint32_t)ed.GetTicks();
-    m_chartfile_date_binary = ::wxFileModificationTime(chart->GetFullPath());
-    m_chartfile_size = (uint32_t)wxFileName::GetSize(chart->GetFullPath()).GetLo();
+    QDateTime ed = chart->GetEditionDate();
+    m_chart_date_binary = (uint32_t)ed.toTime_t();
+//    m_chartfile_date_binary = ::wxFileModificationTime(chart->GetFullPath());
+//    m_chartfile_size = (uint32_t)wxFileName::GetSize(chart->GetFullPath()).GetLo();
+    m_chartfile_date_binary = chart->getModifyTime().toTime_t();
+    m_chartfile_size = chart->getFileSize();
     m_ChartPath = chart->GetFullPath();
     
     m_CompressedCacheFilePath = CompressedCachePath(chart->GetFullPath());
@@ -204,9 +200,9 @@ glTexFactory::~glTexFactory()
     delete [] m_tiles;
  }
 
-glTextureDescriptor *glTexFactory::GetpTD( wxRect & rect )
+glTextureDescriptor *glTexFactory::GetpTD( QRect & rect )
 {
-    int array_index = ArrayIndex(rect.x, rect.y);
+    int array_index = ArrayIndex(rect.x(), rect.y());
     return m_td_array[array_index];
 }
 
@@ -222,42 +218,6 @@ bool glTexFactory::OnTimer()
             ptd->FreeComp();
         }
     }
-
-#if 0 // this is proven unreliable and slow
-    // if we have the data in the catalog of level 0 or doubly compressed
-    // for an entire row of tiles, then we can free rows from the linebuffer
-    if(g_GLOptions.m_bTextureCompression) {
-        ChartBase *pChart = ChartData->OpenChartFromDB( m_ChartPath, FULL_INIT );
-        ChartBaseBSB *pBSBChart = dynamic_cast<ChartBaseBSB*>( pChart );
-
-        if(pBSBChart) {
-            for(int y = 0; y<m_ny_tex; y++) {
-                int dim = g_GLOptions.m_iTextureDimension;
-
-                if(!pBSBChart->HaveLineCacheRow(y*dim))
-                    continue;
-
-                for(int x = 0; x<m_nx_tex; x++) {
-                    int i = ArrayIndex(x, y);
-                    glTextureDescriptor *ptd = m_td_array[i];
-                    
-                    if( !ptd )
-                        goto keeplines;
-                    
-                    if( ptd->compcomp_array[0] )
-                        continue; // ok
-                    
-                    CatalogEntryValue *p = GetCacheEntryValue(0, x*dim, y*dim, ptd->m_colorscheme);
-                    if(!p)
-                        goto keeplines;
-                }
-
-                pBSBChart->FreeLineCacheRows(y*dim, (y+1)*dim);
-            }
-        keeplines:;
-        }
-    }
-#endif
     
     // write doubly compressed data to disk
     if(g_GLOptions.m_bTextureCompressionCaching)
@@ -266,7 +226,7 @@ bool glTexFactory::OnTimer()
             if(ptd && ptd->IsCompCompArrayComplete( 0 )) {
                 int dim = g_GLOptions.m_iTextureDimension;
                 UpdateCacheAllLevels
-                    (wxRect(ptd->x, ptd->y, dim, dim),
+                    (QRect(ptd->x, ptd->y, dim, dim),
                      ptd->m_colorscheme, ptd->compcomp_array, ptd->compcomp_size );
 
                 // no longer need to store the compressed compressed data
@@ -277,22 +237,6 @@ bool glTexFactory::OnTimer()
 
     return false;
 }
-
-#ifdef __OCPN__ANDROID__
-    // delete any uncompressed textures if texture memory is more than 30
-    // on android??   Maybe this should be removed now
-    bool bGLMemCrunch = g_tex_mem_used > 30/*g_GLOptions.m_iTextureMemorySize*/ * 1024 * 1024;
-    
-    if( bGLMemCrunch ){
-        for(wxTextureListNode *node = m_texture_list.GetFirst(); node;
-            node = node->GetNext()) {
-            glTextureDescriptor *ptd = node->GetData();
-            if(ptd->nGPU_compressed == GPU_TEXTURE_UNCOMPRESSED){
-                DeleteSingleTexture(ptd);
-            }
-        }
-    }
-#endif    
 
 void glTexFactory::AccumulateMemStatistics(int &map_size, int &comp_size, int &compcomp_size)
 {
@@ -306,10 +250,10 @@ void glTexFactory::AccumulateMemStatistics(int &map_size, int &comp_size, int &c
     }
 }
 
-void glTexFactory::DeleteTexture(const wxRect &rect)
+void glTexFactory::DeleteTexture(const QRect &rect)
 {
     //    Is this texture tile defined?
-    int array_index = ArrayIndex(rect.x, rect.y);
+    int array_index = ArrayIndex(rect.x(), rect.y());
     glTextureDescriptor *ptd = m_td_array[array_index];
 
     
@@ -408,10 +352,10 @@ void glTexFactory::DeleteSingleTexture( glTextureDescriptor *ptd )
     ptd->nGPU_compressed = GPU_TEXTURE_UNKNOWN;
 }
 
-void  glTexFactory::ArrayXY(wxRect *r, int index) const
+void  glTexFactory::ArrayXY(QRect *r, int index) const
 {
-    r->y = (index / m_stride)*m_tex_dim;
-    r->x = (index -((r->y/m_tex_dim)*m_stride)) *m_tex_dim;
+    r->setY((index / m_stride)*m_tex_dim);
+    r->setX((index -((r->y()/m_tex_dim)*m_stride)) *m_tex_dim );
 }
 
 CatalogEntryValue *glTexFactory::GetCacheEntryValue(int level, int x, int y, ColorScheme color_scheme)
@@ -437,7 +381,7 @@ CatalogEntryValue *glTexFactory::GetCacheEntryValue(int level, int x, int y, Col
     return r;    
 }
 
-bool glTexFactory::IsLevelInCache( int level, const wxRect &rect, ColorScheme color_scheme )
+bool glTexFactory::IsLevelInCache( int level, const QRect &rect, ColorScheme color_scheme )
 {
     bool b_ret = false;
     
@@ -445,21 +389,21 @@ bool glTexFactory::IsLevelInCache( int level, const wxRect &rect, ColorScheme co
         g_GLOptions.m_bTextureCompressionCaching) {
          
     //  Search for the requested texture
-        if (GetCacheEntryValue(level, rect.x, rect.y, color_scheme) != 0)
+        if (GetCacheEntryValue(level, rect.x(), rect.y(), color_scheme) != 0)
             b_ret = true;
     }
     
     return b_ret;
 }
 
-glTextureDescriptor *glTexFactory::GetOrCreateTD(const wxRect &rect)
+glTextureDescriptor *glTexFactory::GetOrCreateTD(const QRect &rect)
 {
-    int array_index = ArrayIndex(rect.x, rect.y);
+    int array_index = ArrayIndex(rect.x(), rect.y());
     if( !m_td_array[array_index] ){
         glTextureDescriptor *p = new glTextureDescriptor();
         
-        p->x = rect.x;
-        p->y = rect.y;
+        p->x = rect.x();
+        p->y = rect.y();
         p->level_min = g_mipmap_max_level + 1;  // default, nothing loaded
         p->m_colorscheme = global_color_scheme;
         m_td_array[array_index] = p;
@@ -483,14 +427,9 @@ static void CreateTexture(GLuint &tex_name, bool b_use_mipmaps)
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
     else
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-#ifdef __OCPN__ANDROID__
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#endif
 }
 
-bool glTexFactory::BuildTexture(glTextureDescriptor *ptd, int base_level, const wxRect &rect)
+bool glTexFactory::BuildTexture(glTextureDescriptor *ptd, int base_level, const QRect &rect)
 {
     bool busy_shown = false;
     
@@ -630,7 +569,7 @@ bool glTexFactory::BuildTexture(glTextureDescriptor *ptd, int base_level, const 
     return true;
 }
 
-bool glTexFactory::PrepareTexture( int base_level, const wxRect &rect, ColorScheme color_scheme, int mem_used )
+bool glTexFactory::PrepareTexture( int base_level, const QRect &rect, ColorScheme color_scheme, int mem_used )
 {    
     glTextureDescriptor *ptd = NULL;
 
@@ -745,14 +684,14 @@ void glTexFactory::PrepareTiles(const ViewPort &vp, bool use_norm_vp, ChartBase 
         if(vp.m_projection_type == PROJECTION_ORTHOGRAPHIC) {
             Extent e;
             pChartBSB->GetChartExtent(&e);
-            xsplits = xsplits * wxMax(fabsf(e.NLAT), fabsf(e.SLAT)) / 90;
+            xsplits = xsplits * qMax(fabsf(e.NLAT), fabsf(e.SLAT)) / 90;
         }
         
         xsplits = round(xsplits);
         ysplits = 2*xsplits;
         
-        xsplits = wxMin(wxMax(xsplits, 1), 8);
-        ysplits = wxMin(wxMax(ysplits, 1), 8);
+        xsplits = qMin(qMax(xsplits, 1.0), 8.0);
+        ysplits = qMin(qMax(ysplits, 1.0), 8.0);
         break;
     case PROJECTION_EQUIRECTANGULAR:
         // needed for skewed charts?
@@ -770,21 +709,21 @@ void glTexFactory::PrepareTiles(const ViewPort &vp, bool use_norm_vp, ChartBase 
     }
 
     //    Using a 2D loop, iterate thru the texture tiles of the chart
-    wxRect rect;
-    rect.y = 0;
+    QRect rect;
+    rect.setY(0);
     for( int i = 0; i < m_ny_tex; i++ ) {
-        rect.height = tex_dim;
-        rect.x = 0;
+        rect.setHeight(tex_dim);
+        rect.setX(0);
         for( int j = 0; j < m_nx_tex; j++ ) {
-            rect.width = tex_dim;
+            rect.setWidth(tex_dim);
 
             glTexTile *tile = m_tiles[i*m_nx_tex + j] = new glTexTile;
             tile->rect = rect;
 
             double lat, lon;
             float ll[8];
-            int x[4] = {rect.x, rect.x, rect.x+rect.width, rect.x+rect.width};
-            int y[4] = {rect.y+rect.height, rect.y, rect.y, rect.y+rect.height};
+            int x[4] = {rect.x(), rect.x(), rect.x()+rect.width(), rect.x()+rect.width()};
+            int y[4] = {rect.y()+rect.height(), rect.y(), rect.y(), rect.y()+rect.height()};
 
             for(int k=0; k<4; k++) {
                 pChartBSB->chartpix_to_latlong(x[k], y[k], &lat, &lon);
@@ -795,26 +734,26 @@ void glTexFactory::PrepareTiles(const ViewPort &vp, bool use_norm_vp, ChartBase 
             float lonmin = ll[0], lonmax = ll[0];
             float latmin = ll[1], latmax = ll[1];
             for(int i=2; i<8; i+=2) {
-                lonmin = wxMin(lonmin, ll[i]), lonmax = wxMax(lonmax, ll[i]);
-                latmin = wxMin(latmin, ll[i+1]), latmax = wxMax(latmax, ll[i+1]);
+                lonmin = qMin(lonmin, ll[i]), lonmax = qMax(lonmax, ll[i]);
+                latmin = qMin(latmin, ll[i+1]), latmax = qMax(latmax, ll[i+1]);
             }
 
             if(fabsf(lonmin - lonmax) > 180) {
                 lonmin = 540, lonmax = 0; 
                 for(int i=0; i<8; i+=2) {
                     float lon = ll[i] < 0 ? ll[i]+360 : ll[i];
-                    lonmin = wxMin(lonmin, lon), lonmax = wxMax(lonmax, lon);
+                    lonmin = qMin(lonmin, lon), lonmax = qMax(lonmax, lon);
                 }
             }
 
             tile->box.Set(latmin, lonmin, latmax, lonmax);
 
-            double sx = rect.width;
-            double sy = rect.height;
+            double sx = rect.width();
+            double sy = rect.height();
                                 
-            double xs = rect.width / xsplits;
-            double ys = rect.height / ysplits;
-            double x1 = rect.x, u1 = 0;
+            double xs = rect.width() / xsplits;
+            double ys = rect.height() / ysplits;
+            double x1 = rect.x(), u1 = 0;
 
             int maxncoords = 4*xsplits*ysplits;
             tile->m_coords = new float[2*maxncoords];
@@ -825,13 +764,13 @@ void glTexFactory::PrepareTiles(const ViewPort &vp, bool use_norm_vp, ChartBase 
             int end = 0; // should be 1<<base_level but we have no way to know now
 
             for(int x = 0; x<xsplits; x++) {
-                double x2 = wxMin(x1+xs, m_size_X - end);
-                double u2 = (x2-rect.x)/rect.width;
+                double x2 = qMin(x1+xs, (m_size_X - end) * 1.0);
+                double u2 = (x2-rect.x())/rect.width();
 
-                double y1 = rect.y, v1 = 0;
+                double y1 = rect.y(), v1 = 0;
                 for(int y = 0; y<ysplits; y++) {
-                    double y2 = wxMin(y1+ys, m_size_Y - end);
-                    double v2 = (y2-rect.y)/rect.height;
+                    double y2 = qMin(y1+ys, (m_size_Y - end) * 1.0);
+                    double v2 = (y2-rect.y())/rect.height();
 
                     // todo avoid extra calls per loop and also caching from above
                     double xc[4] = {x1, x1, x2, x2}, yc[4] = {y2, y1, y1, y2};
@@ -847,9 +786,9 @@ void glTexFactory::PrepareTiles(const ViewPort &vp, bool use_norm_vp, ChartBase 
                         tile->m_texcoords[idx+1] = v[j];
 
                         if(use_norm_vp) {
-                            wxPoint2DDouble p = nvp.GetDoublePixFromLL(lat[j], lon[j]);
-                            tile->m_coords[idx+0] = p.m_x;
-                            tile->m_coords[idx+1] = p.m_y;
+                            QPointF p = nvp.GetDoublePixFromLL(lat[j], lon[j]);
+                            tile->m_coords[idx+0] = p.rx();
+                            tile->m_coords[idx+1] = p.ry();
                         } else {
                             tile->m_coords[idx+0] = lat[j];
                             tile->m_coords[idx+1] = lon[j];
@@ -869,14 +808,14 @@ void glTexFactory::PrepareTiles(const ViewPort &vp, bool use_norm_vp, ChartBase 
                 u1 = u2;
                 x1 = x2;
             }
-            rect.x += rect.width;
+            rect.setX(rect.x() + rect.width());
         }
-        rect.y += rect.height;
+        rect.setY( rect.y() + rect.height());
     }
 }
 
 
-bool glTexFactory::UpdateCacheLevel( const wxRect &rect, int level, ColorScheme color_scheme, unsigned char *data, int size)
+bool glTexFactory::UpdateCacheLevel( const QRect &rect, int level, ColorScheme color_scheme, unsigned char *data, int size)
 {
     if( !g_GLOptions.m_bTextureCompressionCaching)
         return false;
@@ -886,7 +825,7 @@ bool glTexFactory::UpdateCacheLevel( const wxRect &rect, int level, ColorScheme 
 
     //  Search for the requested texture
         //  Search the catalog for this particular texture
-    CatalogEntryValue *v = GetCacheEntryValue(level, rect.x, rect.y, color_scheme) ;
+    CatalogEntryValue *v = GetCacheEntryValue(level, rect.x(), rect.y(), color_scheme) ;
         
     //      This texture is already done
     if(v != 0)
@@ -896,7 +835,7 @@ bool glTexFactory::UpdateCacheLevel( const wxRect &rect, int level, ColorScheme 
 
 }
 
-bool glTexFactory::UpdateCacheAllLevels( const wxRect &rect, ColorScheme color_scheme, unsigned char **compcomp_array, int *compcomp_size)
+bool glTexFactory::UpdateCacheAllLevels( const QRect &rect, ColorScheme color_scheme, unsigned char **compcomp_array, int *compcomp_size)
 {
     if( !g_GLOptions.m_bTextureCompressionCaching)
         return false;
@@ -912,7 +851,7 @@ bool glTexFactory::UpdateCacheAllLevels( const wxRect &rect, ColorScheme color_s
     return work;
 }
 
-int glTexFactory::GetTextureLevel( glTextureDescriptor *ptd, const wxRect &rect,
+int glTexFactory::GetTextureLevel( glTextureDescriptor *ptd, const QRect &rect,
                                    int level, ColorScheme color_scheme )
 {
     //  Already available in the texture descriptor?
@@ -930,19 +869,19 @@ int glTexFactory::GetTextureLevel( glTextureDescriptor *ptd, const wxRect &rect,
             //  If cacheing compressed textures, look in the cache
             //  Search for the requested texture
             //  Search the catalog for this particular texture
-            CatalogEntryValue *p = GetCacheEntryValue(level, rect.x, rect.y, color_scheme);
+            CatalogEntryValue *p = GetCacheEntryValue(level, rect.x(), rect.y(), color_scheme);
         
             //      Requested texture level is found in the cache
             //      so go load it
             if( p != 0 ) {
                 int size = TextureTileSize(level, true);
 
-                if(m_fs->IsOpened()){
-                    m_fs->Seek(p->texture_offset);
+                if(m_fs && m_fs->isOpen()){
+                    m_fs->seek(p->texture_offset);
                     ptd->comp_array[level] = (unsigned char*)malloc(size);
                     int max_compressed_size = LZ4_COMPRESSBOUND(g_tile_size);
                     char *compressed_data = (char*)malloc(p->compressed_size);
-                    m_fs->Read(compressed_data, p->compressed_size);
+                    m_fs->read(compressed_data, p->compressed_size);
                     LZ4_decompress_fast(compressed_data, (char*)ptd->comp_array[level], size);
                     free(compressed_data);
                 }
@@ -966,23 +905,23 @@ int glTexFactory::GetTextureLevel( glTextureDescriptor *ptd, const wxRect &rect,
 // true 
 bool glTexFactory::LoadHeader(void)
 {
-    if(m_hdrOK)
-        return true;
+    if(m_hdrOK)  return true;
 
     bool need_new = false;
 
-    if(wxFileName::FileExists(m_CompressedCacheFilePath)) {
+    if(QFile::exists(m_CompressedCacheFilePath))
+    {
         
-        m_fs = new wxFFile(m_CompressedCacheFilePath, _T("rb+"));
-        if(m_fs->IsOpened()){
-        
+        m_fs = new QFile(m_CompressedCacheFilePath/*, _T("rb+")*/);
+        m_fs->open(QIODevice::ReadOnly);
+        if(m_fs->isOpen()){
             CompressedCacheHeader hdr;
             
             //  Header is located at the end of the file
-            wxFileOffset hdr_offset = m_fs->Length() -sizeof( hdr);
-            hdr_offset = m_fs->Seek( hdr_offset );
+            qint64 hdr_offset = m_fs->size() -sizeof( hdr);
+            hdr_offset = m_fs->seek( hdr_offset );
             
-            if( sizeof( hdr) == m_fs->Read(&hdr, sizeof( hdr ))) {
+            if( sizeof( hdr) == m_fs->read((char*)&hdr, sizeof( hdr ))) {
                 if( hdr.magic != COMPRESSED_CACHE_MAGIC ||
                     hdr.chartdate != m_chart_date_binary ||
                     hdr.chartfile_date != m_chartfile_date_binary ||
@@ -1008,27 +947,29 @@ bool glTexFactory::LoadHeader(void)
         else{               // some problem opening file, probably permissions on Win7
             delete m_fs;
             need_new = true;
-            wxRemoveFile(m_CompressedCacheFilePath);
+            QFile::remove(m_CompressedCacheFilePath);
         }
         
     }   // exists
     
     else {   // File does not exist
-        wxFileName fn(m_CompressedCacheFilePath);
-        if(!fn.DirExists())
-            fn.Mkdir();
+        QFileInfo fn(m_CompressedCacheFilePath);
+        QDir dir(fn.absoluteFilePath());
+        if(!dir.exists()) dir.mkpath(dir.path());
         need_new = true;
     }
 
     if (need_new) {
         //  Create new file, with empty catalog, and correct header
-        m_fs = new wxFFile(m_CompressedCacheFilePath, _T("wb"));
+        m_fs = new QFile(m_CompressedCacheFilePath/*, _T("wb")*/);
+        m_fs->open(QIODevice::WriteOnly);
         n_catalog_entries = 0;
         m_catalog_offset = 0;
         WriteCatalogAndHeader();
         delete m_fs;
 
-        m_fs = new wxFFile(m_CompressedCacheFilePath, _T("rb+"));
+        m_fs = new QFile(m_CompressedCacheFilePath/*, _T("rb+")*/);
+        m_fs->open(QIODevice::ReadOnly);
     }
     m_hdrOK = true;
     return true;
@@ -1071,7 +1012,7 @@ bool glTexFactory::LoadCatalog(void)
         return true;
     }
     
-    m_fs->Seek(m_catalog_offset);
+    m_fs->seek(m_catalog_offset);
  
     CatalogEntry ps;
     int buf_size =  ps.GetSerialSize();
@@ -1080,7 +1021,7 @@ bool glTexFactory::LoadCatalog(void)
     CatalogEntry p;
     bool bad = false;
     for(int i=0 ; i < n_catalog_entries ; i++){
-        m_fs->Read(buf, buf_size);
+        m_fs->read((char*)buf, buf_size);
         p.DeSerialize(buf);
         if (!AddCacheEntryValue(p))
             bad = true;
@@ -1088,7 +1029,7 @@ bool glTexFactory::LoadCatalog(void)
     
     free(buf);
     if (bad && !m_catalogCorrupted) {
-        ZCHX_LOGMSG(wxString::Format(_T("Bad cache catalog %s %s"), m_ChartPath.c_str(), m_CompressedCacheFilePath.c_str()));
+        qDebug("Bad cache catalog %s %s", m_ChartPath.toStdString().data(), m_CompressedCacheFilePath.toStdString().data());
         m_catalogCorrupted = true;
     }
     m_catalogOK = true;
@@ -1098,16 +1039,16 @@ bool glTexFactory::LoadCatalog(void)
 
 bool glTexFactory::WriteCatalogAndHeader()
 {
-    if(m_fs && m_fs->IsOpened()){
+    if(m_fs && m_fs->isOpen()){
 
-        m_fs->Seek(m_catalog_offset);
+        m_fs->seek(m_catalog_offset);
         
         CatalogEntry ps;
         int buf_size =  ps.GetSerialSize();
         unsigned char buf[CATALOG_ENTRY_SERIAL_SIZE];   // MSVC requires constant stack array size...
         int new_n_catalog_entries = 0;
         CatalogEntry p;
-        wxRect rect;
+        QRect rect;
         for (int i = 0; i < N_COLOR_SCHEMES; i++) {
             p.k.tcolorscheme = (ColorScheme)i;
             for (int j = 0; j < MAX_TEX_LEVEL; j++) {
@@ -1117,15 +1058,15 @@ bool glTexFactory::WriteCatalogAndHeader()
                 p.k.mip_level = j;
                 for (int k = 0; k < m_ntex; k++) {
                     ArrayXY(&rect, k);
-                    p.k.y = rect.y;
-                    p.k.x = rect.x;
+                    p.k.y = rect.y();
+                    p.k.x = rect.x();
                     CatalogEntryValue *r = &v[k];
                     if (r->compressed_size == 0)
                         continue;
                     p.v = *r;
                     new_n_catalog_entries++;
                     p.Serialize(buf);
-                    m_fs->Write( buf, buf_size);
+                    m_fs->write((char*)buf, buf_size);
 
                 }
             }
@@ -1142,8 +1083,8 @@ bool glTexFactory::WriteCatalogAndHeader()
         hdr.chartfile_date = m_chartfile_date_binary;
         hdr.chartfile_size = m_chartfile_size;
         
-        m_fs->Write( &hdr, sizeof(hdr));
-        m_fs->Flush();
+        m_fs->write( (char*)(&hdr), sizeof(hdr));
+        m_fs->flush();
         
         return true;
     }
@@ -1151,24 +1092,24 @@ bool glTexFactory::WriteCatalogAndHeader()
         return false;
 }
 
-bool glTexFactory::UpdateCachePrecomp(unsigned char *data, int data_size, const wxRect &rect,
+bool glTexFactory::UpdateCachePrecomp(unsigned char *data, int data_size, const QRect &rect,
                                       int level, ColorScheme color_scheme, bool write_catalog)
 {
     if (level < 0 || level >= MAX_TEX_LEVEL)
         return false;	// XXX BUG
 
     //  Search the catalog for this particular texture
-    if (GetCacheEntryValue(level, rect.x, rect.y, color_scheme) != 0) 
+    if (GetCacheEntryValue(level, rect.x(), rect.y(), color_scheme) != 0)
         return false;
     
     // Make sure the file exists
-    wxASSERT(m_fs != 0);
+    Q_ASSERT(m_fs != 0);
         
-    if( ! m_fs->IsOpened() )
+    if( ! m_fs->isOpen() )
         return false;
 
     //      Create a new catalog entry
-    CatalogEntry p( level, rect.x, rect.y, color_scheme);
+    CatalogEntry p( level, rect.x(), rect.y(), color_scheme);
     
     //      Write the compressed data to disk
     p.v.texture_offset = m_catalog_offset;
@@ -1178,8 +1119,8 @@ bool glTexFactory::UpdateCachePrecomp(unsigned char *data, int data_size, const 
     n_catalog_entries++;
 
     //      We write the new data at the current catalog offset, overwriting the old catalog
-    m_fs->Seek( m_catalog_offset );
-    m_fs->Write( data, data_size );
+    m_fs->seek( m_catalog_offset );
+    m_fs->write((char*)data, data_size );
     
     //      Write the catalog and Header (which follows the catalog at the end of the file
     m_catalog_offset += data_size;

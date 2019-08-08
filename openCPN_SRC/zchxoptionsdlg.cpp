@@ -1,5 +1,6 @@
-#include "zchxoptionsdlg.h"
+﻿#include "zchxoptionsdlg.h"
 #include "ui_zchxoptionsdlg.h"
+#include "zchxchecklistwidget.h"
 
 zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
     QDialog(parent),
@@ -11,4 +12,11 @@ zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
 zchxOptionsDlg::~zchxOptionsDlg()
 {
     delete ui;
+}
+
+
+
+void zchxOptionsDlg::on_bOpenGL_clicked()
+{
+
 }

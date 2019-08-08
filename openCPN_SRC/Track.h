@@ -36,6 +36,7 @@
 #include <QDateTime>
 #include "Hyperlink.h"
 #include "LLRegion.h"
+#include "Route.h"
 
 class ChartCanvas;
 class ViewPort;

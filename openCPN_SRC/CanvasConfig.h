@@ -72,6 +72,6 @@ public:
      
 };
 
-typedef  canvasConfig* arrayofCanvasConfigPtr;
+typedef  QList<canvasConfig*>  arrayofCanvasConfigPtr;
 
 #endif

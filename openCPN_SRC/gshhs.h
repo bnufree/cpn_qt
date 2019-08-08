@@ -40,8 +40,6 @@
 #include <assert.h>
 #include <vector>
 
-
-#include "ocpn_types.h"
 #include "ocpndc.h"
 #include "viewport.h"
 #include "cutil.h"

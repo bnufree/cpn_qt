@@ -27,7 +27,7 @@
 #pragma once
 #include <tinyxml.h>
 
-#include "ocpn_types.h"
+#include "_def.h"
 #include <QBitmap>
 #include <QHash>
 

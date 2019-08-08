@@ -25,8 +25,6 @@
 #define __ROLLOVERWIN_H__
 
 
-#include "ocpn_types.h"
-
 //constants for rollovers fonts
 enum
 {

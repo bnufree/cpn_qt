@@ -55,12 +55,10 @@ public:
     OCPNPlatform();
     ~OCPNPlatform();
 
+    //获取核心数
+    int getCpuCorNum() const {return mCpuCoreNum;}
     
-//  Per-Platform initialization support    
-    
-    //  Called from MyApp() immediately upon entry to MyApp::OnInit()
-    static void Initialize_1( void );
-    
+//  Per-Platform initialization support
     //  Called from MyApp() immediately before creation of MyFrame()
     void Initialize_2( void );
     
@@ -81,8 +79,8 @@ public:
 //--------------------------------------------------------------------------
 //      Platform Display Support
 //--------------------------------------------------------------------------
-    static void ShowBusySpinner( void );
-    static void HideBusySpinner( void );
+    static QCursor ShowBusySpinner( void );
+    static QCursor HideBusySpinner( void );
     double getFontPointsperPixel( void );
     QSize getDisplaySize();
     double GetDisplaySizeMM();
@@ -92,11 +90,6 @@ public:
     double GetToolbarScaleFactor( int GUIScaleFactor );
     double GetCompassScaleFactor( int GUIScaleFactor );
     void onStagedResizeFinal();
-    
-    QFileDialog *AdjustFileDialogFont(QWidget *container, QFileDialog *dlg);
-    QFileDialog  *AdjustDirDialogFont(QWidget *container,  QFileDialog *dlg);
-
-    void PositionAISAlert( QWidget *alert_window);
     float getChartScaleFactorExp( float scale_linear );
     int GetStatusBarFieldCount();
     bool GetFullscreen();
@@ -107,57 +100,33 @@ public:
 //--------------------------------------------------------------------------
 //      Per-Platform file/directory support
 //--------------------------------------------------------------------------
-
-    QString &GetStdPaths();
-    QString &GetHomeDir();
-    QString &GetExePath();
-    QString &GetSharedDataDir();
-    QString &GetPrivateDataDir();
-    QString GetWritableDocumentsDir();
-    QString &GetPluginDir();
-    QString &GetConfigFileName();
-    QString &GetLogFileName(){ return mlog_file; }
+    QString GetAppDir();
+    QString GetDataDir();
+    QString GetPluginDir();
+    QString GetPathSeparator();
+    QString GetConfigFileName();
     MyConfig *GetConfigObject();
     QString GetSupplementalLicenseString();
     QString NormalizePath(const QString &full_path); //Adapt for portable use
     
-    int DoFileSelectorDialog( QWidget *parent, QString *file_spec, QString Title, QString initDir,
-                                QString suggestedName, QString wildcard);
+    bool DoFileSelectorDialog( QWidget *parent, QString *file_spec, QString Title, QString initDir, QString suggestedName, QString wildcard);
     int DoDirSelectorDialog( QWidget *parent, QString *file_spec, QString Title, QString initDir);
-
-    bool InitializeLogFile( void );
-    void CloseLogFile( void );
-    QString    &GetLargeLogMessage( void ){ return large_log_message; }
-    FILE        *GetLogFilePtr(){ return flog; }
-
-
-#define PLATFORM_CAP_PLUGINS   1
-#define PLATFORM_CAP_FASTPAN   2
-
-    void SetLocaleSearchPrefixes( void );
-    QString GetDefaultSystemLocale();
-    
-#if wxUSE_XLOCALE    
-    QString GetAdjustedAppLocale();
-    QString ChangeLocale(QString &newLocaleID, wxLocale *presentLocale, wxLocale** newLocale);
-#endif
-    
     
 //--------------------------------------------------------------------------
 //      Per-Platform OpenGL support
 //--------------------------------------------------------------------------
     bool BuildGLCaps( void *pbuf );
     bool IsGLCapable();
+private:
+    void initSystemInfo();
 
 private:
     bool        GetWindowsMonitorSize( int& width, int& height);
-    QString    mlog_file;
-    FILE        *flog;
-    QString    large_log_message;
     QSize      m_displaySize;
     QSize      m_displaySizeMM;
     int         m_displaySizeMMOverride;
     bool        m_bdisableWindowsDisplayEnum;
+    int         mCpuCoreNum;
 };
 
 

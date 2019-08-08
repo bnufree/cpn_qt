@@ -138,8 +138,8 @@ public:
     
 
     void ComputeRenderRegion( ViewPort &vp, OCPNRegion &chart_region );
-    bool RenderQuiltRegionViewOnDCNoText( wxMemoryDC &dc, ViewPort &vp, OCPNRegion &chart_region );
-    bool RenderQuiltRegionViewOnDCTextOnly( wxMemoryDC &dc, ViewPort &vp, OCPNRegion &chart_region );
+    bool RenderQuiltRegionViewOnDCNoText( QPainter &dc, ViewPort &vp, OCPNRegion &chart_region );
+    bool RenderQuiltRegionViewOnDCTextOnly( QPainter &dc, ViewPort &vp, OCPNRegion &chart_region );
     
     bool IsVPBlittable( ViewPort &VPoint, int dx, int dy, bool b_allow_vector = false );
     ChartBase *GetChartAtPix( ViewPort &VPoint, const QPoint& p );
@@ -234,11 +234,11 @@ private:
     bool BuildExtendedChartStackAndCandidateArray(int ref_db_index, ViewPort &vp_in);
     int AdjustRefOnZoom( bool b_zin, ChartFamilyEnum family, ChartTypeEnum type, double proposed_scale_onscreen );
 
-    bool DoRenderQuiltRegionViewOnDC( wxMemoryDC &dc, ViewPort &vp, OCPNRegion &chart_region );
-    bool DoRenderQuiltRegionViewOnDCTextOnly( wxMemoryDC& dc, ViewPort &vp, OCPNRegion &chart_region );
+    bool DoRenderQuiltRegionViewOnDC( QPainter &dc, ViewPort &vp, OCPNRegion &chart_region );
+    bool DoRenderQuiltRegionViewOnDCTextOnly( QPainter& dc, ViewPort &vp, OCPNRegion &chart_region );
     
     void EmptyCandidateArray( void );
-    void SubstituteClearDC( wxMemoryDC &dc, ViewPort &vp );
+    void SubstituteClearDC( QPainter &dc, ViewPort &vp );
     int GetNewRefChart( void );
 
     

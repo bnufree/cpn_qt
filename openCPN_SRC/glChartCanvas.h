@@ -28,8 +28,6 @@
 //#include <wx/glcanvas.h>
 
 #include "dychart.h"
-
-#include "ocpn_types.h"
 #include "OCPNRegion.h"
 #include "LLRegion.h"
 #include "viewport.h"
@@ -83,39 +81,14 @@ typedef class{
 void GetglEntryPoints( OCPN_GLCaps *pcaps );
 GLboolean QueryExtension( const char *extName );
 
-
-class ocpnGLOptions
-{
-public:
-    bool m_bUseAcceleratedPanning;
-    bool m_bUseCanvasPanning;
-    
-    bool m_bTextureCompression;
-    bool m_bTextureCompressionCaching;
-
-    int m_iTextureDimension;
-    int m_iTextureMemorySize;
-    
-    bool m_GLPolygonSmoothing;
-    bool m_GLLineSmoothing;
-};
-
-
-class glTestCanvas : public wxGLCanvas
-{
-public:
-    glTestCanvas(wxWindow *parent);
-    ~glTestCanvas() {};
-
-};
-
-
 class ocpnDC;
 class emboss_data;
 class Route;
 class ChartBaseBSB;
+class ChartBase;
 
-class glChartCanvas : public wxGLCanvas
+#include <QOpenGLWindow>
+class glChartCanvas : public QOpenGLWindow
 {
 public:
     static bool CanClipViewport(const ViewPort &vp);
@@ -128,7 +101,7 @@ public:
     static void RotateToViewPort(const ViewPort &vp);
     static void DrawRegion( ViewPort &vp, const LLRegion &region);
     static void SetClipRegion( ViewPort &vp, const LLRegion &region);
-    static void SetClipRect(const ViewPort &vp, const wxRect &rect, bool g_clear=false);
+    static void SetClipRect(const ViewPort &vp, const QRect &rect, bool g_clear=false);
     static void DisableClipRegion();
     void SetColorScheme(ColorScheme cs);
     
@@ -139,27 +112,14 @@ public:
     
     void SendJSONConfigMessage();
     
-    glChartCanvas(wxWindow *parent);
+    glChartCanvas(QOpenGLContext* ctx, ChartCanvas* parentCavas);
     ~glChartCanvas();
 
-    void SetContext(wxGLContext *pcontext) { m_pcontext = pcontext; }
-
-    void OnPaint(wxPaintEvent& event);
-    void OnEraseBG(wxEraseEvent& evt);
-    void Render();
-    void OnActivate ( wxActivateEvent& event );
-    void OnSize ( wxSizeEvent& event );
-    void MouseEvent(wxMouseEvent& event);
+    void SetContext(QOpenGLContext *pcontext) { m_pcontext = pcontext; }
+    void Render();    
     void FastPan(int dx, int dy);
     void FastZoom(float factor);
     void RenderCanvasBackingChart( ocpnDC &dc, OCPNRegion chart_get_region);
-    
-#ifdef __OCPN__ANDROID__    
-    void OnEvtPanGesture( wxQT_PanGestureEvent &event);
-    void OnEvtPinchGesture( wxQT_PinchGestureEvent &event);
-    void onGestureTimerEvent(wxTimerEvent &event);
-#endif
-    
     QString GetRendererString(){ return m_renderer; }
     QString GetVersionString(){ return m_version; }
     void EnablePaint(bool b_enable){ m_b_paint_enable = b_enable; }
@@ -188,6 +148,19 @@ public:
 
     int viewport[4];
     double mvmatrix[16], projmatrix[16];
+public slots:
+    void OnActivate ();
+//    void OnSize (QSize size);
+    void MouseEvent(QMouseEvent& event);
+
+protected:
+    void paintGL();
+    void resizeGL(int w, int h);
+    void initializeGL();
+    void mouseDoubleClickEvent(QMouseEvent* evnt);
+    void mouseMoveEvent(QMouseEvent* event);
+    void mousePressEvent(QMouseEvent* event);
+    void mouseReleaseEvent(QMouseEvent* event);
 
 protected:
     void RenderGLAlertMessage();
@@ -202,7 +175,7 @@ protected:
     void RenderCharts(ocpnDC &dc, const OCPNRegion &rect_region);
     void RenderNoDTA(ViewPort &vp, const LLRegion &region, int transparency = 255);
     void RenderNoDTA(ViewPort &vp, ChartBase *chart);
-    void RenderWorldChart(ocpnDC &dc, ViewPort &vp, wxRect &rect, bool &world_view);
+    void RenderWorldChart(ocpnDC &dc, ViewPort &vp, QRect &rect, bool &world_view);
 
     void DrawFloatingOverlayObjects( ocpnDC &dc );
     void DrawGroundedOverlayObjects(ocpnDC &dc, ViewPort &vp);
@@ -214,7 +187,7 @@ protected:
     void DrawGLTidesInBBox(ocpnDC& dc, LLBBox& BBox);
     void DrawGLCurrentsInBBox(ocpnDC& dc, LLBBox& BBox);
     
-    wxGLContext       *m_pcontext;
+    QOpenGLContext       *m_pcontext;
 
     int max_texture_dimension;
 
@@ -244,7 +217,7 @@ protected:
 
     GLuint      ownship_tex;
     int         ownship_color;
-    wxSize      ownship_size, ownship_tex_size;
+    QSize      ownship_size, ownship_tex_size;
 
     GLuint      m_piano_tex;
     
@@ -257,8 +230,6 @@ protected:
     bool        m_bfogit;
     bool        m_benableFog;
     bool        m_benableVScale;
-    
-    wxTimer     m_gestureEeventTimer;
     bool        m_bgestureGuard;
     bool        m_bpinchGuard;
     
@@ -275,8 +246,6 @@ protected:
     int          m_currentTexHeight;
     
     ChartCanvas *m_pParentCanvas;
-    
-    DECLARE_EVENT_TABLE()
 };
 
 extern void BuildCompressedCache();

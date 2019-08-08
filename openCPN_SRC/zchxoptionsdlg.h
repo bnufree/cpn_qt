@@ -1,4 +1,4 @@
-#ifndef ZCHXOPTIONSDLG_H
+﻿#ifndef ZCHXOPTIONSDLG_H
 #define ZCHXOPTIONSDLG_H
 
 #include <QDialog>
@@ -15,7 +15,10 @@ public:
     explicit zchxOptionsDlg(QWidget *parent = 0);
     ~zchxOptionsDlg();
 
-private:
+private slots:
+    void on_bOpenGL_clicked();
+
+public:
     Ui::zchxOptionsDlg *ui;
 };
 
