@@ -10,6 +10,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent) :
     ui(new Ui::zchxMapMainWindow)
 {
     ui->setupUi(this);
+    this->menuBar()->addAction("Settings", this, SLOT(slotOpenSettingDlg()));
     mMonitorTimer = new QTimer();
     mMonitorTimer->setInterval(30000);
     connect(mMonitorTimer, SIGNAL(timeout()), this, SLOT(slotMemoryMonitor()));
@@ -104,5 +105,10 @@ void  zchxMapMainWindow::getMemoryStatus()
         mMemTotal = statex.ullTotalPhys / 1024;
     }
     qDebug()<<"memory total:"<<mMemTotal<<"  app used:"<<mMemUsed;
+}
+
+void zchxMapMainWindow::slotOpenSettingDlg()
+{
+    qDebug()<<"open settings windows now";
 }
 

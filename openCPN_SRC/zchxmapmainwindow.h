@@ -26,6 +26,7 @@ public:
 
 public slots:
     void    slotMemoryMonitor() {getMemoryStatus();}
+    void    slotOpenSettingDlg();
 
 private:
     Ui::zchxMapMainWindow *ui;
