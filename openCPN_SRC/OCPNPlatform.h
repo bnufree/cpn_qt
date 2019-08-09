@@ -26,12 +26,10 @@
 #ifndef OCPNPLATFORM_H
 #define OCPNPLATFORM_H
 
-
-#include <zchxlog.h>
 #include <stdio.h>
 #include <QFileDialog>
 
-class MyConfig;
+class zchxConfig;
 
 typedef struct {
     char    tsdk[20];
@@ -105,7 +103,7 @@ public:
     QString GetPluginDir();
     QString GetPathSeparator();
     QString GetConfigFileName();
-    MyConfig *GetConfigObject();
+    zchxConfig *GetConfigObject();
     QString GetSupplementalLicenseString();
     QString NormalizePath(const QString &full_path); //Adapt for portable use
     
@@ -127,6 +125,7 @@ private:
     int         m_displaySizeMMOverride;
     bool        m_bdisableWindowsDisplayEnum;
     int         mCpuCoreNum;
+    zchxConfig      *mConfigObj;
 };
 
 

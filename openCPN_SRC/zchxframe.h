@@ -2,6 +2,7 @@
 #define ZCHXFRAME_H
 
 #include <QMainWindow>
+#include "zchxconfig.h"
 
 class zchxFrame : public QMainWindow
 {
@@ -18,6 +19,7 @@ public:
     quint64 getProcessIDFromSystem();
     int     GetApplicationMemoryUse(void);
     void    getMemoryStatus();
+    zchxConfig*  getConfigObj();
 private:
     bool    prepareClose();
 protected:

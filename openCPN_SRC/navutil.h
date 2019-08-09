@@ -136,60 +136,60 @@ bool ExportGPXRoutes(QWidget* parent, RouteList *pRoutes, const QString suggeste
 bool ExportGPXTracks(QWidget* parent, TrackList *pRoutes, const QString suggestedName = ("tracks"));
 bool ExportGPXWaypoints(QWidget* parent, RoutePointList *pRoutePoints, const QString suggestedName = ("waypoints"));
 
-//----------------------------------------------------------------------------
-//    Config
-//----------------------------------------------------------------------------
-#include <QSettings>
-class MyConfig : public QSettings
-{
-public:
+////----------------------------------------------------------------------------
+////    Config
+////----------------------------------------------------------------------------
+//#include <QSettings>
+//class MyConfig : public QSettings
+//{
+//public:
 
-      MyConfig(const QString &LocalFileName);
+//      MyConfig(const QString &LocalFileName);
 
-      int LoadMyConfig();
-      void LoadS57Config();
-      void LoadNavObjects();
-      virtual void AddNewRoute(Route *pr);
-      virtual void UpdateRoute(Route *pr);
-      virtual void DeleteConfigRoute(Route *pr);
+//      int LoadMyConfig();
+//      void LoadS57Config();
+//      void LoadNavObjects();
+//      virtual void AddNewRoute(Route *pr);
+//      virtual void UpdateRoute(Route *pr);
+//      virtual void DeleteConfigRoute(Route *pr);
 
-      virtual void AddNewTrack(Track *pt);
-      virtual void UpdateTrack(Track *pt);
-      virtual void DeleteConfigTrack(Track *pt);
+//      virtual void AddNewTrack(Track *pt);
+//      virtual void UpdateTrack(Track *pt);
+//      virtual void DeleteConfigTrack(Track *pt);
 
-      virtual void AddNewWayPoint(RoutePoint *pWP, int ConfigRouteNum = -1);
-      virtual void UpdateWayPoint(RoutePoint *pWP);
-      virtual void DeleteWayPoint(RoutePoint *pWP);
-      virtual void AddNewTrackPoint( TrackPoint *pWP, const QString& parent_GUID );
+//      virtual void AddNewWayPoint(RoutePoint *pWP, int ConfigRouteNum = -1);
+//      virtual void UpdateWayPoint(RoutePoint *pWP);
+//      virtual void DeleteWayPoint(RoutePoint *pWP);
+//      virtual void AddNewTrackPoint( TrackPoint *pWP, const QString& parent_GUID );
 
-      virtual void CreateConfigGroups ( ChartGroupArray *pGroupArray );
-      virtual void DestroyConfigGroups ( void );
-      virtual void LoadConfigGroups ( ChartGroupArray *pGroupArray );
+//      virtual void CreateConfigGroups ( ChartGroupArray *pGroupArray );
+//      virtual void DestroyConfigGroups ( void );
+//      virtual void LoadConfigGroups ( ChartGroupArray *pGroupArray );
 
-      virtual void LoadCanvasConfigs( bool bApplyAsTemplate = false );
-      virtual void LoadConfigCanvas( canvasConfig *cConfig, bool bApplyAsTemplate );
+//      virtual void LoadCanvasConfigs( bool bApplyAsTemplate = false );
+//      virtual void LoadConfigCanvas( canvasConfig *cConfig, bool bApplyAsTemplate );
+
+//      virtual void SaveCanvasConfigs( );
+//      virtual void SaveConfigCanvas( canvasConfig *cc );
       
-      virtual void SaveCanvasConfigs( );
-      virtual void SaveConfigCanvas( canvasConfig *cc );
-      
-      virtual bool UpdateChartDirs(ArrayOfCDI &dirarray);
-      virtual bool LoadChartDirArray(ArrayOfCDI &ChartDirArray);
-      virtual void UpdateSettings();
+//      virtual bool UpdateChartDirs(ArrayOfCDI &dirarray);
+//      virtual bool LoadChartDirArray(ArrayOfCDI &ChartDirArray);
+//      virtual void UpdateSettings();
 
-      bool LoadLayers(QString &path);
-      int LoadMyConfigRaw( bool bAsTemplate = false );
+//      bool LoadLayers(QString &path);
+//      int LoadMyConfigRaw( bool bAsTemplate = false );
       
-      void CreateRotatingNavObjBackup();
-      virtual void UpdateNavObj();
+//      void CreateRotatingNavObjBackup();
+//      virtual void UpdateNavObj();
       
-      QString                m_sNavObjSetFile;
-      QString                m_sNavObjSetChangesFile;
+//      QString                m_sNavObjSetFile;
+//      QString                m_sNavObjSetChangesFile;
 
-      NavObjectChanges        *m_pNavObjectChangesSet;
-      NavObjectCollection1    *m_pNavObjectInputSet;
-      bool                    m_bSkipChangeSetUpdate;
+//      NavObjectChanges        *m_pNavObjectChangesSet;
+//      NavObjectCollection1    *m_pNavObjectInputSet;
+//      bool                    m_bSkipChangeSetUpdate;
       
-};
+//};
 
 void SwitchInlandEcdisMode( bool Switch );
 

@@ -2,26 +2,30 @@
 #include "ui_zchxopengloptiondlg.h"
 #include "_def.h"
 #include <QDir>
-#include "zchxframe.h"
+#include "zchxmapmainwindow.h"
+#include "zchxconfig.h"
 #include "glTextureManager.h"
 #include "GL/gl.h"
 
-extern bool g_bGLexpert;
-extern ocpnGLOptions g_GLOptions;
-extern bool g_bopengl;
-extern bool g_raster_format;
-extern bool g_bShowFPS;
-extern glTextureManager   *g_glTextureManager;
 
-zchxOpenGlOptionDlg::zchxOpenGlOptionDlg(zchxFrame* frame, QWidget *parent) :
+extern      zchxGLOptions                       g_GLOptions;
+extern      bool                                g_bGlExpert;
+extern      bool                                g_bOpenGL;
+extern      GLuint                              g_raster_format;
+extern      bool                                g_bShowFPS;
+extern      glTextureManager                    *g_glTextureManager;
+
+zchxOpenGlOptionDlg::zchxOpenGlOptionDlg(zchxMapMainWindow* frame, QWidget *parent) :
     QDialog(parent),
-    mFrame(frame),
+    mMainWindow(frame),
     m_brebuild_cache(false),
     ui(new Ui::zchxOpenGlOptionDlg)
 {
     ui->setupUi(this);
     this->setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
-    if(g_bGLexpert)
+    Q_ASSERT(mMainWindow);
+
+    if(g_bGlExpert)
     {
         ui->m_cbTextureCompression->setText(tr("Texture Compression"));
     } else
@@ -29,7 +33,10 @@ zchxOpenGlOptionDlg::zchxOpenGlOptionDlg(zchxFrame* frame, QWidget *parent) :
         ui->m_cbTextureCompression->setText(tr("Texture Compression with Caching"));
     }
     ui->btnRebuild->setEnabled(g_GLOptions.m_bTextureCompressionCaching);
-    if (!g_bopengl || g_raster_format == GL_RGB) ui->btnRebuild->setEnabled(false);
+    if (!g_bOpenGL || g_raster_format == GL_RGB)
+    {
+        ui->btnRebuild->setEnabled(false);
+    }
     ui->btnClear->setEnabled(g_GLOptions.m_bTextureCompressionCaching);
     ui->m_cacheSize->setText(QString("Size:%1").arg(GetTextureCacheSize()));
     Populate();
@@ -92,10 +99,10 @@ void zchxOpenGlOptionDlg::Populate(void)
         ui->m_cbTextureCompression->setChecked(false);
     }
 
-    ui->m_cbTextureCompressionCaching->setVisible(g_bGLexpert);
-    ui->m_memorySize->setVisible(g_bGLexpert);
-    ui->m_sTextureMemorySize->setVisible(g_bGLexpert);
-    if (g_bGLexpert)
+    ui->m_cbTextureCompressionCaching->setVisible(g_bGlExpert);
+    ui->m_memorySize->setVisible(g_bGlExpert);
+    ui->m_sTextureMemorySize->setVisible(g_bGlExpert);
+    if (g_bGlExpert)
     {
         ui->m_cbTextureCompressionCaching->setChecked(g_GLOptions.m_bTextureCompressionCaching);
         ui->m_sTextureMemorySize->setValue(g_GLOptions.m_iTextureMemorySize);
@@ -103,19 +110,11 @@ void zchxOpenGlOptionDlg::Populate(void)
     ui->m_cbShowFPS->setChecked(g_bShowFPS);
     ui->m_cbPolygonSmoothing->setChecked(g_GLOptions.m_GLPolygonSmoothing);
     ui->m_cbLineSmoothing->setChecked(g_GLOptions.m_GLLineSmoothing);
-
-#if defined(__UNIX__) && !defined(__OCPN__ANDROID__) && !defined(__WXOSX__)
-    if (gFrame->GetPrimaryCanvas()->GetglCanvas()){
-        if(gFrame->GetPrimaryCanvas()->GetglCanvas()->GetVersionString().Upper().Find(_T( "MESA" )) !=  wxNOT_FOUND)
-            ui->m_cbSoftwareGL->SetValue(g_bSoftwareGL);
-    }
-#else
     ui->m_cbSoftwareGL->hide();
-#endif
 
-    if (g_bGLexpert) {
-        if (mFrame && mFrame->GetPrimaryCanvas()->GetglCanvas()){
-            if(mFrame->GetPrimaryCanvas()->GetglCanvas()->CanAcceleratePanning()) {
+    if (g_bGlExpert) {
+        if (/*mFrame && mFrame->GetPrimaryCanvas()->GetglCanvas()*/true){
+            if(/*mFrame->GetPrimaryCanvas()->GetglCanvas()->CanAcceleratePanning()*/true) {
                 ui->m_cbUseAcceleratedPanning->setEnabled(true);
                 ui->m_cbUseAcceleratedPanning->setChecked(g_GLOptions.m_bUseAcceleratedPanning);
             } else {
@@ -142,7 +141,7 @@ void zchxOpenGlOptionDlg::OnButtonRebuild()
 
 void zchxOpenGlOptionDlg::OnButtonClear()
 {
-  if (g_bopengl && g_glTextureManager)
+  if (g_bOpenGL && g_glTextureManager)
   {
       Qt::CursorShape old_shape = cursor().shape();
       //busy

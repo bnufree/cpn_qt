@@ -116,7 +116,6 @@ HEADERS += \
 #    MUIBar.h \
 #    mygeom.h \
 #    NavObjectCollection.h \
-#    navutil.h \
 #    NMEALogWindow.h \
 #    OCP_DataStreamInputhread.h \
 #    ocpCursor.h \
@@ -125,7 +124,7 @@ HEADERS += \
 #    ocpn_types.h \
 #    ocpndc.h \
 #    OCPNListCtrl.h \
-#    OCPNPlatform.h \
+#     OCPNPlatform.h \
 #    OCPNRegion.h \
 #    ogr_s57.h \
 #    options.h \
@@ -192,11 +191,12 @@ HEADERS += \
 #    ocpn_plugin.h \
     opencpn_global.h \
     objectfactory.h \
-#    zchxoptionsdlg.h \
-#    zchxopengloptiondlg.h \
+    zchxoptionsdlg.h \
+    zchxopengloptiondlg.h \
 #    zchxchecklistwidget.h \
 #    zchxframe.h \
     zchxmapmainwindow.h \
+    zchxconfig.h
 
 SOURCES += \
 #    bbox.cpp \
@@ -243,7 +243,6 @@ SOURCES += \
 #    multiplexer.cpp \
 #    mygeom.cpp \
 #    NavObjectCollection.cpp \
-#    navutil.cpp \
 #    NMEALogWindow.cpp \
 #    OCP_DataStreamInputhread.cpp \
 #    ocpCursor.cpp \
@@ -305,19 +304,20 @@ SOURCES += \
 #    wificlient.cpp \
 #    macutils.c \
 #    ocpnhelper.c \
-#    zchxoptionsdlg.cpp \
-#    zchxopengloptiondlg.cpp \
+    zchxoptionsdlg.cpp \
+    zchxopengloptiondlg.cpp \
 #    zchxchecklistwidget.cpp \
 #    zchxframe.cpp \
     main.cpp \
     zchxmapmainwindow.cpp \
+    zchxconfig.cpp
 
 OBJECTIVE_SOURCES += \
     DarkMode.mm
 
 FORMS += \
 #    sendtogpsdlg.ui \
-#    zchxoptionsdlg.ui \
-#    zchxopengloptiondlg.ui \
+    zchxoptionsdlg.ui \
+    zchxopengloptiondlg.ui \
     zchxmapmainwindow.ui
 

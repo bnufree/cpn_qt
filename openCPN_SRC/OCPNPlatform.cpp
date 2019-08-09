@@ -35,10 +35,7 @@
 #include "_def.h"
 #include <QDesktopWidget>
 #include "GL/gl_private.h"
-
-#ifdef __OCPN__ANDROID__
-#include "androidUTIL.h"
-#endif
+#include "zchxconfig.h"
 
 #ifdef ocpnUSE_GL
 #include "glChartCanvas.h"
@@ -51,12 +48,10 @@
 
 
 
-#ifdef __WXMSW__
 #include <windows.h>
 #include <winioctl.h>
 #include <initguid.h>
 #include "setupapi.h"                   // presently stored in opencpn/src
-#endif
 
 #include <cstdlib>
 
@@ -216,7 +211,7 @@ extern int                       options_lastPage;
 
 //  OCPN Platform implementation
 
-OCPNPlatform::OCPNPlatform()
+OCPNPlatform::OCPNPlatform() : mConfigObj(0)
 {
     m_pt_per_pixel = 0;                 // cached value
     m_bdisableWindowsDisplayEnum = false;
@@ -224,6 +219,7 @@ OCPNPlatform::OCPNPlatform()
     m_displaySizeMM = QSize(0,0);
     m_displaySizeMMOverride = 0;
     initSystemInfo();
+    GetConfigObject();
 }
 
 OCPNPlatform::~OCPNPlatform()
@@ -411,6 +407,8 @@ bool OCPNPlatform::IsGLCapable()
 
 void OCPNPlatform::SetDefaultOptions( void )
 {
+    mConfigObj->setDefault(COMMON_SEC, SHOW_CHART_OUTLINES, true);
+#if 0
     //  General options, applied to all platforms
     g_bShowOutlines = true;
     
@@ -483,6 +481,7 @@ void OCPNPlatform::SetDefaultOptions( void )
         pConfig->endGroup();
         
     }
+#endif
     
 }
 
@@ -581,13 +580,14 @@ int OCPNPlatform::DoDirSelectorDialog( QWidget *parent, QString *file_spec, QStr
 }
 
 
-MyConfig *OCPNPlatform::GetConfigObject()
+zchxConfig *OCPNPlatform::GetConfigObject()
 {
-    MyConfig *result = NULL;
+    if(mConfigObj == 0)
+    {
+        mConfigObj = new zchxConfig( GetConfigFileName() );
+    }
 
-    result = new MyConfig( GetConfigFileName() );
-
-    return result;
+    return mConfigObj;
 }
 
 

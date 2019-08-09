@@ -50,7 +50,7 @@ enum LatlonFormat{
 };
 
 
-class ocpnGLOptions
+class zchxGLOptions
 {
 public:
     bool m_bUseAcceleratedPanning;
@@ -124,6 +124,17 @@ typedef enum ColorScheme
       N_COLOR_SCHEMES
 }_ColorScheme;
 
+// display category type
+typedef enum _DisCat{
+   DISPLAYBASE          = 'D',            //
+   STANDARD             = 'S',            //
+   OTHER                = 'O',            // O for OTHER
+   MARINERS_STANDARD    = 'M',            // Mariner specified
+   MARINERS_OTHER,                        // value not defined
+   DISP_CAT_NUM,                          // value not defined
+}DisCat;
+
+
 
 
 ////----------------------------------------------------------------------------
@@ -146,6 +157,27 @@ typedef struct {
     time_t FixTime;
     int    nSats;
 } GenericPosDatEx;
+
+class ChartDirInfo
+{
+public:
+    QString    fullpath;
+    QString    magic_number;
+
+    ChartDirInfo() {}
+    ChartDirInfo(const QString& path, const QString& num = QString())
+    {
+        fullpath = path;
+        magic_number = num;
+    }
+
+    bool operator ==(const ChartDirInfo& other)
+    {
+        return this->fullpath == other.fullpath;
+    }
+};
+
+typedef QList<ChartDirInfo> ArrayOfCDI;
 
 
 

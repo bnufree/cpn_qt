@@ -7,14 +7,15 @@ namespace Ui {
 class zchxOpenGlOptionDlg;
 }
 
-class zchxFrame;
+class zchxMapMainWindow;
+class zchxConfig;
 
 class zchxOpenGlOptionDlg : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit zchxOpenGlOptionDlg(zchxFrame* frame,  QWidget *parent = 0);
+    explicit zchxOpenGlOptionDlg(zchxMapMainWindow* frame,  QWidget *parent = 0);
     ~zchxOpenGlOptionDlg();
     bool GetAcceleratedPanning(void) const;
     bool GetTextureCompression(void) const;
@@ -42,7 +43,7 @@ private slots:
 private:
     Ui::zchxOpenGlOptionDlg *ui;
     bool m_brebuild_cache;
-    zchxFrame*          mFrame;
+    zchxMapMainWindow*          mMainWindow;
 };
 
 #endif // ZCHXOPENGLOPTIONDLG_H
