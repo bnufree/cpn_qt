@@ -33,7 +33,7 @@
 class wxGLContext;
 
 #include "LLRegion.h"
-#include "ocpn_types.h"
+#include "_def.h"
 
 typedef QHash<QString, Rule*> RuleHash;
 typedef QHash<int, QString>  MyNatsurHash;

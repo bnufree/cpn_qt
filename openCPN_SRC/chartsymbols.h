@@ -26,7 +26,7 @@
 #pragma once
 
 #include "s52plib.h"
-#include <tinyxml.h>
+#include "tinyxml.h"
 #include "pugixml.hpp"
 
 
@@ -47,10 +47,10 @@ public:
 
 
 typedef struct _SymbolSizeInfo {
-	wxSize size;
-	wxPoint origin;
-	wxPoint pivot;
-	wxPoint graphics;
+    QSize size;
+    QPoint origin;
+    QPoint pivot;
+    QPoint graphics;
 	int minDistance;
 	int maxDistance;
 } SymbolSizeInfo_t;
@@ -69,7 +69,7 @@ public:
 	char spacing;
 	SymbolSizeInfo_t bitmapSize;
 	SymbolSizeInfo_t vectorSize;
-	wxBitmap bitmap;
+    QBitmap bitmap;
 	QString HPGL;
 };
 
@@ -80,7 +80,7 @@ public:
 	QString description;
 	QString colorRef;
 	SymbolSizeInfo_t vectorSize;
-	wxBitmap bitmap;
+    QBitmap bitmap;
 	QString HPGL;
 };
 
@@ -114,8 +114,8 @@ public:
 	static wxArrayPtrVoid * GetColorTables();
 	static int FindColorTable(const QString & tableName);
 	static S52color* GetColor( const char *colorName, int fromTable );
-	static wxColor GetwxColor( const QString &colorName, int fromTable );
-	static wxColor GetwxColor( const char *colorName, int fromTable );
+    static QColor GetQColor( const QString &colorName, int fromTable );
+    static QColor GetQColor( const char *colorName, int fromTable );
 	static QString HashKey( const char* symbolName );
 	static wxImage GetImage( const char* symbolName );
         static unsigned int GetGLTextureRect( wxRect &rect, const char* symbolName );

@@ -24,13 +24,6 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  **************************************************************************/
 
-// For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif //precompiled headers
-
 #include <math.h>
 #include <stdlib.h>
 
@@ -47,11 +40,8 @@
 #include "TexFont.h"
 #include "ocpn_plugin.h"
 #include "gdal/cpl_csv.h"
+#include <QFile>
 
-#include <wx/image.h>
-#include <wx/tokenzr.h>
-#include <wx/fileconf.h>
-#include "wx/zchxLog.h"
 
 #ifndef PROJECTION_MERCATOR
     #define PROJECTION_MERCATOR 1
@@ -78,17 +68,9 @@ void PLIBDrawGLThickLine( float x1, float y1, float x2, float y2, wxPen pen, boo
 
 void LoadS57Config();
 
-//    Implement all lists
-#include <wx/listimpl.cpp>
-WX_DEFINE_LIST( TextObjList );
-
-
-//    Implement all arrays
-#include <wx/arrimpl.cpp>
-WX_DEFINE_OBJARRAY(ArrayOfNoshow);
 
 //  S52_TextC Implementation
-S52_TextC::()
+S52_TextC::S52_TextC()
 { 
     pcol = NULL;
     pFont = NULL;
@@ -136,24 +118,19 @@ const char *MyPLIBCSVGetField( const char * pszFilename, const char * pszKeyFiel
     return ( papszRecord[iTargetField] );
 }
 
-wxString GetS57AttributeDecode( wxString& att, int ival )
+QString GetS57AttributeDecode( QString& att, int ival )
 {
-    wxString ret_val = _T("");
+    QString ret_val = "";
     
-    wxString s57data_dir = *GetpSharedDataLocation();
-    s57data_dir += _T("s57data");
-    
-    if( !s57data_dir.Len() )
-        return ret_val;
+    QString s57data_dir = QString("%1/s57data").arg(MAP_DIR);
+    if( !s57data_dir.length() ) return ret_val;
 
 //  Get the attribute code from the acronym
     const char *att_code;
     
-    wxString file = s57data_dir;
-    file.Append( _T("/s57attributes.csv") );
-    
-    if( !wxFileName::FileExists( file ) ) {
-        wxString msg( _T("   Could not open ") );
+    QString file = QString("%1/s57attributes.csv").arg(s57data_dir);
+    if( !QFile::exists(file ) ) {
+        QString msg( _T("   Could not open ") );
         msg.Append( file );
         ZCHX_LOGMSG( msg );
         
@@ -168,11 +145,11 @@ wxString GetS57AttributeDecode( wxString& att, int ival )
     //  This will have to be a 2-d search, using ID field and Code field
     
     // Ingest, and get a pointer to the ingested table for "Expected Input" file
-    wxString ei_file = s57data_dir;
+    QString ei_file = s57data_dir;
     ei_file.Append( _T("/s57expectedinput.csv") );
     
     if( !wxFileName::FileExists( ei_file ) ) {
-        wxString msg( _T("   Could not open ") );
+        QString msg( _T("   Could not open ") );
         msg.Append( ei_file );
         ZCHX_LOGMSG( msg );
         
@@ -195,7 +172,7 @@ wxString GetS57AttributeDecode( wxString& att, int ival )
         
         if( !strcmp( papszFields[0], att_code ) ) {
             if( atoi( papszFields[1] ) == ival ) {
-                ret_val = wxString( papszFields[2], wxConvUTF8 );
+                ret_val = QString( papszFields[2], wxConvUTF8 );
                 bSelected = TRUE;
             }
         }
@@ -274,7 +251,7 @@ LUPArrayContainer::~LUPArrayContainer()
 LUPHashIndex *LUPArrayContainer::GetArrayIndexHelper( const char *objectName )
 {
     // Look for the key
-    wxString key(objectName, wxConvUTF8);
+    QString key(objectName, wxConvUTF8);
     LUPArrayIndexHash::iterator it = IndexHash.find( key );
     
     if( it == IndexHash.end() ){             
@@ -332,7 +309,7 @@ LUPHashIndex *LUPArrayContainer::GetArrayIndexHelper( const char *objectName )
 //-----------------------------------------------------------------------------
 //      s52plib implementation
 //-----------------------------------------------------------------------------
-s52plib::s52plib( const wxString& PLib, bool b_forceLegacy )
+s52plib::s52plib( const QString& PLib, bool b_forceLegacy )
 {
     m_plib_file = PLib;
 
@@ -597,7 +574,7 @@ bool s52plib::GetQualityOfData()
 }
         
 
-void s52plib::SetGLRendererString(const wxString &renderer)
+void s52plib::SetGLRendererString(const QString &renderer)
 {
 }
 
@@ -627,7 +604,7 @@ void s52plib::GenerateStateHash()
     unsigned char state_buffer[512];  // Needs to be at least this big...
     memset(state_buffer, 0, sizeof(state_buffer));
     
-    int time = ::wxGetUTCTime();
+    int time = QDateTime::currentDateTimeUtc().toTime_t();
     memcpy(state_buffer, &time, sizeof(int));
     
     size_t offset = sizeof(int);           // skipping the time int, first element
@@ -640,7 +617,7 @@ void s52plib::GenerateStateHash()
         }
     }
     
-    for(unsigned int i=0 ; i < m_noshow_array.GetCount() ; i++){
+    for(unsigned int i=0 ; i < m_noshow_array.count() ; i++){
         if( (offset + 6) < sizeof(state_buffer)){
             memcpy(&state_buffer[offset], m_noshow_array[i].obj, 6) ;
             offset += 6;
@@ -823,7 +800,7 @@ LUPrec *s52plib::FindBestLUP( wxArrayOfLUPrec *LUPArray, unsigned int startIndex
                                 //    Strings must be exact match
                                 //    n.b. OGR_STR is used for S-57 attribute type 'L', comma-separated list
                                 
-                                //wxString cs( (char *) v->value, wxConvUTF8 ); // Attribute from object
+                                //QString cs( (char *) v->value, wxConvUTF8 ); // Attribute from object
                                 //if( LATTC.Mid( 6 ) == cs )
                                 if( !strcmp((char *) v->value, slatv))
                                     attValMatch = true;
@@ -908,7 +885,7 @@ check_LUP:
                               r->ruleType = t;\
                               r->INSTstr  = str;
 
-Rules *s52plib::StringToRules( const wxString& str_in )
+Rules *s52plib::StringToRules( const QString& str_in )
 {
     wxCharBuffer buffer=str_in.ToUTF8();
     if(!buffer.data())
@@ -971,7 +948,7 @@ Rules *s52plib::StringToRules( const wxString& str_in )
 
             strncpy( strk, str, 8 );
             strk[8] = 0;
-            wxString key( strk, wxConvUTF8 );
+            QString key( strk, wxConvUTF8 );
 
             r->razRule = ( *_symb_sym )[key];
 
@@ -988,7 +965,7 @@ Rules *s52plib::StringToRules( const wxString& str_in )
         INSTRUCTION ( "LC",RUL_COM_LN )
             strncpy( strk, str, 8 );
             strk[8] = 0;
-            wxString key( strk, wxConvUTF8 );
+            QString key( strk, wxConvUTF8 );
 
             r->razRule = ( *_line_sym )[key];
 
@@ -1004,7 +981,7 @@ Rules *s52plib::StringToRules( const wxString& str_in )
         INSTRUCTION ( "AP",RUL_ARE_PA )
             strncpy( strk, str, 8 );
             strk[8] = 0;
-            wxString key( strk, wxConvUTF8 );
+            QString key( strk, wxConvUTF8 );
 
             r->razRule = ( *_patt_sym )[key];
             if( r->razRule == NULL ) r->razRule = ( *_patt_sym )[_T ( "QUESMRK1V" )];
@@ -1022,7 +999,7 @@ Rules *s52plib::StringToRules( const wxString& str_in )
             char stt[9];
             strncpy( stt, str, 8 );
             stt[8] = 0;
-            wxString index( stt, wxConvUTF8 );
+            QString index( stt, wxConvUTF8 );
             r->razRule = ( *_cond_sym )[index];
             if( r->razRule == NULL ) r->razRule = ( *_cond_sym )[_T ( "QUESMRK1" )];
             SCANFWRD
@@ -1084,7 +1061,7 @@ int s52plib::_LUP2rules( LUPrec *LUP, S57Obj *pObj )
 }
 
 
-int s52plib::S52_load_Plib( const wxString& PLib, bool b_forceLegacy )
+int s52plib::S52_load_Plib( const QString& PLib, bool b_forceLegacy )
 {
 
     pAlloc = new wxArrayPtrVoid;
@@ -1117,7 +1094,7 @@ int s52plib::S52_load_Plib( const wxString& PLib, bool b_forceLegacy )
         RazdsParser parser;
         useLegacyRaster = true;
         if( parser.LoadFile( this, PLib ) ) {
-            wxString msg( _T("Loaded legacy PLIB data: ") );
+            QString msg( _T("Loaded legacy PLIB data: ") );
             msg += PLib;
             ZCHX_LOGMSG( msg );
         } else
@@ -1129,7 +1106,7 @@ int s52plib::S52_load_Plib( const wxString& PLib, bool b_forceLegacy )
             RazdsParser parser;
             useLegacyRaster = true;
             if( parser.LoadFile( this, PLib ) ) {
-                wxString msg( _T("Loaded legacy PLIB data: ") );
+                QString msg( _T("Loaded legacy PLIB data: ") );
                 msg += PLib;
                 ZCHX_LOGMSG( msg );
             } else
@@ -1140,10 +1117,7 @@ int s52plib::S52_load_Plib( const wxString& PLib, bool b_forceLegacy )
     ChartSymbols chartSymbols;
     useLegacyRaster = false;
     if( !chartSymbols.LoadConfigFile( this, PLib ) ) {
-        wxString msg( _T("Could not load XML PLib symbol file: ") );
-        msg += PLib;
-        ZCHX_LOGMSG( msg );
- 
+        qDebug("Could not load XML PLib symbol file: %s", PLib.toUtf8().data());
         return 0;
     }
 
@@ -1152,14 +1126,14 @@ int s52plib::S52_load_Plib( const wxString& PLib, bool b_forceLegacy )
     //   Hash Results Values are the Rule *, i.e. the CS procedure entry point
 
     for( int i = 0; condTable[i].condInst != NULL; ++i ) {
-        wxString index( condTable[i].name, wxConvUTF8 );
+        QString index = QString::fromUtf8(condTable[i].name);
         ( *_cond_sym )[index] = (Rule *) ( condTable[i].condInst );
     }
 
-    wxString s57data_dir = *GetpSharedDataLocation();
+    QString s57data_dir = *GetpSharedDataLocation();
     s57data_dir += _T("s57data");
     
-    wxString oc_file( s57data_dir );
+    QString oc_file( s57data_dir );
     oc_file.Append( _T("/s57objectclasses.csv") );
 
     PreloadOBJLFromCSV( oc_file );
@@ -1384,7 +1358,7 @@ LUPrec *s52plib::S52_LUPLookup( LUPname LUP_Name, const char * objectName, S57Ob
 
 void  s52plib::SetPLIBColorScheme( ColorScheme cs )
 {
-    wxString SchemeName;
+    QString SchemeName;
     switch( cs ){
         case GLOBAL_COLOR_SCHEME_DAY:
             SchemeName = _T("DAY");
@@ -1405,9 +1379,9 @@ void  s52plib::SetPLIBColorScheme( ColorScheme cs )
     
 
 
-void s52plib::SetPLIBColorScheme( wxString scheme )
+void s52plib::SetPLIBColorScheme( QString scheme )
 {
-    wxString str_find;
+    QString str_find;
     str_find = scheme;
     m_colortable_index = 0; // default is the first color in the table
 
@@ -1433,7 +1407,7 @@ S52color* s52plib::getColor( const char *colorName )
     return c;
 }
 
-wxColour s52plib::getwxColour( const wxString &colorName )
+wxColour s52plib::getwxColour( const QString &colorName )
 {
     wxColor c;
     c = ChartSymbols::GetwxColor( colorName, m_colortable_index );
@@ -1465,7 +1439,7 @@ char *s52plib::_getParamVal( ObjRazRules *rzRules, char *str, char *buf, int bsz
 //  3- LUP default value.
 // Return pointer to the next field in the string (delim is ','), NULL to abort
 {
-    wxString value;
+    QString value;
     int defval = 0; // default value
     int len = 0;
     char *ret_ptr = str;
@@ -1537,20 +1511,20 @@ char *s52plib::_getParamVal( ObjRazRules *rzRules, char *str, char *buf, int bsz
 
         // special case when ENC returns an index for particular attribute types
         if( !strncmp( buf, "NATSUR", 6 ) ) {
-            wxString natsur_att( _T ( "NATSUR" ) );
-            wxString result;
-            wxString svalue = value;
-            wxStringTokenizer tkz( svalue, _T ( "," ) );
+            QString natsur_att( _T ( "NATSUR" ) );
+            QString result;
+            QString svalue = value;
+            QStringTokenizer tkz( svalue, _T ( "," ) );
 
             int icomma = 0;
             while( tkz.HasMoreTokens() ) {
                 if( icomma )
                     result += _T ( "," );
 
-                wxString token = tkz.GetNextToken();
+                QString token = tkz.GetNextToken();
                 long i;
                 if( token.ToLong(&i) ){
-                    wxString nat;
+                    QString nat;
                     if( !m_natsur_hash[i].IsEmpty() )            // entry available?
                         nat = m_natsur_hash[i];
                     else {
@@ -1646,11 +1620,11 @@ S52_TextC *s52plib::S52_PL_parseTX( ObjRazRules *rzRules, Rules *rules, char *cm
     if( NULL != text )
     {
         if ( valn[0] != '\0' ) {
-            text->frmtd = wxString( valn, wxConvUTF8 );
+            text->frmtd = QString( valn, wxConvUTF8 );
             text->bnat = true;
         }
         else {
-            text->frmtd = wxString( val, wxConvUTF8 );
+            text->frmtd = QString( val, wxConvUTF8 );
             text->bnat = false;
         }
     }
@@ -1738,7 +1712,7 @@ S52_TextC *s52plib::S52_PL_parseTE( ObjRazRules *rzRules, Rules *rules, char *cm
         *b = 0;
         text = new S52_TextC;
         str = _parseTEXT( rzRules, text, str );
-        if( NULL != text ) text->frmtd = wxString( buf, wxConvUTF8 );
+        if( NULL != text ) text->frmtd = QString( buf, wxConvUTF8 );
         
         //  We check to see if the formatted text has any "special" characters
         wxCharBuffer buf = text->frmtd.ToUTF8();
@@ -2634,7 +2608,7 @@ bool s52plib::RenderHPGL( ObjRazRules *rzRules, Rule *prule, wxPoint &r, ViewPor
 #endif
         wxMemoryDC mdc( *pbm );
         if(!mdc.IsOk()){
-            wxString msg;
+            QString msg;
             msg.Printf(_T("RenderHPGL: width %d  height %d"), width, height);
             ZCHX_LOGMSG(msg);
             return false;
@@ -2739,12 +2713,12 @@ wxImage s52plib::RuleXBMToImage( Rule *prule )
     int width = prule->pos.line.bnbox_w.SYHL;
     int height = prule->pos.line.bnbox_h.SYVL;
 
-    wxString gstr( *prule->bitmap.SBTM ); // the bit array
+    QString gstr( *prule->bitmap.SBTM ); // the bit array
 
     wxImage Image( width, height );
 
     for( int iy = 0; iy < height; iy++ ) {
-        wxString thisrow = gstr( iy * width, width ); // extract a row
+        QString thisrow = gstr( iy * width, width ); // extract a row
 
         for( int ix = 0; ix < width; ix++ ) {
             int cref = (int) ( thisrow[ix] - 'A' ); // make an index
@@ -4922,7 +4896,7 @@ int s52plib::RenderMPS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
             point_obj.BBObj.Invalidate();
             
             char *rule_str1 = RenderCS( &point_rzRules, ru_cs );
-            wxString cs_string( rule_str1, wxConvUTF8 );
+            QString cs_string( rule_str1, wxConvUTF8 );
             free( rule_str1 ); 
     
             Rules *rule_chain = StringToRules( cs_string );
@@ -4999,25 +4973,25 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     char *str = (char*) rules->INSTstr;
     //    extract the parameters from the string
     //    And creating a unique string hash as we go
-    wxString inst( str, wxConvUTF8 );
-    wxString carc_hash;
+    QString inst( str, wxConvUTF8 );
+    QString carc_hash;
 
-    wxStringTokenizer tkz( inst, _T ( ",;" ) );
+    QStringTokenizer tkz( inst, _T ( ",;" ) );
 
     //    outline color
-    wxString outline_color = tkz.GetNextToken();
+    QString outline_color = tkz.GetNextToken();
     carc_hash += outline_color;
     carc_hash += _T(".");
 
     //    outline width
-    wxString slong = tkz.GetNextToken();
+    QString slong = tkz.GetNextToken();
     long outline_width;
     slong.ToLong( &outline_width );
     carc_hash += slong;
     carc_hash += _T(".");
 
     //    arc color
-    wxString arc_color = tkz.GetNextToken();
+    QString arc_color = tkz.GetNextToken();
     carc_hash += arc_color;
     carc_hash += _T(".");
 
@@ -5107,7 +5081,7 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     ///scale_factor *= xscale;
     
     carc_hash += _T(".");
-    wxString xs;
+    QString xs;
     xs.Printf( _T("%5g"), xscale );
     carc_hash += xs;
 
@@ -5723,38 +5697,42 @@ int s52plib::DoRenderObjectTextOnly( wxDC *pdcin, ObjRazRules *rzRules, ViewPort
     return 1;
 }
 
-bool s52plib::PreloadOBJLFromCSV(const wxString &csv_file)
+bool s52plib::PreloadOBJLFromCSV(const QString &csv_file)
 {
-    wxTextFile file( csv_file );
-    if( !file.Exists() ) return false;
+    QFile file( csv_file );
+    if( !file.exists() ) return false;
 
-    file.Open();
+    if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) return false;
 
-    wxString str;
-    str = file.GetFirstLine();
+    QString str = file.readLine();
     wxChar quote[] = { '\"', 0 };
-    wxString description;
-    wxString token;
+    QString description;
+    QString token;
 
-    while( !file.Eof() ) {
-        str = file.GetNextLine();
+    while( !file.atEnd() ) {
+        str = file.readLine();
+        QStringList tkz = str.split(",");
+        if(tkz.size() < 2 )continue;
+        int i = 0;
+        token = tkz[i++]; // code
+        description = tkz[i++]; // May contain comma
+        if( !description.endsWith('\"') ) description.append(tkz[i++]);
+        description.replace("\"", "");
+        if(i<tkz.length())
+        {
+            token = tkz[i++]; // Acronym
+        } else
+        {
+            token = "";
+        }
 
-        wxStringTokenizer tkz( str, _T(",") );
-        token = tkz.GetNextToken(); // code
-
-        description = tkz.GetNextToken(); // May contain comma
-        if( !description.EndsWith( quote ) ) description << tkz.GetNextToken();
-        description.Replace( _T("\""), _T(""), true );
-
-        token = tkz.GetNextToken(); // Acronym
-
-        if( token.Len() ) {
+        if( token.size() > 0 ) {
             //    Filter out any duplicates, in a case insensitive way
             //    i.e. only the first of "DEPARE" and "depare" is added
             bool bdup = false;
             for( unsigned int iPtr = 0; iPtr < pOBJLArray->GetCount(); iPtr++ ) {
                 OBJLElement *pOLEt = (OBJLElement *) ( pOBJLArray->Item( iPtr ) );
-                if( !token.CmpNoCase( wxString( pOLEt->OBJLName, wxConvUTF8 ) ) ) {
+                if( !token.CmpNoCase( QString( pOLEt->OBJLName, wxConvUTF8 ) ) ) {
                     bdup = true;
                     break;
                 }
@@ -7272,7 +7250,7 @@ int s52plib::RenderToGLAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                     (s_glBindBuffer)(GL_ARRAY_BUFFER, vboId);
                     GLenum err = glGetError();
                     if(err){
-                        wxString msg;
+                        QString msg;
                         msg.Printf(_T("VBO Error A: %d"), err);
                         ZCHX_LOGMSG(msg);
                         return 0;
@@ -7284,7 +7262,7 @@ int s52plib::RenderToGLAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                                     ppg_vbo->single_buffer_size, ppg_vbo->single_buffer, GL_STATIC_DRAW);
                     err = glGetError();
                     if(err){
-                        wxString msg;
+                        QString msg;
                         msg.Printf(_T("VBO Error B: %d"), err);
                         ZCHX_LOGMSG(msg);
                         return 0;
@@ -7295,7 +7273,7 @@ int s52plib::RenderToGLAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                     (s_glBindBuffer)(GL_ARRAY_BUFFER, rzRules->obj->auxParm0);
                     GLenum err = glGetError();
                     if(err){
-                        wxString msg;
+                        QString msg;
                         msg.Printf(_T("VBO Error C: %d"), err);
                         ZCHX_LOGMSG(msg);
                         return 0;
@@ -8372,7 +8350,7 @@ void s52plib::GetAndAddCSRules( ObjRazRules *rzRules, Rules *rules )
     LUPrec *LUPCandidate;
 
     char *rule_str1 = RenderCS( rzRules, rules );
-    wxString cs_string( rule_str1, wxConvUTF8 );
+    QString cs_string( rule_str1, wxConvUTF8 );
     free( rule_str1 ); //delete rule_str1;
 
 //  Try to find a match for this object/attribute set in dynamic CS LUP Table
@@ -8415,7 +8393,7 @@ void s52plib::GetAndAddCSRules( ObjRazRules *rzRules, Rules *rules )
         memcpy( NewLUP->OBCL, rzRules->LUP->OBCL, 6 ); // the object class name
 
 //      Add the complete CS string to the LUP
-        wxString *pINST = new wxString( cs_string );
+        QString *pINST = new QString( cs_string );
         NewLUP->INST = pINST;
 
         _LUP2rules( NewLUP, rzRules->obj );
@@ -8780,11 +8758,11 @@ void s52plib::PLIB_LoadS57Config()
     int iOBJMax = pconfig->GetNumberOfEntries();
     if( iOBJMax ) {
         
-        wxString str;
+        QString str;
         long val;
         long dummy;
         
-        wxString sObj;
+        QString sObj;
         
         bool bCont = pconfig->GetFirstEntry( str, dummy );
         while( bCont ) {
@@ -9174,7 +9152,7 @@ const char* RenderFromHPGL::findColorNameInRef( char colorCode, char* col )
     return col + 1; // Default to first color if not found.
 }
 
-wxPoint RenderFromHPGL::ParsePoint( wxString& argument )
+wxPoint RenderFromHPGL::ParsePoint( QString& argument )
 {
     long x, y;
     int colon = argument.Index( ',' );
@@ -9341,10 +9319,10 @@ bool RenderFromHPGL::Render( char *str, char *col, wxPoint &r, wxPoint &pivot, w
     // SW is not always defined, cf. US/US4CA17M/US4CA17M.000
     penWidth = 1;
 
-    wxStringTokenizer commands( wxString( str, wxConvUTF8 ), _T(";") );
+    QStringTokenizer commands( QString( str, wxConvUTF8 ), _T(";") );
     while( commands.HasMoreTokens() ) {
-        wxString command = commands.GetNextToken();
-        wxString arguments = command.Mid( 2 );
+        QString command = commands.GetNextToken();
+        QString arguments = command.Mid( 2 );
         command = command.Left( 2 );
 
         if( command == _T("SP") ) {
@@ -9418,7 +9396,7 @@ bool RenderFromHPGL::Render( char *str, char *col, wxPoint &r, wxPoint &pivot, w
                         Circle( lineStart, radius, HPGL_FILLED );
                     }
                     if( command == _T("PD") ) {
-                        wxStringTokenizer points( arguments, _T(",") );
+                        QStringTokenizer points( arguments, _T(",") );
                         while( points.HasMoreTokens() ) {
                             long x, y;
                             points.GetNextToken().ToLong( &x );
@@ -9443,8 +9421,8 @@ bool RenderFromHPGL::Render( char *str, char *col, wxPoint &r, wxPoint &pivot, w
         }
 
         // Only get here if non of the other cases did a continue.
-//        wxString msg( _T("RenderHPGL: The '%s' instruction is not implemented.") );
-//        msg += wxString( command );
+//        QString msg( _T("RenderHPGL: The '%s' instruction is not implemented.") );
+//        msg += QString( command );
 //        wxLogWarning( msg );
     }
     

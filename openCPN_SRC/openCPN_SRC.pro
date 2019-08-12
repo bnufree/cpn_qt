@@ -7,9 +7,9 @@
 include(../Libs.pri)
 
 INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/gdal
-#INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/nmea0183
-#INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/tinyxml
-#INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/sound
+INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/nmea0183
+INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/tinyxml
+INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/sound
 #INCLUDEPATH += $${PWD}/iso8211
 #INCLUDEPATH += $${PWD}/texcmp/squish
 #INCLUDEPATH += $${PWD}/lz4
@@ -20,9 +20,9 @@ INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/gdal
 INCLUDEPATH += ../include
 
 LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lgdal
-#LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -l libnmea0183
-#LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -l libtinyxml
-#LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -l libsound
+LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lnmea0183
+LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltinyxml
+LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lsound
 #LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -l libiso8211
 LIBS += -lpsapi
 
@@ -77,7 +77,7 @@ HEADERS += \
 #    chartdb.h \
 #    chartdbs.h \
 #    chartimg.h \
-#    chartsymbols.h \
+    chartsymbols.h \
 #    chcanv.h \
 #    ChInfoWin.h \
 #    cm93.h \
@@ -124,10 +124,10 @@ HEADERS += \
 #    ocpn_types.h \
 #    ocpndc.h \
 #    OCPNListCtrl.h \
-#     OCPNPlatform.h \
+     OCPNPlatform.h \
 #    OCPNRegion.h \
 #    ogr_s57.h \
-#    options.h \
+    options.h \
 #    Osenc.h \
 #    piano.h \
 #    pluginmanager.h \
@@ -140,18 +140,18 @@ HEADERS += \
 #    Route.h \
 #    routeman.h \
 #    RoutePoint.h \
-#    s52plib.h \
-#    s52s57.h \
-#    s52utils.h \
-#    s57.h \
-#    s57chart.h \
-#    S57ClassRegistrar.h \
-#    S57Light.h \
-#    s57mgr.h \
-#    S57ObjectDesc.h \
-#    S57QueryDialog.h \
-#    s57RegistrarMgr.h \
-#    S57Sector.h \
+    s52plib.h \
+    s52s57.h \
+    s52utils.h \
+    s57.h \
+    s57chart.h \
+    S57ClassRegistrar.h \
+    S57Light.h \
+    s57mgr.h \
+    S57ObjectDesc.h \
+    S57QueryDialog.h \
+    s57RegistrarMgr.h \
+    S57Sector.h \
 #    scrollingdialog.h \
 #    Select.h \
 #    SelectItem.h \
@@ -196,7 +196,8 @@ HEADERS += \
 #    zchxchecklistwidget.h \
 #    zchxframe.h \
     zchxmapmainwindow.h \
-    zchxconfig.h
+    zchxconfig.h \
+    zchxs57listctrlbox.h
 
 SOURCES += \
 #    bbox.cpp \
@@ -207,7 +208,7 @@ SOURCES += \
 #    chartdb.cpp \
 #    chartdbs.cpp \
 #    chartimg.cpp \
-#    chartsymbols.cpp \
+    chartsymbols.cpp \
 #    chcanv.cpp \
 #    ChInfoWin.cpp \
 #    cm93.cpp \
@@ -250,11 +251,11 @@ SOURCES += \
 #    ocpn_pixel.cpp \
 #    ocpndc.cpp \
 #    OCPNListCtrl.cpp \
-#    OCPNPlatform.cpp \
+    OCPNPlatform.cpp \
 #    OCPNRegion.cpp \
 #    ogrs57datasource.cpp \
 #    ogrs57layer.cpp \
-#    options.cpp \
+    options.cpp \
 #    Osenc.cpp \
 #    piano.cpp \
 #    pluginmanager.cpp \
@@ -267,17 +268,17 @@ SOURCES += \
 #    routeman.cpp \
 #    routemanagerdialog.cpp \
 #    RoutePoint.cpp \
-#    s52cnsy.cpp \
-#    s52plib.cpp \
-#    s52utils.cpp \
-#    s57chart.cpp \
-#    s57classregistrar.cpp \
-#    s57featuredefns.cpp \
-#    s57mgr.cpp \
-#    s57obj.cpp \
-#    S57QueryDialog.cpp \
-#    s57reader.cpp \
-#    s57RegistrarMgr.cpp \
+    s52cnsy.cpp \
+    s52plib.cpp \
+    s52utils.cpp \
+    s57chart.cpp \
+    s57classregistrar.cpp \
+    s57featuredefns.cpp \
+    s57mgr.cpp \
+    s57obj.cpp \
+    S57QueryDialog.cpp \
+    s57reader.cpp \
+    s57RegistrarMgr.cpp \
 #    scrollingdialog.cpp \
 #    Select.cpp \
 #    SelectItem.cpp \
@@ -310,7 +311,8 @@ SOURCES += \
 #    zchxframe.cpp \
     main.cpp \
     zchxmapmainwindow.cpp \
-    zchxconfig.cpp
+    zchxconfig.cpp \
+    zchxs57listctrlbox.cpp
 
 OBJECTIVE_SOURCES += \
     DarkMode.mm

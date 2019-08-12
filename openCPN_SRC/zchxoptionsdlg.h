@@ -1,8 +1,9 @@
-﻿#ifndef ZCHXOPTIONSDLG_H
+#ifndef ZCHXOPTIONSDLG_H
 #define ZCHXOPTIONSDLG_H
 
 #include <QDialog>
 #include "_def.h"
+
 
 namespace Ui {
 class zchxOptionsDlg;
@@ -36,6 +37,7 @@ class zchxOptionsDlg : public QDialog
 public:
     explicit zchxOptionsDlg(QWidget *parent = 0);
     ~zchxOptionsDlg();
+    void resetMarStdList(bool bsetConfig, bool bsetStd);
 
 private:
     void UpdateWorkArrayFromTextCtl(void);  //更新地图文件列表
@@ -54,6 +56,7 @@ public:
     ArrayOfCDI                  m_CurrentDirList;
     ArrayOfCDI                  *m_pWorkDirList;
     int                         m_returnChanges;
+    std::vector<int>            marinersStdXref;
 };
 
 #endif // ZCHXOPTIONSDLG_H

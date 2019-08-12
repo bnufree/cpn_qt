@@ -24,20 +24,13 @@
  **************************************************************************/
 #include "config.h"
 
-#include "wx/wxprec.h"
-#include "wx/zchxLog.h"
 
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif
-
-#include <wx/filename.h>
 #include <stdlib.h>
 
 #include "chartsymbols.h"
-#ifdef ocpnUSE_GL
-#include <wx/glcanvas.h>
-#endif
+//#ifdef ocpnUSE_GL
+//#include <wx/glcanvas.h>
+//#endif
 
 extern bool g_bopengl;
 
@@ -53,13 +46,13 @@ extern GLenum       g_texture_rectangle_format;
 
 wxArrayPtrVoid* colorTables;
 unsigned int rasterSymbolsTexture;
-wxSize rasterSymbolsTextureSize;
-wxBitmap rasterSymbols;
+QSize rasterSymbolsTextureSize;
+QBitmap rasterSymbols;
 int rasterSymbolsLoadedColorMapNumber;
-wxString configFileDirectory;
+QString configFileDirectory;
 int ColorTableIndex;
 
-WX_DECLARE_STRING_HASH_MAP( wxRect, symbolGraphicsHashMap );
+typedef QMap<QString, QRect> symbolGraphicsHashMap;
 
 symbolGraphicsHashMap* symbolGraphicLocations;
 //--------------------------------------------------------------------------------------
@@ -87,15 +80,15 @@ void ChartSymbols::DeleteGlobals( void )
     delete symbolGraphicLocations;
     symbolGraphicLocations = NULL;
 
-    for( unsigned int i = 0; i < colorTables->GetCount(); i++ ) {
-        colTable *ct = (colTable *) colorTables->Item( i );
+    for( unsigned int i = 0; i < colorTables->count(); i++ ) {
+        colTable *ct = (colTable *) colorTables->at( i );
         delete ct->tableName;
         ct->colors.clear();
         ct->wxColors.clear();
         delete ct;
     }
 
-    colorTables->Clear();
+    colorTables->clear();
     delete colorTables;
     colorTables = NULL;
 }
@@ -107,16 +100,16 @@ void ChartSymbols::ProcessColorTables( pugi::xml_node &node )
         
         if( !strcmp( pcn, "color-table" ) ) {
             colTable *colortable = new colTable;
-            colortable->tableName = new wxString( child.first_attribute().value(), wxConvUTF8 );
+            colortable->tableName = new QString( child.first_attribute().value(), wxConvUTF8 );
             
             pugi::xml_node colorNode =child.first_child();
             while(colorNode){
                 if(!strcmp(colorNode.name(), "graphics-file")){
-                    colortable->rasterFileName = wxString( colorNode.first_attribute().value(), wxConvUTF8 );
+                    colortable->rasterFileName = QString( colorNode.first_attribute().value(), wxConvUTF8 );
                 }
 
                 if(!strcmp(colorNode.name(), "color")){
-                    wxString key;
+                    QString key;
                     S52color color;
                     
                     for ( pugi::xml_attribute attr = colorNode.first_attribute(); attr; attr = attr.next_attribute() ) {
@@ -124,7 +117,7 @@ void ChartSymbols::ProcessColorTables( pugi::xml_node &node )
                         if(!strcmp(pca, "name")){
                             strncpy(color.colName, attr.value(), 5);
                             color.colName[5] = 0;
-                            key = wxString( attr.value(), wxConvUTF8 );
+                            key = QString( attr.value(), wxConvUTF8 );
                             
                         }                        
                         else if(!strcmp(pca, "r")){
@@ -148,7 +141,7 @@ void ChartSymbols::ProcessColorTables( pugi::xml_node &node )
 	            colorNode = colorNode.next_sibling();
             }
             
-            colorTables->Add( (void *) colortable );
+            colorTables->append( (void *) colortable );
         }
     }
 }
@@ -162,9 +155,8 @@ void ChartSymbols::ProcessColorTables( pugi::xml_node &node )
 
 
 #define TGET_INT_PROPERTY_VALUE( node, name, target )  \
-      propVal = wxString(node->Attribute(name), wxConvUTF8); \
-      propVal.ToLong( &numVal, 0 ); \
-      target = numVal;
+      propVal = QString::fromUtf8(node->Attribute(name)); \
+      target = propVal.toLong();
 
 void ChartSymbols::ProcessColorTables( TiXmlElement* colortableNodes )
 {
@@ -175,24 +167,24 @@ void ChartSymbols::ProcessColorTables( TiXmlElement* colortableNodes )
         colTable *colortable = new colTable;
 
         const char *pName = child->Attribute( "name" );
-        colortable->tableName = new wxString( pName, wxConvUTF8 );
+        colortable->tableName = new QString( pName, wxConvUTF8 );
 
         TiXmlElement* colorNode = child->FirstChild()->ToElement();
 
         while( colorNode ) {
             S52color color;
-            wxString propVal;
+            QString propVal;
             long numVal;
 
-            if( wxString( colorNode->Value(), wxConvUTF8 ) == _T("graphics-file") ) {
-                colortable->rasterFileName = wxString( colorNode->Attribute( "name" ), wxConvUTF8 );
+            if( QString( colorNode->Value(), wxConvUTF8 ) == _T("graphics-file") ) {
+                colortable->rasterFileName = QString( colorNode->Attribute( "name" ), wxConvUTF8 );
                 goto next;
             } else {
                 TGET_INT_PROPERTY_VALUE( colorNode, "r", color.R )
                 TGET_INT_PROPERTY_VALUE( colorNode, "g", color.G )
                 TGET_INT_PROPERTY_VALUE( colorNode, "b", color.B )
 
-                wxString key( colorNode->Attribute( "name" ), wxConvUTF8 );
+                QString key( colorNode->Attribute( "name" ), wxConvUTF8 );
                 strncpy( color.colName, key.char_str(), 5 );
                 color.colName[5] = 0;
 
@@ -205,7 +197,7 @@ void ChartSymbols::ProcessColorTables( TiXmlElement* colortableNodes )
             next: colorNode = colorNode->NextSiblingElement();
         }
 
-        colorTables->Add( (void *) colortable );
+        colorTables->append((void *) colortable );
 
     }
 }
@@ -222,7 +214,7 @@ void ChartSymbols::ProcessLookups( pugi::xml_node &node )
             for ( pugi::xml_attribute attr = child.first_attribute(); attr; attr = attr.next_attribute() ) {
                 const char *pca = attr.name();
                 if(!strcmp(pca, "name")){
-                    lookup.name = wxString (attr.value(), wxConvUTF8 );
+                    lookup.name = QString (attr.value(), wxConvUTF8 );
                 }
                 else if(!strcmp(pca, "RCID")){
                     lookup.RCID = attr.as_int();
@@ -282,7 +274,7 @@ void ChartSymbols::ProcessLookups( pugi::xml_node &node )
             }
             
             else if( !strcmp( lookupNode.name(), "instruction") ) {
-                wxString inst(nodeText, wxConvUTF8);
+                QString inst(nodeText, wxConvUTF8);
                 lookup.instruction = inst;
                 lookup.instruction.Append( '\037' );
                 
@@ -504,7 +496,7 @@ void ChartSymbols::ProcessSymbols( pugi::xml_node &node )
                         symbol.vectorSize.pivot.y = child.attribute("y").as_int();
                     }
                     else if( !strcmp(nodeType,"HPGL") ){
-                        symbol.HPGL = wxString( child.first_child().value(), wxConvUTF8 );
+                        symbol.HPGL = QString( child.first_child().value(), wxConvUTF8 );
                     }
                 }
             }
@@ -521,7 +513,7 @@ void ChartSymbols::ProcessSymbols( pugi::xml_node &node )
 void ChartSymbols::ProcessLookups( TiXmlElement* lookupNodes )
 {
     Lookup lookup;
-    wxString propVal;
+    QString propVal;
     long numVal;
 
     for( TiXmlNode *childNode = lookupNodes->FirstChild(); childNode;
@@ -530,13 +522,13 @@ void ChartSymbols::ProcessLookups( TiXmlElement* lookupNodes )
 
         TGET_INT_PROPERTY_VALUE( child, "id", lookup.id )
         TGET_INT_PROPERTY_VALUE( child, "RCID", lookup.RCID )
-        lookup.name = wxString( child->Attribute( "name" ), wxConvUTF8 );
+        lookup.name = QString( child->Attribute( "name" ), wxConvUTF8 );
 
         TiXmlElement* subNode = child->FirstChild()->ToElement();
 
         while( subNode ) {
-            wxString nodeType( subNode->Value(), wxConvUTF8 );
-            wxString nodeText( subNode->GetText(), wxConvUTF8 );
+            QString nodeType( subNode->Value(), wxConvUTF8 );
+            QString nodeText( subNode->GetText(), wxConvUTF8 );
 
             if( nodeType == _T("type") ) {
 
@@ -601,7 +593,7 @@ void ChartSymbols::ProcessLookups( TiXmlElement* lookupNodes )
                 goto nextNode;
             }
             if( nodeType == _T("comment") ) {
-                wxString comment( subNode->GetText(), wxConvUTF8 );
+                QString comment( subNode->GetText(), wxConvUTF8 );
                 long value;
                 comment.ToLong( &value, 0 );
                 lookup.comment = value;
@@ -648,7 +640,7 @@ void ChartSymbols::BuildLookup( Lookup &lookup )
 
     LUP->ATTArray = lookup.attributeCodeArray;
 
-    LUP->INST = new wxString( lookup.instruction );
+    LUP->INST = new QString( lookup.instruction );
     LUP->LUCM = lookup.comment;
 
     // Add LUP to array
@@ -674,7 +666,7 @@ void ChartSymbols::BuildLookup( Lookup &lookup )
 
 void ChartSymbols::ProcessVectorTag( TiXmlElement* vectorNode, SymbolSizeInfo_t &vectorSize )
 {
-    wxString propVal;
+    QString propVal;
     long numVal;
     TGET_INT_PROPERTY_VALUE( vectorNode, "width", vectorSize.size.x )
     TGET_INT_PROPERTY_VALUE( vectorNode, "height", vectorSize.size.y )
@@ -682,7 +674,7 @@ void ChartSymbols::ProcessVectorTag( TiXmlElement* vectorNode, SymbolSizeInfo_t 
     TiXmlElement* vectorNodes = vectorNode->FirstChild()->ToElement();
 
     while( vectorNodes ) {
-        wxString nodeType( vectorNodes->Value(), wxConvUTF8 );
+        QString nodeType( vectorNodes->Value(), wxConvUTF8 );
 
         if( nodeType == _T("distance") ) {
             TGET_INT_PROPERTY_VALUE( vectorNodes, "min", vectorSize.minDistance )
@@ -708,7 +700,7 @@ void ChartSymbols::ProcessLinestyles( TiXmlElement* linestyleNodes )
 {
 
     LineStyle lineStyle;
-    wxString propVal;
+    QString propVal;
     long numVal;
 
     for( TiXmlNode *childNode = linestyleNodes->FirstChild(); childNode;
@@ -720,8 +712,8 @@ void ChartSymbols::ProcessLinestyles( TiXmlElement* linestyleNodes )
         TiXmlElement* subNode = child->FirstChild()->ToElement();
 
         while( subNode ) {
-            wxString nodeType( subNode->Value(), wxConvUTF8 );
-            wxString nodeText( subNode->GetText(), wxConvUTF8 );
+            QString nodeType( subNode->Value(), wxConvUTF8 );
+            QString nodeText( subNode->GetText(), wxConvUTF8 );
 
             if( nodeType == _T("description") ) {
                 lineStyle.description = nodeText;
@@ -788,7 +780,7 @@ void ChartSymbols::ProcessPatterns( TiXmlElement* patternNodes )
 {
 
     OCPNPattern pattern;
-    wxString propVal;
+    QString propVal;
     long numVal;
 
     for( TiXmlNode *childNode = patternNodes->FirstChild(); childNode;
@@ -804,8 +796,8 @@ void ChartSymbols::ProcessPatterns( TiXmlElement* patternNodes )
         TiXmlElement* subNodes = child->FirstChild()->ToElement();
 
         while( subNodes ) {
-            wxString nodeType( subNodes->Value(), wxConvUTF8 );
-            wxString nodeText( subNodes->GetText(), wxConvUTF8 );
+            QString nodeType( subNodes->Value(), wxConvUTF8 );
+            QString nodeText( subNodes->GetText(), wxConvUTF8 );
 
             if( nodeType == _T("description") ) {
                 pattern.description = nodeText;
@@ -843,7 +835,7 @@ void ChartSymbols::ProcessPatterns( TiXmlElement* patternNodes )
 
                 TiXmlElement* bitmapNodes = subNodes->FirstChild()->ToElement();
                 while( bitmapNodes ) {
-                    wxString bitmapnodeType( bitmapNodes->Value(), wxConvUTF8 );
+                    QString bitmapnodeType( bitmapNodes->Value(), wxConvUTF8 );
 
                     if( bitmapnodeType == _T("distance") ) {
                         TGET_INT_PROPERTY_VALUE( bitmapNodes, "min",
@@ -895,7 +887,7 @@ void ChartSymbols::BuildPattern( OCPNPattern &pattern )
     plib->pAlloc->Add( patt );
 
     patt->RCID = pattern.RCID;
-    patt->exposition.PXPO = new wxString( pattern.description );
+    patt->exposition.PXPO = new QString( pattern.description );
     memcpy( patt->name.PANM, pattern.name.mb_str(), 8 );
     patt->bitmap.PBTM = NULL;
     patt->fillType.PATP = pattern.fillType;
@@ -929,7 +921,7 @@ void ChartSymbols::BuildPattern( OCPNPattern &pattern )
     patt->pos.patt.bnbox_x.SBXC = patternSize.origin.x;
     patt->pos.patt.bnbox_y.SBXR = patternSize.origin.y;
 
-    wxRect graphicsLocation( pattern.bitmapSize.graphics, pattern.bitmapSize.size );
+    QRect graphicsLocation( pattern.bitmapSize.graphics, pattern.bitmapSize.size );
     ( *symbolGraphicLocations )[pattern.name] = graphicsLocation;
 
     // check if key already there
@@ -952,7 +944,7 @@ void ChartSymbols::ProcessSymbols( TiXmlElement* symbolNodes )
 {
 
     ChartSymbol symbol;
-    wxString propVal;
+    QString propVal;
     long numVal;
 
     for( TiXmlNode *childNode = symbolNodes->FirstChild(); childNode;
@@ -968,8 +960,8 @@ void ChartSymbols::ProcessSymbols( TiXmlElement* symbolNodes )
         TiXmlElement* subNodes = child->FirstChild()->ToElement();
 
         while( subNodes ) {
-            wxString nodeType( subNodes->Value(), wxConvUTF8 );
-            wxString nodeText( subNodes->GetText(), wxConvUTF8 );
+            QString nodeType( subNodes->Value(), wxConvUTF8 );
+            QString nodeText( subNodes->GetText(), wxConvUTF8 );
 
             if( nodeType == _T("description") ) {
                 symbol.description = nodeText;
@@ -1003,7 +995,7 @@ void ChartSymbols::ProcessSymbols( TiXmlElement* symbolNodes )
 
                 TiXmlElement* bitmapNodes = subNodes->FirstChild()->ToElement();
                 while( bitmapNodes ) {
-                    wxString bitmapnodeType( bitmapNodes->Value(), wxConvUTF8 );
+                    QString bitmapnodeType( bitmapNodes->Value(), wxConvUTF8 );
                     if( bitmapnodeType == _T("distance") ) {
                         TGET_INT_PROPERTY_VALUE( bitmapNodes, "min", symbol.bitmapSize.minDistance )
                         TGET_INT_PROPERTY_VALUE( bitmapNodes, "max", symbol.bitmapSize.maxDistance )
@@ -1034,7 +1026,7 @@ void ChartSymbols::ProcessSymbols( TiXmlElement* symbolNodes )
 
                 TiXmlElement* vectorNodes = subNodes->FirstChild()->ToElement();
                 while( vectorNodes ) {
-                    wxString vectornodeType( vectorNodes->Value(), wxConvUTF8 );
+                    QString vectornodeType( vectorNodes->Value(), wxConvUTF8 );
                     if( vectornodeType == _T("distance") ) {
                         TGET_INT_PROPERTY_VALUE( vectorNodes, "min", symbol.vectorSize.minDistance )
                         TGET_INT_PROPERTY_VALUE( vectorNodes, "max", symbol.vectorSize.maxDistance )
@@ -1051,7 +1043,7 @@ void ChartSymbols::ProcessSymbols( TiXmlElement* symbolNodes )
                         goto nextVector;
                     }
                     if( vectornodeType == _T("HPGL") ) {
-                        symbol.HPGL = wxString( vectorNodes->GetText(), wxConvUTF8 );
+                        symbol.HPGL = QString( vectorNodes->GetText(), wxConvUTF8 );
                     }
                     nextVector: vectorNodes = vectorNodes->NextSiblingElement();
                 }
@@ -1069,13 +1061,13 @@ void ChartSymbols::BuildSymbol( ChartSymbol& symbol )
     Rule *symb = (Rule*) calloc( 1, sizeof(Rule) );
     plib->pAlloc->Add( symb );
 
-    wxString SVCT;
-    wxString SCRF;
+    QString SVCT;
+    QString SCRF;
 
     symb->RCID = symbol.RCID;
     memcpy( symb->name.SYNM, symbol.name.char_str(), 8 );
 
-    symb->exposition.SXPO = new wxString( symbol.description );
+    symb->exposition.SXPO = new QString( symbol.description );
 
     symb->vector.SVCT = (char *) malloc( symbol.HPGL.Len() + 1 );
     strcpy( symb->vector.SVCT, symbol.HPGL.mb_str() );
@@ -1107,7 +1099,7 @@ void ChartSymbols::BuildSymbol( ChartSymbol& symbol )
     symb->pos.symb.bnbox_x.SBXC = symbolSize.origin.x;
     symb->pos.symb.bnbox_y.SBXR = symbolSize.origin.y;
 
-    wxRect graphicsLocation( symbol.bitmapSize.graphics, symbol.bitmapSize.size );
+    QRect graphicsLocation( symbol.bitmapSize.graphics, symbol.bitmapSize.size );
     ( *symbolGraphicLocations )[symbol.name] = graphicsLocation;
 
     // Already something here with same key? Then free its strings, otherwise they leak.
@@ -1122,7 +1114,7 @@ void ChartSymbols::BuildSymbol( ChartSymbol& symbol )
 
 }
 
-bool ChartSymbols::LoadConfigFile(s52plib* plibArg, const wxString & s52ilePath)
+bool ChartSymbols::LoadConfigFile(s52plib* plibArg, const QString & s52ilePath)
 {
     TiXmlDocument doc;
 
@@ -1131,11 +1123,11 @@ bool ChartSymbols::LoadConfigFile(s52plib* plibArg, const wxString & s52ilePath)
     // Expect to find library data XML file in same folder as other S52 data.
     // Files in CWD takes precedence.
 
-    wxString name, extension;
-    wxString xmlFileName = _T("chartsymbols.xml");
+    QString name, extension;
+    QString xmlFileName = _T("chartsymbols.xml");
 
     wxFileName::SplitPath( s52ilePath, &configFileDirectory, &name, &extension );
-    wxString fullFilePath = configFileDirectory + wxFileName::GetPathSeparator() + xmlFileName;
+    QString fullFilePath = configFileDirectory + wxFileName::GetPathSeparator() + xmlFileName;
 
     if( wxFileName::FileExists( xmlFileName ) ) {
         fullFilePath = xmlFileName;
@@ -1143,7 +1135,7 @@ bool ChartSymbols::LoadConfigFile(s52plib* plibArg, const wxString & s52ilePath)
     }
 
     if( !wxFileName::FileExists( fullFilePath ) ) {
-        wxString msg( _T("ChartSymbols ConfigFile not found: ") );
+        QString msg( _T("ChartSymbols ConfigFile not found: ") );
         msg += fullFilePath;
         ZCHX_LOGMSG( msg );
         return false;
@@ -1151,7 +1143,7 @@ bool ChartSymbols::LoadConfigFile(s52plib* plibArg, const wxString & s52ilePath)
 
 #if 1   
     if(m_symbolsDoc.load_file( fullFilePath.fn_str() ) ){
-        wxString msg( _T("ChartSymbols loaded from ") );
+        QString msg( _T("ChartSymbols loaded from ") );
         msg += fullFilePath;
         ZCHX_LOGMSG( msg );
         
@@ -1171,19 +1163,19 @@ bool ChartSymbols::LoadConfigFile(s52plib* plibArg, const wxString & s52ilePath)
     
 #else
     if( !doc.LoadFile( (const char *) fullFilePath.mb_str() ) ) {
-        wxString msg( _T("    ChartSymbols ConfigFile Failed to load ") );
+        QString msg( _T("    ChartSymbols ConfigFile Failed to load ") );
         msg += fullFilePath;
         ZCHX_LOGMSG( msg );
         return false;
     }
 
-    wxString msg( _T("ChartSymbols loaded from ") );
+    QString msg( _T("ChartSymbols loaded from ") );
     msg += fullFilePath;
     ZCHX_LOGMSG( msg );
     
     TiXmlHandle hRoot( doc.RootElement() );
     
-    wxString root = wxString( doc.RootElement()->Value(), wxConvUTF8 );
+    QString root = QString( doc.RootElement()->Value(), wxConvUTF8 );
     if( root != _T("chartsymbols" ) ) {
         ZCHX_LOGMSG(
                 _T("    ChartSymbols::LoadConfigFile(): Expected XML Root <chartsymbols> not found.") );
@@ -1193,7 +1185,7 @@ bool ChartSymbols::LoadConfigFile(s52plib* plibArg, const wxString & s52ilePath)
     TiXmlElement* pElem = hRoot.FirstChild().Element();
 
     for( ; pElem != 0; pElem = pElem->NextSiblingElement() ) {
-        wxString child = wxString( pElem->Value(), wxConvUTF8 );
+        QString child = QString( pElem->Value(), wxConvUTF8 );
 
         if( child == _T("color-tables") ) ProcessColorTables( pElem );
         if( child == _T("lookups") ) ProcessLookups( pElem );
@@ -1232,11 +1224,11 @@ int ChartSymbols::LoadRasterFileForColorTable( int tableNo, bool flush )
     
     colTable* coltab = (colTable *) colorTables->Item( tableNo );
 
-    wxString filename = configFileDirectory + wxFileName::GetPathSeparator()
+    QString filename = configFileDirectory + wxFileName::GetPathSeparator()
             + coltab->rasterFileName;
 
     wxImage rasterFileImg;
-    if( rasterFileImg.LoadFile( filename, wxBITMAP_TYPE_PNG ) ) {
+    if( rasterFileImg.LoadFile( filename, QBitmap_TYPE_PNG ) ) {
 #ifdef ocpnUSE_GL
         /* for opengl mode, load the symbols into a texture */
         if( g_bopengl && g_texture_rectangle_format) {
@@ -1274,7 +1266,7 @@ int ChartSymbols::LoadRasterFileForColorTable( int tableNo, bool flush )
             glTexParameteri( g_texture_rectangle_format, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
             glTexParameteri( g_texture_rectangle_format, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
-            rasterSymbolsTextureSize = wxSize(w, h);
+            rasterSymbolsTextureSize = QSize(w, h);
 
             glDisable( GL_TEXTURE_2D );
             
@@ -1282,14 +1274,14 @@ int ChartSymbols::LoadRasterFileForColorTable( int tableNo, bool flush )
         } 
 #endif
         {
-            rasterSymbols = wxBitmap( rasterFileImg, -1/*32*/);
+            rasterSymbols = QBitmap( rasterFileImg, -1/*32*/);
         }
 
         rasterSymbolsLoadedColorMapNumber = tableNo;
         return true;
     }
 
-    wxString msg( _T("ChartSymbols...Failed to load raster symbols file ") );
+    QString msg( _T("ChartSymbols...Failed to load raster symbols file ") );
     msg += filename;
     ZCHX_LOGMSG( msg );
     return false;
@@ -1304,12 +1296,12 @@ wxArrayPtrVoid* ChartSymbols::GetColorTables()
 S52color* ChartSymbols::GetColor( const char *colorName, int fromTable )
 {
     colTable *colortable;
-    wxString key( colorName, wxConvUTF8, 5 );
+    QString key( colorName, wxConvUTF8, 5 );
     colortable = (colTable *) colorTables->Item( fromTable );
     return &( colortable->colors[key] );
 }
 
-wxColor ChartSymbols::GetwxColor( const wxString &colorName, int fromTable )
+wxColor ChartSymbols::GetwxColor( const QString &colorName, int fromTable )
 {
     colTable *colortable;
     colortable = (colTable *) colorTables->Item( fromTable );
@@ -1319,11 +1311,11 @@ wxColor ChartSymbols::GetwxColor( const wxString &colorName, int fromTable )
 
 wxColor ChartSymbols::GetwxColor( const char *colorName, int fromTable )
 {
-    wxString key( colorName, wxConvUTF8, 5 );
+    QString key( colorName, wxConvUTF8, 5 );
     return GetwxColor( key, fromTable );
 }
 
-int ChartSymbols::FindColorTable(const wxString & tableName)
+int ChartSymbols::FindColorTable(const QString & tableName)
 {
     for( unsigned int i = 0; i < colorTables->GetCount(); i++ ) {
         colTable *ct = (colTable *) colorTables->Item( i );
@@ -1334,32 +1326,32 @@ int ChartSymbols::FindColorTable(const wxString & tableName)
     return 0;
 }
 
-wxString ChartSymbols::HashKey( const char* symbolName )
+QString ChartSymbols::HashKey( const char* symbolName )
 {
     char key[9];
     key[8] = 0;
     strncpy( key, symbolName, 8 );
-    return wxString( key, wxConvUTF8 );
+    return QString( key, wxConvUTF8 );
 }
 
 wxImage ChartSymbols::GetImage( const char* symbolName )
 {
-    wxRect bmArea = ( *symbolGraphicLocations )[HashKey( symbolName )];
+    QRect bmArea = ( *symbolGraphicLocations )[HashKey( symbolName )];
     if(rasterSymbols.IsOk()){
-        wxBitmap bitmap = rasterSymbols.GetSubBitmap( bmArea );
+        QBitmap bitmap = rasterSymbols.GetSubBitmap( bmArea );
         return bitmap.ConvertToImage();
     }
     else
         return wxImage(1,1);
 }
 
-unsigned int ChartSymbols::GetGLTextureRect( wxRect &rect, const char* symbolName )
+unsigned int ChartSymbols::GetGLTextureRect( QRect &rect, const char* symbolName )
 {
     rect = ( *symbolGraphicLocations )[HashKey( symbolName )];
     return rasterSymbolsTexture;
 }
 
-wxSize ChartSymbols::GLTextureSize()
+QSize ChartSymbols::GLTextureSize()
 {
     return rasterSymbolsTextureSize;
 }
