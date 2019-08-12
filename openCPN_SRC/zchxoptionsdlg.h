@@ -1,4 +1,4 @@
-#ifndef ZCHXOPTIONSDLG_H
+﻿#ifndef ZCHXOPTIONSDLG_H
 #define ZCHXOPTIONSDLG_H
 
 #include <QDialog>
@@ -40,6 +40,7 @@ public:
     void resetMarStdList(bool bsetConfig, bool bsetStd);
 
 private:
+    void processApply(bool apply);
     void UpdateWorkArrayFromTextCtl(void);  //更新地图文件列表
 
 private slots:
@@ -57,6 +58,10 @@ public:
     ArrayOfCDI                  *m_pWorkDirList;
     int                         m_returnChanges;
     std::vector<int>            marinersStdXref;
+
+    int                         k_vectorcharts;
+    int                         k_charts;
+    int                         m_groups_changed;
 };
 
 #endif // ZCHXOPTIONSDLG_H

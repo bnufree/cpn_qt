@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  S-57 Translator
  * Purpose:  Declarations for S-57 translator not including the
@@ -96,48 +96,48 @@ char **S57FileCollector( const char * pszDataset );
 
 
 
-/************************************************************************/
-/*                            DDFRecordIndex                            */
-/*                                                                      */
-/*      Maintain an index of DDF records based on an integer key.       */
-/************************************************************************/
+///************************************************************************/
+///*                            DDFRecordIndex                            */
+///*                                                                      */
+///*      Maintain an index of DDF records based on an integer key.       */
+///************************************************************************/
 
-typedef struct
-{
-    int         nKey;
-    DDFRecord   *poRecord;
-} DDFIndexedRecord;
+//typedef struct
+//{
+//    int         nKey;
+//    DDFRecord   *poRecord;
+//} DDFIndexedRecord;
 
-class DDFRecordIndex
-{
-    int         bSorted;
+//class DDFRecordIndex
+//{
+//    int         bSorted;
 
-    int         nRecordCount;
-    int         nRecordMax;
+//    int         nRecordCount;
+//    int         nRecordMax;
 
-    int         nLastObjlPos;            /* rjensen. added for FindRecordByObjl() */
-    int         nLastObjl;                  /* rjensen. added for FindRecordByObjl() */
+//    int         nLastObjlPos;            /* rjensen. added for FindRecordByObjl() */
+//    int         nLastObjl;                  /* rjensen. added for FindRecordByObjl() */
 
-    DDFIndexedRecord *pasRecords;
+//    DDFIndexedRecord *pasRecords;
 
-    void        Sort();
+//    void        Sort();
 
-public:
-                DDFRecordIndex();
-               ~DDFRecordIndex();
+//public:
+//                DDFRecordIndex();
+//               ~DDFRecordIndex();
 
-    void        AddRecord( int nKey, DDFRecord * );
-    int         RemoveRecord( int nKey );
+//    void        AddRecord( int nKey, DDFRecord * );
+//    int         RemoveRecord( int nKey );
 
-    DDFRecord  *FindRecord( int nKey );
+//    DDFRecord  *FindRecord( int nKey );
 
-    DDFRecord  *FindRecordByObjl( int nObjl );    /* rjensen. added for FindRecordByObjl() */
+//    DDFRecord  *FindRecordByObjl( int nObjl );    /* rjensen. added for FindRecordByObjl() */
 
-    void        Clear();
+//    void        Clear();
 
-    int         GetCount() { return nRecordCount; }
-    DDFRecord  *GetByIndex( int i );
-};
+//    int         GetCount() { return nRecordCount; }
+//    DDFRecord  *GetByIndex( int i );
+//};
 
 /************************************************************************/
 /*                              S57Reader                               */

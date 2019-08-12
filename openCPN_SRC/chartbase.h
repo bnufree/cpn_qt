@@ -30,12 +30,14 @@
 
 #include "bbox.h"
 #include "LLRegion.h"
+#include "_def.h"
+#include <QDateTime>
 
 //----------------------------------------------------------------------------
 //  Forward Declarations
 //----------------------------------------------------------------------------
 class ViewPort;
-class wxGLContext;
+class QGLContext;
 class OCPNRegion;
 
 //----------------------------------------------------------------------------
@@ -181,7 +183,7 @@ public:
       virtual bool RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint,
                                         const OCPNRegion &Region) = 0;
 
-      virtual bool RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
                                         const OCPNRegion &RectRegion, const LLRegion &Region) = 0;
 
       virtual bool AdjustVP(ViewPort &vp_last, ViewPort &vp_proposed) = 0;
@@ -282,7 +284,7 @@ public:
       virtual bool RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint,
                                         const OCPNRegion &Region);
 
-      virtual bool RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
                                         const OCPNRegion &RectRegion, const LLRegion &Region);
 
       virtual bool AdjustVP(ViewPort &vp_last, ViewPort &vp_proposed);

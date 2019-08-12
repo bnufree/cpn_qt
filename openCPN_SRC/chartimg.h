@@ -161,7 +161,7 @@ class  ChartBaseBSB     :public ChartBase
 
       bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region);
 
-      virtual bool RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
                                         const OCPNRegion &RectRegion, const LLRegion &Region);
 
       virtual bool AdjustVP(ViewPort &vp_last, ViewPort &vp_proposed);
@@ -397,7 +397,7 @@ class ChartPlugInWrapper : public ChartBaseBSB
             virtual bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint,
                                               const OCPNRegion &Region);
 
-            virtual bool RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& VPoint,
+            virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
                                               const OCPNRegion &RectRegion, const LLRegion &Region);
 
             virtual bool AdjustVP(ViewPort &vp_last, ViewPort &vp_proposed);
@@ -438,10 +438,10 @@ class ChartPlugInWrapper : public ChartBaseBSB
             virtual bool RenderRegionViewOnDCTextOnly(QPainter &dc, const ViewPort& VPoint,
                                                     const OCPNRegion &Region);
             
-            virtual bool RenderRegionViewOnGLNoText( const wxGLContext &glc, const ViewPort& VPoint,
+            virtual bool RenderRegionViewOnGLNoText( const QGLContext &glc, const ViewPort& VPoint,
                                                        const OCPNRegion &RectRegion, const LLRegion &Region );
             
-            virtual bool RenderRegionViewOnGLTextOnly( const wxGLContext &glc, const ViewPort& VPoint,
+            virtual bool RenderRegionViewOnGLTextOnly( const QGLContext &glc, const ViewPort& VPoint,
                                                          const OCPNRegion &RectRegion );
             
             virtual void ClearPLIBTextList();

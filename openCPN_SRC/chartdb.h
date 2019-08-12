@@ -104,7 +104,6 @@ public:
       ChartDB();
       virtual ~ChartDB();
 
-
       bool LoadBinary(const QString & filename, ArrayOfCDI& dir_array_check);
       bool SaveBinary(const QString & filename) { return ChartDatabase::Write(filename); }
 
@@ -169,6 +168,7 @@ private:
       CacheEntry *FindOldestDeleteCandidate( bool blog );
       void DeleteCacheEntry(int i, bool bDelTexture = false, const QString &msg = QString());
       void DeleteCacheEntry(CacheEntry *pce, bool bDelTexture = false, const QString &msg = QString());
+      void createDomTagAndNode(QDomElement* root, QDomDocument& doc, const QString& tag, const QString& text);
       
       
       wxArrayPtrVoid    *pChartCache;

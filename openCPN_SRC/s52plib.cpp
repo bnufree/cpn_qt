@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S52 Presentation Library
@@ -504,20 +504,21 @@ DisCat s52plib::findLUPDisCat(const char *objectName, LUPname TNAM)
     LUPArrayContainer *plac = SelectLUPArrayContainer( TNAM );
     
     wxArrayOfLUPrec *LUPArray = SelectLUPARRAY( TNAM  );
-    
-    
-    //      Find the first matching entry in the LUP Array
-    int index = 0;
-    int index_max = LUPArray->GetCount();
-    LUPrec *LUPCandidate;
-    
-    
-    while(  index < index_max  ) {
-        LUPCandidate = LUPArray->Item( index );
-        if( !strcmp( objectName, LUPCandidate->OBCL ) ) {
-            return LUPCandidate->DISC;
+    if(LUPArray)
+    {
+        //      Find the first matching entry in the LUP Array
+        int index = 0;
+        int index_max = LUPArray->count();
+        LUPrec *LUPCandidate;
+
+
+        while(  index < index_max  ) {
+            LUPCandidate = LUPArray->at( index );
+            if( !strcmp( objectName, LUPCandidate->OBCL ) ) {
+                return LUPCandidate->DISC;
+            }
+            index++;
         }
-        index++;
     }
     
     return (DisCat)(-1);

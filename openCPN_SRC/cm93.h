@@ -439,9 +439,9 @@ class cm93compchart : public s57chart
 
             bool AdjustVP(ViewPort &vp_last, ViewPort &vp_proposed);
 
-            bool RenderRegionViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint, const OCPNRegion &Region);
+            bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region);
 
-            virtual bool RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& VPoint,
+            virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
                                               const OCPNRegion &RectRegion, const LLRegion &Region);
             void SetColorScheme(ColorScheme cs, bool bApplyImmediate);
 
@@ -477,16 +477,16 @@ class cm93compchart : public s57chart
             void UpdateRenderRegions ( const ViewPort& VPoint );
             OCPNRegion GetValidScreenCanvasRegion(const ViewPort& VPoint, const OCPNRegion &ScreenRegion);
 
-            bool RenderViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint);
+            bool RenderViewOnDC(QPainter& dc, const ViewPort& VPoint);
 
             InitReturn CreateHeaderData();
             cm93_dictionary *FindAndLoadDictFromDir(const QString &dir);
             void FillScaleArray(double lat, double lon);
             int PrepareChartScale(const ViewPort &vpt, int cmscale, bool bOZ_protect = true);
             int GetCMScaleFromVP(const ViewPort &vpt);
-            bool DoRenderRegionViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint, const OCPNRegion &Region);
+            bool DoRenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region);
 
-            bool DoRenderRegionViewOnGL (const wxGLContext &glc, const ViewPort& VPoint,
+            bool DoRenderRegionViewOnGL (const QGLContext &glc, const ViewPort& VPoint,
                                          const OCPNRegion &RectRegion, const LLRegion &Region );
 
             bool RenderCellOutlinesOnDC( ocpnDC &dc, ViewPort& vp, QPoint *pwp, M_COVR_Desc *mcd );

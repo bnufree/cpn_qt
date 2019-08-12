@@ -1,4 +1,4 @@
-#include "zchxoptionsdlg.h"
+﻿#include "zchxoptionsdlg.h"
 #include "ui_zchxoptionsdlg.h"
 #include "zchxchecklistwidget.h"
 #include "zchxopengloptiondlg.h"
@@ -7,6 +7,7 @@
 #include "s52plib.h"
 #include "s52utils.h"
 #include "cm93.h"
+#include "zchxmapmainwindow.h"
 
 extern  bool            g_bShowStatusBar;
 extern  bool            g_bShowMenuBar;
@@ -39,6 +40,7 @@ extern  int             g_cm93_zoom_factor;
 extern  int             g_nDepthUnitDisplay;
 extern OCPNPlatform     *g_Platform;
 extern s52plib          *ps52plib;
+extern  zchxMapMainWindow   *mMainWindow;
 
 zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
     QDialog(parent),
@@ -49,6 +51,14 @@ zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
     this->setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
     ui->pPointStyle->setItemData(0, PAPER_CHART);
     ui->pPointStyle->setItemData(1, SIMPLIFIED);
+    ui->pBoundStyle->setItemData(0, PLAIN_BOUNDARIES);
+    ui->pBoundStyle->setItemData(1, SYMBOLIZED_BOUNDARIES);
+
+    //显示模式赋值
+    ui->pDispCat->setItemData(0, DISPLAYBASE);
+    ui->pDispCat->setItemData(1, STANDARD);
+    ui->pDispCat->setItemData(2, OTHER);
+    ui->pDispCat->setItemData(3, MARINERS_STANDARD);
 }
 
 zchxOptionsDlg::~zchxOptionsDlg()
@@ -65,7 +75,7 @@ void zchxOptionsDlg::on_bOpenGL_clicked()
 
 void zchxOptionsDlg::on_OK_clicked()
 {
-    on_APPLY_clicked();
+    processApply(false);
     accept();
 }
 
@@ -76,6 +86,12 @@ void zchxOptionsDlg::on_CANCEL_clicked()
 
 void zchxOptionsDlg::on_APPLY_clicked()
 {
+    processApply(true);
+}
+
+void zchxOptionsDlg::processApply(bool apply)
+{
+    Qt::CursorShape cursor_type = cursor().shape();
     setCursor(QCursor(Qt::BusyCursor));
 
     // Handle Chart Tab
@@ -147,18 +163,17 @@ void zchxOptionsDlg::on_APPLY_clicked()
             }
         }
         Q_ASSERT(itemIndex >= 0);
-        OBJLElement* pOLE = (OBJLElement*)(ps52plib->pOBJLArray->Item(itemIndex));
-        if(pOLE->nViz != ps57CtlListBox->IsChecked(iPtr))bUserStdChange = true;
-        pOLE->nViz = ps57CtlListBox->IsChecked(iPtr);
+        OBJLElement* pOLE = (OBJLElement*)(ps52plib->pOBJLArray->at(itemIndex));
+        if(pOLE->nViz != ui->ps57CtlListBox->ischecked(iPtr))bUserStdChange = true;
+        pOLE->nViz = ui->ps57CtlListBox->ischecked(iPtr);
     }
 
-    if (ps52plib) {
-
+    if (ps52plib)
+    {
         // Take a snapshot of the S52 config right now,
         // for later comparison
         ps52plib->GenerateStateHash();
         long stateHash = ps52plib->GetStateHash();
-
 
         if (m_returnChanges & GL_CHANGED) {
             // Do this now to handle the screen refresh that is automatically
@@ -169,120 +184,64 @@ void zchxOptionsDlg::on_APPLY_clicked()
             ps52plib->GenerateStateHash();
         }
 
-        if(pDispCat) {
-            enum _DisCat nset = OTHER;
-            switch (pDispCat->GetSelection()) {
-            case 0:
-                nset = DISPLAYBASE;
-                break;
-            case 1:
-                nset = STANDARD;
-                break;
-            case 2:
-                nset = OTHER;
-                break;
-            case 3:
-                nset = MARINERS_STANDARD;
-                break;
-            }
+        if(ui->pDispCat) {
+            enum _DisCat nset = ui->pDispCat->currentData().toInt();
             ps52plib->SetDisplayCategory(nset);
         }
 
         ps52plib->m_bShowSoundg = ui->pCheck_SOUNDG->isChecked();
         ps52plib->m_bShowAtonText = ui->pCheck_ATONTEXT->isChecked();
-        ps52plib->m_bShowLdisText = ui->pCheck_LDISTEXT->GetValue();
-        ps52plib->m_bExtendLightSectors = ui->pCheck_XLSECTTEXT->GetValue();
+        ps52plib->m_bShowLdisText = ui->pCheck_LDISTEXT->isChecked();
+        ps52plib->m_bExtendLightSectors = ui->pCheck_XLSECTTEXT->isChecked();
 
-        ps52plib->m_bShowMeta = ui->pCheck_META->GetValue();
-        ps52plib->m_bDeClutterText = ui->pCheck_DECLTEXT->GetValue();
-        ps52plib->m_bShowNationalTexts = ui->pCheck_NATIONALTEXT->GetValue();
-        ps52plib->m_bShowS57ImportantTextOnly = ui->pCheck_SHOWIMPTEXT->GetValue();
-        ps52plib->m_bUseSCAMIN = ui->pCheck_SCAMIN->GetValue();
+        ps52plib->m_bShowMeta = ui->pCheck_META->isChecked();
+        ps52plib->m_bDeClutterText = ui->pCheck_DECLTEXT->isChecked();
+        ps52plib->m_bShowNationalTexts = ui->pCheck_NATIONALTEXT->isChecked();
+        ps52plib->m_bShowS57ImportantTextOnly = ui->pCheck_SHOWIMPTEXT->isChecked();
+        ps52plib->m_bUseSCAMIN = ui->pCheck_SCAMIN->isChecked();
 
-        ps52plib->m_nSymbolStyle = ui->pPointStyle->GetSelection() == 0 ? PAPER_CHART : SIMPLIFIED;
-
-        ps52plib->m_nBoundaryStyle = pBoundStyle->GetSelection() == 0
-                                         ? PLAIN_BOUNDARIES
-                                         : SYMBOLIZED_BOUNDARIES;
-
-        S52_setMarinerParam(S52_MAR_TWO_SHADES, (p24Color->GetSelection() == 0) ? 1.0 : 0.0);
+        ps52plib->m_nSymbolStyle = ui->pPointStyle->currentData().toInt();
+        ps52plib->m_nBoundaryStyle = ui->pBoundStyle->currentData().toInt();
+        S52_setMarinerParam(S52_MAR_TWO_SHADES, (ui->p24Color->currentIndex() == 0) ? 1.0 : 0.0);
 
         // Depths
-        double dval;
         float conv = 1;
 
-        if (depthUnit == 0)  // feet
-          conv = 0.3048f;    // international definiton of 1 foot is 0.3048 metres
-        else if (depthUnit == 2)  // fathoms
-          conv = 0.3048f * 6;     // 1 fathom is 6 feet
-
-        if (m_SafetyCtl->GetValue().ToDouble(&dval)) {
-          S52_setMarinerParam(S52_MAR_SAFETY_DEPTH, dval * conv);  // controls sounding display
-          S52_setMarinerParam(S52_MAR_SAFETY_CONTOUR, dval * conv);  // controls colour
+        if (g_nDepthUnitDisplay == 0)  // feet
+        {
+            conv = 0.3048f;    // international definiton of 1 foot is 0.3048 metres
+        } else if (g_nDepthUnitDisplay == 2)  // fathoms
+        {
+            conv = 0.3048f * 6;     // 1 fathom is 6 feet
         }
 
-        if (m_ShallowCtl->GetValue().ToDouble(&dval))
-          S52_setMarinerParam(S52_MAR_SHALLOW_CONTOUR, dval * conv);
+        double dval = ui->m_SafetyCtl->text().toDouble();
+        S52_setMarinerParam(S52_MAR_SAFETY_DEPTH, dval * conv);  // controls sounding display
+        S52_setMarinerParam(S52_MAR_SAFETY_CONTOUR, dval * conv);  // controls colour
 
-        if (m_DeepCtl->GetValue().ToDouble(&dval))
-          S52_setMarinerParam(S52_MAR_DEEP_CONTOUR, dval * conv);
+        dval = ui->m_ShallowCtl->text().toDouble();
+        S52_setMarinerParam(S52_MAR_SHALLOW_CONTOUR, dval * conv);
+
+        dval = ui->m_DeepCtl->text().toDouble();
+        S52_setMarinerParam(S52_MAR_DEEP_CONTOUR, dval * conv);
 
         ps52plib->UpdateMarinerParams();
-        ps52plib->m_nDepthUnitDisplay = depthUnit;
+        ps52plib->m_nDepthUnitDisplay = g_nDepthUnitDisplay;
 
         ps52plib->GenerateStateHash();
 
         // Detect a change to S52 library config
         if( (stateHash != ps52plib->GetStateHash()) || bUserStdChange )
+        {
             m_returnChanges |= S52_CHANGED;
-
-      }
-
-
-        if ( g_bInlandEcdis != pInlandEcdis->GetValue() ){ // InlandEcdis changed
-            g_bInlandEcdis = pInlandEcdis->GetValue();
-            SwitchInlandEcdisMode( g_bInlandEcdis );
-            m_returnChanges |= TOOLBAR_CHANGED;
         }
-    #ifdef __WXOSX__
-        if ( g_bDarkDecorations != pDarkDecorations->GetValue() ) {
-            g_bDarkDecorations = pDarkDecorations->GetValue();
+    }
 
-            OCPNMessageBox(this,
-                           _("The changes to the window decorations will take full effect the next time you start OpenCPN."),
-                           _("OpenCPN"));
-        }
-    #endif
-      // PlugIn Manager Panel
 
-      // Pick up any changes to selections
-      if (g_pi_manager->UpdatePlugIns())
-          m_returnChanges |= TOOLBAR_CHANGED;
+    m_returnChanges |= GENERIC_CHANGED | k_vectorcharts | k_charts | m_groups_changed ;
 
-      // And keep config in sync
-      if (m_pPlugInCtrl) m_pPlugInCtrl->UpdatePluginsOrder();
-      g_pi_manager->UpdateConfig();
-
-      // PlugIns may have added panels
-      if (g_pi_manager) g_pi_manager->CloseAllPlugInPanels((int)wxOK);
-
-      m_returnChanges |= GENERIC_CHANGED | k_vectorcharts | k_charts |
-                         m_groups_changed | k_plugins | k_tides;
-
-      // Pick up all the entries in the DataSelected control
-      // and update the global static array
-      TideCurrentDataSet.Clear();
-      int nEntry = tcDataSelected->GetCount();
-
-      for (int i = 0; i < nEntry; i++)
-        TideCurrentDataSet.Add(tcDataSelected->GetString(i));
-
-      // Canvas configuration
-      if (event.GetId() != ID_APPLY)                // only on ID_OK
-        g_canvasConfig = m_screenConfig;
-
-      if (event.GetId() == ID_APPLY) {
-        gFrame->ProcessOptionsDialog(m_returnChanges, m_pWorkDirList);
+    if (apply && mMainWindow) {
+        mMainWindow->ProcessOptionsDialog(m_returnChanges, m_pWorkDirList);
         m_CurrentDirList = *m_pWorkDirList; // Perform a deep copy back to main database.
 
         //  We can clear a few flag bits on "Apply", so they won't be recognised at the "OK" click.
@@ -291,14 +250,8 @@ void zchxOptionsDlg::on_APPLY_clicked()
         k_charts = 0;
 
         gFrame->RefreshAllCanvas();
-      }
-
-
-      //  Record notice of any changes to last applied template
-      UpdateTemplateTitleText();
-
-      ::wxEndBusyCursor();
     }
+    setCursor(QCursor(cursor_type));
 }
 
 
@@ -335,17 +288,17 @@ void zchxOptionsDlg::resetMarStdList(bool bsetConfig, bool bsetStd)
     ui->ps57CtlListBox->clear();
     marinersStdXref.clear();
 
-    for (unsigned int i = 0; i < ps52plib->pOBJLArray->count(); i++)
+    for (unsigned int iPtr = 0; iPtr < ps52plib->pOBJLArray->count(); iPtr++)
     {
-        OBJLElement* pOLE = (OBJLElement*)(ps52plib->pOBJLArray[i]);
+        OBJLElement* pOLE = (OBJLElement*)(ps52plib->pOBJLArray[iPtr]);
         if(!pOLE) continue;
         if( !strncmp(pOLE->OBJLName, "CBLARE", 6))
             int yyp = 3;
 
         QString item = QString::fromUtf8(pOLE->OBJLName);
-        if (i < ps52plib->OBJLDescriptions.size())
+        if (iPtr < ps52plib->OBJLDescriptions.size())
         {
-            item = ps52plib->OBJLDescriptions[];
+            item = ps52plib->OBJLDescriptions[iPtr];
         }
 
         // Find the most conservative Category, among Point, Area, and Line LUPs
@@ -365,29 +318,19 @@ void zchxOptionsDlg::resetMarStdList(bool bsetConfig, bool bsetStd)
         // The ListBox control will insert entries in sorted order, which means
         // we need to
         // keep track of already inserted items that gets pushed down the line.
-        int newpos = ps57CtlListBox->Append(item, benable);
+        int newpos = ui->ps57CtlListBox->append(item, benable);
         marinersStdXref.push_back(newpos);
         for (size_t i = 0; i < iPtr; i++) {
             if (marinersStdXref[i] >= newpos) marinersStdXref[i]++;
         }
 
         bool bviz = 0;
-        if(bsetConfig)
-            bviz = !(pOLE->nViz == 0);
+        if(bsetConfig) bviz = !(pOLE->nViz == 0);
 
-        if(cat == DISPLAYBASE)
-            bviz = true;
+        if(cat == DISPLAYBASE) bviz = true;
 
-        if(bsetStd){
-            if(cat == STANDARD){
-                bviz = true;
-            }
-        }
-
-        ps57CtlListBox->Check(newpos, bviz);
+        if(bsetStd && cat == STANDARD) bviz = true;
+        ui->ps57CtlListBox->setChecked(newpos, bviz);
     }
-    //  Force the wxScrolledWindow to recalculate its scroll bars
-    wxSize s = ps57CtlListBox->GetSize();
-    ps57CtlListBox->SetSize(s.x, s.y-1);
 }
 

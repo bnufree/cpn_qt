@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Thumbnail Object
@@ -26,13 +26,6 @@
  *
  */
 
-
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-  #include "wx/wx.h"
-#endif //precompiled headers
-
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
@@ -43,22 +36,20 @@
 #include "chart1.h"
 #include "chartdb.h"
 #include "wx28compat.h"
+#include <QPainter>
 
 //------------------------------------------------------------------------------
 //    Thumbwin Implementation
 //------------------------------------------------------------------------------
-BEGIN_EVENT_TABLE(ThumbWin, wxWindow)
-  EVT_PAINT(ThumbWin::OnPaint)
-END_EVENT_TABLE()
 
 // Define a constructor
 
-ThumbWin::ThumbWin( wxWindow *parent ) :
-        wxWindow( parent, wxID_ANY, wxPoint( 20, 20 ), wxSize( 5, 5 ), wxSIMPLE_BORDER )
+ThumbWin::ThumbWin( QWidget *parent ) :
+        QWidget( parent),
+        m_max_size(100, 100)
 {
     pThumbChart = NULL;
-    m_max_size.x = m_max_size.y = 100;
-    Show( false );
+    setVisible(false);
 }
 
 ThumbWin::~ThumbWin()
@@ -69,38 +60,37 @@ void ThumbWin::Resize( void )
 {
     if( pThumbChart ) {
         if( pThumbChart->GetThumbData()->pDIBThumb ) {
-            int newheight = std::min(m_max_size.y, pThumbChart->GetThumbData()->pDIBThumb->GetHeight());
-            int newwidth = std::min(m_max_size.x, pThumbChart->GetThumbData()->pDIBThumb->GetWidth());
-            SetSize( 0, 0, newwidth, newheight );
+            int newheight = std::min(m_max_size.height(), pThumbChart->GetThumbData()->pDIBThumb->height());
+            int newwidth = std::min(m_max_size.width(), pThumbChart->GetThumbData()->pDIBThumb->width());
+            resize(newwidth, newheight );
         }
     }
 }
 
-void ThumbWin::SetMaxSize( wxSize const &max_size )
+void ThumbWin::SetMaxSize( QSize const &max_size )
 {
     m_max_size = max_size;
 }
 
 
-void ThumbWin::OnPaint( wxPaintEvent& event )
+void ThumbWin::paintEvent(QPaintEvent *event)
 {
-    wxPaintDC dc( this );
-
-    if( pThumbChart ) {
-        if( pThumbChart->GetThumbData() ) {
-            if( pThumbChart->GetThumbData()->pDIBThumb ) dc.DrawBitmap(
-                    *( pThumbChart->GetThumbData()->pDIBThumb ), 0, 0, false );
-
-            wxPen ppPen( GetGlobalColor( _T("CHBLK") ), 1, wxPENSTYLE_SOLID );
-            dc.SetPen( ppPen );
-            wxBrush yBrush( GetGlobalColor( _T("CHYLW") ), wxBRUSHSTYLE_SOLID );
-            dc.SetBrush( yBrush );
-            dc.DrawCircle( pThumbChart->GetThumbData()->ShipX, pThumbChart->GetThumbData()->ShipY, 6 );
-        }
+    QPainter dc( this );
+    if(!pThumbChart )  return;
+    if(!(pThumbChart->GetThumbData()) ) return;
+    if( pThumbChart->GetThumbData()->pDIBThumb )
+    {
+        dc.drawPixmap(QPoint(0, 0), *( pThumbChart->GetThumbData()->pDIBThumb ));
     }
+
+    QPen ppPen( GetGlobalColor("CHBLK"), 1, Qt::SolidLine );
+    dc.SetPen( ppPen );
+    QBrush yBrush( GetGlobalColor("CHYLW" ), Qt::SolidPattern );
+    dc.SetBrush( yBrush );
+    dc.drawEllipse(pThumbChart->GetThumbData()->ShipX, pThumbChart->GetThumbData()->ShipY, 6, 6 );
 }
 
-const wxBitmap &ThumbWin::GetBitmap(void)
+const QBitmap &ThumbWin::GetBitmap(void)
 {
     if( pThumbChart ) {
         if( pThumbChart->GetThumbData() ) {

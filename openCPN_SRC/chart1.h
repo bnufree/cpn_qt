@@ -30,7 +30,7 @@
 
 #include "config.h"
 #include "viewport.h"
-#include "nmea0183.h"
+#include "nmea0183/nmea0183.h"
 #include "chartdbs.h"
 #include "s52s57.h"
 #include "SencManager.h"

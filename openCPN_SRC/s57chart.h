@@ -30,7 +30,7 @@
 #include "chartbase.h"
 #include "gdal/ogrsf_frmts.h"
 
-#include "iso8211.h"
+#include "iso8211/iso8211.h"
 
 #include "gdal/gdal.h"
 #include "s57RegistrarMgr.h"
@@ -121,11 +121,11 @@ public:
 
       void SetNativeScale(int s){m_Chart_Scale = s;}
 
-      virtual bool RenderRegionViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint, const OCPNRegion &Region);
-      virtual bool RenderOverlayRegionViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint, const OCPNRegion &Region);
+      virtual bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region);
+      virtual bool RenderOverlayRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region);
 
-      virtual bool RenderRegionViewOnDCNoText(wxMemoryDC& dc, const ViewPort& VPoint, const OCPNRegion &Region);
-      virtual bool RenderRegionViewOnDCTextOnly(wxMemoryDC& dc, const ViewPort& VPoint, const OCPNRegion &Region);
+      virtual bool RenderRegionViewOnDCNoText(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region);
+      virtual bool RenderRegionViewOnDCTextOnly(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region);
       
       virtual void GetValidCanvasRegion(const ViewPort& VPoint, OCPNRegion *pValidRegion);
       virtual LLRegion GetValidRegion();
@@ -210,7 +210,7 @@ public:
 
       virtual bool IsCacheValid(){ return (pDIB != nullptr); }
       virtual void InvalidateCache();
-      virtual bool RenderViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint);
+      virtual bool RenderViewOnDC(QPainter& dc, const ViewPort& VPoint);
 
       virtual void ClearDepthContourArray(void);
       virtual void BuildDepthContourArray(void);
@@ -244,13 +244,13 @@ private:
       int GetLineFeaturePointArray(S57Obj *obj, void **ret_array);
       void SetSafetyContour(void);
     
-      bool DoRenderViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint, RenderTypeEnum option, bool force_new_view);
+      bool DoRenderViewOnDC(QPainter& dc, const ViewPort& VPoint, RenderTypeEnum option, bool force_new_view);
 
-      bool DoRenderRegionViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint, const OCPNRegion &Region, bool b_overlay);
+      bool DoRenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region, bool b_overlay);
 
-      int DCRenderRect(wxMemoryDC& dcinput, const ViewPort& vp, QRect *rect);
-      bool DCRenderLPB(wxMemoryDC& dcinput, const ViewPort& vp, QRect* rect);
-      bool DCRenderText(wxMemoryDC& dcinput, const ViewPort& vp);
+      int DCRenderRect(QPainter& dcinput, const ViewPort& vp, QRect *rect);
+      bool DCRenderLPB(QPainter& dcinput, const ViewPort& vp, QRect* rect);
+      bool DCRenderText(QPainter& dcinput, const ViewPort& vp);
       
 
       int BuildSENCFile(const QString& FullPath000, const QString& SENCFileName, bool b_progress = true);

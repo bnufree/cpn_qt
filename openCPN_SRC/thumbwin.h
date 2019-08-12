@@ -31,6 +31,9 @@
 #ifndef __thumbwin_H__
 #define __thumbwin_H__
 
+#include <QWidget>
+#include <QBitmap>
+
 
 // Include wxWindows' headers
 
@@ -49,27 +52,28 @@ class ChartBase;
 //----------------------------------------------------------------------------
 // ThumbWin
 //----------------------------------------------------------------------------
-class ThumbWin: public wxWindow
+class ThumbWin: public QWidget
 {
+    Q_OBJECT
 public:
-      ThumbWin();
-      ThumbWin(wxWindow *parent);
-      virtual ~ThumbWin();
+    explicit  ThumbWin(QWidget *parent = 0);
+    virtual ~ThumbWin();
 
-      void Resize(void);
-      void SetMaxSize(wxSize const &max_size);
-      const wxBitmap &GetBitmap(void);
+    void Resize(void);
+    void SetMaxSize(QSize const &max_size);
+    const QBitmap &GetBitmap(void);
 
 
-      wxBitmap     m_bitmap;
-      ChartBase    *pThumbChart;
+    QBitmap     m_bitmap;
+    ChartBase    *pThumbChart;
+
+protected:
+    void paintEvent(QPaintEvent* event);
 
 private:
-      void OnPaint(wxPaintEvent& event);
 
-      wxSize      m_max_size;
 
-DECLARE_EVENT_TABLE()
+    QSize      m_max_size;
 };
 
 #endif

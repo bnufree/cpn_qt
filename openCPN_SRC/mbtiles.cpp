@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  MBTiles chart type support
@@ -34,32 +34,13 @@
 // ----------------------------------------------------------------------------
 // headers
 // ----------------------------------------------------------------------------
-
-// For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
-#include "wx/zchxLog.h"
-
-#ifndef  WX_PRECOMP
-  #include "wx/wx.h"
-#endif //precompiled headers
-
-
-//  Why are these not in wx/prec.h?
-#include "wx/dir.h"
-#include "wx/stream.h"
-#include "wx/wfstream.h"
-#include "wx/tokenzr.h"
-#include "wx/filename.h"
-#include <wx/image.h>
-#include <wx/fileconf.h>
-#include <wx/mstream.h>
 #include <sys/stat.h>
 #include <sstream>
 #include <map>
 #include <unordered_map>
 
 #include <sqlite3.h> //We need some defines
-#include <SQLiteCpp/SQLiteCpp.h>
+#include <SQLiteCpp.h>
 
 #include "mbtiles.h"
 #include "chart1.h"
@@ -280,7 +261,7 @@ ChartMBTiles::ChartMBTiles()
 
       m_datum_str = _T("WGS84");                // assume until proven otherwise
       m_projection = PROJECTION_WEB_MERCATOR;
-      m_imageType = wxBITMAP_TYPE_ANY;
+      m_imageType = "";
 
       m_b_cdebug = 0;
 
@@ -367,7 +348,7 @@ double ChartMBTiles::GetNearestPreferredScalePPM(double target_scale_ppm)
 }
 
 //Checks/corrects/completes the initialization based on real data from the tiles table
-void ChartMBTiles::InitFromTiles( const wxString& name )
+void ChartMBTiles::InitFromTiles( const QString& name )
 {
     try
     {

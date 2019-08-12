@@ -99,14 +99,14 @@ enum{
 };
 
 // display category type
-typedef enum _DisCat{
-   DISPLAYBASE          = 'D',            //
-   STANDARD             = 'S',            //
-   OTHER                = 'O',            // O for OTHER
-   MARINERS_STANDARD    = 'M',            // Mariner specified
-   MARINERS_OTHER,                        // value not defined
-   DISP_CAT_NUM,                          // value not defined
-}DisCat;
+//typedef enum _DisCat{
+//   DISPLAYBASE          = 'D',            //
+//   STANDARD             = 'S',            //
+//   OTHER                = 'O',            // O for OTHER
+//   MARINERS_STANDARD    = 'M',            // Mariner specified
+//   MARINERS_OTHER,                        // value not defined
+//   DISP_CAT_NUM,                          // value not defined
+//}DisCat;
 
 
 #define MASK_POINT      1

@@ -6,11 +6,15 @@
 
 include(../Libs.pri)
 
-INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/gdal
-INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/nmea0183
-INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/tinyxml
-INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/sound
-#INCLUDEPATH += $${PWD}/iso8211
+INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}
+
+#INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/gdal
+#INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/nmea0183
+#INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/tinyxml
+#INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/sound
+#INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/iso8211
+#INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/SQLiteCpp
+#INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}/ssl
 #INCLUDEPATH += $${PWD}/texcmp/squish
 #INCLUDEPATH += $${PWD}/lz4
 #INCLUDEPATH += $${PWD}/mipmap
@@ -23,7 +27,9 @@ LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lgdal
 LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lnmea0183
 LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltinyxml
 LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lsound
-#LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -l libiso8211
+LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -liso8211
+LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lSQLiteCPP
+LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lssl_sha1
 LIBS += -lpsapi
 
 QT       += core gui network positioning core_private opengl svg xml webkitwidgets multimedia
@@ -74,13 +80,13 @@ HEADERS += \
 #    chart1.h \
 #    chartbase.h \
 #    ChartDataInputStream.h \
-#    chartdb.h \
-#    chartdbs.h \
-#    chartimg.h \
+    chartdb.h \
+    chartdbs.h \
+    chartimg.h \
     chartsymbols.h \
 #    chcanv.h \
 #    ChInfoWin.h \
-#    cm93.h \
+    cm93.h \
 #    compass.h \
 #    concanv.h \
 #    ConfigMgr.h \
@@ -98,9 +104,9 @@ HEADERS += \
 #    geodesic.h \
 #    georef.h \
 #    glChartCanvas.h \
-#    glTexCache.h \
-#    glTextureDescriptor.h \
-#    glTextureManager.h \
+    glTexCache.h \
+    glTextureDescriptor.h \
+    glTextureManager.h \
 #    GoToPositionDialog.h \
 #    gshhs.h \
 #    Hyperlink.h \
@@ -112,7 +118,7 @@ HEADERS += \
 #    LLRegion.h \
 #    macutils.h \
 #    MarkIcon.h \
-#    mbtiles.h \
+    mbtiles.h \
 #    MUIBar.h \
 #    mygeom.h \
 #    NavObjectCollection.h \
@@ -167,7 +173,7 @@ HEADERS += \
 #    tcmgr.h \
 #    TCWin.h \
 #    TexFont.h \
-#    thumbwin.h \
+    thumbwin.h \
 #    tide_time.h \
 #    time_textbox.h \
 #    timers.h \
@@ -205,13 +211,13 @@ SOURCES += \
 #    CanvasOptions.cpp \
 #    chart1.cpp \
 #    ChartDataInputStream.cpp \
-#    chartdb.cpp \
-#    chartdbs.cpp \
-#    chartimg.cpp \
+    chartdb.cpp \
+    chartdbs.cpp \
+    chartimg.cpp \
     chartsymbols.cpp \
 #    chcanv.cpp \
 #    ChInfoWin.cpp \
-#    cm93.cpp \
+    cm93.cpp \
 #    compass.cpp \
 #    compasswin.cpp \
 #    concanv.cpp \
@@ -226,9 +232,9 @@ SOURCES += \
 #    geodesic.cpp \
 #    georef.cpp \
 #    glChartCanvas.cpp \
-#    glTexCache.cpp \
-#    glTextureDescriptor.cpp \
-#    glTextureManager.cpp \
+    glTexCache.cpp \
+    glTextureDescriptor.cpp \
+    glTextureManager.cpp \
 #    GoToPositionDialog.cpp \
 #    gshhs.cpp \
 #    Hyperlink.cpp \
@@ -239,7 +245,7 @@ SOURCES += \
 #    LinkPropDlg.cpp \
 #    LLRegion.cpp \
 #    MarkInfo.cpp \
-#    mbtiles.cpp \
+    mbtiles.cpp \
 #    MUIBar.cpp \
 #    multiplexer.cpp \
 #    mygeom.cpp \
@@ -293,7 +299,7 @@ SOURCES += \
 #    tcmgr.cpp \
 #    TCWin.cpp \
 #    TexFont.cpp \
-#    thumbwin.cpp \
+    thumbwin.cpp \
 #    toolbar.cpp \
 #    Track.cpp \
 #    trackprintout.cpp \

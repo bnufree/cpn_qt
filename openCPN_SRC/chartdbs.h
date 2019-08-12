@@ -39,16 +39,6 @@ class ChartBase;
 class ChartGroup;
 typedef QList<ChartGroup*> ChartGroupArray;
 
-//    A small class used in an array to describe chart directories
-class ChartDirInfo
-{
-public:
-    QString    fullpath;
-    QString    magic_number;
-};
-
-typedef QList<ChartDirInfo> ArrayOfCDI;
-
 ///////////////////////////////////////////////////////////////////////
 
 static const int DB_VERSION_PREVIOUS = 17;

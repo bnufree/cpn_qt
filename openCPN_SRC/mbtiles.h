@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  MBTiles Chart Support
@@ -35,12 +35,11 @@
 #include "georef.h"                 // for GeoRef type
 #include "OCPNRegion.h"
 #include "viewport.h"
+#include "opencpn_global.h"
 
 
 enum class MBTilesType : std::int8_t {BASE, OVERLAY};
 enum class MBTilesScheme : std::int8_t {XYZ, TMS};
-
-class WXDLLEXPORT ChartMbTiles;
 
 //-----------------------------------------------------------------------------
 //    Constants, etc.
@@ -71,7 +70,7 @@ class mbTileDescriptor;
 // ChartMBTiles
 // ----------------------------------------------------------------------------
 
-class  ChartMBTiles     :public ChartBase
+class ZCHX_OPENCPN_EXPORT ChartMBTiles     :public ChartBase
 {
     public:
       //    Public methods
@@ -93,9 +92,9 @@ class  ChartMBTiles     :public ChartBase
       virtual InitReturn Init( const QString& name, ChartInitFlag init_flags );
 
 
-      bool RenderRegionViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint, const OCPNRegion &Region);
+      bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region);
 
-      virtual bool RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
                                         const OCPNRegion &RectRegion, const LLRegion &Region);
 
       virtual double GetNearestPreferredScalePPM(double target_scale_ppm);
@@ -112,7 +111,7 @@ class  ChartMBTiles     :public ChartBase
       
 protected:
 //    Methods
-      bool RenderViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint);
+      bool RenderViewOnDC(QPainter& dc, const ViewPort& VPoint);
       InitReturn PreInit( const QString& name, ChartInitFlag init_flags, ColorScheme cs );
       InitReturn PostInit(void);
 
@@ -137,7 +136,19 @@ protected:
       int       m_minZoom, m_maxZoom;
       mbTileZoomDescriptor      **m_tileArray;
       LLRegion  m_minZoomRegion;
-      wxBitmapType m_imageType;
+//      wxBitmapType m_imageType;
+//      Format	MIME type	Description
+//      BMP	image/bmp	Windows Bitmap
+//      GIF	image/gif	Graphic Interchange Format (optional)
+//      JPG	image/jpeg	Joint Photographic Experts Group
+//      PNG	image/png	Portable Network Graphics
+//      PBM	image/x-portable-bitmap	Portable Bitmap
+//      PGM	image/x-portable-graymap	Portable Graymap
+//      PPM	image/x-portable-pixmap	Portable Pixmap
+//      XBM	image/x-xbitmap	X11 Bitmap
+//      XPM	image/x-xpixmap	X11 Pixmap
+//      SVG	image/svg+xml	Scalable Vector Graphics
+      QString    m_imageType;           //图像的类型
       
       double m_zoomScaleFactor;
     
@@ -149,7 +160,7 @@ protected:
       
 private:
       void InitFromTiles( const QString& name );
-      wxPoint2DDouble GetDoublePixFromLL( ViewPort& vp, double lat, double lon );
+      QPointF GetDoublePixFromLL( ViewPort& vp, double lat, double lon );
 
 };
 

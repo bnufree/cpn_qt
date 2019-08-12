@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  ChartBase, ChartBaseBSB and Friends
@@ -38,54 +38,37 @@
 #include <assert.h>
 
 // For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-  #include "wx/wx.h"
-#endif //precompiled headers
-
-
-//  Why are these not in wx/prec.h?
-#include "wx/dir.h"
-#include "wx/stream.h"
-#include "wx/wfstream.h"
-#include "wx/tokenzr.h"
-#include "wx/filename.h"
-#include <wx/image.h>
-#include <wx/fileconf.h>
-#include <sys/stat.h>
-#include "wx/zchxLog.h"
 
 #include "config.h"
 #include "chartimg.h"
 #include "ocpn_pixel.h"
 #include "ChartDataInputStream.h"
 
-#ifndef __WXMSW__
-#include <signal.h>
-#include <setjmp.h>
+//#ifndef __WXMSW__
+//#include <signal.h>
+//#include <setjmp.h>
 
-#define OCPN_USE_CONFIG 1
+//#define OCPN_USE_CONFIG 1
 
-struct sigaction sa_all_chart;
-struct sigaction sa_all_previous;
+//struct sigaction sa_all_chart;
+//struct sigaction sa_all_previous;
 
-sigjmp_buf           env_chart;                 // the context saved by sigsetjmp();
+//sigjmp_buf           env_chart;                 // the context saved by sigsetjmp();
 
-void catch_signals_chart(int signo)
-{
-      switch(signo)
-      {
-            case SIGSEGV:
-                  siglongjmp(env_chart, 1);     // jump back to the setjmp() point
-                  break;
+//void catch_signals_chart(int signo)
+//{
+//      switch(signo)
+//      {
+//            case SIGSEGV:
+//                  siglongjmp(env_chart, 1);     // jump back to the setjmp() point
+//                  break;
 
-            default:
-                  break;
-      }
-}
+//            default:
+//                  break;
+//      }
+//}
 
-#endif
+//#endif
 
 //  Missing from MSW include files
 #ifdef _MSC_VER

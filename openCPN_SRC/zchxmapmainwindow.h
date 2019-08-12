@@ -3,6 +3,9 @@
 
 #include <QMainWindow>
 #include <QVariant>
+#include "_def.h"
+
+#define TIMER_GFRAME_1 999
 
 namespace Ui {
 class zchxMapMainWindow;
@@ -30,6 +33,9 @@ public:
     void    setActionCheckSts(const QString& action, bool check);
     void    setActionEnableSts(const QString& action, bool check);
     zchxConfig*     getConfigObj() {return mConfigObj;}
+    bool    ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray );
+    bool    UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName );
+    void    startFrameTimer1();
 
 
 public slots:
@@ -65,6 +71,8 @@ public slots:
 
 private:
     QAction* addCustomAction(QMenu* menu, const QString &text, const QObject *receiver, const char* slot, bool check = false, const QVariant& data = QVariant());
+private slots:
+    void    slotOnFrameTimer1Out();
 
 private:
     Ui::zchxMapMainWindow *ui;
@@ -83,6 +91,8 @@ private:
     zchxOptionsDlg*             mOptionDlg;
     //配置文件
     zchxConfig*                 mConfigObj;
+    //定时事件
+    QTimer                     *FrameTimer1;
 };
 
 #endif // ZCHXMAPMAINWINDOW_H

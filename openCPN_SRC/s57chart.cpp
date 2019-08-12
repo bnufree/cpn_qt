@@ -22,19 +22,6 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  **************************************************************************/
-
-// For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-  #include "wx/wx.h"
-#endif //precompiled headers
-
-#include "wx/image.h"                           // for some reason, needed for msvc???
-#include "wx/tokenzr.h"
-#include <wx/textfile.h>
-#include <wx/filename.h>
-
 #include "dychart.h"
 #include "OCPNPlatform.h"
 
@@ -79,7 +66,7 @@
 #include <algorithm>          // for std::sort
 #include <map>
 
-#include "ssl/sha1.h"
+#include "sha1.h"
 
 #ifdef __MSVC__
 #define strncasecmp(x,y,z) _strnicmp(x,y,z)

@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  ISO 8211 Access
  * Purpose:  Main declarations for ISO 8211.
@@ -66,6 +66,50 @@ class DDFFieldDefn;
 class DDFSubfieldDefn;
 class DDFRecord;
 class DDFField;
+
+/************************************************************************/
+/*                            DDFRecordIndex                            */
+/*                                                                      */
+/*      Maintain an index of DDF records based on an integer key.       */
+/************************************************************************/
+
+typedef struct
+{
+    int         nKey;
+    DDFRecord   *poRecord;
+} DDFIndexedRecord;
+
+class DDFRecordIndex
+{
+    int         bSorted;
+
+    int         nRecordCount;
+    int         nRecordMax;
+
+    int         nLastObjlPos;            /* rjensen. added for FindRecordByObjl() */
+    int         nLastObjl;                  /* rjensen. added for FindRecordByObjl() */
+
+    DDFIndexedRecord *pasRecords;
+
+    void        Sort();
+
+public:
+                DDFRecordIndex();
+               ~DDFRecordIndex();
+
+    void        AddRecord( int nKey, DDFRecord * );
+    int         RemoveRecord( int nKey );
+
+    DDFRecord  *FindRecord( int nKey );
+
+    DDFRecord  *FindRecordByObjl( int nObjl );    /* rjensen. added for FindRecordByObjl() */
+
+    void        Clear();
+
+    int         GetCount() { return nRecordCount; }
+    DDFRecord  *GetByIndex( int i );
+};
+
 
 /************************************************************************/
 /*                              DDFModule                               */
