@@ -35,7 +35,7 @@
 #include "ocpn_plugin.h"
 #include "chart1.h"                 // for MyFrame
 //#include "chcanv.h"                 // for ViewPort
-#include "OCPN_Sound.h"
+#include "sound/OCPN_Sound.h"
 #include "chartimg.h"
 
 #include "s57chart.h"               // for Object list

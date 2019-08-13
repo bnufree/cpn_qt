@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Tesselation of Polygon Object
@@ -30,11 +30,9 @@
 #ifndef __MYGEOM_H
 #define __MYGEOM_H
 
-// For compilers that support precompilation, includes "wx/wx.h".
-#include "wx/wxprec.h"
-//#include <wx/wfstream.h>
 
 #include "dychart.h"
+#include <QPointF>
 
 class OGRGeometry;
 class OGRPolygon;
@@ -81,7 +79,7 @@ public:
       int               n_max_vertex;
       int               pointx;
       int               pointy;
-      wxPoint2DDouble   *vertex_array;
+      QPointF          *vertex_array;
       int               xmin, xmax, ymin, ymax;
       int               n_max_edge_points;
 

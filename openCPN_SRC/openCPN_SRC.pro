@@ -79,7 +79,7 @@ HEADERS += \
 #    CanvasOptions.h \
 #    chart1.h \
 #    chartbase.h \
-#    ChartDataInputStream.h \
+    ChartDataInputStream.h \
     chartdb.h \
     chartdbs.h \
     chartimg.h \
@@ -120,13 +120,13 @@ HEADERS += \
 #    MarkIcon.h \
     mbtiles.h \
 #    MUIBar.h \
-#    mygeom.h \
+    mygeom.h \
 #    NavObjectCollection.h \
 #    NMEALogWindow.h \
 #    OCP_DataStreamInputhread.h \
 #    ocpCursor.h \
 #    OCPN_AUIManager.h \
-#    ocpn_pixel.h \
+    ocpn_pixel.h \
 #    ocpn_types.h \
 #    ocpndc.h \
 #    OCPNListCtrl.h \
@@ -210,7 +210,7 @@ SOURCES += \
 #    CanvasConfig.cpp \
 #    CanvasOptions.cpp \
 #    chart1.cpp \
-#    ChartDataInputStream.cpp \
+    ChartDataInputStream.cpp \
     chartdb.cpp \
     chartdbs.cpp \
     chartimg.cpp \
@@ -248,13 +248,13 @@ SOURCES += \
     mbtiles.cpp \
 #    MUIBar.cpp \
 #    multiplexer.cpp \
-#    mygeom.cpp \
+    mygeom.cpp \
 #    NavObjectCollection.cpp \
 #    NMEALogWindow.cpp \
 #    OCP_DataStreamInputhread.cpp \
 #    ocpCursor.cpp \
 #    OCPN_AUIManager.cpp \
-#    ocpn_pixel.cpp \
+    ocpn_pixel.cpp \
 #    ocpndc.cpp \
 #    OCPNListCtrl.cpp \
     OCPNPlatform.cpp \

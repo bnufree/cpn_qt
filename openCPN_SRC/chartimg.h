@@ -221,8 +221,8 @@ protected:
       bool GetView( QRect& source, QRect& dest, ScaleTypeEnum scale_type );
 
 
-      virtual int BSBScanScanline(QDataStream *pinStream);
-      virtual int ReadBSBHdrLine( QDataStream*, char *, int );
+      virtual int BSBScanScanline(FileReadWrite *pinStream);
+      virtual int ReadBSBHdrLine( FileReadWrite*, char *, int );
       virtual int AnalyzeRefpoints(bool b_testSolution = true);
       virtual bool AnalyzeSkew(void);
       
@@ -275,9 +275,9 @@ protected:
 
       CachedLine  *pLineCache;
 
-      QDataStream    *ifs_hdr;
-      QDataStream    *ifss_bitmap;
-      QDataStream    *ifs_bitmap;
+      FileReadWrite    *ifs_hdr;
+      FileReadWrite    *ifss_bitmap;
+      FileReadWrite    *ifs_bitmap;
 
       QString          *pBitmapFilePath;
 

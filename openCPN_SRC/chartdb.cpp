@@ -1321,20 +1321,20 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
 
             for(unsigned int i=0 ; i < m_ChartClassDescriptorArray.count() ; i++)
             {
-                if(m_ChartClassDescriptorArray[i].m_descriptor_type == PLUGIN_DESCRIPTOR)
+                if(m_ChartClassDescriptorArray[i]->m_descriptor_type == PLUGIN_DESCRIPTOR)
                 {
-                    if(m_ChartClassDescriptorArray[i].m_search_mask == ext_upper)
+                    if(m_ChartClassDescriptorArray[i]->m_search_mask == ext_upper)
                     {
-                        chart_class_name = m_ChartClassDescriptorArray[i].m_class_name;
+                        chart_class_name = m_ChartClassDescriptorArray[i]->m_class_name;
                         break;
                     }
-                    if(m_ChartClassDescriptorArray[i].m_search_mask == ext_lower)
+                    if(m_ChartClassDescriptorArray[i]->m_search_mask == ext_lower)
                     {
-                        chart_class_name = m_ChartClassDescriptorArray[i].m_class_name;
+                        chart_class_name = m_ChartClassDescriptorArray[i]->m_class_name;
                         break;
                     }
-                    if(QRegularExpression(ChartFullPath).match(m_ChartClassDescriptorArray.at(i).m_search_mask).hasMatch()) {
-                        chart_class_name = m_ChartClassDescriptorArray.at(i).m_class_name;
+                    if(QRegExp(m_ChartClassDescriptorArray.at(i)->m_search_mask).exactMatch(ChartFullPath)) {
+                        chart_class_name = m_ChartClassDescriptorArray.at(i)->m_class_name;
                         break;
                     }
 

@@ -58,6 +58,7 @@
 #include "_def.h"
 #include <QMessageBox>
 #include <QEvent>
+#include "s52s57.h"
 
 //    This is the most modern API Version number
 //    It is expected that the API will remain downward compatible, meaning that

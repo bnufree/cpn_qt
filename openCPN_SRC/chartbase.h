@@ -180,7 +180,7 @@ public:
       virtual ChartDepthUnitType GetDepthUnitType(void) { return m_depth_unit_id;}
 
       virtual bool IsReadyToRender(){ return bReadyToRender;}
-      virtual bool RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint,
                                         const OCPNRegion &Region) = 0;
 
       virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,

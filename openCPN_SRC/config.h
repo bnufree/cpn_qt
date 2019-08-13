@@ -1,4 +1,4 @@
-#ifndef OCPN_CONFIG_H
+﻿#ifndef OCPN_CONFIG_H
 #define OCPN_CONFIG_H
 
 /* #undef LINUX_CRASHRPT */

@@ -1,4 +1,4 @@
-
+﻿
 /******************************************************************************
  *
  * Project:  OpenCPN
@@ -32,8 +32,10 @@
 #define _OCPN_PIXEL_H_
 
 #include "dychart.h"                // for configuration stuff
+#include <QImage>
+#include <QPainter>
 
-wxImage Image_Rotate(wxImage &base_image, double angle, const wxPoint & centre_of_rotation, bool interpolating, wxPoint * offset_after_rotation);
+QImage Image_Rotate(QImage &base_image, double angle, const QPoint & centre_of_rotation, bool interpolating, QPoint * offset_after_rotation);
 
 //--------------------------------------------------------------------------
 //      Set the desired compile time conditionals related to display optimization
@@ -181,7 +183,7 @@ class PixelCache
         PixelCache(int width, int height, int depth);
         ~PixelCache();
 
-        void SelectIntoDC(wxMemoryDC &dc);
+        void SelectIntoDC(QPainter &dc);
         void Update(void);
         RGBO GetRGBO(){return m_rgbo;}
         unsigned char *GetpData() const;
@@ -203,10 +205,10 @@ class PixelCache
 #ifdef ocpnUSE_ocpnBitmap
       ocpnBitmap         *m_pbm;
 #else
-      wxBitmap          *m_pbm;
+      QBitmap          *m_pbm;
 #endif
 
-      wxImage           *m_pimage;
+      QImage           *m_pimage;
 
 #ifdef __PIX_CACHE_DIBSECTION__
       wxDIB             *m_pDS;
@@ -321,15 +323,15 @@ private:
 //      ocpnMemDC Definition
 //----------------------------------------------------------------------------
 
-class /*WXDLLEXPORT*/ ocpnMemDC : public wxMemoryDC
+class /*WXDLLEXPORT*/ ocpnMemDC : public QPainter
 {
     public:
         ocpnMemDC();
 
-//      void SelectObject(const wxBitmap& bitmap){wxMemoryDC::SelectObject(bitmap);}
+//      void SelectObject(const wxBitmap& bitmap){QPainter::SelectObject(bitmap);}
 
       //    Satisfy wxX11 2.8.0
-        void SelectObject(wxBitmap& bitmap){wxMemoryDC::SelectObject(bitmap);}
+//        void SelectObject(QBitmap& bitmap){QPainter::SelectObject(bitmap);}
 
 //    Add a method to select a DIB section directly into the DC
 #ifdef ocpnUSE_DIBSECTION
@@ -342,8 +344,6 @@ class /*WXDLLEXPORT*/ ocpnMemDC : public wxMemoryDC
 #ifdef ocpnUSE_DIBSECTION
       wxDIB *m_pselectedDIB;
 #endif
-
-   DECLARE_DYNAMIC_CLASS(ocpnMemDC)
 };
 
 #endif  // _OCPN_PIXEL_H_

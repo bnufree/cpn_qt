@@ -2,6 +2,7 @@
 #define _DEF_H
 
 #include <QApplication>
+#include <QDir>
 
 /*  menu and toolbar item kinds */
 enum wxItemKind
@@ -178,6 +179,124 @@ public:
 };
 
 typedef QList<ChartDirInfo> ArrayOfCDI;
+
+
+
+class FileReadWrite
+{
+public:
+    enum FileOptMode{
+        E_READ = 0,
+        E_Write,
+    };
+
+    enum FileSeekMode{
+        SEEK_FROM_START = 0,
+        SEEK_FROM_CUR,
+        SEEK_FROM_END,
+    };
+
+    FileReadWrite() : mName(""), mode(E_READ), fp(0), isError(0), mLastRead(0)
+    {}
+    FileReadWrite(const QString& fileName, int opt = E_READ) : mName(fileName), mode(opt), fp(0), isError(0), mLastRead(0)
+    { fp = fopen(mName.toUtf8().data(), mode == E_READ? "rb" : "wb");}
+    ~FileReadWrite() {if(fp) fclose(fp);}
+    virtual bool IsOK() const
+    {
+        return fp != NULL;
+    }
+
+    bool HasError() {return isError;}
+
+    int Read(void* buf, int size)
+    {
+        if(!fp)
+        {
+            isError = true;
+            return 0;
+        }
+        int res = fread(buf, size, 1, fp);
+        mLastRead += res;
+        isError = (res == size);
+        return res;
+    }
+
+    int Write(void* buf, int size)
+    {
+        if(!fp)
+        {
+            isError = true;
+            return 0;
+        }
+        int res = fwrite(buf, size, 1, fp);
+        isError = (res == size);;
+        return res;
+    }
+
+    int GetC()
+    {
+        if(!fp)
+        {
+            isError = true;
+            return 0;
+        }
+        return fgetc(fp);
+    }
+
+    bool IsEof()
+    {
+        if(!fp)
+        {
+            isError = true;
+            return false;
+        }
+        return feof(fp);
+    }
+
+    uint64_t Seek(uint64_t pos, int mode)
+    {
+        return fseek(fp, pos, mode);
+    }
+
+    uint64_t TellI()
+    {
+        return ftell(fp);
+    }
+
+    uint64_t LastRead() const {return mLastRead;}
+
+    void Close()
+    {
+        if(fp)
+        {
+            fclose(fp);
+            fp = 0;
+        }
+    }
+
+private:
+    FILE* fp;
+    QString mName;
+    int mode;
+    bool    isError;
+    uint64_t mLastRead;
+};
+
+class zchxFuncUtil
+{
+public:
+    zchxFuncUtil() {}
+    static bool isDirExist(const QString& name)
+    {
+        QDir dir(name);
+        return dir.exists();
+    }
+
+    static bool isFileExist(const QString& name)
+    {
+        return QFile::exists(name);
+    }
+};
 
 
 

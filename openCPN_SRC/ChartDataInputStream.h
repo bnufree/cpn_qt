@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Support XZ compressed charts
@@ -29,23 +29,26 @@
 
 #ifdef OCPN_USE_LZMA
 #include <lzma.h>
+#include "_def.h"
+#include <QTemporaryFile>
+
 
 // this implements a non-seekable input stream of xz compressed file
-class wxCompressedFFileInputStream : public wxInputStream
+class wxCompressedFFileInputStream : public FileReadWrite
 {
 public:
     wxCompressedFFileInputStream(const QString& fileName);
     virtual ~wxCompressedFFileInputStream();
 
-    virtual bool IsOk() const { return wxStreamBase::IsOk() && m_file->IsOpened(); }
+//    virtual bool IsOk() const { return FileReadWrite::isOK()/* && m_file->IsOpened()*/; }
     bool IsSeekable() const { return false; }
 
 protected:
     size_t OnSysRead(void *buffer, size_t size);
-    wxFileOffset OnSysSeek(wxFileOffset pos, wxSeekMode mode);
-    wxFileOffset OnSysTell() const;
+    uint64_t OnSysSeek(uint64_t pos, FileReadWrite::FileSeekMode mode);
+    uint64_t OnSysTell() const;
 
-    wxFFile *m_file;
+//    wxFFile *m_file;
     lzma_stream strm;
 
 private:
@@ -53,54 +56,56 @@ private:
 
     uint8_t inbuf[BUFSIZ];
 
-    wxDECLARE_NO_COPY_CLASS(wxCompressedFFileInputStream);
+    Q_DISABLE_COPY(wxCompressedFFileInputStream)
 };
 
 // non-seekable stream for either non-compressed or compressed files
-class ChartDataNonSeekableInputStream : public wxInputStream
+class ChartDataNonSeekableInputStream : public FileReadWrite
 {
 public:
     ChartDataNonSeekableInputStream(const QString& fileName);
     virtual ~ChartDataNonSeekableInputStream();
 
-    virtual bool IsOk() const { return m_stream->IsOk(); }
+//    virtual bool IsOk() const { return m_stream->IsOk(); }
     bool IsSeekable() const { return false; }
 
 protected:
     size_t OnSysRead(void *buffer, size_t size);
-    wxFileOffset OnSysSeek(wxFileOffset pos, wxSeekMode mode);
-    wxFileOffset OnSysTell() const;
+    uint64_t OnSysSeek(uint64_t pos, FileReadWrite::FileSeekMode mode);
+    uint64_t OnSysTell() const;
 
 private:
-    wxInputStream *m_stream;
+    FileReadWrite *m_stream;
 
-    wxDECLARE_NO_COPY_CLASS(ChartDataNonSeekableInputStream);
+    Q_DISABLE_COPY(ChartDataNonSeekableInputStream)
 };
 
 
 // seekable stream for either non-compressed or compressed files
 // it must decompress the file to a temporary file to make it seekable
-class ChartDataInputStream : public wxInputStream
+class ChartDataInputStream : public FileReadWrite
 {
 public:
     ChartDataInputStream(const QString& fileName);
     virtual ~ChartDataInputStream();
 
-    virtual bool IsOk() const { return m_stream->IsOk(); }
-    bool IsSeekable() const { return m_stream->IsSeekable(); }
+//    virtual bool IsOk() const { return m_stream->IsOk(); }
+    bool IsSeekable() const { return /*m_stream->IsSeekable()*/true; }
 
-    QString TempFileName() const { return m_tempfilename; }
+    QString TempFileName() const { return m_tempfileName; }
 
 protected:
     size_t OnSysRead(void *buffer, size_t size);
-    wxFileOffset OnSysSeek(wxFileOffset pos, wxSeekMode mode);
-    wxFileOffset OnSysTell() const;
+    uint64_t OnSysSeek(uint64_t pos, FileReadWrite::FileSeekMode mode);
+    uint64_t OnSysTell() const;
+
 
 private:
-    QString  m_tempfilename;
-    wxInputStream *m_stream;
+    QTemporaryFile  m_tempfile;
+    QString         m_tempfileName;
+    FileReadWrite *m_stream;
 
-    wxDECLARE_NO_COPY_CLASS(ChartDataInputStream);
+    Q_DISABLE_COPY(ChartDataInputStream)
 };
 
 #else

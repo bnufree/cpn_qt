@@ -179,13 +179,13 @@ public:
       
       double GetCalculatedSafetyContour(void){ return m_next_safe_cnt; }
 
-      virtual bool RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
                                         const OCPNRegion &RectRegion, const LLRegion &Region);
-      virtual bool RenderOverlayRegionViewOnGL(const wxGLContext &glc, const ViewPort& VPoint,
+      virtual bool RenderOverlayRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
                                                const OCPNRegion &RectRegion, const LLRegion &Region);
-      virtual bool RenderRegionViewOnGLNoText(const wxGLContext &glc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnGLNoText(const QGLContext &glc, const ViewPort& VPoint,
                                         const OCPNRegion &RectRegion, const LLRegion &Region);
-      virtual bool RenderViewOnGLTextOnly(const wxGLContext &glc, const ViewPort& VPoint);
+      virtual bool RenderViewOnGLTextOnly(const QGLContext &glc, const ViewPort& VPoint);
       
 // Public data
 //Todo Accessors here

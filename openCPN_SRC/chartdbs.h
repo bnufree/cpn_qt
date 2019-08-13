@@ -34,7 +34,7 @@
 #include "LLRegion.h"
 #include "_def.h"
 
-class wxGenericProgressDialog;
+class QProgressDialog;
 class ChartBase;
 class ChartGroup;
 typedef QList<ChartGroup*> ChartGroupArray;
@@ -162,8 +162,8 @@ struct ChartTableHeader
     ChartTableHeader(int dirEntries, int tableEntries) :
                 nTableEntries(tableEntries), nDirEntries(dirEntries) {}
 
-    void Read(QDataStream &is);
-    void Write(QDataStream &os);
+    void Read(FileReadWrite& is);
+    void Write(FileReadWrite& os);
     bool CheckValid();
     int GetDirEntries() const { return nDirEntries; }
     int GetTableEntries() const { return nTableEntries; }
@@ -184,8 +184,8 @@ struct ChartTableEntry
 
     bool IsEqualTo(const ChartTableEntry &cte) const;
     bool IsEarlierThan(const ChartTableEntry &cte) const;
-    bool Read(const ChartDatabase *pDb, QDataStream &is);
-    bool Write(const ChartDatabase *pDb, QDataStream &os);
+    bool Read(const ChartDatabase *pDb, FileReadWrite& is);
+    bool Write(const ChartDatabase *pDb, FileReadWrite& os);
     void Clear();
     void Disable();
     void ReEnable();
@@ -299,7 +299,7 @@ public:
 ///////////////////////////////////////////////////////////////////////
 
 typedef QList<ChartTableEntry> ChartTable;
-typedef QList<ChartClassDescriptor> ArrayOfChartClassDescriptor;
+typedef QList<ChartClassDescriptor*> ArrayOfChartClassDescriptor;
 
 class ChartDatabase
 {
@@ -307,8 +307,8 @@ public:
     ChartDatabase();
     virtual ~ChartDatabase(){}
 
-    bool Create(ArrayOfCDI& dir_array, wxGenericProgressDialog *pprog);
-    bool Update(ArrayOfCDI& dir_array, bool bForce, wxGenericProgressDialog *pprog);
+    bool Create(ArrayOfCDI& dir_array, QProgressDialog *pprog);
+    bool Update(ArrayOfCDI& dir_array, bool bForce, QProgressDialog *pprog);
 
     bool Read(const QString &filePath);
     bool Write(const QString &filePath);
@@ -361,7 +361,7 @@ protected:
     virtual ChartBase *GetChart(const char *theFilePath, ChartClassDescriptor &chart_desc) const;
     int AddChartDirectory(const QString &theDir, bool bshow_prog);
     void SetValid(bool valid) { bValid = valid; }
-    ChartTableEntry *CreateChartTableEntry(const QString &filePath, ChartClassDescriptor &chart_desc);
+    ChartTableEntry* CreateChartTableEntry(const QString &filePath, ChartClassDescriptor &chart_desc);
 
     ArrayOfChartClassDescriptor    m_ChartClassDescriptorArray;
     ArrayOfCDI    m_dir_array;
@@ -369,12 +369,12 @@ protected:
 private:
     bool IsChartDirUsed(const QString &theDir);
 
-    int SearchDirAndAddCharts(QString& dir_name_base, ChartClassDescriptor &chart_desc, wxGenericProgressDialog *pprog);
+    int SearchDirAndAddCharts(QString& dir_name_base, ChartClassDescriptor &chart_desc, QProgressDialog *pprog);
 
-    int TraverseDirAndAddCharts(ChartDirInfo& dir_info, wxGenericProgressDialog *pprog, QString& dir_magic, bool bForce);
-    bool DetectDirChange(const QString & dir_path, const QString & magic, QString &new_magic, wxGenericProgressDialog *pprog);
+    int TraverseDirAndAddCharts(ChartDirInfo& dir_info, QProgressDialog *pprog, QString& dir_magic, bool bForce);
+    bool DetectDirChange(const QString & dir_path, const QString & magic, QString &new_magic, QProgressDialog *pprog);
 
-    bool AddChart( QString &chartfilename, ChartClassDescriptor &chart_desc, wxGenericProgressDialog *pprog,
+    bool AddChart( QString &chartfilename, ChartClassDescriptor &chart_desc, QProgressDialog *pprog,
                    int isearch, bool bthis_dir_in_dB );
 
     bool Check_CM93_Structure(QString dir_name);
