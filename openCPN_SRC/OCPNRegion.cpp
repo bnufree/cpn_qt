@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -536,7 +536,7 @@ void OCPNRegion::InitRect(wxCoord x, wxCoord y, wxCoord w, wxCoord h)
 //    M_REGIONDATA->m_region = gdk_region_copy( region );
 //}
 
-OCPNRegion::OCPNRegion( size_t n, const wxPoint *points, int fillStyle )
+OCPNRegion::OCPNRegion( size_t n, const zchxPoint *points, int fillStyle )
 {
     OGdkPoint *gdkpoints = new OGdkPoint[n];
     for ( size_t i = 0 ; i < n ; i++ )
@@ -743,6 +743,17 @@ bool OCPNRegion::IsEmpty() const
         return true;
 
     return gdk_region_empty( M_REGIONDATA->m_region );
+}
+
+void OCPNRegion::copyFromOtherRegion(const OCPNRegion &region)
+{
+    if(m_region)
+    {
+        gdk_region_destroy(m_region);
+        m_region = 0;
+    }
+
+    m_region = gdk_region_copy(region.GetRegion());
 }
 
 wxRegionContain OCPNRegion::ODoContainsPoint( wxCoord x, wxCoord y ) const

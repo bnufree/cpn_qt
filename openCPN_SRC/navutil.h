@@ -39,9 +39,9 @@
 #include "vector2D.h"
 #include "SelectItem.h"
 #include "ocpndc.h"
-#include "RoutePoint.h"
-#include "Track.h"
-#include "Route.h"
+//#include "RoutePoint.h"
+//#include "Track.h"
+//#include "Route.h"
 
 enum
 {
@@ -132,9 +132,9 @@ const char *ParseGPXDateTime( QDateTime &dt, const char *datetime );
 void ExportGPX(QWidget* parent, bool bviz_only = false, bool blayer = false);
 void UI_ImportGPX(QWidget* parent, bool islayer = false, QString dirpath = (""), bool isdirectory = true, bool isPersistent = false);
  
-bool ExportGPXRoutes(QWidget* parent, RouteList *pRoutes, const QString suggestedName = ("routes"));
-bool ExportGPXTracks(QWidget* parent, TrackList *pRoutes, const QString suggestedName = ("tracks"));
-bool ExportGPXWaypoints(QWidget* parent, RoutePointList *pRoutePoints, const QString suggestedName = ("waypoints"));
+//bool ExportGPXRoutes(QWidget* parent, RouteList *pRoutes, const QString suggestedName = ("routes"));
+//bool ExportGPXTracks(QWidget* parent, TrackList *pRoutes, const QString suggestedName = ("tracks"));
+//bool ExportGPXWaypoints(QWidget* parent, RoutePointList *pRoutePoints, const QString suggestedName = ("waypoints"));
 
 ////----------------------------------------------------------------------------
 ////    Config

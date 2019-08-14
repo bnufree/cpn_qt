@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -23,9 +23,6 @@
  */
 
 #include "SelectItem.h"
-
-#include <wx/listimpl.cpp>
-WX_DEFINE_LIST ( SelectableItemList );
 
 SelectItem::SelectItem()
 {

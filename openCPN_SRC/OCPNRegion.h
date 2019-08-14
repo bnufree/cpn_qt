@@ -32,6 +32,7 @@
 #define _OCPN_REGION_H_
 
 #include <QRegion>
+#include "_def.h"
 
 //#if defined(__WXOSX__)
 #define USE_NEW_REGION
@@ -42,11 +43,11 @@
 // OCPNRegion
 // ----------------------------------------------------------------------------
 class OGdkRegion;
-class OCPNRegion : public
+class OCPNRegion
 #ifdef USE_NEW_REGION
- QObject
+// : public QObject
 #else
- QRegion
+ : public QRegion
 #endif
 {
     Q_OBJECT
@@ -57,7 +58,7 @@ public:
     OCPNRegion( const QPoint& topLeft, const QPoint& bottomRight );
     OCPNRegion( const QRect& rect );
     OCPNRegion( const QRegion& region );
-    OCPNRegion( size_t n, const QPoint *points, int fillStyle = Qt::OddEvenFill );
+    OCPNRegion( size_t n, const zchxPoint *points, int fillStyle = Qt::OddEvenFill );
     
     virtual ~OCPNRegion();
     
@@ -96,13 +97,15 @@ public:
     bool Contains(const QRect& rect) const
     { return ODoContainsRect(rect); }
     
- // Is region equal (i.e. covers the same area as another one)?
- bool IsEqual(const OCPNRegion& region) const;
+    // Is region equal (i.e. covers the same area as another one)?
+    bool IsEqual(const OCPNRegion& region) const;
  
     // OCPNRegionBase methods
     virtual void Clear();
     virtual bool IsEmpty() const;
     bool Empty() const { return IsEmpty(); }
+
+    void copyFromOtherRegion(const OCPNRegion& region);
     
 public:
 //    OCPNRegion( OGdkRegion *region );

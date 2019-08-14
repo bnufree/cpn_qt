@@ -42,9 +42,9 @@
 #define GL_ETC1_RGB8_OES                                        0x8D64
 #endif
 
-#include "squish.h"
-#include "lz4.h"
-#include "lz4hc.h"
+#include "texcmp/squish.h"
+#include "lz4/lz4.h"
+#include "lz4/lz4hc.h"
 #include "gl/glext.h"
 #include "gl/gl_private.h"
 
@@ -60,7 +60,7 @@ extern GLuint g_raster_format;
 extern int          g_nCacheLimit;
 extern int          g_memCacheLimit;
 extern ChartDB      *ChartData;
-extern ocpnGLOptions    g_GLOptions;
+extern zchxGLOptions    g_GLOptions;
 extern long g_tex_mem_used;
 extern int              g_tile_size;
 extern int              g_uncompressed_tile_size;

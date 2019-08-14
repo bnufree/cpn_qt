@@ -44,6 +44,8 @@
 #include "ocpn_pixel.h"
 #include "ChartDataInputStream.h"
 #include <QBitmap>
+#include <QTextCodec>
+#include <QDebug>
 
 //#ifndef __WXMSW__
 //#include <signal.h>
@@ -95,8 +97,6 @@ typedef struct  {
 
 
 bool G_FloatPtInPolygon(MyFlPoint *rgpts, int wnumpts, float x, float y) ;
-
-
 // ----------------------------------------------------------------------------
 // private classes
 // ----------------------------------------------------------------------------
@@ -520,15 +520,16 @@ InitReturn ChartGEO::Init( const QString& name, ChartInitFlag init_flags)
 
         else if (!strncmp(buffer, "Name", 4))
         {
-            QStringTokenizer tkz(str_buf, _T("="));
-            QString token = tkz.GetNextToken();
-            if(token.IsSameAs(_T("Name"), FALSE))                         // Name
+            QStringList tkz = str_buf.split("=");
+            if(tkz.size() >= 2)
             {
-                int i;
-                i = tkz.GetPosition();
-                m_Name.Clear();
-                while(isprint(buffer[i]) && (i < 80))
-                    m_Name.Append(buffer[i++]);
+                QString token = tkz[0];
+                if(token.compare("Name", Qt::CaseInsensitive))
+                {
+                    m_Name.clear();
+                    m_Name = tkz[1].trimmed();
+
+                }
             }
         }
     }     //while
@@ -550,28 +551,28 @@ InitReturn ChartGEO::Init( const QString& name, ChartInitFlag init_flags)
 
     QString NOS_Name(*pBitmapFilePath);            // take a copy
 
-    wxDir target_dir(Path);
-    wxArrayString file_array;
-    int nfiles = wxDir::GetAllFiles(Path, &file_array);
+    QDir target_dir(Path);
+    QStringList file_array = target_dir.entryList();
+    int nfiles = file_array.count();
     int ifile;
+    pBitmapFilePath->insert(0, Path);
 
-    pBitmapFilePath->Prepend(Path);
-
-    wxFileName NOS_filename(*pBitmapFilePath);
-    if(! NOS_filename.FileExists())
+    QFileInfo NOS_filename(*pBitmapFilePath);
+    if(! NOS_filename.exists())
     {
+#if 0
         //    File as fetched verbatim from the .geo file doesn't exist.
         //    Try all possible upper/lower cases
         //    Extract the filename and extension
-        QString fname(NOS_filename.GetName());
-        QString fext(NOS_filename.GetExt());
+        QString fname(NOS_filename.fileName());
+        QString fext(NOS_filename.suffix();
 
         //    Try all four combinations, the hard way
         // case 1
-        fname.MakeLower();
-        fext.MakeLower();
+        fname.toLower();
+        fext.toLower();
         NOS_filename.SetName(fname);
-        NOS_filename.SetExt(fext);
+        NOS_filename.s(fext);
 
         if(NOS_filename.FileExists())
             goto found_uclc_file;
@@ -602,22 +603,21 @@ InitReturn ChartGEO::Init( const QString& name, ChartInitFlag init_flags)
 
         if(NOS_filename.FileExists())
             goto found_uclc_file;
-
+#endif
 
         //      Search harder
 
         for(ifile = 0 ; ifile < nfiles ; ifile++)
         {
             QString file_up = file_array[ifile];
-            file_up.MakeUpper();
+            file_up.toUpper();
 
             QString target_up = *pBitmapFilePath;
-            target_up.MakeUpper();
+            target_up.toUpper();
 
-            if(file_up.IsSameAs( target_up))
+            if(file_up == target_up)
             {
-                NOS_filename.Clear();
-                NOS_filename.Assign(file_array[ifile]);
+                NOS_filename.setFile(file_array[ifile]);
                 goto found_uclc_file;
             }
 
@@ -629,13 +629,13 @@ InitReturn ChartGEO::Init( const QString& name, ChartInitFlag init_flags)
 found_uclc_file:
 
         delete pBitmapFilePath;                   // fix up the member element
-        pBitmapFilePath = new QString(NOS_filename.GetFullPath());
+        pBitmapFilePath = new QString(NOS_filename.filePath());
 
     }
-    ifss_bitmap = new wxFFileInputStream(*pBitmapFilePath); // open the bitmap file
-    ifs_bitmap = new wxBufferedInputStream(*ifss_bitmap);
+    ifss_bitmap = new FileReadWrite(*pBitmapFilePath); // open the bitmap file
+    ifs_bitmap = /*new wxBufferedInputStream(*ifss_bitmap)*/new FileReadWrite(*pBitmapFilePath);
 
-    if(!ifss_bitmap->IsOk())
+    if(!ifss_bitmap->IsOK())
     {
         free(pPlyTable);
         return INIT_FAIL_REMOVE;
@@ -644,31 +644,26 @@ found_uclc_file:
 
     while( (ReadBSBHdrLine(ifss_bitmap, &buffer[0], BUF_LEN_MAX)) != 0 )
     {
-        QString str_buf(buffer,  wxConvUTF8);
+        QString str_buf = QString::fromUtf8(buffer);
 
         if(!strncmp(buffer, "NOS", 3))
         {
-            QStringTokenizer tkz(str_buf, _T(",="));
-            while ( tkz.HasMoreTokens() )
+            QStringList tkz = str_buf.split(",=");
+            if(tkz.size() >= 2)
             {
-                QString token = tkz.GetNextToken();
-                if(token.IsSameAs(_T("RA"), TRUE))                  // extract RA=x,y
+                int i = 0;
+                QString token = tkz[i++];
+                if(token == ("RA"))                  // extract RA=x,y
                 {
-                    int i;
-                    tkz.GetNextToken();
-                    tkz.GetNextToken();
-                    i = tkz.GetPosition();
-                    Size_X = atoi(&buffer[i]);
-                    QString token = tkz.GetNextToken();
-                    i = tkz.GetPosition();
-                    Size_Y = atoi(&buffer[i]);
+                    i++;
+                    i++;
+                    if(i<tkz.size()) Size_X = tkz[i++].toInt();
+                    if(i<tkz.size()) Size_Y = tkz[i++].toInt();
                 }
-                else if(token.IsSameAs(_T("DU"), TRUE))                  // extract DU=n
+                else if(token == "DU")                  // extract DU=n
                 {
-                    token = tkz.GetNextToken();
-                    long temp_du;
-                    if(token.ToLong(&temp_du))
-                        m_Chart_DU = temp_du;
+                    token = tkz[i++];
+                    m_Chart_DU = token.toULong();
                 }
             }
 
@@ -709,37 +704,28 @@ found_uclc_file:
 
     if(nPlypoint < 3)
     {
-        QString msg(_T("   Chart File contains less than 3 PLY points: "));
-        msg.Append(m_FullPath);
-        ZCHX_LOGMSG(msg);
+        qDebug("   Chart File contains less than 3 PLY points:%s ", m_FullPath.toUtf8().data());
         free(pPlyTable);
 
         return INIT_FAIL_REMOVE;
     }
 
-    if(m_datum_str.IsEmpty()){
-        QString msg(_T("   Chart datum not specified on chart "));
-        msg.Append(m_FullPath);
-        ZCHX_LOGMSG(msg);
-        ZCHX_LOGMSG(_T("   Default datum (WGS84) substituted."));
+    if(m_datum_str.isEmpty()){
+        qDebug("   Chart datum not specified on chart:%s ", m_FullPath.toUtf8().data());
+        qDebug("   Default datum (WGS84) substituted.");
 
         //          return INIT_FAIL_REMOVE;
     }
     else {
         char d_str[100];
-        strncpy(d_str, m_datum_str.mb_str(), 99);
+        strncpy(d_str, m_datum_str.toUtf8().data(), 99);
         d_str[99] = 0;
 
         int datum_index = GetDatumIndex(d_str);
 
         if(datum_index < 0){
-            QString msg(_T("   Chart datum {"));
-            msg += m_datum_str;
-            msg += _T("} invalid on chart ");
-            msg.Append(m_FullPath);
-            ZCHX_LOGMSG(msg);
-            ZCHX_LOGMSG(_T("   Default datum (WGS84) substituted."));
-
+            qDebug("   Chart datum {%s} invalid on chart :%s", m_datum_str.toUtf8().data(), m_FullPath.toUtf8().data());
+            qDebug("   Default datum (WGS84) substituted.");
             datum_index = DATUM_INDEX_WGS84;
         }
         m_datum_index = datum_index;
@@ -777,10 +763,8 @@ found_uclc_file:
 
     //    Read the Color table bit size
     nColorSize = ifs_bitmap->GetC();
-    if ( nColorSize == wxEOF || nColorSize <= 0 || nColorSize > 7) {
-        QString msg(_T("   Invalid nColorSize data, corrupt on chart "));
-        msg.Append(m_FullPath);
-        ZCHX_LOGMSG(msg);
+    if ( nColorSize == /*wxEOF*/-1 || nColorSize <= 0 || nColorSize > 7) {
+        qDebug("   Invalid nColorSize data, corrupt on chart :%s ", m_FullPath.toUtf8().data());
         return INIT_FAIL_REMOVE;
     }
 
@@ -819,7 +803,7 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
 
     ifs_hdr = new ChartDataNonSeekableInputStream(name);          // open the Header file as a read-only stream
 
-    if(!ifs_hdr->IsOk())
+    if(!ifs_hdr->IsOK())
         return INIT_FAIL_REMOVE;
 
     
@@ -853,10 +837,7 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
 
     if(ifs_hdr->LastRead() != TestBlockSize)
     {
-        QString msg;
-        msg.Printf(_T("   Could not read first %d bytes of header for chart file: "), TestBlockSize);
-        msg.Append(name);
-        ZCHX_LOGMSG(msg);
+        qDebug("   Could not read first %d bytes of header for chart file: %s ", TestBlockSize, name.toUtf8().data());
         free(pPlyTable);
         return INIT_FAIL_REMOVE;
     }
@@ -877,9 +858,7 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
     }
     if( i == TestBlockSize - 4 )
     {
-        QString msg(_T("   Chart file has no BSB header, cannot Init."));
-        msg.Append(name);
-        ZCHX_LOGMSG(msg);
+        qDebug("   Chart file has no BSB header, cannot Init. %s", name.toUtf8().data());
         free(pPlyTable);
         return INIT_FAIL_REMOVE;
     }
@@ -887,12 +866,13 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
 
 
     //    Read and Parse Chart Header, line by line
-    ifs_hdr->SeekI(0, wxFromStart);                                         // rewind
+    ifs_hdr->Seek(0, FileReadWrite::SEEK_FROM_START);                                         // rewind
 
     Size_X = Size_Y = 0;
 
     int done_header_parse = 0;
-    wxCSConv iso_conv(wxT("ISO-8859-1"));                 // we will need a converter
+    QTextCodec* iso_conv = QTextCodec::codecForName("ISO-8859-1");                 // we will need a converter
+    QTextCodec* utf8_conv = QTextCodec::codecForName("UTF8");                 // we will need a converter
 
     while(done_header_parse == 0)
     {
@@ -913,57 +893,38 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
             continue;
         }
 
-        QString str_buf(buffer,  wxConvUTF8);
-        if(!str_buf.Len())                                    // failed conversion
-            str_buf = QString(buffer, iso_conv);
+        QString str_buf = utf8_conv->toUnicode(buffer, strlen(buffer));
+        if(str_buf.length() == 0)                                    // failed conversion
+        {
+            str_buf = iso_conv->toUnicode(buffer, strlen(buffer));
+        }
 
-        if(str_buf.Find(_T("SHOM")) != wxNOT_FOUND)
-            m_b_SHOM = true;
+        if(str_buf.indexOf("SHOM") >= 0) m_b_SHOM = true;
 
         if(!strncmp(buffer, "BSB", 3))
         {
-            QString clip_str_buf(&buffer[0],  iso_conv);  // for single byte French encodings of NAme field
-            QStringTokenizer tkz(clip_str_buf, _T("/,="));
-            while ( tkz.HasMoreTokens() )
+            QString clip_str_buf = iso_conv->toUnicode(&buffer[0],  strlen(&buffer[0]));  // for single byte French encodings of NAme field
+            QStringList tkz = clip_str_buf.split("/,=");
+            int i = 0;
+            while ( i < tkz.size() )
             {
-                QString token = tkz.GetNextToken();
-                if(token.IsSameAs(_T("RA"), TRUE))                  // extract RA=x,y
+                QString token = tkz[i++];
+                if(token == "RA")                  // extract RA=x,y
                 {
-                    int i;
-                    i = tkz.GetPosition();
-                    Size_X = atoi(&buffer[i]);
-                    QString token = tkz.GetNextToken();
-                    i = tkz.GetPosition();
-                    Size_Y = atoi(&buffer[i]);
+                    Size_X = tkz[i++].toInt();
+                    Size_Y = tkz[i++].toInt();
                 }
-                else if(token.IsSameAs(_T("NA"), TRUE))                  // extract NA=str
+                else if(token == "NA")                  // extract NA=str
                 {
-                    int i = tkz.GetPosition();
-                    char nbuf[81];
-                    int j=0;
-                    while((buffer[i] != ',') && (i < 80))
-                        nbuf[j++] = buffer[i++];
-                    nbuf[j] = 0;
-                    QString n_str(nbuf,  iso_conv);
-                    m_Name = n_str;
+                    m_Name = tkz[i++];
                 }
-                else if(token.IsSameAs(_T("NU"), TRUE))                  // extract NU=str
-                {
-                    int i = tkz.GetPosition();
-                    char nbuf[81];
-                    int j=0;
-                    while((buffer[i] != ',') && (i < 80))
-                        nbuf[j++] = buffer[i++];
-                    nbuf[j] = 0;
-                    QString n_str(nbuf,  iso_conv);
-                    m_ID = n_str;
+                else if(token == "NU")                  // extract NU=str
+                {;
+                    m_ID = tkz[i++];
                 }
-                else if(token.IsSameAs(_T("DU"), TRUE))                  // extract DU=n
+                else if(token == "DU")                  // extract DU=n
                 {
-                    token = tkz.GetNextToken();
-                    long temp_du;
-                    if(token.ToLong(&temp_du))
-                        m_Chart_DU = temp_du;
+                    m_Chart_DU = tkz[i++].toLong();
                 }
 
             }
@@ -971,91 +932,68 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
 
         else if(!strncmp(buffer, "KNP", 3))
         {
-            QString conv_buf(buffer,  iso_conv);
-            QStringTokenizer tkz(conv_buf, _T("/,="));
-            while ( tkz.HasMoreTokens() )
+            QString conv_buf = iso_conv->toUnicode(buffer,  strlen(buffer));
+            QStringList tkz = conv_buf.split("/,=");
+            int i= 0;
+            while ( i<tkz.size())
             {
-                QString token = tkz.GetNextToken();
-                if(token.IsSameAs(_T("SC"), TRUE))                  // extract Scale
+                QString token = tkz[i++];
+                if(token == "SC")                  // extract Scale
                 {
-                    int i;
-                    i = tkz.GetPosition();
-                    m_Chart_Scale = atoi(&buffer[i]);
-                    if(0 == m_Chart_Scale)
-                        m_Chart_Scale = 100000000;
+                    m_Chart_Scale = tkz[i++].toInt();;
+                    if(0 == m_Chart_Scale) m_Chart_Scale = 100000000;
                 }
-                else if(token.IsSameAs(_T("SK"), TRUE))                  // extract Skew
+                else if(token == "SK")                  // extract Skew
                 {
-                    int i;
-                    i = tkz.GetPosition();
-                    float fcs;
-                    sscanf(&buffer[i], "%f,", &fcs);
-                    m_Chart_Skew = fcs;
+                    m_Chart_Skew = tkz[i++].toFloat();
                 }
-                else if(token.IsSameAs(_T("UN"), TRUE))                  // extract Depth Units
+                else if(token == "UN")                  // extract Depth Units
                 {
-                    int i;
-                    i = tkz.GetPosition();
-                    QString str(&buffer[i], iso_conv);
-                    m_DepthUnits = str.BeforeFirst(',');
+                    m_DepthUnits = tkz[i++];
                 }
-                else if(token.IsSameAs(_T("GD"), TRUE))                  // extract Datum
+                else if(token == "GD")                  // extract Datum
                 {
-                    int i;
-                    i = tkz.GetPosition();
-                    QString str(&buffer[i], iso_conv);
-                    m_datum_str = str.BeforeFirst(',').Trim();
+                    m_datum_str = tkz[i++];
                 }
-                else if(token.IsSameAs(_T("SD"), TRUE))                  // extract Soundings Datum
+                else if(token == "SD")                  // extract Soundings Datum
                 {
-                    int i;
-                    i = tkz.GetPosition();
-                    QString str(&buffer[i], iso_conv);
-                    m_SoundingsDatum = str.BeforeFirst(',').Trim();
+                    m_SoundingsDatum = tkz[i++];
                 }
-                else if(token.IsSameAs(_T("PP"), TRUE))                  // extract Projection Parameter
+                else if(token == "PP")                  // extract Projection Parameter
                 {
-                    int i;
-                    i = tkz.GetPosition();
-                    double fcs;
-                    QString str(&buffer[i], iso_conv);
-                    QString str1 = str.BeforeFirst(',').Trim();
-                    if(str1.ToDouble(&fcs))
-                        m_proj_parameter = fcs;
+                    m_proj_parameter = tkz[i++].toDouble();
                 }
-                else if(token.IsSameAs(_T("PR"), TRUE))                  // extract Projection Type
+                else if(token == "PR")                  // extract Projection Type
                 {
-                    int i;
-                    i = tkz.GetPosition();
-                    QString str(&buffer[i], iso_conv);
-                    QString stru = str.MakeUpper();
+                    QString str = tkz[i++];
+                    QString stru = str.toUpper();
                     bool bp_set = false;;
 
-                    if(stru.Matches(_T("*MERCATOR*")))
+                    if(stru.indexOf(QRegExp("*MERCATOR*")) >= 0)
                     {
                         m_projection = PROJECTION_MERCATOR;
                         bp_set = true;
                     }
 
-                    if(stru.Matches(_T("*TRANSVERSE*")))
+                    if(stru.indexOf(QRegExp("*TRANSVERSE*")) >= 0)
                     {
                         m_projection = PROJECTION_TRANSVERSE_MERCATOR;
                         bp_set = true;
                     }
 
-                    if(stru.Matches(_T("*CONIC*")))
+                    if(stru.indexOf(QRegExp("*CONIC*")) >= 0)
                     {
                         m_projection = PROJECTION_POLYCONIC;
                         bp_set = true;
                     }
 
-                    if(stru.Matches(_T("*TM*")))
+                    if(stru.indexOf(QRegExp("*TM*")) >= 0)
                     {
                         m_projection = PROJECTION_TRANSVERSE_MERCATOR;
                         bp_set = true;
                     }
 
-                    if(stru.Matches(_T("*GAUSS CONFORMAL*")))
+                    if(stru.indexOf(QRegExp("*GAUSS CONFORMAL*")) >= 0)
                     {
                         m_projection = PROJECTION_TRANSVERSE_MERCATOR;
                         bp_set = true;
@@ -1064,30 +1002,22 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
                     if(!bp_set)
                     {
                         m_projection = PROJECTION_UNKNOWN;
-                        QString msg(_T("   Chart projection is "));
-                        msg += tkz.GetNextToken();
-                        msg += _T(" which is unsupported.  Disabling chart ");
+                        QString msg("   Chart projection is ");
+                        msg += tkz[i++];
+                        msg += (" which is unsupported.  Disabling chart ");
                         msg += m_FullPath;
-                        ZCHX_LOGMSG(msg);
+                        qDebug()<<msg;
                         free(pPlyTable);
                         return INIT_FAIL_REMOVE;
                     }
                 }
-                else if(token.IsSameAs(_T("DX"), TRUE))                  // extract Pixel scale parameter, if present
+                else if(token == "DX")                  // extract Pixel scale parameter, if present
                 {
-                    int i;
-                    i = tkz.GetPosition();
-                    float x;
-                    sscanf(&buffer[i], "%f,", &x);
-                    m_dx = x;
+                    m_dx = tkz[i++].toDouble();
                 }
-                else if(token.IsSameAs(_T("DY"), TRUE))                  // extract Pixel scale parameter, if present
+                else if(token == "DY")                  // extract Pixel scale parameter, if present
                 {
-                    int i;
-                    i = tkz.GetPosition();
-                    float x;
-                    sscanf(&buffer[i], "%f,", &x);
-                    m_dy = x;
+                    m_dy = tkz[i++].toDouble();
                 }
             }
         }
@@ -1137,20 +1067,16 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
         {
             int idx = 0;
             double d;
-            QStringTokenizer tkz(str_buf.Mid(4), _T(","));
-            QString token = tkz.GetNextToken();
-
-            if(token.ToLong((long int *)&wpx_type))
+            int i = 0;
+            QStringList tkz = str_buf.mid(4).split(",");
+            QString token = tkz[i++];
+            wpx_type = token.toLong();
+            while ( i < tkz.size() && (idx < 12) )
             {
-                while ( tkz.HasMoreTokens() && (idx < 12) )
-                {
-                    token = tkz.GetNextToken();
-                    if(token.ToDouble(&d))
-                    {
-                        wpx[idx] = d;
-                        idx++;
-                    }
-                }
+                token = tkz[i++];
+                d = token.toDouble();
+                wpx[idx] = d;
+                idx++;
             }
             n_wpx = idx;
         }
@@ -1159,20 +1085,17 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
         {
             int idx = 0;
             double d;
-            QStringTokenizer tkz(str_buf.Mid(4), _T(","));
-            QString token = tkz.GetNextToken();
+            int i = 0;
+            QStringList tkz = str_buf.mid(4).split(",");
+            QString token = tkz[i++];
+            wpy_type = token.toLong();
 
-            if(token.ToLong((long int *)&wpy_type))
+            while ( i<tkz.size() && (idx < 12) )
             {
-                while ( tkz.HasMoreTokens() && (idx < 12) )
-                {
-                    token = tkz.GetNextToken();
-                    if(token.ToDouble(&d))
-                    {
-                        wpy[idx] = d;
-                        idx++;
-                    }
-                }
+                token = tkz[i++];
+                d = token.toDouble();
+                wpy[idx] = d;
+                idx++;
             }
             n_wpy = idx;
         }
@@ -1181,20 +1104,17 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
         {
             int idx = 0;
             double d;
-            QStringTokenizer tkz(str_buf.Mid(4), _T(","));
-            QString token = tkz.GetNextToken();
+            int i = 0;
+            QStringList tkz = str_buf.mid(4).split(",");
+            QString token = tkz[i++];
+            pwx_type = token.toLong();
 
-            if(token.ToLong((long int *)&pwx_type))
+            while ( i<tkz.size() && (idx < 12) )
             {
-                while ( tkz.HasMoreTokens() && (idx < 12) )
-                {
-                    token = tkz.GetNextToken();
-                    if(token.ToDouble(&d))
-                    {
-                        pwx[idx] = d;
-                        idx++;
-                    }
-                }
+                token = tkz[i++];
+                d = token.toDouble();
+                pwx[idx] = d;
+                idx++;
             }
             n_pwx = idx;
         }
@@ -1203,21 +1123,19 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
         {
             int idx = 0;
             double d;
-            QStringTokenizer tkz(str_buf.Mid(4), _T(","));
-            QString token = tkz.GetNextToken();
+            int i = 0;
+            QStringList tkz = str_buf.mid(4).split(",");
+            QString token = tkz[i++];
+            pwy_type = token.toLong();
 
-            if(token.ToLong((long int *)&pwy_type))
+            while ( i<tkz.size() && (idx < 12) )
             {
-                while ( tkz.HasMoreTokens() && (idx < 12) )
-                {
-                    token = tkz.GetNextToken();
-                    if(token.ToDouble(&d))
-                    {
-                        pwy[idx] = d;
-                        idx++;
-                    }
-                }
+                token = tkz[i++];
+                d = token.toDouble();
+                pwy[idx] = d;
+                idx++;
             }
+
             n_pwy = idx;
         }
 
@@ -1231,26 +1149,19 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
 
         else if (!strncmp(buffer, "VER", 3))
         {
-            QStringTokenizer tkz(str_buf, _T("/,="));
-            QString token = tkz.GetNextToken();
-
-            m_bsb_ver = tkz.GetNextToken();
+            QStringList tkz = str_buf.split("/,=");
+            QString token = tkz[0];
+            m_bsb_ver = tkz[1];
         }
 
         else if (!strncmp(buffer, "DTM", 3))
         {
-            double val;
-            QStringTokenizer tkz(str_buf, _T("/,="));
-            QString token = tkz.GetNextToken();
-
-            token = tkz.GetNextToken();
-            if(token.ToDouble(&val))
-                m_dtm_lat = val;
-
-            token = tkz.GetNextToken();
-            if(token.ToDouble(&val))
-                m_dtm_lon = val;
-
+            QStringList tkz = str_buf.split("/,=");
+            QString token = tkz[0];
+            token = tkz[1];
+            m_dtm_lat = token.toDouble();
+            token = tkz[2];
+            m_dtm_lon = token.toDouble();
 
             //                  float fdtmlat, fdtmlon;
             //                  sscanf(&buffer[4], "%f,%f", &fdtmlat, &fdtmlon);
@@ -1288,38 +1199,33 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
 
         else if(!strncmp(buffer, "CED", 3))
         {
-            QStringTokenizer tkz(str_buf, _T("/,="));
-            while ( tkz.HasMoreTokens() )
+            QStringList tkz = str_buf.split("/,=");
+            int i=0;
+            while ( i < tkz.size() )
             {
-                QString token = tkz.GetNextToken();
-                if(token.IsSameAs(_T("ED"), TRUE))                  // extract Edition Date
+                QString token = tkz[i++];
+                if(token == "ED")                  // extract Edition Date
                 {
-
-                    int i;
-                    i = tkz.GetPosition();
-
                     char date_string[40];
                     char date_buf[16];
                     date_string[0] = 0;
                     date_buf[0] = 0;
-                    sscanf(&buffer[i], "%s\r\n", date_string);
-                    QString date_wxstr(date_string,  wxConvUTF8);
+                    QString date_wxstr = tkz[i++];
 
-                    wxDateTime dt;
-                    if(dt.ParseDate(date_wxstr))       // successful parse?
+                    QDateTime dt = QDateTime::fromString(date_wxstr, "yyyy-MM-dd");
+                    if(dt.isValid())       // successful parse?
                     {
-                        int iyear = dt.GetYear(); // GetYear() fails on W98, DMC compiler, wx2.8.3
+                        int iyear = dt.date().year(); // GetYear() fails on W98, DMC compiler, wx2.8.3
                         //    BSB charts typically list publish date as xx/yy/zz
                         //  This our own little version of the Y2K problem.
                         //  Just apply some sensible logic
-
                         if(iyear < 50){
                             iyear += 2000;
-                            dt.SetYear(iyear);
+                            dt.addYears(2000);
                         }
                         else if((iyear >= 50) && (iyear < 100)){
                             iyear += 1900;
-                            dt.SetYear(iyear);
+                            dt.addYears(1900);
                         }
                         assert(iyear <= 9999);
                         sprintf(date_buf, "%d", iyear);
@@ -1330,17 +1236,14 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
                     else
                     {
                         sscanf(date_string, "%s", date_buf);
-                        m_EdDate.Set(1, wxDateTime::Jan, 2000);                    //Todo this could be smarter
+                        m_EdDate.setDate(QDate(2000, 1, 1));                    //Todo this could be smarter
                     }
 
-                    m_PubYear = QString(date_buf,  wxConvUTF8);
+                    m_PubYear = QString::fromUtf8(date_buf);
                 }
-                else if(token.IsSameAs(_T("SE"), TRUE))                  // extract Source Edition
+                else if(token == "SE")                  // extract Source Edition
                 {
-                    int i;
-                    i = tkz.GetPosition();
-                    QString str(&buffer[i], iso_conv);
-                    m_SE = str.BeforeFirst(',');
+                    m_SE = tkz[i++];
                 }
 
             }
@@ -1349,7 +1252,7 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
 
     //    Some charts improperly encode the DTM parameters.
     //    Identify them as necessary, for further processing
-    if(m_b_SHOM && (m_bsb_ver == _T("1.1")))
+    if(m_b_SHOM && (m_bsb_ver == ("1.1")))
         m_b_apply_dtm = false;
 
     //    If imbedded coefficients are found,
@@ -1382,35 +1285,33 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
 
     if(nPlypoint < 3)
     {
-        QString msg(_T("   Chart File contains less than 3 or too many PLY points: "));
-        msg.Append(m_FullPath);
-        ZCHX_LOGMSG(msg);
+        QString msg("   Chart File contains less than 3 or too many PLY points: ");
+        msg.append(m_FullPath);
+        qDebug()<<msg;
         free(pPlyTable);
         return INIT_FAIL_REMOVE;
     }
 
-    if(m_datum_str.IsEmpty()){
-        QString msg(_T("   Chart datum not specified on chart "));
-        msg.Append(m_FullPath);
-        ZCHX_LOGMSG(msg);
-        ZCHX_LOGMSG(_T("   Default datum (WGS84) substituted."));
-
-        //          return INIT_FAIL_REMOVE;
+    if(m_datum_str.isEmpty()){
+        QString msg("   Chart datum not specified on chart ");
+        msg.append(m_FullPath);
+        qDebug()<<msg;
+        qDebug("   Default datum (WGS84) substituted.");
     }
     else {
         char d_str[100];
-        strncpy(d_str, m_datum_str.mb_str(), 99);
+        strncpy(d_str, m_datum_str.toUtf8().data(), 99);
         d_str[99] = 0;
         
         int datum_index = GetDatumIndex(d_str);
         
         if(datum_index < 0){
-            QString msg(_T("   Chart datum {"));
+            QString msg("   Chart datum {");
             msg += m_datum_str;
-            msg += _T("} invalid on chart ");
-            msg.Append(m_FullPath);
-            ZCHX_LOGMSG(msg);
-            ZCHX_LOGMSG(_T("   Default datum (WGS84) substituted."));
+            msg += ("} invalid on chart ");
+            msg.append(m_FullPath);
+            qDebug()<<msg;
+            qDebug("   Default datum (WGS84) substituted.");
             
             //          return INIT_FAIL_REMOVE;
         }
@@ -1435,10 +1336,10 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
         m_LatMin = 90.0;
 
         for(int i=0 ; i < nPlypoint ; i++){
-            m_LatMax = wxMax(m_LatMax, pPlyTable[i].ltp);
-            m_LatMin = wxMin(m_LatMin, pPlyTable[i].ltp);
-            m_LonMax = wxMax(m_LonMax, pPlyTable[i].lnp);
-            m_LonMin = wxMin(m_LonMin, pPlyTable[i].lnp);
+            m_LatMax = qMax(m_LatMax, pPlyTable[i].ltp);
+            m_LatMin = qMin(m_LatMin, pPlyTable[i].ltp);
+            m_LonMax = qMax(m_LonMax, pPlyTable[i].lnp);
+            m_LonMin = qMin(m_LonMin, pPlyTable[i].lnp);
         }
 
         int count = nPlypoint;
@@ -1461,7 +1362,7 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
                 double steps = ceil( (fabs(lastplylat-plylat) + fabs(lastplylon-plylon)) / 2 );
                 for( double c = 0; c < steps; c++ ) {
                     double d = c/steps, lat, lon;
-                    wxPoint2DDouble s;
+                    QPointF s;
                     double x = (1-d)*x1 + d*x2, y = (1-d)*y1 + d*y2;
                     chartpix_to_latlong(x, y, &lat, &lon);
                     pPlyTable = (Plypoint *)realloc(pPlyTable, sizeof(Plypoint) * (nPlypoint+1));
@@ -1485,8 +1386,8 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
     m_LonMax = -360.;
     m_LonMin = 360.;
     for(int i=0; i < nPlypoint; i++){
-        m_LonMin  = wxMin(m_LonMin, pPlyTable[i].lnp);
-        m_LonMax  = wxMax(m_LonMax, pPlyTable[i].lnp);
+        m_LonMin  = qMin(m_LonMin, pPlyTable[i].lnp);
+        m_LonMax  = qMax(m_LonMax, pPlyTable[i].lnp);
     }
     // This test does not really work for charts that cross IDL
     bool b_test = true;
@@ -1505,13 +1406,13 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
         
         bool bAdjustPly = false;
         QRect bitRect(0, 0, Size_X, Size_Y);
-        bitRect.Inflate(5);               // allow for a little roundoff error
+        bitRect = bitRect.marginsAdded(QMargins(5,5,5,5)) ;             // allow for a little roundoff error
         for(int i=0; i < nPlypoint; i++){
             double pix_x, pix_y;
             latlong_to_chartpix(pPlyTable[i].ltp, pPlyTable[i].lnp, pix_x, pix_y);
-            if(!bitRect.Contains(pix_x, pix_y)){
+            if(!bitRect.contains(pix_x, pix_y)){
                 bAdjustPly = true;
-                if(m_b_cdebug)printf("Adjusting COVR region on: %s\n", name.ToUTF8().data());
+                if(m_b_cdebug)qDebug("Adjusting COVR region on: %s\n", name.toUtf8().data());
                 break;
             }
         }
@@ -1558,14 +1459,14 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
 
     //    Setup the datum transform parameters
     char d_str[100];
-    strncpy(d_str, m_datum_str.mb_str(), 99);
+    strncpy(d_str, m_datum_str.toUtf8().data(), 99);
     d_str[99] = 0;
 
     int datum_index = GetDatumIndex(d_str);
     m_datum_index = datum_index;
 
     if(datum_index < 0)
-        m_ExtraInfo = _T("---<<< Warning:  Chart Datum may be incorrect. >>>---");
+        m_ExtraInfo = ("---<<< Warning:  Chart Datum may be incorrect. >>>---");
 
     //    Establish defaults, may be overridden later
     m_lon_datum_adjust = (-m_dtm_lon) / 3600.;
@@ -1631,19 +1532,14 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
 
     if(bcorrupt)
     {
-        QString msg(_T("   Chart File RLL data corrupt on chart "));
-        msg.Append(m_FullPath);
-        ZCHX_LOGMSG(msg);
-
+        qDebug("   Chart File RLL data corrupt on chart %s", m_FullPath.toUtf8().data());
         return INIT_FAIL_REMOVE;
     }
 
     //    Read the Color table bit size
     nColorSize = ifs_hdr->GetC();
-    if ( nColorSize == wxEOF || nColorSize <= 0 || nColorSize > 7) {
-        QString msg(_T("   Invalid nColorSize data, corrupt on chart "));
-        msg.Append(m_FullPath);
-        ZCHX_LOGMSG(msg);
+    if ( nColorSize == -1 || nColorSize <= 0 || nColorSize > 7) {
+        qDebug("   Invalid nColorSize data, corrupt on chart %s", m_FullPath.toUtf8().data());
         return INIT_FAIL_REMOVE;
     }
 
@@ -1657,10 +1553,10 @@ InitReturn ChartKAP::Init( const QString& name, ChartInitFlag init_flags )
 #ifdef OCPN_USE_LZMA      
     tempfile = stream->TempFileName();
 #endif
-    m_filesize = wxFileName::GetSize( tempfile.empty() ? name : tempfile );
+    m_filesize = QFileInfo(tempfile.isEmpty() ? name : tempfile ).size();
 
     ifss_bitmap = stream;
-    ifs_bitmap = new wxBufferedInputStream(*ifss_bitmap);
+    ifs_bitmap = new FileReadWrite(*ifss_bitmap);
 
 
     //    Perform common post-init actions in ChartBaseBSB
@@ -1725,7 +1621,7 @@ ChartBaseBSB::ChartBaseBSB()
 
     m_mapped_color_index = COLOR_RGB_DEFAULT;
 
-    m_datum_str = _T("WGS84");                // assume until proven otherwise
+    m_datum_str = ("WGS84");                // assume until proven otherwise
 
     m_dtm_lat = 0.;
     m_dtm_lon = 0.;
@@ -1799,7 +1695,7 @@ void ChartBaseBSB::FreeLineCacheRows(int start, int end)
         if(end < 0)
             end = Size_Y;
         else
-            end = wxMin(end, Size_Y);
+            end = qMin(end, Size_Y);
         for(int ylc = start ; ylc < end ; ylc++) {
             CachedLine *pt = &pLineCache[ylc];
             if(pt->bValid) {
@@ -1945,17 +1841,13 @@ void ChartBaseBSB::CreatePaletteEntry(char *buffer, int palette_index)
 InitReturn ChartBaseBSB::PostInit(void)
 {
     // catch undefined shift if not already done in derived classes
-    if ( nColorSize == wxEOF || nColorSize <= 0 || nColorSize > 7) {
-        QString msg(_T("   Invalid nColorSize data, corrupt in PostInit() on chart "));
-        msg.Append(m_FullPath);
-        ZCHX_LOGMSG(msg);
+    if ( nColorSize == -1 || nColorSize <= 0 || nColorSize > 7) {
+        qDebug("   Invalid nColorSize data, corrupt in PostInit() on chart %s", m_FullPath.toUtf8().data());
         return INIT_FAIL_REMOVE;
     }
 
     if (Size_X <= 0 || Size_X > INT_MAX / 4 ||  Size_Y <= 0 || Size_Y -1 > INT_MAX / 4) {
-        QString msg(_T("   Invalid Size_X/Size_Y data, corrupt in PostInit() on chart "));
-        msg.Append(m_FullPath);
-        ZCHX_LOGMSG(msg);
+        qDebug("   Invalid Size_X/Size_Y data, corrupt in PostInit() on chart %s", m_FullPath.toUtf8().data());
         return INIT_FAIL_REMOVE;
     }
 
@@ -2012,15 +1904,13 @@ InitReturn ChartBaseBSB::PostInit(void)
     if(!pline_table)
         return INIT_FAIL_REMOVE;
 
-    ifs_bitmap->SeekI((Size_Y+1) * -4, wxFromEnd);                 // go to Beginning of offset table
+    ifs_bitmap->Seek((Size_Y+1) * -4, FileReadWrite::SEEK_FROM_END);                 // go to Beginning of offset table
     pline_table[Size_Y] = ifs_bitmap->TellI();                     // fill in useful last table entry
 
     unsigned char *tmp = (unsigned char*)malloc(Size_Y * sizeof(int));
     ifs_bitmap->Read(tmp, Size_Y * sizeof(int));
     if ( ifs_bitmap->LastRead() != Size_Y * sizeof(int)) {
-        QString msg(_T("   Chart File corrupt in PostInit() on chart "));
-        msg.Append(m_FullPath);
-        ZCHX_LOGMSG(msg);
+        qDebug("   Chart File corrupt in PostInit() on chart %s", m_FullPath.toUtf8().data());
         free(tmp);
 
         return INIT_FAIL_REMOVE;
@@ -2044,29 +1934,23 @@ InitReturn ChartBaseBSB::PostInit(void)
     bool bline_index_ok = true;
     m_nLineOffset = 0;
 
-    wxULongLong bitmap_filesize = m_filesize;
+    uint64_t bitmap_filesize = m_filesize;
     if( (m_ChartType == CHART_TYPE_GEO) && pBitmapFilePath )
-        bitmap_filesize = wxFileName::GetSize( *pBitmapFilePath );
+        bitmap_filesize = QFileInfo( *pBitmapFilePath ).size();
 
     //  look logically at the line offset table
     for(int iplt=0 ; iplt< Size_Y - 1 ; iplt++)
     {
         if( pline_table[iplt] > bitmap_filesize )
         {
-            QString msg(_T("   Chart File corrupt in PostInit() on chart "));
-            msg.Append(m_FullPath);
-            ZCHX_LOGMSG(msg);
-
+            qDebug("   Chart File corrupt in PostInit() on chart %s", m_FullPath.toUtf8().data());
             return INIT_FAIL_REMOVE;
         }
 
         int thisline_size = pline_table[iplt+1] - pline_table[iplt] ;
         if(thisline_size < 0)
         {
-            QString msg(_T("   Chart File corrupt in PostInit() on chart "));
-            msg.Append(m_FullPath);
-            ZCHX_LOGMSG(msg);
-
+            qDebug("   Chart File corrupt in PostInit() on chart %s", m_FullPath.toUtf8().data());
             return INIT_FAIL_REMOVE;
         }
     }
@@ -2075,17 +1959,13 @@ InitReturn ChartBaseBSB::PostInit(void)
     //  For older charts, say Version 1.x, we will try to read the chart and check the lines for coherence
     //  These older charts are more likely to have index troubles....
     //  We only need to check a few lines.  Errors are quickly apparent.
-    double ver;
-    m_bsb_ver.ToDouble(&ver);
+    double ver = m_bsb_ver.toDouble();
     if( ver < 2.0){
         for(int iplt=0 ; iplt< 10 ; iplt++)
         {
-            if( wxInvalidOffset == ifs_bitmap->SeekI(pline_table[iplt], wxFromStart))
+            if( -1 == ifs_bitmap->Seek(pline_table[iplt], FileReadWrite::SEEK_FROM_START))
             {
-                QString msg(_T("   Chart File corrupt in PostInit() on chart "));
-                msg.Append(m_FullPath);
-                ZCHX_LOGMSG(msg);
-                
+                qDebug("   Chart File corrupt in PostInit() on chart %s", m_FullPath.toUtf8().data());
                 return INIT_FAIL_REMOVE;
             }
             
@@ -2122,14 +2002,10 @@ InitReturn ChartBaseBSB::PostInit(void)
     // Recreate the scan line index if the embedded version seems corrupt
     if(!bline_index_ok)
     {
-        QString msg(_T("   Line Index corrupt, recreating Index for chart "));
-        msg.Append(m_FullPath);
-        ZCHX_LOGMSG(msg);
+        qDebug("   Line Index corrupt, recreating Index for chart %s", m_FullPath.toUtf8().data());
         if(!CreateLineIndex())
         {
-            QString msg(_T("   Error creating Line Index for chart "));
-            msg.Append(m_FullPath);
-            ZCHX_LOGMSG(msg);
+            qDebug("   Error creating Line Index for chart %s", m_FullPath.toUtf8().data());
             return INIT_FAIL_REMOVE;
         }
     }
@@ -2155,20 +2031,20 @@ InitReturn ChartBaseBSB::PostInit(void)
 
 
     //    Validate/Set Depth Unit Type
-    QString test_str = m_DepthUnits.Upper();
-    if(test_str.IsSameAs(_T("FEET"), FALSE))
+    QString test_str = m_DepthUnits.toUpper();
+    if(test_str.compare("FEET", Qt::CaseInsensitive) == 0)
         m_depth_unit_id = DEPTH_UNIT_FEET;
-    else if(test_str.IsSameAs(_T("METERS"), FALSE))
+    else if(test_str.compare("METERS", Qt::CaseInsensitive) == 0)
         m_depth_unit_id = DEPTH_UNIT_METERS;
-    else if(test_str.IsSameAs(_T("METRES"), FALSE))                  // Special case for alternate spelling
+    else if(test_str.compare("METRES", Qt::CaseInsensitive) == 0)                  // Special case for alternate spelling
         m_depth_unit_id = DEPTH_UNIT_METERS;
-    else if(test_str.IsSameAs(_T("METRIC"), FALSE))
+    else if(test_str.compare("METRIC", Qt::CaseInsensitive) == 0)
         m_depth_unit_id = DEPTH_UNIT_METERS;
-    else if(test_str.IsSameAs(_T("FATHOMS"), FALSE))
+    else if(test_str.compare("FATHOMS", Qt::CaseInsensitive) == 0)
         m_depth_unit_id = DEPTH_UNIT_FATHOMS;
-    else if(test_str.Find(_T("FATHOMS")) != wxNOT_FOUND)             // Special case for "Fathoms and Feet"
+    else if(test_str.indexOf("FATHOMS", Qt::CaseInsensitive) >= 0)             // Special case for "Fathoms and Feet"
         m_depth_unit_id = DEPTH_UNIT_FATHOMS;
-    else if(test_str.Find(_T("METERS")) != wxNOT_FOUND)             // Special case for "Meters and decimeters"
+    else if(test_str.indexOf("METERS", Qt::CaseInsensitive) >= 0)             // Special case for "Meters and decimeters"
         m_depth_unit_id = DEPTH_UNIT_METERS;
 
 
@@ -2190,7 +2066,7 @@ bool ChartBaseBSB::CreateLineIndex()
     //    wxBufferedInputStream *pbis = new wxBufferedInputStream(*ifss_bitmap);
 
     //  Seek to start of data
-    ifs_bitmap->SeekI(nFileOffsetDataStart);                 // go to Beginning of data
+    ifs_bitmap->Seek(nFileOffsetDataStart, FileReadWrite::SEEK_FROM_START);                 // go to Beginning of data
 
     for(int iplt=0 ; iplt<Size_Y ; iplt++)
     {
@@ -2430,24 +2306,20 @@ void ChartBaseBSB::SetColorScheme(ColorScheme cs, bool bApplyImmediate)
 }
 
 
-wxBitmap *ChartBaseBSB::CreateThumbnail(int tnx, int tny, ColorScheme cs)
+QBitmap *ChartBaseBSB::CreateThumbnail(int tnx, int tny, ColorScheme cs)
 {
 
     //    Calculate the size and divisors
 
-    int divx = wxMax(1, Size_X / (4 * tnx) );
-    int divy = wxMax(1, Size_Y / (4 * tny) );
+    int divx = qMax(1, Size_X / (4 * tnx) );
+    int divy = qMax(1, Size_Y / (4 * tny) );
 
     int div_factor = std::min(divx, divy);
 
     int des_width = Size_X / div_factor;
     int des_height = Size_Y / div_factor;
 
-    QRect gts;
-    gts.x = 0;                                // full chart
-    gts.y = 0;
-    gts.width = Size_X;
-    gts.height = Size_Y;
+    QRect gts(0, 0, Size_X, Size_Y);
 
     int this_bpp = 24;                       // for wxImage
     //    Allocate the pixel storage needed for one line of chart bits
@@ -2508,7 +2380,7 @@ wxBitmap *ChartBaseBSB::CreateThumbnail(int tnx, int tny, ColorScheme cs)
 
 
 
-    wxBitmap *retBMP;
+    QBitmap *retBMP;
 
 #ifdef ocpnUSE_ocpnBitmap
     wxBitmap* bmx2 = new ocpnBitmap(pPixTN, des_width, des_height, -1);
@@ -2517,9 +2389,9 @@ wxBitmap *ChartBaseBSB::CreateThumbnail(int tnx, int tny, ColorScheme cs)
     retBMP = new wxBitmap( imgx2 );
     delete bmx2;
 #else
-    wxImage thumb_image(des_width, des_height, pPixTN, true);
-    thumb_image.Rescale( des_width/4, des_height/4, wxIMAGE_QUALITY_HIGH );
-    retBMP = new wxBitmap(thumb_image);
+    QImage thumb_image(pPixTN, des_width, des_height, QImage::Format_RGB32);
+    thumb_image.scaled(des_width/4, des_height/4, Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
+    retBMP = new QBitmap(QBitmap::fromImage(thumb_image));
 #endif
 
 
@@ -2561,8 +2433,7 @@ ThumbData *ChartBaseBSB::GetThumbData(int tnx, int tny, float lat, float lon)
     tvp.pix_height = tny;
     tvp.view_scale_ppm = GetPPM() / div_factor;
     QRect trex = Rsrc;
-    Rsrc.x = 0;
-    Rsrc.y = 0;
+    Rsrc.moveTo(0, 0);
     latlong_to_pix_vp(lat, lon, pixx, pixy, tvp);
     Rsrc = trex;
 
@@ -2593,8 +2464,7 @@ bool ChartBaseBSB::UpdateThumbData(double lat, double lon)
     tvp.pix_height =  pThumbData->Thumb_Size_Y;
     tvp.view_scale_ppm = GetPPM() / div_factor;
     QRect trex = Rsrc;
-    Rsrc.x = 0;
-    Rsrc.y = 0;
+    Rsrc.moveTo(0,0);
     latlong_to_pix_vp(lat, lon, pixx_test, pixy_test, tvp);
     Rsrc = trex;
 
@@ -2625,8 +2495,8 @@ int ChartBaseBSB::vp_pix_to_latlong(ViewPort& vp, double pixx, double pixy, doub
     {
         double raster_scale = GetPPM() / vp.view_scale_ppm;
 
-        double px = pixx*raster_scale + Rsrc.x;
-        double py = pixy*raster_scale + Rsrc.y;
+        double px = pixx*raster_scale + Rsrc.x();
+        double py = pixy*raster_scale + Rsrc.y();
         //            pix_to_latlong(px, py, plat, plon);
 
         if(1)
@@ -2673,7 +2543,7 @@ int ChartBaseBSB::vp_pix_to_latlong(ViewPort& vp, double pixx, double pixy, doub
             double slon_p = lon - m_lon_datum_adjust;
             double slat_p = lat - m_lat_datum_adjust;
 
-            //                  printf("%8g %8g %8g %8g %g\n", slat, slat_p, slon, slon_p, slon - slon_p);
+            //                  qDebug("%8g %8g %8g %8g %g\n", slat, slat_p, slon, slon_p, slon - slon_p);
             slon = slon_p;
             slat = slat_p;
 
@@ -2709,7 +2579,7 @@ int ChartBaseBSB::vp_pix_to_latlong(ViewPort& vp, double pixx, double pixy, doub
             slon = slon_p;
             slat = slat_p;
 
-            //                  printf("vp.clon  %g    xc  %g   px   %g   east  %g  \n", vp.clon, xc, px, east);
+            //                  qDebug("vp.clon  %g    xc  %g   px   %g   east  %g  \n", vp.clon, xc, px, east);
 
         }
         else if(m_projection == PROJECTION_POLYCONIC)
@@ -2797,8 +2667,8 @@ int ChartBaseBSB::latlong_to_pix_vp(double lat, double lon, double &pixx, double
 
             double raster_scale = GetPPM() / vp.view_scale_ppm;
 
-            pixx = (xd - Rsrc.x) / raster_scale;
-            pixy = (yd - Rsrc.y) / raster_scale;
+            pixx = (xd - Rsrc.x()) / raster_scale;
+            pixy = (yd - Rsrc.y()) / raster_scale;
 
             return 0;
         }
@@ -3107,22 +2977,22 @@ void ChartBaseBSB::ComputeSourceRectangle(const ViewPort &vp, QRect *pSourceRect
     double xd, yd;
     latlong_to_chartpix(vp.clat, vp.clon, xd, yd);
 
-    wxRealPoint pos, size;
+    QPointF pos, size;
 
-    pos.x = xd - (vp.pix_width  * m_raster_scale_factor / 2);
-    pos.y = yd - (vp.pix_height * m_raster_scale_factor / 2);
+    pos.setX(xd - (vp.pix_width  * m_raster_scale_factor / 2));
+    pos.setY(yd - (vp.pix_height * m_raster_scale_factor / 2));
 
-    size.x = vp.pix_width  * m_raster_scale_factor;
-    size.y = vp.pix_height * m_raster_scale_factor;
+    size.setX(vp.pix_width  * m_raster_scale_factor);
+    size.setY(vp.pix_height * m_raster_scale_factor);
 
-    *pSourceRect = QRect(wxRound(pos.x), wxRound(pos.y), wxRound(size.x), wxRound(size.y));
+    *pSourceRect = QRect(qRound(pos.x()), qRound(pos.y()), qRound(size.x()), qRound(size.y()));
 }
 
 
 double ChartBaseBSB::GetRasterScaleFactor(const ViewPort &vp)
 {
     //      This funny contortion is necessary to allow scale factors < 1, i.e. overzoom
-    return (wxRound(100000 * GetPPM() / vp.view_scale_ppm)) / 100000.;
+    return (qRound(100000 * GetPPM() / vp.view_scale_ppm)) / 100000.;
 }
 
 void ChartBaseBSB::SetVPRasterParms(const ViewPort &vpt)
@@ -3172,9 +3042,9 @@ bool ChartBaseBSB::AdjustVP(ViewPort &vp_last, ViewPort &vp_proposed)
         //    The objective here is to ensure that the VP center falls on an exact pixel boundary within the cache
 
 
-        if(cached_image_ok && (binary_scale_factor > 1.0) && (fabs(binary_scale_factor - wxRound(binary_scale_factor)) < 1e-5))
+        if(cached_image_ok && (binary_scale_factor > 1.0) && (fabs(binary_scale_factor - qRound(binary_scale_factor)) < 1e-5))
         {
-            if(m_b_cdebug)printf(" Possible Adjust VP for integer scale: %g\n", binary_scale_factor);
+            if(m_b_cdebug)qDebug(" Possible Adjust VP for integer scale: %g\n", binary_scale_factor);
 
             QRect rprop;
             ComputeSourceRectangle(vp_proposed, &rprop);
@@ -3195,27 +3065,27 @@ bool ChartBaseBSB::AdjustVP(ViewPort &vp_last, ViewPort &vp_proposed)
 
 bool ChartBaseBSB::IsRenderCacheable( QRect& source, QRect& dest )
 {
-    double scale_x = (double)source.width / (double)dest.width;
+    double scale_x = (double)source.width() / (double)dest.width();
 
     if(scale_x <= 1.0)                                        // overzoom
     {
-        //            if(m_b_cdebug)printf("    MISS<<<>>>GVUC:  Overzoom\n");
+        //            if(m_b_cdebug)qDebug("    MISS<<<>>>GVUC:  Overzoom\n");
         return false;
     }
 
 
     //    Using the cache only works for pure binary scale factors......
-    if((fabs(scale_x - wxRound(scale_x))) > .0001)
+    if((fabs(scale_x - qRound(scale_x))) > .0001)
     {
-        //            if(m_b_cdebug)printf("   MISS<<<>>>GVUC: Not digital scale test 1\n");
+        //            if(m_b_cdebug)qDebug("   MISS<<<>>>GVUC: Not digital scale test 1\n");
         return false;
     }
 
 
     //    Scale must be exactly digital...
-    if((int)(source.width/dest.width) != (int)wxRound(scale_x))
+    if((int)(source.width()/dest.width()) != (int)qRound(scale_x))
     {
-        //            if(m_b_cdebug)printf("   MISS<<<>>>GVUC: Not digital scale test 2\n");
+        //            if(m_b_cdebug)qDebug("   MISS<<<>>>GVUC: Not digital scale test 2\n");
         return false;
     }
 
@@ -3232,11 +3102,11 @@ void ChartBaseBSB::GetValidCanvasRegion(const ViewPort& VPoint, OCPNRegion *pVal
     int rxl, rxr;
     int ryb, ryt;
 
-    rxl = wxMax(-Rsrc.x * raster_scale, VPoint.rv_rect.x);
-    rxr = wxMin((Size_X - Rsrc.x) * raster_scale, VPoint.rv_rect.width + VPoint.rv_rect.x);
+    rxl = qMax(int(-Rsrc.x() * raster_scale), VPoint.rv_rect.x());
+    rxr = qMin(int((Size_X - Rsrc.x()) * raster_scale), VPoint.rv_rect.width() + VPoint.rv_rect.x());
 
-    ryt = wxMax(-Rsrc.y * raster_scale, VPoint.rv_rect.y);
-    ryb = wxMin((Size_Y - Rsrc.y) * raster_scale, VPoint.rv_rect.height + VPoint.rv_rect.y);
+    ryt = qMax(int(-Rsrc.y() * raster_scale), VPoint.rv_rect.y());
+    ryb = qMin(int((Size_Y - Rsrc.y()) * raster_scale), VPoint.rv_rect.height() + VPoint.rv_rect.y());
 
 
 
@@ -3271,19 +3141,19 @@ bool ChartBaseBSB::GetViewUsingCache( QRect& source, QRect& dest, const OCPNRegi
     QRect s1;
     ScaleTypeEnum scale_type_corrected;
 
-    if(m_b_cdebug)printf(" source:  %d %d\n", source.x, source.y);
-    if(m_b_cdebug)printf(" cache:   %d %d\n", cache_rect.x, cache_rect.y);
+    if(m_b_cdebug)qDebug(" source:  %d %d\n", source.x(), source.y());
+    if(m_b_cdebug)qDebug(" cache:   %d %d\n", cache_rect.x(), cache_rect.y());
 
     //    Anything to do?
     if((source == cache_rect) /*&& (cache_scale_method == scale_type)*/ && (cached_image_ok) )
     {
-        if(m_b_cdebug)printf("    GVUC: Cache is good, nothing to do\n");
+        if(m_b_cdebug)qDebug("    GVUC: Cache is good, nothing to do\n");
         return false;
     }
 
-    double scale_x = (double)source.width / (double)dest.width;
+    double scale_x = (double)source.width() / (double)dest.width();
 
-    if(m_b_cdebug)printf("GVUC: scale_x: %g\n", scale_x);
+    if(m_b_cdebug)qDebug("GVUC: scale_x: %g\n", scale_x);
 
     //    Enforce a limit on bilinear scaling, for performance reasons
     scale_type_corrected = scale_type; //RENDER_LODEF; //scale_type;
@@ -3291,15 +3161,15 @@ bool ChartBaseBSB::GetViewUsingCache( QRect& source, QRect& dest, const OCPNRegi
         scale_type_corrected = RENDER_LODEF;
 
     {
-        //            if(b_cdebug)printf("   MISS<<<>>>GVUC: Intentional out\n");
+        //            if(b_cdebug)qDebug("   MISS<<<>>>GVUC: Intentional out\n");
         //            return GetView( source, dest, scale_type_corrected );
     }
 
 
     //    Using the cache only works for pure binary scale factors......
-    if((fabs(scale_x - wxRound(scale_x))) > .0001)
+    if((fabs(scale_x - qRound(scale_x))) > .0001)
     {
-        if(m_b_cdebug)printf("   MISS<<<>>>GVUC: Not digital scale test 1\n");
+        if(m_b_cdebug)qDebug("   MISS<<<>>>GVUC: Not digital scale test 1\n");
         return GetView( source, dest, scale_type_corrected );
     }
 
@@ -3308,57 +3178,57 @@ bool ChartBaseBSB::GetViewUsingCache( QRect& source, QRect& dest, const OCPNRegi
 
     if(!cached_image_ok)
     {
-        if(m_b_cdebug)printf("    MISS<<<>>>GVUC:  Cache NOk\n");
+        if(m_b_cdebug)qDebug("    MISS<<<>>>GVUC:  Cache NOk\n");
         return GetView( source, dest, scale_type_corrected );
     }
 
     if(scale_x < 1.0)                                        // overzoom
     {
-        if(m_b_cdebug)printf("    MISS<<<>>>GVUC:  Overzoom\n");
+        if(m_b_cdebug)qDebug("    MISS<<<>>>GVUC:  Overzoom\n");
         return GetView( source, dest, scale_type_corrected );
     }
 
     //    Scale must be exactly digital...
-    if((int)(source.width/dest.width) != (int)wxRound(scale_x))
+    if((int)(source.width()/dest.width()) != (int)qRound(scale_x))
     {
-        if(m_b_cdebug)printf("   MISS<<<>>>GVUC: Not digital scale test 2\n");
+        if(m_b_cdebug)qDebug("   MISS<<<>>>GVUC: Not digital scale test 2\n");
         return GetView( source, dest, scale_type_corrected );
     }
 
     //    Calculate the digital scale, e.g. 1,2,4,8,,,
-    int cs1d = source.width/dest.width;
-    if(abs(source.x - cache_rect.x) % cs1d)
+    int cs1d = source.width()/dest.width();
+    if(abs(source.x() - cache_rect.x()) % cs1d)
     {
-        if(m_b_cdebug)printf("   source.x: %d  cache_rect.x: %d  cs1d: %d\n", source.x, cache_rect.x, cs1d);
-        if(m_b_cdebug)printf("   MISS<<<>>>GVUC: x mismatch\n");
+        if(m_b_cdebug)qDebug("   source.x: %d  cache_rect.x: %d  cs1d: %d\n", source.x(), cache_rect.x(), cs1d);
+        if(m_b_cdebug)qDebug("   MISS<<<>>>GVUC: x mismatch\n");
         return GetView( source, dest, scale_type_corrected );
     }
-    if(abs(source.y - cache_rect.y) % cs1d)
+    if(abs(source.y() - cache_rect.y()) % cs1d)
     {
-        if(m_b_cdebug)printf("   MISS<<<>>>GVUC: y mismatch\n");
-        return GetView( source, dest, scale_type_corrected );
-    }
-
-    if(pPixCache && ((pPixCache->GetWidth() != dest.width) || (pPixCache->GetHeight() != dest.height)))
-    {
-        if(m_b_cdebug)printf("   MISS<<<>>>GVUC: dest size mismatch\n");
+        if(m_b_cdebug)qDebug("   MISS<<<>>>GVUC: y mismatch\n");
         return GetView( source, dest, scale_type_corrected );
     }
 
-    int stride_rows = (source.y + source.height) - (cache_rect.y + cache_rect.height);
+    if(pPixCache && ((pPixCache->GetWidth() != dest.width()) || (pPixCache->GetHeight() != dest.height())))
+    {
+        if(m_b_cdebug)qDebug("   MISS<<<>>>GVUC: dest size mismatch\n");
+        return GetView( source, dest, scale_type_corrected );
+    }
+
+    int stride_rows = (source.y() + source.height()) - (cache_rect.y() + cache_rect.height());
     int scaled_stride_rows = (int)(stride_rows / scale_x);
 
-    if(abs(stride_rows) >= source.height)                       // Pan more than one screen
+    if(abs(stride_rows) >= source.height())                       // Pan more than one screen
         return GetView( source, dest, scale_type_corrected );
 
-    int stride_pixels = (source.x + source.width) - (cache_rect.x + cache_rect.width);
+    int stride_pixels = (source.x() + source.width()) - (cache_rect.x() + cache_rect.width());
     int scaled_stride_pixels = (int)(stride_pixels / scale_x);
 
 
-    if(abs(stride_pixels) >= source.width)                      // Pan more than one screen
+    if(abs(stride_pixels) >= source.width())                      // Pan more than one screen
         return GetView( source, dest, scale_type_corrected );
 
-    if(m_b_cdebug)printf("    GVUC Using raster data cache\n");
+    if(m_b_cdebug)qDebug("    GVUC Using raster data cache\n");
 
     ScaleTypeEnum pan_scale_type_x = scale_type_corrected;
     ScaleTypeEnum pan_scale_type_y = scale_type_corrected;
@@ -3412,19 +3282,19 @@ bool ChartBaseBSB::GetViewUsingCache( QRect& source, QRect& dest, const OCPNRegi
         }
         
         //    Y Pan
-        if(source.y != cache_rect.y)
+        if(source.y() != cache_rect.y())
         {
             QRect sub_dest = dest;
-            sub_dest.height = abs(scaled_stride_rows);
+            sub_dest.setHeight(abs(scaled_stride_rows));
             
             if(stride_rows > 0)                             // pan down
             {
-                sub_dest.y = height - scaled_stride_rows;
+                sub_dest.setY(height - scaled_stride_rows);
                 
             }
             else
             {
-                sub_dest.y = 0;
+                sub_dest.setY(0);
                 
             }
             
@@ -3432,16 +3302,16 @@ bool ChartBaseBSB::GetViewUsingCache( QRect& source, QRect& dest, const OCPNRegi
             
             //    A little optimization...
             //    No sense in fetching bits that are not part of the ultimate render region
-            wxRegionContain rc = Region.Contains(sub_dest);
-            if((wxPartRegion == rc) || (wxInRegion == rc))
+            bool rc = Region.Contains(sub_dest);
+            if(rc)
             {
-                GetAndScaleData(pPixCache->GetpData(), pPixCache->GetLength(), source, source.width, sub_dest, width, cs1d, pan_scale_type_y);
+                GetAndScaleData(pPixCache->GetpData(), pPixCache->GetLength(), source, source.width(), sub_dest, width, cs1d, pan_scale_type_y);
             }
             pPixCache->Update();
             
             //    Update the cached parameters, Y only
             
-            cache_rect.y = source.y;
+            cache_rect.setY(source.y());
             //          cache_rect = source;
             cache_rect_scaled = dest;
             cached_image_ok = 1;
@@ -3452,28 +3322,27 @@ bool ChartBaseBSB::GetViewUsingCache( QRect& source, QRect& dest, const OCPNRegi
         
         
         //    X Pan
-        if(source.x != cache_rect.x)
+        if(source.x() != cache_rect.x())
         {
             QRect sub_dest = dest;
-            sub_dest.width = abs(scaled_stride_pixels);
-            
+            sub_dest.setWidth( abs(scaled_stride_pixels));
             if(stride_pixels > 0)                           // pan right
             {
-                sub_dest.x = width - scaled_stride_pixels;
+                sub_dest.setX(width - scaled_stride_pixels);
             }
             else                                                  // pan left
             {
-                sub_dest.x = 0;
+                sub_dest.setX(0);
             }
             
             //    Get the new bits needed
             
             //    A little optimization...
             //    No sense in fetching bits that are not part of the ultimate render region
-            wxRegionContain rc = Region.Contains(sub_dest);
-            if((wxPartRegion == rc) || (wxInRegion == rc))
+            bool rc = Region.Contains(sub_dest);
+            if(rc)
             {
-                GetAndScaleData(pPixCache->GetpData(), pPixCache->GetLength(), source, source.width, sub_dest, width, cs1d, pan_scale_type_x);
+                GetAndScaleData(pPixCache->GetpData(), pPixCache->GetLength(), source, source.width(), sub_dest, width, cs1d, pan_scale_type_x);
             }
             
             pPixCache->Update();
@@ -3509,7 +3378,7 @@ bool ChartBaseBSB::RenderViewOnDC(QPainter& dc, const ViewPort& VPoint)
     if(!bsame_region)
         cached_image_ok = false;
 
-    m_last_region = rgn;
+    m_last_region.copyFromOtherRegion(rgn);
 
     return RenderRegionViewOnDC(dc, VPoint, rgn);
 
@@ -3532,13 +3401,13 @@ bool ChartBaseBSB::RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, co
     double factor = GetRasterScaleFactor(VPoint);
     if(m_b_cdebug)
     {
-        printf("%d RenderRegion  ScaleType:  %d   factor:  %g\n", s_dc++, RENDER_HIDEF, factor );
-        printf("Rect list:\n");
+        qDebug("%d RenderRegion  ScaleType:  %d   factor:  %g\n", s_dc++, RENDER_HIDEF, factor );
+        qDebug("Rect list:\n");
         OCPNRegionIterator upd ( Region ); // get the requested rect list
         while ( upd.HaveRects() )
         {
             QRect rect = upd.GetRect();
-            printf("   %d %d %d %d\n", rect.x, rect.y, rect.width, rect.height);
+            qDebug("   %d %d %d %d\n", rect.x(), rect.y(), rect.width(), rect.height());
             upd.NextRect() ;
         }
     }
@@ -3574,12 +3443,12 @@ bool ChartBaseBSB::RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, co
         if((bsame_region) && (Rsrc == cache_rect)  )
         {
             pPixCache->SelectIntoDC(dc);
-            if(m_b_cdebug)printf("  Using Current PixelCache\n");
+            if(m_b_cdebug)qDebug("  Using Current PixelCache\n");
             return false;
         }
     }
 
-    m_last_region = Region;
+    m_last_region.copyFromOtherRegion(Region);
 
 
     //     Analyze the region requested
@@ -3609,7 +3478,7 @@ bool ChartBaseBSB::RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, co
 
     if((!IsRenderCacheable( Rsrc, dest ) && ( n_rect > 4 ) && (n_rect < 20)) || ( factor < 1))
     {
-        if(m_b_cdebug)printf("   RenderRegion by rect iterator   n_rect: %d\n", n_rect);
+        if(m_b_cdebug)qDebug("   RenderRegion by rect iterator   n_rect: %d\n", n_rect);
 
         // Verify that the persistent pixel cache is at least as large as the largest rectangle in the region
         QRect dest_check_rect = dest;
@@ -3617,20 +3486,20 @@ bool ChartBaseBSB::RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, co
         while ( upd_check.HaveRects() )
         {
             QRect rect = upd_check.GetRect();
-            dest_check_rect.Union(rect);
+            dest_check_rect = dest_check_rect.united(rect);
             upd_check.NextRect();
         }
 
         if(pPixCache)
         {
-            if((pPixCache->GetWidth() != dest_check_rect.width) || (pPixCache->GetHeight() != dest_check_rect.height))
+            if((pPixCache->GetWidth() != dest_check_rect.width()) || (pPixCache->GetHeight() != dest_check_rect.height()))
             {
                 delete pPixCache;
-                pPixCache = new PixelCache(dest_check_rect.width, dest_check_rect.height, BPP);
+                pPixCache = new PixelCache(dest_check_rect.width(), dest_check_rect.height(), BPP);
             }
         }
         else
-            pPixCache = new PixelCache(dest_check_rect.width, dest_check_rect.height, BPP);
+            pPixCache = new PixelCache(dest_check_rect.width(), dest_check_rect.height(), BPP);
 
 
         ScaleTypeEnum ren_type = RENDER_LODEF;
@@ -3647,12 +3516,12 @@ bool ChartBaseBSB::RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, co
             //  Floating point math can lead to negative rectangle origin.
             //  If this happens, we arbitrarily shift the rectangle to be positive semidefinite.
             //  This will cause at most a 1 pixlel error onscreen.
-            if(rect.y < 0) rect.Offset(0, -rect.y);
-            if(rect.x < 0) rect.Offset(-rect.x, 0);
+            if(rect.y() < 0) rect.translate(0, -rect.y());
+            if(rect.x() < 0) rect.translate(-rect.x(), 0);
 
 
             GetAndScaleData(pPixCache->GetpData(), pPixCache->GetLength(),
-                            Rsrc, Rsrc.width, rect, pPixCache->GetWidth(), factor, ren_type);
+                            Rsrc, Rsrc.width(), rect, pPixCache->GetWidth(), factor, ren_type);
 
             ir++;
             upd.NextRect();;
@@ -3676,18 +3545,18 @@ bool ChartBaseBSB::RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, co
 
     if(pPixCache)
     {
-        if((pPixCache->GetWidth() != dest.width) || (pPixCache->GetHeight() != dest.height))
+        if((pPixCache->GetWidth() != dest.width()) || (pPixCache->GetHeight() != dest.height()))
         {
             delete pPixCache;
-            pPixCache = new PixelCache(dest.width, dest.height, BPP);
+            pPixCache = new PixelCache(dest.width(), dest.height(), BPP);
         }
     }
     else
-        pPixCache = new PixelCache(dest.width, dest.height, BPP);
+        pPixCache = new PixelCache(dest.width(), dest.height(), BPP);
 
 
 
-    if(m_b_cdebug)printf("  Render Region By GVUC\n");
+    if(m_b_cdebug)qDebug("  Render Region By GVUC\n");
 
     //     A performance enhancement.....
     ScaleTypeEnum scale_type_zoom = RENDER_HIDEF;
@@ -3704,12 +3573,12 @@ bool ChartBaseBSB::RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, co
 
 }
 
-wxImage *ChartBaseBSB::GetImage()
+QImage *ChartBaseBSB::GetImage()
 {
     int img_size_x = ((Size_X >> 2) * 4) + 4;
-    wxImage *img = new wxImage( img_size_x, Size_Y, false);
+    QImage *img = new QImage( img_size_x, Size_Y, QImage::Format_RGB32);
 
-    unsigned char *ppnx = img->GetData();
+    unsigned char *ppnx = img->bits();
 
 
     for(int i=0 ; i < Size_Y ; i++)
@@ -3717,7 +3586,7 @@ wxImage *ChartBaseBSB::GetImage()
         QRect source_rect(0,i,Size_X, 1);
         QRect dest_rect(0,0,Size_X, 1);
 
-        GetAndScaleData(img->GetData(), img_size_x * Size_Y * 3, source_rect, Size_X, dest_rect, Size_X, 1.0, RENDER_HIDEF);
+        GetAndScaleData(img->bits(), img_size_x * Size_Y * 3, source_rect, Size_X, dest_rect, Size_X, 1.0, RENDER_HIDEF);
 
         ppnx += img_size_x * 3;
     }
@@ -3732,7 +3601,7 @@ bool ChartBaseBSB::GetView( QRect& source, QRect& dest, ScaleTypeEnum scale_type
     //      PixelCache *pPixCacheTemp = new PixelCache(dest.width, dest.height, BPP);
 
     //    Get and Rescale the data directly into the temporary PixelCache data buffer
-    double factor = ((double)source.width)/((double)dest.width);
+    double factor = ((double)source.width())/((double)dest.width());
 
     /*
       if(!GetAndScaleData(&ppnx, source, source.width, dest, dest.width, factor, scale_type))
@@ -3746,7 +3615,7 @@ bool ChartBaseBSB::GetView( QRect& source, QRect& dest, ScaleTypeEnum scale_type
            pPixCache = pPixCacheTemp;
       }
 */
-    GetAndScaleData(pPixCache->GetpData(), pPixCache->GetLength(), source, source.width, dest, dest.width, factor, scale_type);
+    GetAndScaleData(pPixCache->GetpData(), pPixCache->GetLength(), source, source.width(), dest, dest.width(), factor, scale_type);
     pPixCache->Update();
 
     //    Update cache parameters
@@ -3771,8 +3640,8 @@ bool ChartBaseBSB::GetAndScaleData(unsigned char *ppn, size_t data_size, QRect& 
     double factor = scale_factor;
     int Factor =  (int)factor;
 
-    int target_width = (int)wxRound((double)source.width  / factor) ;
-    int target_height = (int)wxRound((double)source.height / factor);
+    int target_width = (int)qRound((double)source.width()  / factor) ;
+    int target_height = (int)qRound((double)source.height() / factor);
 
     int dest_line_length = dest_stride * BPP/8;
 
@@ -3796,21 +3665,17 @@ bool ChartBaseBSB::GetAndScaleData(unsigned char *ppn, size_t data_size, QRect& 
         if(scale_type == RENDER_HIDEF)
         {
             //    Allocate a working buffer based on scale factor
-            int blur_factor = wxMax(2, Factor);
-            int wb_size = (source.width) * (blur_factor * 2) * BPP/8 ;
+            int blur_factor = qMax(2, Factor);
+            int wb_size = (source.width()) * (blur_factor * 2) * BPP/8 ;
             s_data = (unsigned char *) malloc( wb_size ); // work buffer
             unsigned char *pixel;
             int y_offset;
 
-            for (int y = dest.y; y < (dest.y + dest.height); y++)
+            for (int y = dest.y(); y < (dest.y() + dest.height()); y++)
             {
                 //    Read "blur_factor" lines
 
-                QRect s1;
-                s1.x = source.x;
-                s1.y = source.y  + (int)(y * factor);
-                s1.width = source.width;
-                s1.height = blur_factor;
+                QRect s1(source.x(), source.y()  + (int)(y * factor), source.width(), blur_factor);
                 GetChartBits(s1, s_data, 1);
 
                 target_data = data + (y * dest_line_length/*dest_stride * BPP/8*/);
@@ -3824,7 +3689,7 @@ bool ChartBaseBSB::GetAndScaleData(unsigned char *ppn, size_t data_size, QRect& 
                     unsigned char *pix0 = s_data +  BPP/8 * ((int)( x * factor )) ;
                     y_offset = 0;
 
-                    if((x * Factor) < (Size_X - source.x))
+                    if((x * Factor) < (Size_X - source.x()))
                     {
                         // determine average
                         for ( int y1 = 0 ; y1 < blur_factor ; ++y1 )
@@ -3840,7 +3705,7 @@ bool ChartBaseBSB::GetAndScaleData(unsigned char *ppn, size_t data_size, QRect& 
 
                                 pixel_count++;
                             }
-                            y_offset += source.width ;
+                            y_offset += source.width() ;
                         }
 
                         if(0 == pixel_count)                // Protect
@@ -3871,36 +3736,32 @@ bool ChartBaseBSB::GetAndScaleData(unsigned char *ppn, size_t data_size, QRect& 
 
             int scaler = 16;
 
-            if(source.width > 32767)                  // High underscale can exceed signed math bits
+            if(source.width() > 32767)                  // High underscale can exceed signed math bits
                 scaler = 8;
 
             int wb_size = (Size_X) * ((/*Factor +*/ 1) * 2) * BPP/8 ;
             s_data = (unsigned char *) malloc( wb_size ); // work buffer
 
-            long x_delta = (source.width<<scaler) / target_width;
-            long y_delta = (source.height<<scaler) / target_height;
+            long x_delta = (source.width()<<scaler) / target_width;
+            long y_delta = (source.height()<<scaler) / target_height;
 
-            int y = dest.y;                // starting here
-            long ys = dest.y * y_delta;
+            int y = dest.y();                // starting here
+            long ys = dest.y() * y_delta;
 
-            while ( y < dest.y + dest.height)
+            while ( y < dest.y() + dest.height())
             {
                 //    Read 1 line at the right place from the source
 
-                QRect s1;
-                s1.x = 0;
-                s1.y = source.y + (ys >> scaler);
-                s1.width = Size_X;
-                s1.height = 1;
+                QRect s1(0, source.y() + (ys >> scaler), Size_X ,1);
                 GetChartBits(s1, s_data, get_bits_submap);
 
-                target_data = data + (y * dest_line_length/*dest_stride * BPP/8*/) + (dest.x * BPP / 8);
+                target_data = data + (y * dest_line_length/*dest_stride * BPP/8*/) + (dest.x() * BPP / 8);
 
-                long x = (source.x << scaler) + (dest.x * x_delta);
+                long x = (source.x() << scaler) + (dest.x() * x_delta);
                 long sizex16 = Size_X << scaler;
-                int xt = dest.x;
+                int xt = dest.x();
 
-                while((xt < dest.x + dest.width) && (x < 0))
+                while((xt < dest.x() + dest.width()) && (x < 0))
                 {
                     target_data[0] = 0;
                     target_data[1] = 0;
@@ -3911,7 +3772,7 @@ bool ChartBaseBSB::GetAndScaleData(unsigned char *ppn, size_t data_size, QRect& 
                     xt++;
                 }
 
-                while ((xt < dest.x + dest.width) && ( x < sizex16))
+                while ((xt < dest.x() + dest.width()) && ( x < sizex16))
                 {
 
                     unsigned char* src_pixel = &s_data[(x>>scaler)*BPP/8];
@@ -3925,7 +3786,7 @@ bool ChartBaseBSB::GetAndScaleData(unsigned char *ppn, size_t data_size, QRect& 
                     xt++;
                 }
 
-                while(xt < dest.x + dest.width)
+                while(xt < dest.x() + dest.width())
                 {
                     target_data[0] = 0;
                     target_data[1] = 0;
@@ -3970,14 +3831,14 @@ bool ChartBaseBSB::GetAndScaleData(unsigned char *ppn, size_t data_size, QRect& 
             sigaction(SIGSEGV, &sa_all_previous, NULL);        // reset signal handler
 
             QString msg;
-            msg.Printf(_T("   Caught SIGSEGV on GetandScaleData, Factor < 1"));
+            msg.qDebug(_T("   Caught SIGSEGV on GetandScaleData, Factor < 1"));
             ZCHX_LOGMSG(msg);
 
-            msg.Printf(_T("   m_raster_scale_factor:  %g   source.width: %d  dest.y: %d dest.x: %d dest.width: %d  dest.height: %d "),
+            msg.qDebug(_T("   m_raster_scale_factor:  %g   source.width: %d  dest.y: %d dest.x: %d dest.width: %d  dest.height: %d "),
                        m_raster_scale_factor, source.width, dest.y, dest.x, dest.width, dest.height);
             ZCHX_LOGMSG(msg);
 
-            msg.Printf(_T("   i: %d  j: %d dest_stride: %d  target_line_start: %p  target_data_x:  %p  y_offset: %d"),
+            msg.qDebug(_T("   i: %d  j: %d dest_stride: %d  target_line_start: %p  target_data_x:  %p  y_offset: %d"),
                        i, j, dest_stride, target_line_start, target_data_x, y_offset);
             ZCHX_LOGMSG(msg);
 
@@ -3996,43 +3857,43 @@ bool ChartBaseBSB::GetAndScaleData(unsigned char *ppn, size_t data_size, QRect& 
             latlong_to_chartpix(m_vp_render_last.clat, m_vp_render_last.clon, xd, yd);
             double xrd = xd - (m_vp_render_last.pix_width  * m_raster_scale_factor / 2);
             double yrd = yd - (m_vp_render_last.pix_height * m_raster_scale_factor / 2);
-            double x_vernier = (xrd - wxRound(xrd));
-            double y_vernier = (yrd - wxRound(yrd));
-            int x_vernier_i =  (int)wxRound(x_vernier / m_raster_scale_factor);
-            int y_vernier_i =  (int)wxRound(y_vernier / m_raster_scale_factor);
+            double x_vernier = (xrd - qRound(xrd));
+            double y_vernier = (yrd - qRound(yrd));
+            int x_vernier_i =  (int)qRound(x_vernier / m_raster_scale_factor);
+            int y_vernier_i =  (int)qRound(y_vernier / m_raster_scale_factor);
 
             //    Seems safe enough to read all the required data
             //    Although we must adjust (increase) temporary allocation for negative source.x
             //    and for vernier
-            int sx = wxMax(source.x, 0);
-            s_data = (unsigned char *) malloc( (sx + source.width + 2) * (source.height + 2) * BPP/8 );
+            int sx = qMax(source.x(), 0);
+            s_data = (unsigned char *) malloc( (sx + source.width() + 2) * (source.height() + 2) * BPP/8 );
 
             QRect vsource = source;
-            vsource.height += 2;                // get more bits to allow for vernier
-            vsource.width += 2;
-            vsource.x -= 1;
-            vsource.y -= 1;
+            vsource.setHeight(vsource.height() + 2);                // get more bits to allow for vernier
+            vsource.setWidth(vsource.width() + 2);
+            vsource.setX(vsource.x() - 1);
+            vsource.setY(vsource.y() - 1);
 
             GetChartBits(vsource, s_data, 1);
             unsigned char *source_data =  s_data;
 
-            j = dest.y;
+            j = dest.y();
 
-            while(j < dest.y + dest.height )
+            while(j < dest.y() + dest.height() )
             {
-                y_offset = (int)((j - y_vernier_i) * m_raster_scale_factor) * vsource.width;        // into the source data
+                y_offset = (int)((j - y_vernier_i) * m_raster_scale_factor) * vsource.width();        // into the source data
 
                 target_line_start = target_data + (j * dest_line_length /*dest_stride * BPP / 8*/);
-                target_data_x = target_line_start + ((dest.x) * BPP / 8);
+                target_data_x = target_line_start + ((dest.x()) * BPP / 8);
 
-                i = dest.x;
+                i = dest.x();
 
                 // Check data bounds to be sure of not overrunning the upstream buffer
-                if( (target_data_x + ( dest.width * BPP/8)) > (target_data + data_size) ) {
-                    j = dest.y + dest.height;
+                if( (target_data_x + ( dest.width() * BPP/8)) > (target_data + data_size) ) {
+                    j = dest.y() + dest.height();
                 }
                 else{
-                    while( i < dest.x + dest.width ){
+                    while( i < dest.x() + dest.width() ){
                         memcpy( target_data_x,
                                 source_data + BPP/8*(y_offset + (int)((i + x_vernier_i) * m_raster_scale_factor)),
                                 BPP/8 );
@@ -4062,7 +3923,7 @@ bool ChartBaseBSB::GetAndScaleData(unsigned char *ppn, size_t data_size, QRect& 
 
 bool ChartBaseBSB::GetChartBits(QRect& source, unsigned char *pPix, int sub_samp)
 {
-    wxCriticalSectionLocker locker(m_critSect);
+    QMutexLocker locker(&m_critSect);
     
     int iy;
 #define FILL_BYTE 0
@@ -4072,56 +3933,56 @@ bool ChartBaseBSB::GetChartBits(QRect& source, unsigned char *pPix, int sub_samp
     unsigned char *pCP;
     pCP = pPix;
 
-    iy = source.y;
+    iy = source.y();
 
-    while (iy < source.y + source.height)
+    while (iy < source.y() + source.height())
     {
         if((iy >= 0) && (iy < Size_Y))
         {
-            if(source.x >= 0)
+            if(source.x() >= 0)
             {
-                if((source.x + source.width) > Size_X)
+                if((source.x() + source.width()) > Size_X)
                 {
-                    if((Size_X - source.x) < 0)
-                        memset(pCP, FILL_BYTE, source.width  * BPP/8);
+                    if((Size_X - source.x()) < 0)
+                        memset(pCP, FILL_BYTE, source.width()  * BPP/8);
                     else
                     {
 
-                        BSBGetScanline( pCP,  iy, source.x, Size_X, sub_samp);
-                        memset(pCP + (Size_X - source.x) * BPP/8, FILL_BYTE,
-                               (source.x + source.width - Size_X) * BPP/8);
+                        BSBGetScanline( pCP,  iy, source.x(), Size_X, sub_samp);
+                        memset(pCP + (Size_X - source.x()) * BPP/8, FILL_BYTE,
+                               (source.x() + source.width() - Size_X) * BPP/8);
                     }
                 }
                 else
-                    BSBGetScanline( pCP, iy, source.x, source.x + source.width, sub_samp);
+                    BSBGetScanline( pCP, iy, source.x(), source.x() + source.width(), sub_samp);
             }
             else
             {
-                if((source.width + source.x) >= 0)
+                if((source.width() + source.x()) >= 0)
                 {
                     // Special case, black on left side
                     //  must ensure that (black fill length % sub_samp) == 0
 
-                    int xfill_corrected = -source.x + (source.x % sub_samp);    //+ve
+                    int xfill_corrected = -source.x() + (source.x() % sub_samp);    //+ve
                     memset(pCP, FILL_BYTE, (xfill_corrected * BPP/8));
                     BSBGetScanline( pCP + (xfill_corrected * BPP/8),  iy, 0,
-                                    source.width + source.x , sub_samp);
+                                    source.width() + source.x() , sub_samp);
 
                 }
                 else
                 {
-                    memset(pCP, FILL_BYTE, source.width  * BPP/8);
+                    memset(pCP, FILL_BYTE, source.width()  * BPP/8);
                 }
             }
         }
 
         else              // requested y is off chart
         {
-            memset(pCP, FILL_BYTE, source.width  * BPP/8);
+            memset(pCP, FILL_BYTE, source.width()  * BPP/8);
 
         }
 
-        pCP += source.width * BPP/8 * sub_samp;
+        pCP += source.width() * BPP/8 * sub_samp;
 
         iy += sub_samp;
     }     // while iy
@@ -4390,7 +4251,7 @@ int   ChartBaseBSB::BSBGetScanline( unsigned char *pLineBuf, int y, int xs, int 
         // as of 2015, in wxWidgets buffered streams don't test for a zero seek
         // so we check here to possibly avoid this seek with a measured performance gain
         if(ifs_bitmap->TellI() != pline_table[y] &&
-                wxInvalidOffset == ifs_bitmap->SeekI(pline_table[y], wxFromStart))
+                0 != ifs_bitmap->Seek(pline_table[y], FileReadWrite::SEEK_FROM_START))
             FAIL;
 
 #ifdef USE_OLD_CACHE
@@ -4724,7 +4585,7 @@ nocachestart:
 
     if(cnt == 500000) {
         static int d;
-        printf("cache time: %d %f\n", d, ttime / 1000.0);
+        qDebug("cache time: %d %f\n", d, ttime / 1000.0);
         cnt = 0;
         d++;
         //        ttime = 0;
@@ -4970,16 +4831,10 @@ bool ChartBaseBSB::AnalyzeSkew(void)
         apparent_skew = m_Chart_Skew;
 
     if(fabs( apparent_skew - m_Chart_Skew ) > 2) {           // measured skew is more than 2 degrees
-        m_Chart_Skew = apparent_skew;                         // different from stated skew
+        m_Chart_Skew = apparent_skew;                        // different from stated skew
 
-        QString msg = _T("   Warning: Skew override on chart ");
-        msg.Append(m_FullPath);
-        QString msg1;
-        msg1.Printf(_T(" is %5g degrees"), apparent_skew);
-        msg.Append(msg1);
-
-        ZCHX_LOGMSG(msg);
-
+        qDebug("   Warning: Skew override on chart %s", m_FullPath.toUtf8().data());
+        qDebug(" is %5g degrees", apparent_skew);
         return false;
 
     }
@@ -5217,7 +5072,7 @@ int   ChartBaseBSB::AnalyzeRefpoints(bool b_testSolution)
             cPoints.ty[n] = pRefTable[n].yr;
             cPoints.lon[n] = easting;
             cPoints.lat[n] = northing;
-            //                   printf(" x: %g  y: %g  east: %g  north: %g\n",pRefTable[n].xr, pRefTable[n].yr, easting, northing);
+            //                   qDebug(" x: %g  y: %g  east: %g  north: %g\n",pRefTable[n].xr, pRefTable[n].yr, easting, northing);
         }
 
         //      Helper parameters
@@ -5231,9 +5086,9 @@ int   ChartBaseBSB::AnalyzeRefpoints(bool b_testSolution)
         Georef_Calculate_Coefficients_Proj(&cPoints);
 
         //              for(int h=0 ; h < 10 ; h++)
-        //                    printf("pix to east %d  %g\n",  h, cPoints.pwx[h]);          // pix to lon
+        //                    qDebug("pix to east %d  %g\n",  h, cPoints.pwx[h]);          // pix to lon
         //             for(int h=0 ; h < 10 ; h++)
-        //                    printf("east to pix %d  %g\n",  h, cPoints.wpx[h]);          // lon to pix
+        //                    qDebug("east to pix %d  %g\n",  h, cPoints.wpx[h]);          // lon to pix
 
         /*
              if ((0 != m_Chart_DU ) && (0 != m_Chart_Scale))
@@ -5241,7 +5096,7 @@ int   ChartBaseBSB::AnalyzeRefpoints(bool b_testSolution)
                    double m_ppm_avg1 = m_Chart_DU * 39.37 / m_Chart_Scale;
                    m_ppm_avg1 *= cos(m_proj_lat * PI / 180.);                    // correct to chart centroid
 
-                   printf("BSB chart ppm_avg:%g ppm_avg1:%g\n", m_ppm_avg, m_ppm_avg1);
+                   qDebug("BSB chart ppm_avg:%g ppm_avg1:%g\n", m_ppm_avg, m_ppm_avg1);
                    m_ppm_avg = m_ppm_avg1;
              }
 */
@@ -5300,7 +5155,7 @@ int   ChartBaseBSB::AnalyzeRefpoints(bool b_testSolution)
             cPoints.ty[n] = pRefTable[n].yr;
             cPoints.lon[n] = easting;
             cPoints.lat[n] = northing;
-            //                   printf(" x: %g  y: %g  east: %g  north: %g\n",pRefTable[n].xr, pRefTable[n].yr, easting, northing);
+            //                   qDebug(" x: %g  y: %g  east: %g  north: %g\n",pRefTable[n].xr, pRefTable[n].yr, easting, northing);
         }
 
         //      Helper parameters
@@ -5314,9 +5169,9 @@ int   ChartBaseBSB::AnalyzeRefpoints(bool b_testSolution)
         Georef_Calculate_Coefficients_Proj(&cPoints);
 
         //              for(int h=0 ; h < 10 ; h++)
-        //                    printf("pix to east %d  %g\n",  h, cPoints.pwx[h]);          // pix to lon
+        //                    qDebug("pix to east %d  %g\n",  h, cPoints.pwx[h]);          // pix to lon
         //              for(int h=0 ; h < 10 ; h++)
-        //                    printf("east to pix %d  %g\n",  h, cPoints.wpx[h]);          // lon to pix
+        //                    qDebug("east to pix %d  %g\n",  h, cPoints.wpx[h]);          // lon to pix
 
     }
 
@@ -5336,7 +5191,7 @@ int   ChartBaseBSB::AnalyzeRefpoints(bool b_testSolution)
 
         m_ppm_avg = fabs(dx / de);
 
-        m_ExtraInfo = _T("---<<< Warning:  Chart georef accuracy may be poor. >>>---");
+        m_ExtraInfo = ("---<<< Warning:  Chart georef accuracy may be poor. >>>---");
     }
 
     else
@@ -5436,24 +5291,17 @@ int   ChartBaseBSB::AnalyzeRefpoints(bool b_testSolution)
 
     if(chart_error_pixels > max_pixel_error)
     {
-        QString msg = _T("   VP Final Check: Georeference Chart_Error_Factor on chart ");
-        msg.Append(m_FullPath);
-        QString msg1;
-        msg1.Printf(_T(" is %5g \n     nominal pixel error is: %5g"), Chart_Error_Factor, chart_error_pixels);
-        msg.Append(msg1);
-
-        ZCHX_LOGMSG(msg);
-
-        m_ExtraInfo = _T("---<<< Warning:  Chart georef accuracy is poor. >>>---");
+        qDebug("   VP Final Check: Georeference Chart_Error_Factor on chart ");
+        qDebug()<<m_FullPath;
+        qDebug(" is %5g \n     nominal pixel error is: %5g", Chart_Error_Factor, chart_error_pixels);
+        m_ExtraInfo = ("---<<< Warning:  Chart georef accuracy is poor. >>>---");
     }
 
     //  Try again with my calculated georef
     //  This problem was found on NOAA 514_1.KAP.  The embedded coefficients are just wrong....
     if((chart_error_pixels > max_pixel_error) && bHaveEmbeddedGeoref)
     {
-        QString msg = _T("   Trying again with internally calculated georef solution ");
-        ZCHX_LOGMSG(msg);
-
+        qDebug("   Trying again with internally calculated georef solution ");
         bHaveEmbeddedGeoref = false;
         SetVPRasterParms(vp);
 
@@ -5504,23 +5352,14 @@ int   ChartBaseBSB::AnalyzeRefpoints(bool b_testSolution)
         //        Good enough for navigation?
         if(chart_error_pixels > max_pixel_error)
         {
-            QString msg = _T("   VP Final Check with internal georef: Georeference Chart_Error_Factor on chart ");
-            msg.Append(m_FullPath);
-            QString msg1;
-            msg1.Printf(_T(" is %5g\n     nominal pixel error is: %5g"), Chart_Error_Factor, chart_error_pixels);
-            msg.Append(msg1);
-
-            ZCHX_LOGMSG(msg);
-
-            m_ExtraInfo = _T("---<<< Warning:  Chart georef accuracy is poor. >>>---");
+            qDebug("   VP Final Check with internal georef: Georeference Chart_Error_Factor on chart '%s'' ", m_FullPath.toUtf8().data());
+            qDebug(" is %5g\n     nominal pixel error is: %5g", Chart_Error_Factor, chart_error_pixels);
+            m_ExtraInfo = ("---<<< Warning:  Chart georef accuracy is poor. >>>---");
         }
         else
         {
-            QString msg = _T("   Result: OK, Internal georef solution used.");
-
-            ZCHX_LOGMSG(msg);
-
-            m_ExtraInfo = _T("");
+            qDebug("   Result: OK, Internal georef solution used.");
+            m_ExtraInfo = ("");
         }
 
     }
@@ -5586,7 +5425,7 @@ static double polytrans( double* coeff, double lon, double lat )
     //    ret += coeff[11]*lat*lat*lat*lat*lat;
 
     //    for(int n = 0 ; n < 10 ; n++)
-    //          printf("  %g\n", coeff[n]);
+    //          qDebug("  %g\n", coeff[n]);
 
     return ret;
 }

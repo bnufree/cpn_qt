@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Optimized wxBitmap Object
@@ -189,7 +189,7 @@ ocpnXImage::ocpnXImage(int width, int height)
     xdisplay = (Display *)wxGlobalDisplay();
     xscreen = DefaultScreen( xdisplay );
     xvisual = DefaultVisual( xdisplay, xscreen );
-    int bpp = wxTheApp->GetVisualInfo(xdisplay)->m_visualDepth;
+    int ZCHXBPP = wxTheApp->GetVisualInfo(xdisplay)->m_visualDepth;
 
 #ifdef ocpUSE_MITSHM
 
@@ -200,7 +200,7 @@ ocpnXImage::ocpnXImage(int width, int height)
 
     if(bMIT_SHM)
     {
-        m_img = XShmCreateImage( xdisplay, xvisual, bpp,
+        m_img = XShmCreateImage( xdisplay, xvisual, ZCHXBPP,
                                  ZPixmap, NULL, &shminfo,
                                  width, height );
         if (m_img == NULL)
@@ -261,7 +261,7 @@ after_check:
 
     if(NULL == m_img)
     {
-        m_img = XCreateImage( xdisplay, xvisual, bpp, ZPixmap, 0, 0, width, height, 32, 0 );
+        m_img = XCreateImage( xdisplay, xvisual, ZCHXBPP, ZPixmap, 0, 0, width, height, 32, 0 );
         m_img->data = (char*) x_malloc( m_img->bytes_per_line * m_img->height );
 
         if (m_img->data == NULL)
@@ -333,7 +333,7 @@ PixelCache::PixelCache(int width, int height, int depth)
     m_rgbo = RGB;                        // default value;
     pData = NULL;
 
-    bytes_per_pixel = BPP / 8;
+    bytes_per_pixel = ZCHXBPP / 8;
     line_pitch_bytes = bytes_per_pixel * width;
 
 
@@ -346,7 +346,7 @@ PixelCache::PixelCache(int width, int height, int depth)
 #endif
 
 #ifdef __PIX_CACHE_DIBSECTION__
-      m_pDS = new wxDIB(width, -height, BPP);
+      m_pDS = new wxDIB(width, -height, ZCHXBPP);
       pData = m_pDS->GetData();
       //        For DIBsections, each scan line is DWORD aligned, padded on the right
       line_pitch_bytes = (((m_width * 24) + 31) & ~31) >> 3;

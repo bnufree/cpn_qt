@@ -52,9 +52,9 @@ class M_COVR_Desc
 
       int      GetWKBSize();
       bool     WriteWKB(void *p);
-      int      ReadWKB(wxFFileInputStream &ifs);
+      int      ReadWKB(FileReadWrite &ifs);
       void     Update(M_COVR_Desc *pmcd);
-      OCPNRegion GetRegion(const ViewPort &vp, QPoint *pwp);
+      OCPNRegion GetRegion(const ViewPort &vp, zchxPoint *pwp);
 
 
       int         m_cell_index;

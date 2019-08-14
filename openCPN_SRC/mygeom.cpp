@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Tesselated Polygon Object
@@ -26,15 +26,6 @@
  *
  */
 // For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif //precompiled headers
-
-#include "wx/tokenzr.h"
-#include <wx/mstream.h>
-
 #include "config.h"
 
 #include "gdal/ogr_geometry.h"
@@ -55,8 +46,9 @@
 #include <string.h>
 #include <math.h>
 
-#include "tesselator.h"
-#include "Striper.h"
+#include "tess2/tesselator.h"
+#include "tess2/Striper.h"
+#include "_def.h"
 
 #ifdef __WXMSW__
 #include <windows.h>
@@ -150,7 +142,7 @@ void poolFree( void* userData, void* ptr )
  * @return TRUE if clockwise otherwise FALSE.
  */
 
-bool isRingClockwise(wxPoint2DDouble *pp, int nPointCount)
+bool isRingClockwise(zchxPointF *pp, int nPointCount)
 
 {
     double dfSum = 0.0;
@@ -486,7 +478,7 @@ int PolyTessGeo::BuildTessGLU()
       double x0, y0, x, y;
 //      OGRPoint p;
 
-      wxPoint2DDouble *pp = (wxPoint2DDouble *)m_vertexPtrArray[0];
+      zchxPointF *pp = (zchxPointF *)m_vertexPtrArray[0];
       bool cw = !isRingClockwise(pp, m_cntr[0]);
       
       //pp++;       // skip 0?
@@ -603,7 +595,7 @@ int PolyTessGeo::BuildTessGLU()
     
     for(iir=0; iir < (unsigned int)m_ncnt-1; iir++){
         
-            wxPoint2DDouble *pp = (wxPoint2DDouble *)m_vertexPtrArray[iir + 1];
+            zchxPointF *pp = (zchxPointF *)m_vertexPtrArray[iir + 1];
 
             int npti  = m_cntr[iir+1];
             ptValid = npti;
@@ -889,7 +881,7 @@ int PolyTessGeo::BuildTess(void)
       double x0, y0, x, y;
       OGRPoint p;
 
-      wxPoint2DDouble *pp = (wxPoint2DDouble *)m_vertexPtrArray[0];
+      zchxPointF *pp = (zchxPointF *)m_vertexPtrArray[0];
       bool cw = isRingClockwise(pp, m_cntr[0]);
       
       //pp++;       // skip 0?
@@ -993,7 +985,7 @@ int PolyTessGeo::BuildTess(void)
       for(iir=0; iir < m_ncnt-1; iir++)
       {
             ppt = geoPt;
-            wxPoint2DDouble *pp = (wxPoint2DDouble *)m_vertexPtrArray[iir + 1];
+            zchxPointF *pp = (zchxPointF *)m_vertexPtrArray[iir + 1];
 
             int npti  = m_cntr[iir+1];
             ptValid = npti;

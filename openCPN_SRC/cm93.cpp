@@ -23,21 +23,6 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  **************************************************************************/
 
-// For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif //precompiled headers
-
-#include <wx/textfile.h>
-#include <wx/tokenzr.h>
-#include <wx/arrstr.h>
-#include <wx/mstream.h>
-#include <wx/spinctrl.h>
-#include <wx/listctrl.h>
-#include <wx/regex.h>
-
 #include <algorithm>
 
 #include "gdal/ogr_api.h"
@@ -50,18 +35,19 @@
 #include "navutil.h"                            // for LogMessageOnce
 #include "ocpn_pixel.h"                         // for ocpnUSE_DIBSECTION
 #include "ocpndc.h"
-#include "pluginmanager.h"  // for PlugInManager
+//#include "pluginmanager.h"  // for PlugInManager
 #include "OCPNPlatform.h"
 #include "wx28compat.h"
 #include "ChartDataInputStream.h"
 #include "DetailSlider.h"
 #include "chcanv.h"
+#include "zchxmapmainwindow.h"
 
 #include <stdio.h>
 
 #ifdef ocpnUSE_GL
 #include "glChartCanvas.h"
-extern ocpnGLOptions g_GLOptions;
+extern zchxGLOptions g_GLOptions;
 #endif
 
 
@@ -75,39 +61,32 @@ extern ocpnGLOptions g_GLOptions;
 
 extern CM93OffsetDialog          *g_pCM93OffsetDialog;
 extern OCPNPlatform     *g_Platform;
-extern wxString         g_SENCPrefix;
+extern QString         g_SENCPrefix;
 extern s52plib          *ps52plib;
-extern MyConfig         *pConfig;
+extern zchxConfig         *pConfig;
 extern bool             g_bDebugCM93;
 extern int              g_cm93_zoom_factor;
 extern PopUpDSlide       *pPopupDetailSlider;
 extern int              g_detailslider_dialog_x, g_detailslider_dialog_y;
 extern bool             g_bShowDetailSlider;
-extern wxString         g_PrivateDataDir;
+extern QString         g_PrivateDataDir;
 
 extern bool             g_bopengl;
-extern PlugInManager    *g_pi_manager;
+//extern PlugInManager    *g_pi_manager;
 extern float            g_GLMinSymbolLineWidth;
 
 extern bool  g_b_EnableVBO;
 extern PFNGLBINDBUFFERPROC                 s_glBindBuffer;
 
 // TODO  These should be gotten from the ctor
-extern MyFrame          *gFrame;
+extern zchxMapMainWindow          *gFrame;
 
 
-#include <wx/arrimpl.cpp>
-WX_DEFINE_OBJARRAY ( Array_Of_M_COVR_Desc );
-
-#include <wx/listimpl.cpp>
-WX_DEFINE_LIST ( List_Of_M_COVR_Desc );
-
-
-void appendOSDirSep ( wxString* pString )
+void appendOSDirSep ( QString* pString )
 {
-      wxChar sep = wxFileName::GetPathSeparator();
-      if ( pString->Last() != sep )
-            pString->Append ( sep );
+      QChar sep = QDir::separator();
+      if ( pString->right(1) != sep )
+            pString->append( sep );
 }
 
 
@@ -193,11 +172,12 @@ bool M_COVR_Desc:: WriteWKB ( void *p )
       return true;
 }
 
-int M_COVR_Desc:: ReadWKB ( wxFFileInputStream &ifs )
+int M_COVR_Desc:: ReadWKB ( FileReadWrite &ifs )
 {
       //    Read the length of the WKB
       int length = 0;
-      if ( !ifs.Read ( &length, sizeof ( int ) ).Eof() )
+      ifs.Read ( &length, sizeof ( int ) );
+      if ( !ifs.IsEof() )
       {
             ifs.Read ( &m_cell_index, sizeof ( int ) );
             ifs.Read ( &m_object_id, sizeof ( int ) );
@@ -237,7 +217,7 @@ int M_COVR_Desc:: ReadWKB ( wxFFileInputStream &ifs )
       return length;
 }
 
-OCPNRegion M_COVR_Desc::GetRegion ( const ViewPort &vp, wxPoint *pwp )
+OCPNRegion M_COVR_Desc::GetRegion ( const ViewPort &vp, zchxPoint *pwp )
 {
       float_2Dpt *p = pvertices;
 
@@ -280,7 +260,7 @@ OCPNRegion M_COVR_Desc::GetRegion ( const ViewPort &vp, wxPoint *pwp )
 // relating to cm93 cell MCOVR objects of a particular scale
 //----------------------------------------------------------------------------
 
-WX_DECLARE_HASH_MAP ( int, int, wxIntegerHash, wxIntegerEqual, cm93cell_hash );
+typedef QHash<int, int>     cm93cell_hash;
 
 char sig_version[] = "COVR1002";
 
@@ -290,20 +270,20 @@ class covr_set
             covr_set ( cm93chart *parent );
             ~covr_set();
 
-            bool Init ( wxChar scale_char, wxString &prefix );
-            unsigned int GetCoverCount() { return m_covr_array_outlines.GetCount(); }
+            bool Init ( QChar scale_char, QString &prefix );
+            unsigned int GetCoverCount() { return m_covr_array_outlines.count(); }
             M_COVR_Desc *GetCover ( unsigned int im ) { return &m_covr_array_outlines[im]; }
-            void Add_MCD ( M_COVR_Desc *pmcd );
-            bool Add_Update_MCD ( M_COVR_Desc *pmcd );
+            void Add_MCD ( const M_COVR_Desc & pmcd );
+            bool Add_Update_MCD ( const M_COVR_Desc &pmcd );
             bool IsCovrLoaded ( int cell_index );
             int Find_MCD ( M_COVR_Desc *pmcd );
             M_COVR_Desc *Find_MCD ( int cell_index, int object_id, int sbcell );
 
             cm93chart         *m_pParent;
-            wxChar            m_scale_char;
+            QChar            m_scale_char;
             int               m_scale;
 
-            wxString          m_cachefile;
+            QString          m_cachefile;
 
             Array_Of_M_COVR_Desc    m_covr_array_outlines;        // array, for chart outline rendering
 
@@ -319,18 +299,18 @@ covr_set::covr_set ( cm93chart *parent )
 covr_set::~covr_set()
 {
       //    Create/Update the cache
-      if(m_cachefile.IsEmpty())
+      if(m_cachefile.isEmpty())
             return;                             // presumably for Z scale charts
                                                 // for which we create no cache
 
-      if ( m_covr_array_outlines.GetCount() )
+      if ( m_covr_array_outlines.count() )
       {
-            wxFFileOutputStream ofs ( m_cachefile );
-            if ( ofs.IsOk() )
+            FileReadWrite ofs ( m_cachefile );
+            if ( ofs.IsOK() )
             {
                   ofs.Write ( sig_version, 8 );             // write signature
 
-                  for ( unsigned int i=0 ; i < m_covr_array_outlines.GetCount() ; i++ )
+                  for ( unsigned int i=0 ; i < m_covr_array_outlines.count() ; i++ )
                   {
                         int wkbsize = m_covr_array_outlines[i].GetWKBSize();
                         if ( wkbsize )
@@ -346,11 +326,11 @@ covr_set::~covr_set()
       }
 }
 
-bool covr_set::Init ( wxChar scale_char, wxString &prefix )
+bool covr_set::Init ( QChar scale_char, QString &prefix )
 {
       m_scale_char = scale_char;
 
-      switch ( m_scale_char )
+      switch ( m_scale_char.unicode())
       {
             case 'Z': m_scale = 20000000;  break;
             case 'A': m_scale =  3000000;  break;
@@ -364,55 +344,63 @@ bool covr_set::Init ( wxChar scale_char, wxString &prefix )
       }
 
       //    Create the cache file name
-      wxString prefix_string = prefix;
-      wxString sep ( wxFileName::GetPathSeparator() );
-      prefix_string.Replace ( sep, _T ( "_" ) );
-      prefix_string.Replace ( _T ( ":" ), _T ( "_" ) );       // for Windows
+      QString prefix_string = prefix;
+      QString sep ( QDir::separator() );
+      prefix_string.replace ( sep, "_"  );
+      prefix_string.replace ( ":" ,"_"  );       // for Windows
 
-      m_cachefile = g_Platform->GetPrivateDataDir();
+      m_cachefile = g_Platform->GetDataDir();
       appendOSDirSep ( &m_cachefile );
 
-      m_cachefile += _T ( "cm93" );
+      m_cachefile += ( "cm93" );
       appendOSDirSep ( &m_cachefile );
 
       m_cachefile += prefix_string;          // include the cm93 prefix string in the cache file name
-      m_cachefile += _T ( "_" );             // to support multiple cm93 data sets
+      m_cachefile += ( "_" );             // to support multiple cm93 data sets
 
-      wxString cache_old_old_name = m_cachefile;
-      cache_old_old_name += _T ( "coverset." );
+      QString cache_old_old_name = m_cachefile;
+      cache_old_old_name += ( "coverset." );
       cache_old_old_name += m_scale_char;
 
-      wxString cache_old_name = m_cachefile;
-      cache_old_name += _T ( "coverset_sig." );
+      QString cache_old_name = m_cachefile;
+      cache_old_name += ( "coverset_sig." );
       cache_old_name += m_scale_char;
 
-      m_cachefile += _T ( "coverset_sigp." );
+      m_cachefile += ( "coverset_sigp." );
       m_cachefile += m_scale_char;
 
-      wxFileName fn ( m_cachefile );
-      if ( !fn.DirExists() )
-            wxFileName::Mkdir ( fn.GetPath(), 0777, wxPATH_MKDIR_FULL );
+      QFileInfo fn ( m_cachefile );
+      if ( !fn.exists() )
+      {
+          QDir dir(fn.absolutePath());
+          dir.mkpath(fn.absolutePath());
+      }
 
 
       //    Preload the cache
-      if ( !wxFileName::FileExists ( m_cachefile ) )
+      if ( !QFile::exists(m_cachefile ) )
       {
             // The signed file does not exist
             // Check for an old style file, and delete if found.
-            if ( wxFileName::FileExists ( cache_old_name ) )
-                  ::wxRemoveFile ( cache_old_name );
-            if ( wxFileName::FileExists ( cache_old_old_name ) )
-                  ::wxRemoveFile ( cache_old_old_name );
+            if ( QFile::exists( cache_old_name ) )
+            {
+                  QFile::remove(cache_old_name );
+            }
+            if ( QFile::exists( cache_old_old_name ) )
+            {
+                  QFile::remove( cache_old_old_name );
+            }
             return false;
       }
 
-      wxFFileInputStream ifs ( m_cachefile );
-      if ( ifs.IsOk() )
+      FileReadWrite ifs ( m_cachefile );
+      if ( ifs.IsOK() )
       {
 
             char sig_bytes[9];
             //    Validate the file signature
-            if ( !ifs.Read ( &sig_bytes, 8 ).Eof() )
+            ifs.Read ( &sig_bytes, 8 );
+            if ( !ifs.IsEof() )
             {
                   if ( strncmp ( sig_bytes, sig_version, 8 ) )
                   {
@@ -426,22 +414,21 @@ bool covr_set::Init ( wxChar scale_char, wxString &prefix )
             bool b_cont = true;
             while ( b_cont )
             {
-                  M_COVR_Desc *pmcd = new M_COVR_Desc;
-                  int length = pmcd->ReadWKB ( ifs );
+                  M_COVR_Desc pmcd;
+                  int length = pmcd.ReadWKB ( ifs );
 
                   if ( length )
                   {
-                        m_covr_array_outlines.Add ( pmcd );
+                        m_covr_array_outlines.append( pmcd );
 
-                        if ( m_cell_hash.find ( pmcd->m_cell_index ) == m_cell_hash.end() )
-                              m_cell_hash[pmcd->m_cell_index] = 0;      // initialize the element
+                        if ( m_cell_hash.find ( pmcd.m_cell_index ) == m_cell_hash.end() )
+                              m_cell_hash[pmcd.m_cell_index] = 0;      // initialize the element
 
-                        m_cell_hash[pmcd->m_cell_index]++;        // add this M_COVR to the hash map
+                        m_cell_hash[pmcd.m_cell_index]++;        // add this M_COVR to the hash map
 
                   }
                   else
                   {
-                        delete pmcd;
                         b_cont = false;
                   }
             }
@@ -450,14 +437,14 @@ bool covr_set::Init ( wxChar scale_char, wxString &prefix )
       return true;
 }
 
-void covr_set::Add_MCD ( M_COVR_Desc *pmcd )
+void covr_set::Add_MCD ( const M_COVR_Desc &pmcd )
 {
-      m_covr_array_outlines.Add ( pmcd );
+      m_covr_array_outlines.append ( pmcd );
 
-      if ( m_cell_hash.find ( pmcd->m_cell_index ) == m_cell_hash.end() )     // not present yet?
-            m_cell_hash[pmcd->m_cell_index] = 0;  // initialize
+      if ( m_cell_hash.find ( pmcd.m_cell_index ) == m_cell_hash.end() )     // not present yet?
+            m_cell_hash[pmcd.m_cell_index] = 0;  // initialize
 
-      m_cell_hash[pmcd->m_cell_index]++;        // add this M_COVR to the hash map
+      m_cell_hash[pmcd.m_cell_index]++;        // add this M_COVR to the hash map
 }
 
 bool covr_set::IsCovrLoaded ( int cell_index )
@@ -465,12 +452,12 @@ bool covr_set::IsCovrLoaded ( int cell_index )
       return ( m_cell_hash.find ( cell_index ) != m_cell_hash.end() );
 }
 
-bool covr_set::Add_Update_MCD ( M_COVR_Desc *pmcd )
+bool covr_set::Add_Update_MCD ( const M_COVR_Desc &pmcd )
 {
-      if ( m_cell_hash.find ( pmcd->m_cell_index ) == m_cell_hash.end() )     // not present yet?
+      if ( m_cell_hash.find ( pmcd.m_cell_index ) == m_cell_hash.end() )     // not present yet?
       {
-            m_covr_array_outlines.Add ( pmcd );
-            m_cell_hash[pmcd->m_cell_index] = 1;  // initialize
+            m_covr_array_outlines.append ( pmcd );
+            m_cell_hash[pmcd.m_cell_index] = 1;  // initialize
             return true;
       }
       //    There is at least one MCD already in place for this cell index
@@ -479,12 +466,12 @@ bool covr_set::Add_Update_MCD ( M_COVR_Desc *pmcd )
       else
       {
             bool b_found = false;
-            for ( unsigned int i=0 ; i < m_covr_array_outlines.GetCount() ; i++ )
+            for ( unsigned int i=0 ; i < m_covr_array_outlines.count() ; i++ )
             {
-                  M_COVR_Desc *pmcd_candidate = &m_covr_array_outlines[i];
-                  if ( ( pmcd_candidate->m_cell_index == pmcd->m_cell_index ) &&
-                          ( pmcd_candidate->m_object_id == pmcd->m_object_id ) &&
-                          ( pmcd_candidate->m_subcell == pmcd->m_subcell ) )
+                  M_COVR_Desc pmcd_candidate = m_covr_array_outlines[i];
+                  if ( ( pmcd_candidate.m_cell_index == pmcd.m_cell_index ) &&
+                          ( pmcd_candidate.m_object_id == pmcd.m_object_id ) &&
+                          ( pmcd_candidate.m_subcell == pmcd.m_subcell ) )
 
                   {
                         b_found = true;
@@ -494,8 +481,8 @@ bool covr_set::Add_Update_MCD ( M_COVR_Desc *pmcd )
 
             if ( !b_found )
             {
-                  m_covr_array_outlines.Add ( pmcd );
-                  m_cell_hash[pmcd->m_cell_index]++;        // add this M_COVR to the hash map
+                  m_covr_array_outlines.append ( pmcd );
+                  m_cell_hash[pmcd.m_cell_index]++;        // add this M_COVR to the hash map
                   return true;
             }
             else
@@ -513,7 +500,7 @@ int covr_set::Find_MCD ( M_COVR_Desc *pmcd )
             //    We need to search the entire table to see if any of those MCD's
             //    correspond to this MCD's object identifier as well as cell index
 
-            for ( unsigned int i=0 ; i < m_covr_array_outlines.GetCount() ; i++ )
+            for ( unsigned int i=0 ; i < m_covr_array_outlines.count() ; i++ )
             {
                   M_COVR_Desc *pmcd_candidate = &m_covr_array_outlines[i];
                   if ( ( pmcd_candidate->m_cell_index == pmcd->m_cell_index ) &&
@@ -532,7 +519,7 @@ M_COVR_Desc *covr_set::Find_MCD ( int cell_index, int object_id, int subcell )
       if ( m_cell_hash.find ( cell_index ) == m_cell_hash.end() )     // not present?
             return NULL;
 
-      for ( unsigned int i=0 ; i < m_covr_array_outlines.GetCount() ; i++ )
+      for ( unsigned int i=0 ; i < m_covr_array_outlines.count() ; i++ )
       {
             M_COVR_Desc *pmcd_candidate = &m_covr_array_outlines[i];
             if ( ( pmcd_candidate->m_cell_index == cell_index ) &&
@@ -580,50 +567,50 @@ static bool  cm93_decode_table_created;
 // This could be made simpler, but matches the old code better as is
 class FindCM93Dictionary : public wxDirTraverser
 {
-      public:
-            FindCM93Dictionary ( wxString& path ) : m_path ( path ) {}
+public:
+    FindCM93Dictionary ( QString& path ) : m_path ( path ) {}
 
-            virtual wxDirTraverseResult OnFile ( const wxString& filename )
-            {
-                  wxString name = filename.AfterLast ( wxFileName::GetPathSeparator() ).Lower();
-                  if ( name == wxT ( "cm93obj.dic" ) )
-                  {
-                        m_path = filename;
-                        return wxDIR_STOP;
-                  }
+    virtual wxDirTraverseResult OnFile ( const QString& filename )
+    {
+        QString name = filename.AfterLast ( wxFileName::GetPathSeparator() ).Lower();
+        if ( name == wxT ( "cm93obj.dic" ) )
+        {
+            m_path = filename;
+            return wxDIR_STOP;
+        }
 
-                  return wxDIR_CONTINUE;
-            }
+        return wxDIR_CONTINUE;
+    }
 
-            virtual wxDirTraverseResult OnDir ( const wxString& WXUNUSED ( dirname ) )
-            {
-                  return wxDIR_CONTINUE;
-            }
+    virtual wxDirTraverseResult OnDir ( const QString& WXUNUSED ( dirname ) )
+    {
+        return wxDIR_CONTINUE;
+    }
 
-      private:
-            wxString& m_path;
+private:
+    QString& m_path;
 };
 
 cm93_dictionary::cm93_dictionary()
 {
-      m_S57ClassArray   = NULL;
-      m_AttrArray       = NULL;
-      m_GeomTypeArray   = NULL;;
-      m_ValTypeArray    = NULL;
-      m_max_class       = 0;
-      m_ok = false;
+    m_S57ClassArray   = NULL;
+    m_AttrArray       = NULL;
+    m_GeomTypeArray   = NULL;;
+    m_ValTypeArray    = NULL;
+    m_max_class       = 0;
+    m_ok = false;
 
 }
 
 
-bool cm93_dictionary::LoadDictionary(const wxString & dictionary_dir)
+bool cm93_dictionary::LoadDictionary(const QString & dictionary_dir)
 {
       int i, nline;
-      wxString line;
-      wxString dir ( dictionary_dir );    // a copy
+      QString line;
+      QString dir ( dictionary_dir );    // a copy
       bool  ret_val = false;
 
-      wxChar sep = wxFileName::GetPathSeparator();
+      QChar sep = wxFileName::GetPathSeparator();
       if ( dir.Last() != sep )
             dir.Append ( sep );
 
@@ -632,7 +619,7 @@ bool cm93_dictionary::LoadDictionary(const wxString & dictionary_dir)
 
       //    Build some array strings for Feature decoding
 
-      wxString sf ( dir );
+      QString sf ( dir );
       sf.Append ( _T ( "CM93OBJ.DIC" ) );
 
       if ( !wxFileName::FileExists ( sf ) )
@@ -660,14 +647,14 @@ bool cm93_dictionary::LoadDictionary(const wxString & dictionary_dir)
       {
             line = file.GetLine ( i );
 
-            wxStringTokenizer tkz ( line, wxT ( "|" ) );
+            QStringTokenizer tkz ( line, wxT ( "|" ) );
 //            while ( tkz.HasMoreTokens() )
             {
                   //  6 char class name
-                  wxString class_name = tkz.GetNextToken();
+                  QString class_name = tkz.GetNextToken();
 
                   //  class number, ascii
-                  wxString token = tkz.GetNextToken();
+                  QString token = tkz.GetNextToken();
                   long liclass;
                   token.ToLong ( &liclass );
                   int iclass = liclass;
@@ -675,7 +662,7 @@ bool cm93_dictionary::LoadDictionary(const wxString & dictionary_dir)
                         iclass_max = iclass;
 
                   //  geom type, ascii
-                  wxString geo_type = tkz.GetNextToken();
+                  QString geo_type = tkz.GetNextToken();
 
             }
 
@@ -695,26 +682,26 @@ bool cm93_dictionary::LoadDictionary(const wxString & dictionary_dir)
       {
             line = file.GetLine ( i );
 
-            wxStringTokenizer tkz ( line, wxT ( "|" ) );
+            QStringTokenizer tkz ( line, wxT ( "|" ) );
 //           while ( tkz.HasMoreTokens() )
             {
                   //  6 char class name
-                  wxString class_name = tkz.GetNextToken();
+                  QString class_name = tkz.GetNextToken();
 
                   //  class number, ascii
-                  wxString token = tkz.GetNextToken();
+                  QString token = tkz.GetNextToken();
                   long liclass;
                   token.ToLong ( &liclass );
                   int iclass = liclass;
 
                   //  geom type, ascii
-                  wxString geo_type = tkz.GetNextToken();
+                  QString geo_type = tkz.GetNextToken();
 
                   m_S57ClassArray->Insert ( class_name, iclass );
                   m_S57ClassArray->RemoveAt ( iclass + 1 );
 
                   int igeom_type = -1;                            // default unknown
-                  wxChar geo_type_primary = geo_type[0];
+                  QChar geo_type_primary = geo_type[0];
 
                   if ( geo_type_primary == 'A' )
                         igeom_type = 3;
@@ -735,7 +722,7 @@ bool cm93_dictionary::LoadDictionary(const wxString & dictionary_dir)
 
       //    Build some array strings for Attribute decoding
 
-      wxString sfa ( dir );
+      QString sfa ( dir );
       sfa.Append ( _T ( "ATTRLUT.DIC" ) );
 
       if ( !wxFileName::FileExists ( sfa ) )
@@ -770,15 +757,15 @@ bool cm93_dictionary::LoadDictionary(const wxString & dictionary_dir)
                         }
 
 
-                        if ( !line.StartsWith ( ( const wxChar * ) wxT ( ";" ) ) )
+                        if ( !line.StartsWith ( ( const QChar * ) wxT ( ";" ) ) )
                         {
-                              wxStringTokenizer tkz ( line, wxT ( "|" ) );
+                              QStringTokenizer tkz ( line, wxT ( "|" ) );
                               {
                                     //  6 attribute label
-                                    wxString class_name = tkz.GetNextToken();
+                                    QString class_name = tkz.GetNextToken();
 
                                     //  attribute number, ascii
-                                    wxString token = tkz.GetNextToken();
+                                    QString token = tkz.GetNextToken();
                                     long liattr;
                                     token.ToLong ( &liattr );
                                     int iattr = liattr;
@@ -818,15 +805,15 @@ bool cm93_dictionary::LoadDictionary(const wxString & dictionary_dir)
                         }
 
 
-                        if ( !line.StartsWith ( ( const wxChar * ) wxT ( ";" ) ) )
+                        if ( !line.StartsWith ( ( const QChar * ) wxT ( ";" ) ) )
                         {
-                              wxStringTokenizer tkz ( line, wxT ( "|" ) );
+                              QStringTokenizer tkz ( line, wxT ( "|" ) );
                               {
                                     //  6 char class name
-                                    wxString attr_name = tkz.GetNextToken();
+                                    QString attr_name = tkz.GetNextToken();
 
                                     //  class number, ascii
-                                    wxString token = tkz.GetNextToken();
+                                    QString token = tkz.GetNextToken();
                                     long liattr;
                                     token.ToLong ( &liattr );
                                     int iattr = liattr;
@@ -907,16 +894,16 @@ bool cm93_dictionary::LoadDictionary(const wxString & dictionary_dir)
                               }
 
 
-                              if ( !line.StartsWith ( ( const wxChar * ) wxT ( ";" ) ) )
+                              if ( !line.StartsWith ( ( const QChar * ) wxT ( ";" ) ) )
                               {
-                                    wxStringTokenizer tkz ( line, wxT ( "|" ) );
+                                    QStringTokenizer tkz ( line, wxT ( "|" ) );
                                     if ( tkz.CountTokens() )
                                     {
                                           //  6 attribute label
-                                          wxString class_name = tkz.GetNextToken();
+                                          QString class_name = tkz.GetNextToken();
 
                                           //  attribute number, ascii
-                                          wxString token = tkz.GetNextToken();
+                                          QString token = tkz.GetNextToken();
                                           long liattr;
                                           token.ToLong ( &liattr );
                                           int iattr = liattr;
@@ -958,16 +945,16 @@ bool cm93_dictionary::LoadDictionary(const wxString & dictionary_dir)
                               }
 
 
-                              if ( !line.StartsWith ( ( const wxChar * ) wxT ( ";" ) ) )
+                              if ( !line.StartsWith ( ( const QChar * ) wxT ( ";" ) ) )
                               {
-                                    wxStringTokenizer tkz ( line, wxT ( "|\r\n" ) );
+                                    QStringTokenizer tkz ( line, wxT ( "|\r\n" ) );
                                     if ( tkz.CountTokens() >= 3 )
                                     {
                                           //  6 char class name
-                                          wxString attr_name = tkz.GetNextToken();
+                                          QString attr_name = tkz.GetNextToken();
 
                                           //  class number, ascii
-                                          wxString token = tkz.GetNextToken();
+                                          QString token = tkz.GetNextToken();
                                           long liattr;
                                           token.ToLong ( &liattr );
                                           int iattr = liattr;
@@ -1009,7 +996,7 @@ bool cm93_dictionary::LoadDictionary(const wxString & dictionary_dir)
       {
             m_ok = true;
 
-            wxString msg ( _T ( "Loaded CM93 Dictionary from " ) );
+            QString msg ( _T ( "Loaded CM93 Dictionary from " ) );
             msg.Append ( dir );
             ZCHX_LOGMSG(msg);
 
@@ -1018,7 +1005,7 @@ bool cm93_dictionary::LoadDictionary(const wxString & dictionary_dir)
       return ret_val;
 }
 
-wxString cm93_dictionary::GetClassName ( int iclass )
+QString cm93_dictionary::GetClassName ( int iclass )
 {
       if ( ( iclass > m_max_class ) || ( iclass < 0 ) )
             return ( _T ( "Unknown" ) );
@@ -1026,7 +1013,7 @@ wxString cm93_dictionary::GetClassName ( int iclass )
             return ( m_S57ClassArray->Item ( iclass ) );
 }
 
-wxString cm93_dictionary::GetAttrName ( int iattr )
+QString cm93_dictionary::GetAttrName ( int iattr )
 {
       if ( ( iattr > m_max_attr ) || ( iattr < 0 ) )
             return ( _T ( "UnknownAttr" ) );
@@ -1240,11 +1227,11 @@ void Get_CM93_Cell_Origin ( int cellindex, int scale, double *lat, double *lon )
 
 
 //    Answer the query: "Is there a cm93 cell at the specified scale which contains a given lat/lon?"
-bool Is_CM93Cell_Present ( wxString &fileprefix, double lat, double lon, int scale_index )
+bool Is_CM93Cell_Present ( QString &fileprefix, double lat, double lon, int scale_index )
 {
       int scale;
       int dval;
-      wxChar scale_char;
+      QChar scale_char;
 
       switch ( scale_index )
       {
@@ -1263,7 +1250,7 @@ bool Is_CM93Cell_Present ( wxString &fileprefix, double lat, double lon, int sca
 
 
       //    Create the file name
-      wxString file;
+      QString file;
 
       int ilat = cellindex / 10000;
       int ilon = cellindex % 10000;
@@ -1274,23 +1261,23 @@ bool Is_CM93Cell_Present ( wxString &fileprefix, double lat, double lon, int sca
       int ilatroot = ( ( ( ilat - 30 ) / 60 ) * 60 ) + 30;
       int ilonroot = ( ilon / 60 ) * 60;
 
-      wxString fileroot;
+      QString fileroot;
       fileroot.Printf ( _T ( "%04d%04d" ), ilatroot, ilonroot );
       appendOSDirSep(&fileroot);
 
-      wxString sdir ( fileprefix );
+      QString sdir ( fileprefix );
       sdir += fileroot;
       sdir += scale_char;
 
-      wxString tfile;
+      QString tfile;
       tfile.Printf ( _T ( "?%03d%04d." ), jlat, jlon );
       tfile += scale_char;
 
       //    Validate that the directory exists, adjusting case if necessary
       if ( !::wxDirExists ( sdir ) )
       {
-            wxString old_scalechar ( scale_char );
-            wxString new_scalechar = old_scalechar.Lower();
+            QString old_scalechar ( scale_char );
+            QString new_scalechar = old_scalechar.Lower();
 
             sdir = fileprefix;
             sdir += fileroot;
@@ -1309,10 +1296,10 @@ bool Is_CM93Cell_Present ( wxString &fileprefix, double lat, double lon, int sca
                   return true;
 
             //    Try with alternate case of m_scalechar
-            wxString old_scalechar ( scale_char );
-            wxString new_scalechar = old_scalechar.Lower();
+            QString old_scalechar ( scale_char );
+            QString new_scalechar = old_scalechar.Lower();
             
-            wxString tfile1;
+            QString tfile1;
             tfile1.Printf ( _T ( "?%03d%04d." ), jlat, jlon );
             tfile1 += new_scalechar;
             
@@ -2453,12 +2440,12 @@ int cm93chart::CreateObjChain ( int cell_index, int subcell, double view_scale_p
 
                   if ( obj )
                   {
-                        wxString objnam  = obj->GetAttrValueAsString("OBJNAM");
-                        wxString fe_name = wxString(obj->FeatureName, wxConvUTF8);
+                        QString objnam  = obj->GetAttrValueAsString("OBJNAM");
+                        QString fe_name = QString(obj->FeatureName, wxConvUTF8);
                         if ( fe_name == _T("_texto") )
                             objnam  = obj->GetAttrValueAsString("_texta");
                         if (objnam.Len() > 0) {
-                            wxString cellname = wxString::Format(_T("%i_%i"), cell_index, subcell);
+                            QString cellname = QString::Format(_T("%i_%i"), cell_index, subcell);
                             g_pi_manager->SendVectorChartObjectInfo( cellname, fe_name, objnam, obj->m_lat, obj->m_lon, scale, nativescale );
                         }
 //      Build/Maintain the ATON floating/rigid arrays
@@ -2567,7 +2554,7 @@ int cm93chart::CreateObjChain ( int cell_index, int subcell, double view_scale_p
                         {
                               if ( g_bDebugCM93 )
                               {
-                                    wxString msg ( obj->FeatureName, wxConvUTF8 );
+                                    QString msg ( obj->FeatureName, wxConvUTF8 );
                                     msg.Prepend ( _T ( "   CM93 could not find LUP for " ) );
                                     LogMessageOnce ( msg );
                               }
@@ -2614,7 +2601,7 @@ int cm93chart::CreateObjChain ( int cell_index, int subcell, double view_scale_p
 
 
 
-InitReturn cm93chart::Init ( const wxString& name, ChartInitFlag flags )
+InitReturn cm93chart::Init ( const QString& name, ChartInitFlag flags )
 {
 
       m_FullPath = name;
@@ -2662,9 +2649,9 @@ InitReturn cm93chart::Init ( const wxString& name, ChartInitFlag flags )
       }
 
       //    Set the nice name
-      wxString data = _T ( "CM93Chart " );
+      QString data = _T ( "CM93Chart " );
       data.Append ( m_scalechar );
-      wxString s;
+      QString s;
       s.Printf ( _T ( "  1/%d" ), m_Chart_Scale );
       data.Append ( s );
       m_Name = data;
@@ -2715,7 +2702,7 @@ InitReturn cm93chart::Init ( const wxString& name, ChartInitFlag flags )
 Extended_Geometry *cm93chart::BuildGeom ( Object *pobject,/* wxFileOutputStream *postream,*/ int iobject )
 
 {
-      wxString s;
+      QString s;
       int geomtype;
 
       int geom_type_maybe = pobject->geotype;
@@ -3174,20 +3161,20 @@ unsigned char *cm93_attr_block::GetNextAttr()
 }
 
 
-wxString ParseSLGTA ( wxString& val )
+QString ParseSLGTA ( QString& val )
 {
-      wxString result;
+      QString result;
       char line[30];
 
-      wxString s;
-      wxStringTokenizer tkz ( val, wxT ( "|" ) );
+      QString s;
+      QStringTokenizer tkz ( val, wxT ( "|" ) );
 
       s = tkz.GetNextToken();
       s = tkz.GetNextToken();
       s = tkz.GetNextToken();             // Mark attributes
 
       //  Defaults, black can
-      wxString sc, st, sp;
+      QString sc, st, sp;
       int color = 0;  sc = _T ( "" );
       int type = 0;   st = _T ( "" );
       int colpat = 0; sp = _T ( "" );
@@ -3239,12 +3226,12 @@ wxString ParseSLGTA ( wxString& val )
       if ( color )
       {
             sprintf ( line, "  %s (%c) = %s", "COLOUR", 'I', ( const char * ) sc.mb_str() );
-            result += wxString ( line, wxConvUTF8 );
+            result += QString ( line, wxConvUTF8 );
             result += '\n';
             if ( !type )
             {
                   sprintf ( line, "  %s (%c) = %s", "BOYSHP", 'I', "4" );
-                  result += wxString ( line, wxConvUTF8 );
+                  result += QString ( line, wxConvUTF8 );
                   result += '\n';
             }
 
@@ -3253,12 +3240,12 @@ wxString ParseSLGTA ( wxString& val )
       if ( type )
       {
             sprintf ( line, "  %s (%c) = %s", "BOYSHP", 'I', ( const char * ) st.mb_str() );
-            result += wxString ( line, wxConvUTF8 );
+            result += QString ( line, wxConvUTF8 );
             result += '\n';
             if ( !color )
             {
                   sprintf ( line, "  %s (%c) = %s", "COLOUR", 'I', "2" );
-                  result += wxString ( line, wxConvUTF8 );
+                  result += QString ( line, wxConvUTF8 );
                   result += '\n';
             }
       }
@@ -3267,7 +3254,7 @@ wxString ParseSLGTA ( wxString& val )
       if ( colpat )
       {
             sprintf ( line, "  %s (%c) = %s", "COLPAT", 'I', ( const char * ) sp.mb_str() );
-            result += wxString ( line, wxConvUTF8 );
+            result += QString ( line, wxConvUTF8 );
             result += '\n';
       }
 
@@ -3276,15 +3263,15 @@ wxString ParseSLGTA ( wxString& val )
 }
 
 
-wxString ParseTEXTA ( wxString& val )
+QString ParseTEXTA ( QString& val )
 {
-      wxString result;
+      QString result;
       char line[30];
 
       if ( val.Contains ( _T ( "WK S" ) ) )
       {
             sprintf ( line, "  %s (%c) = %s", "WRKATT", 'I', "1" );
-            result += wxString ( line, wxConvUTF8 );
+            result += QString ( line, wxConvUTF8 );
             result += '\n';
       }
 
@@ -3294,12 +3281,12 @@ wxString ParseTEXTA ( wxString& val )
 
 
 
-void cm93chart::translate_colmar(const wxString &sclass, S57attVal *pattValTmp)
+void cm93chart::translate_colmar(const QString &sclass, S57attVal *pattValTmp)
 {
       int *pcur_attr = ( int * ) pattValTmp->value;
       int cur_attr = *pcur_attr;
 
-      wxString lstring;
+      QString lstring;
 
       switch ( cur_attr )
       {
@@ -3357,17 +3344,17 @@ S57Obj *cm93chart::CreateS57Obj ( int cell_index, int iobject, int subcell, Obje
       double trans_WGS84_offset_x = 0.;
       double trans_WGS84_offset_y = 0.;
 
-      wxString sclass = pDict->GetClassName ( iclass );
+      QString sclass = pDict->GetClassName ( iclass );
       if ( sclass == _T ( "Unknown" ) )
       {
-            wxString msg;
+            QString msg;
             msg.Printf ( _T ( "   CM93 Error...object type %d not found in CM93OBJ.DIC" ), iclass );
             ZCHX_LOGMSG ( msg );
             delete xgeom;
             return NULL;
       }
 
-      wxString sclass_sub = sclass;
+      QString sclass_sub = sclass;
 
       //  Going to make some substitutions here
       if ( sclass.IsSameAs ( _T ( "ITDARE" ) ) )
@@ -3418,7 +3405,7 @@ S57Obj *cm93chart::CreateS57Obj ( int cell_index, int iobject, int subcell, Obje
 
             unsigned char iattr = *curr_attr;
 
-            wxString sattr = pDict->GetAttrName ( iattr );
+            QString sattr = pDict->GetAttrName ( iattr );
 
             char vtype = pDict->GetAttrType ( iattr );
 
@@ -3565,7 +3552,7 @@ S57Obj *cm93chart::CreateS57Obj ( int cell_index, int iobject, int subcell, Obje
             {
                   if ( sclass_sub.IsSameAs ( _T ( "M_COVR" ) ) && ( vtype == 'S' ) )
                   {
-                        wxString pub_date ( ( char * ) pattValTmp->value, wxConvUTF8 );
+                        QString pub_date ( ( char * ) pattValTmp->value, wxConvUTF8 );
 
                         wxDateTime upd;
                         upd.ParseFormat ( pub_date, _T ( "%Y%m%d" ) );
@@ -3603,7 +3590,7 @@ S57Obj *cm93chart::CreateS57Obj ( int cell_index, int iobject, int subcell, Obje
 
             if ( sattr.Len() ) {
                 wxASSERT( sattr.Len() == 6);
-                wxCharBuffer dbuffer=sattr.ToUTF8();
+                QCharBuffer dbuffer=sattr.ToUTF8();
                 if(dbuffer.data()) {                
                     pobj->att_array = (char *)realloc(pobj->att_array, 6*(pobj->n_attr + 1));
                 
@@ -4108,7 +4095,7 @@ M_COVR_Desc *cm93chart::FindM_COVR_InWorkingSet ( double lat, double lon )
 {
       M_COVR_Desc *ret = NULL;
       //    Default is to use the first M_COVR, the usual case
-      if ( m_CIB.m_cell_mcovr_list.GetCount() == 1 )
+      if ( m_CIB.m_cell_mcovr_list.count() == 1 )
       {
             wxList_Of_M_COVR_DescNode *node0 = m_CIB.m_cell_mcovr_list.GetFirst();
             if ( node0 )
@@ -4152,7 +4139,7 @@ wxPoint2DDouble cm93chart::FindM_COVROffset ( double lat, double lon )
       }
 
       //    If there are more than one M_COVR in this cell, need to search
-      if ( m_CIB.m_cell_mcovr_list.GetCount() > 1 )
+      if ( m_CIB.m_cell_mcovr_list.count() > 1 )
       {
             wxList_Of_M_COVR_DescNode *node = m_CIB.m_cell_mcovr_list.GetFirst();
             while ( node )
@@ -4181,7 +4168,7 @@ InitReturn cm93chart::CreateHeaderDataFromCM93Cell ( void )
 
       //    Figure out the scale from the file name
       wxFileName fn ( m_FullPath );
-      wxString ext = fn.GetExt();
+      QString ext = fn.GetExt();
 
       int scale;
       switch ( ( ext.mb_str() ) [ ( size_t ) 0] )
@@ -4287,7 +4274,7 @@ void cm93chart::ProcessMCOVRObjects ( int cell_index, char subcell )
                   //    Look for and process m_covr object(s)
                   int iclass = pobject->otype;
 
-                  wxString sclass = m_pDict->GetClassName ( iclass );
+                  QString sclass = m_pDict->GetClassName ( iclass );
 
                   if ( sclass.IsSameAs ( _T ( "_m_sor" ) ) )
                   {
@@ -4306,7 +4293,7 @@ void cm93chart::ProcessMCOVRObjects ( int cell_index, char subcell )
                               {
                                     unsigned char *curr_attr = pab.GetNextAttr();
                                     unsigned char iattr = *curr_attr;
-                                    wxString sattr = m_pDict->GetAttrName ( iattr );
+                                    QString sattr = m_pDict->GetAttrName ( iattr );
                                     char vtype = m_pDict->GetAttrType ( iattr );
                                     unsigned char *aval = curr_attr + 1;
 
@@ -4454,7 +4441,7 @@ bool cm93chart::IsPointInLoadedM_COVR ( double xc, double yc )
 #if 1
     return m_region.Contains(yc, xc);
 #else
-      for ( unsigned int im=0 ; im < m_pcovr_array_loaded.GetCount() ; im++ )
+      for ( unsigned int im=0 ; im < m_pcovr_array_loaded.count() ; im++ )
       {
             if ( G_PtInPolygon_FL ( m_pcovr_array_loaded[im]->pvertices, m_pcovr_array_loaded[im]->m_nvertices, xc, yc ) )
                   return true;
@@ -4479,7 +4466,7 @@ int cm93chart::loadcell_in_sequence ( int cellindex, char subcell )
 
 
 
-int cm93chart::loadsubcell ( int cellindex, wxChar sub_char )
+int cm93chart::loadsubcell ( int cellindex, QChar sub_char )
 {
 
       //    Create the file name
@@ -4494,7 +4481,7 @@ int cm93chart::loadsubcell ( int cellindex, wxChar sub_char )
             double dlon = m_dval / 3.;
             double lat, lon;
             Get_CM93_Cell_Origin ( cellindex, GetNativeScale(), &lat, &lon );
-            printf ( "\n   Attempting loadcell %d scale %lc, sub_char %lc at lat: %g/%g lon:%g/%g\n", cellindex, wxChar ( m_scalechar[0] ), sub_char, lat, lat + dlat, lon, lon+dlon );
+            printf ( "\n   Attempting loadcell %d scale %lc, sub_char %lc at lat: %g/%g lon:%g/%g\n", cellindex, QChar ( m_scalechar[0] ), sub_char, lat, lat + dlat, lon, lon+dlon );
       }
 
       int jlat = ( int ) ( ( ( ilat - 30 ) / m_dval ) * m_dval ) + 30;     // normalize
@@ -4503,7 +4490,7 @@ int cm93chart::loadsubcell ( int cellindex, wxChar sub_char )
       int ilatroot = ( ( ( ilat - 30 ) / 60 ) * 60 ) + 30;
       int ilonroot = ( ilon / 60 ) * 60;
 
-      wxString file;
+      QString file;
       file.Printf ( _T ( "%04d%04d." ), jlat, jlon );
       file += m_scalechar;
       file[0] = sub_char;
@@ -4515,16 +4502,16 @@ int cm93chart::loadsubcell ( int cellindex, wxChar sub_char )
       // "nnn" determined by experimentation/intuition.
       // Could also be platform dependent.
       bool b_useNoFind = true;
-      if(m_noFindArray.GetCount() > 500)
+      if(m_noFindArray.count() > 500)
           b_useNoFind = false;
       
       
-      wxString fileroot;
+      QString fileroot;
       fileroot.Printf ( _T ( "%04d%04d" ), ilatroot, ilonroot );
       appendOSDirSep( &fileroot );
       fileroot.append( m_scalechar );
       appendOSDirSep( &fileroot );
-      wxString key = fileroot;
+      QString key = fileroot;
       key.append( file );
       fileroot.Prepend ( m_prefix );
 
@@ -4539,7 +4526,7 @@ int cm93chart::loadsubcell ( int cellindex, wxChar sub_char )
       }
 
       bool bfound = false;
-      wxString compfile;
+      QString compfile;
       if(b_useNoFind){
         if(m_noFindArray.Index(key) == wxNOT_FOUND){
             if ( ::wxFileExists ( file ) ) 
@@ -4573,9 +4560,9 @@ int cm93chart::loadsubcell ( int cellindex, wxChar sub_char )
       // Try again with alternate scale character
       if(!bfound && !compfile.Length()){
              //    Try with alternate case of m_scalechar
-            wxString new_scalechar = m_scalechar.Lower();
+            QString new_scalechar = m_scalechar.Lower();
 
-            wxString file1;
+            QString file1;
             file1.Printf ( _T ( "%04d%04d." ), jlat, jlon );
             file1 += new_scalechar;
             file1[0] = sub_char;
@@ -4628,7 +4615,7 @@ int cm93chart::loadsubcell ( int cellindex, wxChar sub_char )
       
       if ( g_bDebugCM93 )
       {
-          printf("noFind count: %d\n", (int)m_noFindArray.GetCount());
+          printf("noFind count: %d\n", (int)m_noFindArray.count());
       }
                 
       if(!bfound && !compfile.Length())
@@ -4636,7 +4623,7 @@ int cm93chart::loadsubcell ( int cellindex, wxChar sub_char )
       
       //    File is known to exist
 
-      wxString msg ( _T ( "Loading CM93 cell " ) );
+      QString msg ( _T ( "Loading CM93 cell " ) );
       msg += file;
       ZCHX_LOGMSG ( msg );
       
@@ -4663,7 +4650,7 @@ int cm93chart::loadsubcell ( int cellindex, wxChar sub_char )
       //    Ingest it
       if ( !Ingest_CM93_Cell ( ( const char * ) file.mb_str(), &m_CIB ) )
       {
-            wxString msg ( _T ( "   cm93chart  Error ingesting " ) );
+            QString msg ( _T ( "   cm93chart  Error ingesting " ) );
             msg.Append ( file );
             ZCHX_LOGMSG ( msg );
 
@@ -4734,7 +4721,7 @@ cm93manager::~cm93manager ( void )
       delete m_pcm93Dict;
 }
 
-bool cm93manager::Loadcm93Dictionary(const wxString & name)
+bool cm93manager::Loadcm93Dictionary(const QString & name)
 {
 
       //  Find and load cm93_dictionary
@@ -4766,7 +4753,7 @@ bool cm93manager::Loadcm93Dictionary(const wxString & name)
       return true;
 }
 
-cm93_dictionary *cm93manager::FindAndLoadDict ( const wxString &file )
+cm93_dictionary *cm93manager::FindAndLoadDict ( const QString &file )
 {
       cm93_dictionary *retval = NULL;
       cm93_dictionary *pdict = new cm93_dictionary();
@@ -4774,8 +4761,8 @@ cm93_dictionary *cm93manager::FindAndLoadDict ( const wxString &file )
       //    Search for the dictionary files all along the path of the passed parameter filename
 
       wxFileName fn ( file );
-      wxString path = fn.GetPath ( ( int ) ( wxPATH_GET_SEPARATOR | wxPATH_GET_VOLUME ) );
-      wxString target;
+      QString path = fn.GetPath ( ( int ) ( wxPATH_GET_SEPARATOR | wxPATH_GET_VOLUME ) );
+      QString target;
       unsigned int i = 0;
 
       while ( i < path.Len() )
@@ -4860,14 +4847,14 @@ cm93compchart::~cm93compchart()
 }
 
 
-InitReturn cm93compchart::Init ( const wxString& name, ChartInitFlag flags )
+InitReturn cm93compchart::Init ( const QString& name, ChartInitFlag flags )
 {
       m_FullPath = name;
 
       wxFileName fn ( name );
 
-      wxString target;
-      wxString path;
+      QString target;
+      QString path;
 
       //    Verify that the passed file name exists
       if ( !fn.FileExists() )
@@ -4881,7 +4868,7 @@ InitReturn cm93compchart::Init ( const wxString& name, ChartInitFlag flags )
                 appendOSDirSep(&path);
             }
             else {
-                  wxString msg ( _T ( "   CM93Composite Chart Init cannot find " ) );
+                  QString msg ( _T ( "   CM93Composite Chart Init cannot find " ) );
                   msg.Append ( name );
                   ZCHX_LOGMSG ( msg );
                   return  INIT_FAIL_REMOVE;
@@ -4903,7 +4890,7 @@ InitReturn cm93compchart::Init ( const wxString& name, ChartInitFlag flags )
 
       m_prefixComposite = target;
 
-      wxString msg ( _T ( "CM93Composite Chart Root is " ) );
+      QString msg ( _T ( "CM93Composite Chart Root is " ) );
       msg.Append ( m_prefixComposite );
       ZCHX_LOGMSG ( msg );
 
@@ -5063,7 +5050,7 @@ int cm93compchart::PrepareChartScale ( const ViewPort &vpt, int cmscale, bool bO
       if ( g_bDebugCM93 )
             printf ( "\non SetVPParms, cmscale:%d, %c\n", cmscale, ( char ) ( 'A' + cmscale -1 ) );
 
-      wxChar ext;
+      QChar ext;
       bool cellscale_is_useable = false;
       bool b_nochart = false;
 
@@ -5080,11 +5067,11 @@ int cm93compchart::PrepareChartScale ( const ViewPort &vpt, int cmscale, bool bO
                         m_pcm93chart_array[cmscale] = new cm93chart();
 
 
-                        ext = ( wxChar ) ( 'A' + cmscale - 1 );
+                        ext = ( QChar ) ( 'A' + cmscale - 1 );
                         if ( cmscale == 0 )
                               ext = 'Z';
 
-                        wxString file_dummy = _T ( "CM93." );
+                        QString file_dummy = _T ( "CM93." );
                         file_dummy << ext;
 
                         m_pcm93chart_array[cmscale]->SetCM93Dict ( m_pDictComposite );
@@ -5096,7 +5083,7 @@ int cm93compchart::PrepareChartScale ( const ViewPort &vpt, int cmscale, bool bO
                   }
                   else if ( cmscale == 0 )
                   {
-//                        wxString msg;
+//                        QString msg;
 //                        msg.Printf ( _T ( "   CM93 finds no chart of any scale present at Lat/Lon  %g %g" ), vpt.clat, vpt.clon );
 //                        ZCHX_LOGMSG ( msg );
                         if ( g_bDebugCM93 )
@@ -5233,11 +5220,11 @@ int cm93compchart::PrepareChartScale ( const ViewPort &vpt, int cmscale, bool bO
                         if ( NULL == m_pcm93chart_array[new_scale] ) {
                             m_pcm93chart_array[new_scale] = new cm93chart();
                             
-                            ext = ( wxChar ) ( 'A' + new_scale - 1 );
+                            ext = ( QChar ) ( 'A' + new_scale - 1 );
                             if ( new_scale == 0 )
                                 ext = 'Z';
                             
-                            wxString file_dummy = _T ( "CM93." );
+                            QString file_dummy = _T ( "CM93." );
                             file_dummy << ext;
                             
                             m_pcm93chart_array[new_scale]->SetCM93Dict ( m_pDictComposite );
@@ -5277,9 +5264,9 @@ void cm93compchart::FillScaleArray ( double lat, double lon )
 //    These methods simply pass the called parameters to the currently active cm93chart
 
 
-wxString cm93compchart::GetPubDate()
+QString cm93compchart::GetPubDate()
 {
-      wxString data;
+      QString data;
 
       if ( NULL != m_pcm93chart_current )
 
@@ -5420,7 +5407,7 @@ OCPNRegion cm93compchart::GetValidScreenCanvasRegion ( const ViewPort& VPoint, c
             int chart_native_scale = m_pcm93chart_current->GetNativeScale();
 
 
-            for ( unsigned int im=0 ; im < m_pcm93chart_current->m_pcovr_array_loaded.GetCount() ; im++ )
+            for ( unsigned int im=0 ; im < m_pcm93chart_current->m_pcovr_array_loaded.count() ; im++ )
             {
                   M_COVR_Desc *pmcd = ( m_pcm93chart_current->m_pcovr_array_loaded[im] );
 
@@ -5655,7 +5642,7 @@ bool cm93compchart::DoRenderRegionViewOnGL (const wxGLContext &glc, const ViewPo
 
 
 
-bool cm93compchart::RenderRegionViewOnDC ( wxMemoryDC& dc, const ViewPort& VPoint, const OCPNRegion &Region )
+bool cm93compchart::RenderRegionViewOnDC ( QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region )
 {
       SetVPParms ( VPoint );
 
@@ -5665,7 +5652,7 @@ bool cm93compchart::RenderRegionViewOnDC ( wxMemoryDC& dc, const ViewPort& VPoin
       return DoRenderRegionViewOnDC ( dc, VPoint, Region );
 }
 
-bool cm93compchart::RenderViewOnDC ( wxMemoryDC& dc, const ViewPort& VPoint )
+bool cm93compchart::RenderViewOnDC ( QPainter& dc, const ViewPort& VPoint )
 {
       const OCPNRegion vpr ( 0,0,VPoint.pix_width, VPoint.pix_height );
 
@@ -5675,7 +5662,7 @@ bool cm93compchart::RenderViewOnDC ( wxMemoryDC& dc, const ViewPort& VPoint )
 
 }
 
-bool cm93compchart::DoRenderRegionViewOnDC ( wxMemoryDC& dc, const ViewPort& VPoint, const OCPNRegion &Region )
+bool cm93compchart::DoRenderRegionViewOnDC ( QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region )
 {
 //      g_bDebugCM93 = true;
 
@@ -5728,7 +5715,7 @@ bool cm93compchart::DoRenderRegionViewOnDC ( wxMemoryDC& dc, const ViewPort& VPo
 #ifdef ocpnUSE_DIBSECTION
                         ocpnMemDC temp_dc;
 #else
-                        wxMemoryDC temp_dc;
+                        QPainter temp_dc;
 #endif
                         if(!chart_region.IsEmpty())
                             render_return = m_pcm93chart_current->RenderRegionViewOnDC ( temp_dc, vp, chart_region );
@@ -5755,7 +5742,7 @@ bool cm93compchart::DoRenderRegionViewOnDC ( wxMemoryDC& dc, const ViewPort& VPo
 #ifdef ocpnUSE_DIBSECTION
                         ocpnMemDC dumm_dc;
 #else
-                        wxMemoryDC dumm_dc;
+                        QPainter dumm_dc;
 #endif
                         dumm_dc.SelectObject ( *m_pDummyBM );
                         dumm_dc.SetBackground ( *wxBLACK_BRUSH );
@@ -5772,7 +5759,7 @@ bool cm93compchart::DoRenderRegionViewOnDC ( wxMemoryDC& dc, const ViewPort& VPo
 #ifdef ocpnUSE_DIBSECTION
                               ocpnMemDC build_dc;
 #else
-                              wxMemoryDC build_dc;
+                              QPainter build_dc;
 #endif
 
                               if ( m_pcm93chart_current )
@@ -5858,7 +5845,7 @@ bool cm93compchart::DoRenderRegionViewOnDC ( wxMemoryDC& dc, const ViewPort& VPo
 
 
             // Clear the bitmap
-            wxMemoryDC mdc;
+            QPainter mdc;
             mdc.SelectObject ( *m_pDummyBM );
             mdc.SetBackground ( *wxBLACK_BRUSH );
             mdc.Clear();
@@ -6130,11 +6117,11 @@ bool cm93compchart::RenderNextSmallerCellOutlines ( ocpnDC &dc, ViewPort& vp, Ch
               m_pcm93chart_array[nss] = new cm93chart();
               psc = m_pcm93chart_array[nss];
 
-              wxChar ext = ( wxChar ) ( 'A' + nss - 1 );
+              QChar ext = ( QChar ) ( 'A' + nss - 1 );
               if ( nss == 0 )
                   ext = 'Z';
 
-              wxString file_dummy = _T ( "CM93." );
+              QString file_dummy = _T ( "CM93." );
               file_dummy << ext;
 
               psc->SetCM93Dict ( m_pDictComposite );
@@ -6529,18 +6516,18 @@ InitReturn cm93compchart::CreateHeaderData()
       wxRect extent_rect;
 
       wxDir dirt(m_prefixComposite);
-      wxString candidate;
+      QString candidate;
       wxRegEx test(_T("[0-9]+"));
 
       bool b_cont = dirt.GetFirst(&candidate);
 
       while(b_cont) {
           if(test.Matches(candidate)&& (candidate.Len() == 8)) {
-              wxString dir = m_prefixComposite;
+              QString dir = m_prefixComposite;
               dir += candidate;
               if( wxDir::Exists(dir) ) {
                   wxFileName name( dir );
-                  wxString num_name = name.GetName();
+                  QString num_name = name.GetName();
                   long number;
                   if( num_name.ToLong( &number ) ) {
                       int ilat = number / 10000;
@@ -6588,7 +6575,7 @@ InitReturn cm93compchart::CreateHeaderData()
       return INIT_OK;
 }
 
-cm93_dictionary *cm93compchart::FindAndLoadDictFromDir ( const wxString &dir )
+cm93_dictionary *cm93compchart::FindAndLoadDictFromDir ( const QString &dir )
 {
       cm93_dictionary *retval = NULL;
       cm93_dictionary *pdict = new cm93_dictionary();
@@ -6600,8 +6587,8 @@ cm93_dictionary *cm93compchart::FindAndLoadDictFromDir ( const wxString &dir )
 
       //    Otherwise, search for the dictionary files all along the path of the passed parameter
 
-      wxString path = dir;
-      wxString target;
+      QString path = dir;
+      QString target;
       unsigned int i = 0;
 
       while ( i < path.Len() )
@@ -6609,7 +6596,7 @@ cm93_dictionary *cm93compchart::FindAndLoadDictFromDir ( const wxString &dir )
             target.Append ( path[i] );
             if ( path[i] == wxFileName::GetPathSeparator() )
             {
-//                  wxString msg = _T ( " Looking for CM93 dictionary in " );
+//                  QString msg = _T ( " Looking for CM93 dictionary in " );
 //                  msg.Append ( target );
 //                  ZCHX_LOGMSG ( msg );
 
@@ -6632,14 +6619,14 @@ cm93_dictionary *cm93compchart::FindAndLoadDictFromDir ( const wxString &dir )
       //    Could be on branch, so, look at entire tree the hard way.
 
       wxFileName fnc ( dir );
-      wxString found_dict_file_name;
+      QString found_dict_file_name;
 
       bool bdone = false;
       while ( !bdone )
       {
             path = fnc.GetPath ( wxPATH_GET_VOLUME );     // get path without sep
 
-            wxString msg = _T ( " Looking harder for CM93 dictionary in " );
+            QString msg = _T ( " Looking harder for CM93 dictionary in " );
             msg.Append ( path );
             ZCHX_LOGMSG ( msg );
 
@@ -6677,7 +6664,7 @@ cm93_dictionary *cm93compchart::FindAndLoadDictFromDir ( const wxString &dir )
       if ( found_dict_file_name.Len() )
       {
             wxFileName fnd ( found_dict_file_name );
-            wxString dpath = fnd.GetPath ( ( int ) ( wxPATH_GET_SEPARATOR | wxPATH_GET_VOLUME ) );
+            QString dpath = fnd.GetPath ( ( int ) ( wxPATH_GET_SEPARATOR | wxPATH_GET_VOLUME ) );
 
             if ( pdict->LoadDictionary ( dpath ) )
                   retval = pdict;
@@ -6745,10 +6732,10 @@ OCPNOffsetListCtrl::~OCPNOffsetListCtrl()
 }
 
 
-wxString  OCPNOffsetListCtrl::OnGetItemText ( long item, long column ) const
+QString  OCPNOffsetListCtrl::OnGetItemText ( long item, long column ) const
 {
 
-    wxString ret;
+    QString ret;
     M_COVR_Desc *pmcd = m_parent->m_pcovr_array[item];
 
     switch ( column )
@@ -6761,7 +6748,7 @@ wxString  OCPNOffsetListCtrl::OnGetItemText ( long item, long column ) const
         else
         {
             char t = ( char ) pmcd->m_subcell;
-            wxString p;
+            QString p;
             p.Printf ( _T ( "%c" ), t );
             ret.Prepend ( p );
         }
@@ -6866,14 +6853,14 @@ CM93OffsetDialog::CM93OffsetDialog ( QWidget *parent ) : QDialog(parent)
     wxBoxSizer* boxSizer02 = new wxBoxSizer ( wxVERTICAL );
     boxSizer02->AddSpacer ( 22 );
 
-    wxStaticText *pStaticTextXoff = new wxStaticText ( this, wxID_ANY, wxString::Format(_T( "%s (%s)" ), _( "User X Offset" ), _( "meters" ) ), wxDefaultPosition, wxDefaultSize, 0 );
+    wxStaticText *pStaticTextXoff = new wxStaticText ( this, wxID_ANY, QString::Format(_T( "%s (%s)" ), _( "User X Offset" ), _( "meters" ) ), wxDefaultPosition, wxDefaultSize, 0 );
     boxSizer02->Add ( pStaticTextXoff, 0, wxALL, 0 );
 
     m_pSpinCtrlXoff = new wxSpinCtrl ( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize ( 50, -1 ), wxSP_ARROW_KEYS, -10000, 10000, 0 );
     m_pSpinCtrlXoff->Connect ( wxEVT_COMMAND_SPINCTRL_UPDATED, wxCommandEventHandler ( CM93OffsetDialog::OnOffSetSet ), NULL, this );
     boxSizer02->Add ( m_pSpinCtrlXoff, 0, wxEXPAND|wxALL, 0 );
 
-    wxStaticText *pStaticTextYoff = new wxStaticText ( this, wxID_ANY, wxString::Format(_T( "%s (%s)" ), _( "User Y Offset" ), _( "meters" ) ), wxDefaultPosition, wxDefaultSize, 0 );
+    wxStaticText *pStaticTextYoff = new wxStaticText ( this, wxID_ANY, QString::Format(_T( "%s (%s)" ), _( "User Y Offset" ), _( "meters" ) ), wxDefaultPosition, wxDefaultSize, 0 );
     boxSizer02->Add ( pStaticTextYoff, 0, wxALL, 0 );
 
     m_pSpinCtrlYoff = new wxSpinCtrl ( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize ( 50, -1 ), wxSP_ARROW_KEYS, -10000, 10000, 0 );
@@ -7071,7 +7058,7 @@ void CM93OffsetDialog::UpdateMCOVRList ( const ViewPort &vpt )
                 }
             }
 
-            m_pListCtrlMCOVRs->SetItemCount ( m_pcovr_array.GetCount() );
+            m_pListCtrlMCOVRs->SetItemCount ( m_pcovr_array.count() );
             if ( -1 != sel_index )
                 m_pListCtrlMCOVRs->SetItemState ( sel_index, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED );
             else

@@ -40,7 +40,7 @@
 #include <unordered_map>
 
 #include <sqlite3.h> //We need some defines
-#include <SQLiteCpp.h>
+#include "SQLiteCpp/SQLiteCpp.h"
 
 #include "mbtiles.h"
 #include "chart1.h"

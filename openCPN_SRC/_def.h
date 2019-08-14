@@ -3,6 +3,7 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QTextCodec>
 
 /*  menu and toolbar item kinds */
 enum wxItemKind
@@ -78,18 +79,37 @@ typedef struct _S52color{
     unsigned char  B;
 }S52color;
 
-typedef         QHash<QString, QColor>          wxColorHashMap;
-typedef         QHash<QString, S52color>        colorHashMap;
+typedef         QHash<QString, QColor>          QColorHashMap;
+typedef         QHash<QString, S52color>        S52ColorHashMap;
 typedef         QList<void*>                    wxArrayPtrVoid;
 
 typedef struct _colTable {
-    QString *tableName;
+    QString tableName;
     QString rasterFileName;
-    wxArrayPtrVoid *color;
-    colorHashMap colors;
-    wxColorHashMap wxColors;
+//    wxArrayPtrVoid *color;
+    S52ColorHashMap S52Colors;
+    QColorHashMap QColors;
 } colTable;
 
+struct zchxPoint{
+    int x;
+    int y;
+
+    QPoint toPoint() {return QPoint(x, y);}
+};
+
+struct zchxPointF{
+    double x;
+    double y;
+    QPointF toPointF() {return QPointF(x, y);}
+};
+
+struct zchxSize{
+    int width;
+    int height;
+
+    QSize toSize() {return QSize(width, height);}
+};
 
 
 //    ChartType constants
@@ -200,6 +220,16 @@ public:
     {}
     FileReadWrite(const QString& fileName, int opt = E_READ) : mName(fileName), mode(opt), fp(0), isError(0), mLastRead(0)
     { fp = fopen(mName.toUtf8().data(), mode == E_READ? "rb" : "wb");}
+
+    FileReadWrite(const FileReadWrite& other)
+    {
+        mName = other.mName;
+        mode = other.mode;
+        isError = 0;
+        mLastRead = 0;
+        fp = fopen(mName.toUtf8().data(), mode == E_READ? "rb" : "wb");
+    }
+
     ~FileReadWrite() {if(fp) fclose(fp);}
     virtual bool IsOK() const
     {
@@ -243,6 +273,12 @@ public:
         return fgetc(fp);
     }
 
+    int Ungetch(char a)
+    {
+        return ungetc(a, fp);
+    }
+
+
     bool IsEof()
     {
         if(!fp)
@@ -253,7 +289,7 @@ public:
         return feof(fp);
     }
 
-    uint64_t Seek(uint64_t pos, int mode)
+    int Seek(uint64_t pos, int mode)
     {
         return fseek(fp, pos, mode);
     }
@@ -295,6 +331,11 @@ public:
     static bool isFileExist(const QString& name)
     {
         return QFile::exists(name);
+    }
+
+    QTextCodec* codesOfName(const QString& name)
+    {
+        return QTextCodec::codecForName(name.toLatin1().data());
     }
 };
 

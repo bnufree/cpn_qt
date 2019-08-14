@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Symbols
@@ -82,9 +82,9 @@ void ChartSymbols::DeleteGlobals( void )
 
     for( unsigned int i = 0; i < colorTables->count(); i++ ) {
         colTable *ct = (colTable *) colorTables->at( i );
-        delete ct->tableName;
-        ct->colors.clear();
-        ct->wxColors.clear();
+//        delete ct->tableName;
+        ct->S52Colors.clear();
+        ct->QColors.clear();
         delete ct;
     }
 
@@ -100,12 +100,12 @@ void ChartSymbols::ProcessColorTables( pugi::xml_node &node )
         
         if( !strcmp( pcn, "color-table" ) ) {
             colTable *colortable = new colTable;
-            colortable->tableName = new QString( child.first_attribute().value(), wxConvUTF8 );
+            colortable->tableName = QString::fromUtf8(child.first_attribute().value());
             
             pugi::xml_node colorNode =child.first_child();
             while(colorNode){
                 if(!strcmp(colorNode.name(), "graphics-file")){
-                    colortable->rasterFileName = QString( colorNode.first_attribute().value(), wxConvUTF8 );
+                    colortable->rasterFileName = QString::fromUtf8(colorNode.first_attribute().value());
                 }
 
                 if(!strcmp(colorNode.name(), "color")){
@@ -117,7 +117,7 @@ void ChartSymbols::ProcessColorTables( pugi::xml_node &node )
                         if(!strcmp(pca, "name")){
                             strncpy(color.colName, attr.value(), 5);
                             color.colName[5] = 0;
-                            key = QString( attr.value(), wxConvUTF8 );
+                            key = QString::fromUtf8(attr.value());
                             
                         }                        
                         else if(!strcmp(pca, "r")){
@@ -132,9 +132,9 @@ void ChartSymbols::ProcessColorTables( pugi::xml_node &node )
                         
                     }
                     
-                    colortable->colors[key] = color;
-                    wxColour wxcolor( color.R, color.G, color.B );
-                    colortable->wxColors[key] = wxcolor;
+                    colortable->S52Colors[key] = color;
+                    QColor qcolor( color.R, color.G, color.B );
+                    colortable->QColors[key] = qcolor;
                     
                 }
             
@@ -154,9 +154,11 @@ void ChartSymbols::ProcessColorTables( pugi::xml_node &node )
 
 
 
-#define TGET_INT_PROPERTY_VALUE( node, name, target )  \
-      propVal = QString::fromUtf8(node->Attribute(name)); \
-      target = propVal.toLong();
+void TGET_INT_PROPERTY_VALUE( TiXmlElement* node, char* name, int &r)
+{
+    QString propVal = QString::fromUtf8(node->Attribute(name));
+    r =  propVal.toInt();
+}
 
 void ChartSymbols::ProcessColorTables( TiXmlElement* colortableNodes )
 {
@@ -167,7 +169,7 @@ void ChartSymbols::ProcessColorTables( TiXmlElement* colortableNodes )
         colTable *colortable = new colTable;
 
         const char *pName = child->Attribute( "name" );
-        colortable->tableName = new QString( pName, wxConvUTF8 );
+        colortable->tableName = QString::fromUtf8(pName);
 
         TiXmlElement* colorNode = child->FirstChild()->ToElement();
 
@@ -176,22 +178,26 @@ void ChartSymbols::ProcessColorTables( TiXmlElement* colortableNodes )
             QString propVal;
             long numVal;
 
-            if( QString( colorNode->Value(), wxConvUTF8 ) == _T("graphics-file") ) {
-                colortable->rasterFileName = QString( colorNode->Attribute( "name" ), wxConvUTF8 );
+            if( QString::fromUtf8(colorNode->Value()) == "graphics-file" ) {
+                colortable->rasterFileName = QString::fromUtf8(colorNode->Attribute( "name" ));
                 goto next;
             } else {
-                TGET_INT_PROPERTY_VALUE( colorNode, "r", color.R )
-                TGET_INT_PROPERTY_VALUE( colorNode, "g", color.G )
-                TGET_INT_PROPERTY_VALUE( colorNode, "b", color.B )
+                int r, g, b;
+                TGET_INT_PROPERTY_VALUE( colorNode, "r", r);
+                TGET_INT_PROPERTY_VALUE( colorNode, "g", g);
+                TGET_INT_PROPERTY_VALUE( colorNode, "b", b);
+                color.R = r;
+                color.G = g;
+                color.B = b;
 
-                QString key( colorNode->Attribute( "name" ), wxConvUTF8 );
-                strncpy( color.colName, key.char_str(), 5 );
+                QString key = QString::fromUtf8(colorNode->Attribute( "name" ));
+                strncpy( color.colName, key.toUtf8().data(), 5 );
                 color.colName[5] = 0;
 
-                colortable->colors[key] = color;
+                colortable->S52Colors[key] = color;
 
-                wxColour wxcolor( color.R, color.G, color.B );
-                colortable->wxColors[key] = wxcolor;
+                QColor qcolor( color.R, color.G, color.B );
+                colortable->QColors[key] = qcolor;
             }
 
             next: colorNode = colorNode->NextSiblingElement();
@@ -214,7 +220,7 @@ void ChartSymbols::ProcessLookups( pugi::xml_node &node )
             for ( pugi::xml_attribute attr = child.first_attribute(); attr; attr = attr.next_attribute() ) {
                 const char *pca = attr.name();
                 if(!strcmp(pca, "name")){
-                    lookup.name = QString (attr.value(), wxConvUTF8 );
+                    lookup.name = QString::fromUtf8(attr.value());
                 }
                 else if(!strcmp(pca, "RCID")){
                     lookup.RCID = attr.as_int();
@@ -274,9 +280,9 @@ void ChartSymbols::ProcessLookups( pugi::xml_node &node )
             }
             
             else if( !strcmp( lookupNode.name(), "instruction") ) {
-                QString inst(nodeText, wxConvUTF8);
+                QString inst = QString::fromUtf8(nodeText);
                 lookup.instruction = inst;
-                lookup.instruction.Append( '\037' );
+                lookup.instruction.append('\037' );
                 
             }
             
@@ -304,8 +310,8 @@ void ChartSymbols::ProcessLookups( pugi::xml_node &node )
 
 void ChartSymbols::ProcessVectorTag( pugi::xml_node &vectorNode, SymbolSizeInfo_t &vectorSize )
 {
-    vectorSize.size.x = vectorNode.attribute("width").as_int();
-    vectorSize.size.y = vectorNode.attribute("height").as_int();
+    vectorSize.size.width = vectorNode.attribute("width").as_int();
+    vectorSize.size.height = vectorNode.attribute("height").as_int();
     
     
     for( pugi::xml_node child = vectorNode.first_child(); child != 0; child = child.next_sibling() ) {
@@ -383,8 +389,8 @@ void ChartSymbols::ProcessPatterns( pugi::xml_node &node )
             }
                 
             else if( !strcmp(nodeType,"bitmap") ){
-                pattern.bitmapSize.size.x = pattNode.attribute("width").as_int();
-                pattern.bitmapSize.size.y = pattNode.attribute("height").as_int();
+                pattern.bitmapSize.size.width = pattNode.attribute("width").as_int();
+                pattern.bitmapSize.size.height = pattNode.attribute("height").as_int();
                 
                 for( pugi::xml_node child = pattNode.first_child(); child != 0; child = child.next_sibling() ) {
                     const char *nodeType = child.name();
@@ -449,8 +455,8 @@ void ChartSymbols::ProcessSymbols( pugi::xml_node &node )
             }
             
             else if( !strcmp(nodeType,"bitmap") ){
-                symbol.bitmapSize.size.x = symbolNode.attribute("width").as_int();
-                symbol.bitmapSize.size.y = symbolNode.attribute("height").as_int();
+                symbol.bitmapSize.size.width = symbolNode.attribute("width").as_int();
+                symbol.bitmapSize.size.height = symbolNode.attribute("height").as_int();
                 symbol.hasBitmap = true;
                 
                 for( pugi::xml_node child = symbolNode.first_child(); child != 0; child = child.next_sibling() ) {
@@ -476,8 +482,8 @@ void ChartSymbols::ProcessSymbols( pugi::xml_node &node )
             }
             
             else if( !strcmp(nodeType,"vector") ){
-                symbol.vectorSize.size.x = symbolNode.attribute("width").as_int();
-                symbol.vectorSize.size.y = symbolNode.attribute("height").as_int();
+                symbol.vectorSize.size.width = symbolNode.attribute("width").as_int();
+                symbol.vectorSize.size.height = symbolNode.attribute("height").as_int();
                 symbol.hasVector = true;
                 
                 for( pugi::xml_node child = symbolNode.first_child(); child != 0; child = child.next_sibling() ) {
@@ -496,7 +502,7 @@ void ChartSymbols::ProcessSymbols( pugi::xml_node &node )
                         symbol.vectorSize.pivot.y = child.attribute("y").as_int();
                     }
                     else if( !strcmp(nodeType,"HPGL") ){
-                        symbol.HPGL = QString( child.first_child().value(), wxConvUTF8 );
+                        symbol.HPGL = QString::fromUtf8(child.first_child().value());
                     }
                 }
             }
@@ -520,94 +526,93 @@ void ChartSymbols::ProcessLookups( TiXmlElement* lookupNodes )
             childNode = childNode->NextSibling() ) {
         TiXmlElement *child = childNode->ToElement();
 
-        TGET_INT_PROPERTY_VALUE( child, "id", lookup.id )
-        TGET_INT_PROPERTY_VALUE( child, "RCID", lookup.RCID )
-        lookup.name = QString( child->Attribute( "name" ), wxConvUTF8 );
+        TGET_INT_PROPERTY_VALUE( child, "id", lookup.id);
+        TGET_INT_PROPERTY_VALUE( child, "RCID", lookup.RCID);
+        lookup.name = QString::fromUtf8(child->Attribute( "name" ) );
 
         TiXmlElement* subNode = child->FirstChild()->ToElement();
 
         while( subNode ) {
-            QString nodeType( subNode->Value(), wxConvUTF8 );
-            QString nodeText( subNode->GetText(), wxConvUTF8 );
+            QString nodeType = QString::fromUtf8(subNode->Value());
+            QString nodeText = QString::fromUtf8(subNode->GetText());
 
-            if( nodeType == _T("type") ) {
+            if( nodeType == ("type") ) {
 
-                if( nodeText == _T("Area") ) lookup.type = AREAS_T;
+                if( nodeText == ("Area") ) lookup.type = AREAS_T;
                 else
-                    if( nodeText == _T("Line") ) lookup.type = LINES_T;
+                    if( nodeText == ("Line") ) lookup.type = LINES_T;
                     else
                         lookup.type = POINT_T;
 
                 goto nextNode;
             }
 
-            if( nodeType == _T("disp-prio") ) {
+            if( nodeType == ("disp-prio") ) {
                 lookup.displayPrio = PRIO_NODATA;
-                if( nodeText == _T("Group 1") ) lookup.displayPrio = PRIO_GROUP1;
+                if( nodeText == ("Group 1") ) lookup.displayPrio = PRIO_GROUP1;
                 else
-                if( nodeText == _T("Area 1") ) lookup.displayPrio = PRIO_AREA_1;
+                if( nodeText == ("Area 1") ) lookup.displayPrio = PRIO_AREA_1;
                 else
-                if( nodeText == _T("Area 2") ) lookup.displayPrio = PRIO_AREA_2;
+                if( nodeText == ("Area 2") ) lookup.displayPrio = PRIO_AREA_2;
                 else
-                if( nodeText == _T("Point Symbol") ) lookup.displayPrio = PRIO_SYMB_POINT;
+                if( nodeText == ("Point Symbol") ) lookup.displayPrio = PRIO_SYMB_POINT;
                 else
-                if( nodeText == _T("Line Symbol") ) lookup.displayPrio = PRIO_SYMB_LINE;
+                if( nodeText == ("Line Symbol") ) lookup.displayPrio = PRIO_SYMB_LINE;
                 else
-                if( nodeText == _T("Area Symbol") ) lookup.displayPrio = PRIO_SYMB_AREA;
+                if( nodeText == ("Area Symbol") ) lookup.displayPrio = PRIO_SYMB_AREA;
                 else
-                if( nodeText == _T("Routing") ) lookup.displayPrio = PRIO_ROUTEING;
+                if( nodeText == ("Routing") ) lookup.displayPrio = PRIO_ROUTEING;
                 else
-                if( nodeText == _T("Hazards") ) lookup.displayPrio = PRIO_HAZARDS;
+                if( nodeText == ("Hazards") ) lookup.displayPrio = PRIO_HAZARDS;
                 else
-                if( nodeText == _T("Mariners") ) lookup.displayPrio = PRIO_MARINERS;
+                if( nodeText == ("Mariners") ) lookup.displayPrio = PRIO_MARINERS;
                 goto nextNode;
             }
-            if( nodeType == _T("radar-prio") ) {
-                if( nodeText == _T("On Top") ) lookup.radarPrio = RAD_OVER;
+            if( nodeType == ("radar-prio") ) {
+                if( nodeText == ("On Top") ) lookup.radarPrio = RAD_OVER;
                 else
                     lookup.radarPrio = RAD_SUPP;
                 goto nextNode;
             }
-            if( nodeType == _T("table-name") ) {
-                if( nodeText == _T("Simplified") ) lookup.tableName = SIMPLIFIED;
+            if( nodeType == ("table-name") ) {
+                if( nodeText == ("Simplified") ) lookup.tableName = SIMPLIFIED;
                 else
-                if( nodeText == _T("Lines") ) lookup.tableName = LINES;
+                if( nodeText == ("Lines") ) lookup.tableName = LINES;
                 else
-                if( nodeText == _T("Plain") ) lookup.tableName = PLAIN_BOUNDARIES;
+                if( nodeText == ("Plain") ) lookup.tableName = PLAIN_BOUNDARIES;
                 else
-                if( nodeText == _T("Symbolized") ) lookup.tableName = SYMBOLIZED_BOUNDARIES;
+                if( nodeText == ("Symbolized") ) lookup.tableName = SYMBOLIZED_BOUNDARIES;
                 else
                 lookup.tableName = PAPER_CHART;
                 goto nextNode;
             }
-            if( nodeType == _T("display-cat") ) {
-                if( nodeText == _T("Displaybase") ) lookup.displayCat = DISPLAYBASE;
+            if( nodeType == ("display-cat") ) {
+                if( nodeText == ("Displaybase") ) lookup.displayCat = DISPLAYBASE;
                 else
-                if( nodeText == _T("Standard") ) lookup.displayCat = STANDARD;
+                if( nodeText == ("Standard") ) lookup.displayCat = STANDARD;
                 else
-                if( nodeText == _T("Other") ) lookup.displayCat = OTHER;
+                if( nodeText == ("Other") ) lookup.displayCat = OTHER;
                 else
-                if( nodeText == _T("Mariners") ) lookup.displayCat = MARINERS_STANDARD;
+                if( nodeText == ("Mariners") ) lookup.displayCat = MARINERS_STANDARD;
                 else
                 lookup.displayCat = OTHER;
                 goto nextNode;
             }
-            if( nodeType == _T("comment") ) {
-                QString comment( subNode->GetText(), wxConvUTF8 );
-                long value;
-                comment.ToLong( &value, 0 );
+            if( nodeType == ("comment") ) {
+                QString comment = QString::fromUtf8(subNode->GetText());
+                long value = comment.toLong();
                 lookup.comment = value;
                 goto nextNode;
             }
 
-            if( nodeType == _T("instruction") ) {
+            if( nodeType == ("instruction") ) {
                 lookup.instruction = nodeText;
-                lookup.instruction.Append( '\037' );
+                lookup.instruction.append('\037' );
                 goto nextNode;
             }
-            if( nodeType == _T("attrib-code") ) {
+            if( nodeType == ("attrib-code") ) {
                 char *attVal = (char *)calloc(8, sizeof(char));
-                strncpy(attVal, nodeText, 7);
+                strncpy(attVal, nodeText.toUtf8().data(), 7);
                 if( attVal[6] == '\0')
                     attVal[6] = ' ';
                 lookup.attributeCodeArray.push_back(attVal);
@@ -626,7 +631,7 @@ void ChartSymbols::BuildLookup( Lookup &lookup )
 {
 
     LUPrec *LUP = (LUPrec*) calloc( 1, sizeof(LUPrec) );
-    plib->pAlloc->Add( LUP );
+    plib->pAlloc->append(LUP );
 
     LUP->RCID = lookup.RCID;
     LUP->nSequence = lookup.id;
@@ -636,7 +641,7 @@ void ChartSymbols::BuildLookup( Lookup &lookup )
     LUP->RPRI = lookup.radarPrio;
     LUP->TNAM = lookup.tableName;
     LUP->OBCL[6] = 0;
-    memcpy( LUP->OBCL, lookup.name.mb_str(), 7 );
+    memcpy( LUP->OBCL, lookup.name.toUtf8().data(), 7 );
 
     LUP->ATTArray = lookup.attributeCodeArray;
 
@@ -651,44 +656,44 @@ void ChartSymbols::BuildLookup( Lookup &lookup )
     unsigned int index = 0;
     wxArrayOfLUPrec *pLUPARRAYtyped = plib->SelectLUPARRAY( LUP->TNAM );
 
-    while( index < pLUPARRAYtyped->GetCount() ) {
-        LUPrec *pLUPCandidate = pLUPARRAYtyped->Item( index );
+    while( index < pLUPARRAYtyped->count() ) {
+        LUPrec *pLUPCandidate = pLUPARRAYtyped->at( index );
         if( LUP->RCID == pLUPCandidate->RCID ) {
-            pLUPARRAYtyped->RemoveAt(index);
+            pLUPARRAYtyped->removeAt(index);
             plib->DestroyLUP(pLUPCandidate); // empties the LUP
             break;
         }
         index++;
     }
 
-    pLUPARRAYtyped->Add( LUP );
+    pLUPARRAYtyped->append( LUP );
 }
 
 void ChartSymbols::ProcessVectorTag( TiXmlElement* vectorNode, SymbolSizeInfo_t &vectorSize )
 {
     QString propVal;
     long numVal;
-    TGET_INT_PROPERTY_VALUE( vectorNode, "width", vectorSize.size.x )
-    TGET_INT_PROPERTY_VALUE( vectorNode, "height", vectorSize.size.y )
+    TGET_INT_PROPERTY_VALUE( vectorNode, "width", vectorSize.size.width);
+    TGET_INT_PROPERTY_VALUE( vectorNode, "height", vectorSize.size.height);
 
     TiXmlElement* vectorNodes = vectorNode->FirstChild()->ToElement();
 
     while( vectorNodes ) {
-        QString nodeType( vectorNodes->Value(), wxConvUTF8 );
+        QString nodeType = QString::fromUtf8(vectorNodes->Value());
 
-        if( nodeType == _T("distance") ) {
-            TGET_INT_PROPERTY_VALUE( vectorNodes, "min", vectorSize.minDistance )
-            TGET_INT_PROPERTY_VALUE( vectorNodes, "max", vectorSize.maxDistance )
+        if( nodeType == ("distance") ) {
+            TGET_INT_PROPERTY_VALUE( vectorNodes, "min", vectorSize.minDistance);
+            TGET_INT_PROPERTY_VALUE( vectorNodes, "max", vectorSize.maxDistance);
             goto nextVector;
         }
-        if( nodeType == _T("origin") ) {
-            TGET_INT_PROPERTY_VALUE( vectorNodes, "x", vectorSize.origin.x )
-            TGET_INT_PROPERTY_VALUE( vectorNodes, "y", vectorSize.origin.y )
+        if( nodeType == ("origin") ) {
+            TGET_INT_PROPERTY_VALUE( vectorNodes, "x", vectorSize.origin.x);
+            TGET_INT_PROPERTY_VALUE( vectorNodes, "y", vectorSize.origin.y);
             goto nextVector;
         }
-        if( nodeType == _T("pivot") ) {
-            TGET_INT_PROPERTY_VALUE( vectorNodes, "x", vectorSize.pivot.x )
-            TGET_INT_PROPERTY_VALUE( vectorNodes, "y", vectorSize.pivot.y )
+        if( nodeType == ("pivot") ) {
+            TGET_INT_PROPERTY_VALUE( vectorNodes, "x", vectorSize.pivot.x);
+            TGET_INT_PROPERTY_VALUE( vectorNodes, "y", vectorSize.pivot.y);
             goto nextVector;
         }
         nextVector: vectorNodes = vectorNodes->NextSiblingElement();
@@ -707,31 +712,30 @@ void ChartSymbols::ProcessLinestyles( TiXmlElement* linestyleNodes )
             childNode = childNode->NextSibling() ) {
         TiXmlElement *child = childNode->ToElement();
 
-        TGET_INT_PROPERTY_VALUE( child, "RCID", lineStyle.RCID )
-
+        TGET_INT_PROPERTY_VALUE( child, "RCID", lineStyle.RCID);
         TiXmlElement* subNode = child->FirstChild()->ToElement();
 
         while( subNode ) {
-            QString nodeType( subNode->Value(), wxConvUTF8 );
-            QString nodeText( subNode->GetText(), wxConvUTF8 );
+            QString nodeType = QString::fromUtf8(subNode->Value());
+            QString nodeText = QString::fromUtf8(subNode->GetText());
 
-            if( nodeType == _T("description") ) {
+            if( nodeType == ("description") ) {
                 lineStyle.description = nodeText;
                 goto nextNode;
             }
-            if( nodeType == _T("name") ) {
+            if( nodeType == ("name") ) {
                 lineStyle.name = nodeText;
                 goto nextNode;
             }
-            if( nodeType == _T("color-ref") ) {
+            if( nodeType == ("color-ref") ) {
                 lineStyle.colorRef = nodeText;
                 goto nextNode;
             }
-            if( nodeType == _T("HPGL") ) {
+            if( nodeType == ("HPGL") ) {
                 lineStyle.HPGL = nodeText;
                 goto nextNode;
             }
-            if( nodeType == _T("vector") ) {
+            if( nodeType == ("vector") ) {
                 ProcessVectorTag( subNode, lineStyle.vectorSize );
             }
             nextNode: subNode = subNode->NextSiblingElement();
@@ -745,17 +749,17 @@ void ChartSymbols::BuildLineStyle( LineStyle &lineStyle )
 {
     Rule *lnstmp = NULL;
     Rule *lnst = (Rule*) calloc( 1, sizeof(Rule) );
-    plib->pAlloc->Add( lnst );
+    plib->pAlloc->append( lnst );
 
     lnst->RCID = lineStyle.RCID;
-    memcpy( lnst->name.PANM, lineStyle.name.mb_str(), 8 );
+    memcpy( lnst->name.PANM, lineStyle.name.toUtf8().data(), 8 );
     lnst->bitmap.PBTM = NULL;
 
-    lnst->vector.LVCT = (char *) malloc( lineStyle.HPGL.Len() + 1 );
-    strcpy( lnst->vector.LVCT, lineStyle.HPGL.mb_str() );
+    lnst->vector.LVCT = (char *) malloc( lineStyle.HPGL.length() + 1 );
+    strcpy( lnst->vector.LVCT, lineStyle.HPGL.toUtf8().data() );
 
-    lnst->colRef.LCRF = (char *) malloc( lineStyle.colorRef.Len() + 1 );
-    strcpy( lnst->colRef.LCRF, lineStyle.colorRef.mb_str() );
+    lnst->colRef.LCRF = (char *) malloc( lineStyle.colorRef.length() + 1 );
+    strcpy( lnst->colRef.LCRF, lineStyle.colorRef.toUtf8().data() );
 
     lnst->pos.line.minDist.PAMI = lineStyle.vectorSize.minDistance;
     lnst->pos.line.maxDist.PAMA = lineStyle.vectorSize.maxDistance;
@@ -763,8 +767,8 @@ void ChartSymbols::BuildLineStyle( LineStyle &lineStyle )
     lnst->pos.line.pivot_x.PACL = lineStyle.vectorSize.pivot.x;
     lnst->pos.line.pivot_y.PARW = lineStyle.vectorSize.pivot.y;
 
-    lnst->pos.line.bnbox_w.PAHL = lineStyle.vectorSize.size.x;
-    lnst->pos.line.bnbox_h.PAVL = lineStyle.vectorSize.size.y;
+    lnst->pos.line.bnbox_w.PAHL = lineStyle.vectorSize.size.width;
+    lnst->pos.line.bnbox_h.PAVL = lineStyle.vectorSize.size.height;
 
     lnst->pos.line.bnbox_x.SBXC = lineStyle.vectorSize.origin.x;
     lnst->pos.line.bnbox_y.SBXR = lineStyle.vectorSize.origin.y;
@@ -787,8 +791,7 @@ void ChartSymbols::ProcessPatterns( TiXmlElement* patternNodes )
             childNode = childNode->NextSibling() ) {
         TiXmlElement *child = childNode->ToElement();
 
-        TGET_INT_PROPERTY_VALUE( child, "RCID", pattern.RCID )
-
+        TGET_INT_PROPERTY_VALUE( child, "RCID", pattern.RCID);
         pattern.hasVector = false;
         pattern.hasBitmap = false;
         pattern.preferBitmap = true;
@@ -796,78 +799,76 @@ void ChartSymbols::ProcessPatterns( TiXmlElement* patternNodes )
         TiXmlElement* subNodes = child->FirstChild()->ToElement();
 
         while( subNodes ) {
-            QString nodeType( subNodes->Value(), wxConvUTF8 );
-            QString nodeText( subNodes->GetText(), wxConvUTF8 );
+            QString nodeType = QString::fromUtf8(subNodes->Value());
+            QString nodeText = QString::fromUtf8(subNodes->GetText());
 
-            if( nodeType == _T("description") ) {
+            if( nodeType == ("description") ) {
                 pattern.description = nodeText;
                 goto nextNode;
             }
-            if( nodeType == _T("name") ) {
+            if( nodeType == ("name") ) {
                 pattern.name = nodeText;
                 goto nextNode;
             }
-            if( nodeType == _T("filltype") ) {
+            if( nodeType == ("filltype") ) {
                 pattern.fillType = ( subNodes->GetText() )[0];
                 goto nextNode;
             }
-            if( nodeType == _T("spacing") ) {
+            if( nodeType == ("spacing") ) {
                 pattern.spacing = ( subNodes->GetText() )[0];
                 goto nextNode;
             }
-            if( nodeType == _T("color-ref") ) {
+            if( nodeType == ("color-ref") ) {
                 pattern.colorRef = nodeText;
                 goto nextNode;
             }
-            if( nodeType == _T("definition") ) {
+            if( nodeType == ("definition") ) {
                 if( !strcmp( subNodes->GetText(), "V" ) ) pattern.hasVector = true;
                 goto nextNode;
             }
-            if( nodeType == _T("prefer-bitmap") ) {
-                if( nodeText.Lower() == _T("no") ) pattern.preferBitmap = false;
-                if( nodeText.Lower() == _T("false") ) pattern.preferBitmap = false;
+            if( nodeType == ("prefer-bitmap") ) {
+                if( nodeText.toLower() == ("no") ) pattern.preferBitmap = false;
+                if( nodeText.toLower() == ("false") ) pattern.preferBitmap = false;
                 goto nextNode;
             }
-            if( nodeType == _T("bitmap") ) {
-                TGET_INT_PROPERTY_VALUE( subNodes, "width", pattern.bitmapSize.size.x )
-                TGET_INT_PROPERTY_VALUE( subNodes, "height", pattern.bitmapSize.size.y )
+            if( nodeType == ("bitmap") ) {
+                TGET_INT_PROPERTY_VALUE( subNodes, "width", pattern.bitmapSize.size.width);
+                TGET_INT_PROPERTY_VALUE( subNodes, "height", pattern.bitmapSize.size.height);
                 pattern.hasBitmap = true;
 
                 TiXmlElement* bitmapNodes = subNodes->FirstChild()->ToElement();
                 while( bitmapNodes ) {
-                    QString bitmapnodeType( bitmapNodes->Value(), wxConvUTF8 );
+                    QString bitmapnodeType = QString::fromUtf8(bitmapNodes->Value() );
 
-                    if( bitmapnodeType == _T("distance") ) {
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "min",
-                                pattern.bitmapSize.minDistance )
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "max",
-                                pattern.bitmapSize.maxDistance )
+                    if( bitmapnodeType == ("distance") ) {
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "min", pattern.bitmapSize.minDistance);
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "max", pattern.bitmapSize.maxDistance);
                         goto nextBitmap;
                     }
-                    if( bitmapnodeType == _T("origin") ) {
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "x", pattern.bitmapSize.origin.x )
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "y", pattern.bitmapSize.origin.y )
+                    if( bitmapnodeType == ("origin") ) {
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "x", pattern.bitmapSize.origin.x);
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "y", pattern.bitmapSize.origin.y);
                         goto nextBitmap;
                     }
-                    if( bitmapnodeType == _T("pivot") ) {
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "x", pattern.bitmapSize.pivot.x )
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "y", pattern.bitmapSize.pivot.y )
+                    if( bitmapnodeType == ("pivot") ) {
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "x", pattern.bitmapSize.pivot.x );
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "y", pattern.bitmapSize.pivot.y);
                         goto nextBitmap;
                     }
-                    if( bitmapnodeType == _T("graphics-location") ) {
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "x", pattern.bitmapSize.graphics.x )
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "y", pattern.bitmapSize.graphics.y )
+                    if( bitmapnodeType == ("graphics-location") ) {
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "x", pattern.bitmapSize.graphics.x);
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "y", pattern.bitmapSize.graphics.y);
                     }
                     nextBitmap: bitmapNodes = bitmapNodes->NextSiblingElement();
                 }
                 goto nextNode;
             }
-            if( nodeType == _T("HPGL") ) {
+            if( nodeType == ("HPGL") ) {
                 pattern.hasVector = true;
                 pattern.HPGL = nodeText;
                 goto nextNode;
             }
-            if( nodeType == _T("vector") ) {
+            if( nodeType == ("vector") ) {
                 ProcessVectorTag( subNodes, pattern.vectorSize );
             }
             nextNode: subNodes = subNodes->NextSiblingElement();
@@ -884,20 +885,20 @@ void ChartSymbols::BuildPattern( OCPNPattern &pattern )
     Rule *pattmp = NULL;
 
     Rule *patt = (Rule*) calloc( 1, sizeof(Rule) );
-    plib->pAlloc->Add( patt );
+    plib->pAlloc->append(patt );
 
     patt->RCID = pattern.RCID;
     patt->exposition.PXPO = new QString( pattern.description );
-    memcpy( patt->name.PANM, pattern.name.mb_str(), 8 );
+    memcpy( patt->name.PANM, pattern.name.toUtf8().data(), 8 );
     patt->bitmap.PBTM = NULL;
     patt->fillType.PATP = pattern.fillType;
     patt->spacing.PASP = pattern.spacing;
 
-    patt->vector.PVCT = (char *) malloc( pattern.HPGL.Len() + 1 );
-    strcpy( patt->vector.PVCT, pattern.HPGL.mb_str() );
+    patt->vector.PVCT = (char *) malloc( pattern.HPGL.length() + 1 );
+    strcpy( patt->vector.PVCT, pattern.HPGL.toUtf8().data() );
 
-    patt->colRef.PCRF = (char *) malloc( pattern.colorRef.Len() + 1 );
-    strcpy( patt->colRef.PCRF, pattern.colorRef.mb_str() );
+    patt->colRef.PCRF = (char *) malloc( pattern.colorRef.length() + 1 );
+    strcpy( patt->colRef.PCRF, pattern.colorRef.toUtf8().data() );
 
     SymbolSizeInfo_t patternSize;
 
@@ -915,13 +916,13 @@ void ChartSymbols::BuildPattern( OCPNPattern &pattern )
     patt->pos.patt.pivot_x.PACL = patternSize.pivot.x;
     patt->pos.patt.pivot_y.PARW = patternSize.pivot.y;
 
-    patt->pos.patt.bnbox_w.PAHL = patternSize.size.x;
-    patt->pos.patt.bnbox_h.PAVL = patternSize.size.y;
+    patt->pos.patt.bnbox_w.PAHL = patternSize.size.width;
+    patt->pos.patt.bnbox_h.PAVL = patternSize.size.height;
 
     patt->pos.patt.bnbox_x.SBXC = patternSize.origin.x;
     patt->pos.patt.bnbox_y.SBXR = patternSize.origin.y;
 
-    QRect graphicsLocation( pattern.bitmapSize.graphics, pattern.bitmapSize.size );
+    QRect graphicsLocation( pattern.bitmapSize.graphics.toPoint(), pattern.bitmapSize.size.toSize() );
     ( *symbolGraphicLocations )[pattern.name] = graphicsLocation;
 
     // check if key already there
@@ -951,7 +952,7 @@ void ChartSymbols::ProcessSymbols( TiXmlElement* symbolNodes )
             childNode = childNode->NextSibling() ) {
         TiXmlElement *child = childNode->ToElement();
 
-        TGET_INT_PROPERTY_VALUE( child, "RCID", symbol.RCID )
+        TGET_INT_PROPERTY_VALUE( child, "RCID", symbol.RCID);
 
         symbol.hasVector = false;
         symbol.hasBitmap = false;
@@ -960,90 +961,90 @@ void ChartSymbols::ProcessSymbols( TiXmlElement* symbolNodes )
         TiXmlElement* subNodes = child->FirstChild()->ToElement();
 
         while( subNodes ) {
-            QString nodeType( subNodes->Value(), wxConvUTF8 );
-            QString nodeText( subNodes->GetText(), wxConvUTF8 );
+            QString nodeType = QString::fromUtf8(subNodes->Value());
+            QString nodeText = QString::fromUtf8(subNodes->GetText());
 
-            if( nodeType == _T("description") ) {
+            if( nodeType == ("description") ) {
                 symbol.description = nodeText;
                 goto nextNode;
             }
-            if( nodeType == _T("name") ) {
+            if( nodeType == ("name") ) {
                 symbol.name = nodeText;
                 goto nextNode;
             }
-            if( nodeType == _T("color-ref") ) {
+            if( nodeType == ("color-ref") ) {
                 symbol.colorRef = nodeText;
                 goto nextNode;
             }
-            if( nodeType == _T("definition") ) {
+            if( nodeType == ("definition") ) {
                 if( !strcmp( subNodes->GetText(), "V" ) ) symbol.hasVector = true;
                 goto nextNode;
             }
-            if( nodeType == _T("HPGL") ) {
+            if( nodeType == ("HPGL") ) {
                 symbol.HPGL = nodeText;
                 goto nextNode;
             }
-            if( nodeType == _T("prefer-bitmap") ) {
-                if( nodeText.Lower() == _T("no") ) symbol.preferBitmap = false;
-                if( nodeText.Lower() == _T("false") ) symbol.preferBitmap = false;
+            if( nodeType == ("prefer-bitmap") ) {
+                if( nodeText.toLower() == ("no") ) symbol.preferBitmap = false;
+                if( nodeText.toLower() == ("false") ) symbol.preferBitmap = false;
                 goto nextNode;
             }
-            if( nodeType == _T("bitmap") ) {
-                TGET_INT_PROPERTY_VALUE( subNodes, "width", symbol.bitmapSize.size.x )
-                TGET_INT_PROPERTY_VALUE( subNodes, "height", symbol.bitmapSize.size.y )
+            if( nodeType == ("bitmap") ) {
+                TGET_INT_PROPERTY_VALUE( subNodes, "width", symbol.bitmapSize.size.width );
+                TGET_INT_PROPERTY_VALUE( subNodes, "height", symbol.bitmapSize.size.height );
                 symbol.hasBitmap = true;
 
                 TiXmlElement* bitmapNodes = subNodes->FirstChild()->ToElement();
                 while( bitmapNodes ) {
-                    QString bitmapnodeType( bitmapNodes->Value(), wxConvUTF8 );
-                    if( bitmapnodeType == _T("distance") ) {
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "min", symbol.bitmapSize.minDistance )
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "max", symbol.bitmapSize.maxDistance )
+                    QString bitmapnodeType( bitmapNodes->Value());
+                    if( bitmapnodeType == ("distance") ) {
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "min", symbol.bitmapSize.minDistance );
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "max", symbol.bitmapSize.maxDistance );
                         goto nextBitmap;
                     }
-                    if( bitmapnodeType == _T("origin") ) {
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "x", symbol.bitmapSize.origin.x )
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "y", symbol.bitmapSize.origin.y )
+                    if( bitmapnodeType == ("origin") ) {
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "x", symbol.bitmapSize.origin.x );
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "y", symbol.bitmapSize.origin.y );
                         goto nextBitmap;
                     }
-                    if( bitmapnodeType == _T("pivot") ) {
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "x", symbol.bitmapSize.pivot.x )
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "y", symbol.bitmapSize.pivot.y )
+                    if( bitmapnodeType == ("pivot") ) {
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "x", symbol.bitmapSize.pivot.x );
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "y", symbol.bitmapSize.pivot.y );
                         goto nextBitmap;
                     }
-                    if( bitmapnodeType == _T("graphics-location") ) {
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "x", symbol.bitmapSize.graphics.x )
-                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "y", symbol.bitmapSize.graphics.y )
+                    if( bitmapnodeType == ("graphics-location") ) {
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "x", symbol.bitmapSize.graphics.x );
+                        TGET_INT_PROPERTY_VALUE( bitmapNodes, "y", symbol.bitmapSize.graphics.y );
                     }
                     nextBitmap: bitmapNodes = bitmapNodes->NextSiblingElement();
                 }
                 goto nextNode;
             }
-            if( nodeType == _T("vector") ) {
-                TGET_INT_PROPERTY_VALUE( subNodes, "width", symbol.vectorSize.size.x )
-                TGET_INT_PROPERTY_VALUE( subNodes, "height", symbol.vectorSize.size.y )
+            if( nodeType == ("vector") ) {
+                TGET_INT_PROPERTY_VALUE( subNodes, "width", symbol.vectorSize.size.width );
+                TGET_INT_PROPERTY_VALUE( subNodes, "height", symbol.vectorSize.size.height );
                 symbol.hasVector = true;
 
                 TiXmlElement* vectorNodes = subNodes->FirstChild()->ToElement();
                 while( vectorNodes ) {
-                    QString vectornodeType( vectorNodes->Value(), wxConvUTF8 );
-                    if( vectornodeType == _T("distance") ) {
-                        TGET_INT_PROPERTY_VALUE( vectorNodes, "min", symbol.vectorSize.minDistance )
-                        TGET_INT_PROPERTY_VALUE( vectorNodes, "max", symbol.vectorSize.maxDistance )
+                    QString vectornodeType( vectorNodes->Value());
+                    if( vectornodeType == ("distance") ) {
+                        TGET_INT_PROPERTY_VALUE( vectorNodes, "min", symbol.vectorSize.minDistance );
+                        TGET_INT_PROPERTY_VALUE( vectorNodes, "max", symbol.vectorSize.maxDistance );
                         goto nextVector;
                     }
-                    if( vectornodeType == _T("origin") ) {
-                        TGET_INT_PROPERTY_VALUE( vectorNodes, "x", symbol.vectorSize.origin.x )
-                        TGET_INT_PROPERTY_VALUE( vectorNodes, "y", symbol.vectorSize.origin.y )
+                    if( vectornodeType == ("origin") ) {
+                        TGET_INT_PROPERTY_VALUE( vectorNodes, "x", symbol.vectorSize.origin.x );
+                        TGET_INT_PROPERTY_VALUE( vectorNodes, "y", symbol.vectorSize.origin.y );
                         goto nextVector;
                     }
-                    if( vectornodeType == _T("pivot") ) {
-                        TGET_INT_PROPERTY_VALUE( vectorNodes, "x", symbol.vectorSize.pivot.x )
-                        TGET_INT_PROPERTY_VALUE( vectorNodes, "y", symbol.vectorSize.pivot.y )
+                    if( vectornodeType == ("pivot") ) {
+                        TGET_INT_PROPERTY_VALUE( vectorNodes, "x", symbol.vectorSize.pivot.x );
+                        TGET_INT_PROPERTY_VALUE( vectorNodes, "y", symbol.vectorSize.pivot.y );
                         goto nextVector;
                     }
-                    if( vectornodeType == _T("HPGL") ) {
-                        symbol.HPGL = QString( vectorNodes->GetText(), wxConvUTF8 );
+                    if( vectornodeType == ("HPGL") ) {
+                        symbol.HPGL = QString( vectorNodes->GetText());
                     }
                     nextVector: vectorNodes = vectorNodes->NextSiblingElement();
                 }
@@ -1059,21 +1060,21 @@ void ChartSymbols::ProcessSymbols( TiXmlElement* symbolNodes )
 void ChartSymbols::BuildSymbol( ChartSymbol& symbol )
 {
     Rule *symb = (Rule*) calloc( 1, sizeof(Rule) );
-    plib->pAlloc->Add( symb );
+    plib->pAlloc->append( symb );
 
     QString SVCT;
     QString SCRF;
 
     symb->RCID = symbol.RCID;
-    memcpy( symb->name.SYNM, symbol.name.char_str(), 8 );
+    memcpy( symb->name.SYNM, symbol.name.toUcs4().data(), 8 );
 
     symb->exposition.SXPO = new QString( symbol.description );
 
-    symb->vector.SVCT = (char *) malloc( symbol.HPGL.Len() + 1 );
-    strcpy( symb->vector.SVCT, symbol.HPGL.mb_str() );
+    symb->vector.SVCT = (char *) malloc( symbol.HPGL.length() + 1 );
+    strcpy( symb->vector.SVCT, symbol.HPGL.toUtf8().data() );
 
-    symb->colRef.SCRF = (char *) malloc( symbol.colorRef.Len() + 1 );
-    strcpy( symb->colRef.SCRF, symbol.colorRef.mb_str() );
+    symb->colRef.SCRF = (char *) malloc( symbol.colorRef.length() + 1 );
+    strcpy( symb->colRef.SCRF, symbol.colorRef.toUtf8().data() );
 
     symb->bitmap.SBTM = NULL;
 
@@ -1093,13 +1094,13 @@ void ChartSymbols::BuildSymbol( ChartSymbol& symbol )
     symb->pos.symb.pivot_x.SYCL = symbolSize.pivot.x;
     symb->pos.symb.pivot_y.SYRW = symbolSize.pivot.y;
 
-    symb->pos.symb.bnbox_w.SYHL = symbolSize.size.x;
-    symb->pos.symb.bnbox_h.SYVL = symbolSize.size.y;
+    symb->pos.symb.bnbox_w.SYHL = symbolSize.size.width;
+    symb->pos.symb.bnbox_h.SYVL = symbolSize.size.height;
 
     symb->pos.symb.bnbox_x.SBXC = symbolSize.origin.x;
     symb->pos.symb.bnbox_y.SBXR = symbolSize.origin.y;
 
-    QRect graphicsLocation( symbol.bitmapSize.graphics, symbol.bitmapSize.size );
+    QRect graphicsLocation( symbol.bitmapSize.graphics.toPoint(), symbol.bitmapSize.size.toSize() );
     ( *symbolGraphicLocations )[symbol.name] = graphicsLocation;
 
     // Already something here with same key? Then free its strings, otherwise they leak.
@@ -1124,29 +1125,27 @@ bool ChartSymbols::LoadConfigFile(s52plib* plibArg, const QString & s52ilePath)
     // Files in CWD takes precedence.
 
     QString name, extension;
-    QString xmlFileName = _T("chartsymbols.xml");
+    QString xmlFileName = ("chartsymbols.xml");
 
-    wxFileName::SplitPath( s52ilePath, &configFileDirectory, &name, &extension );
-    QString fullFilePath = configFileDirectory + wxFileName::GetPathSeparator() + xmlFileName;
+    QFileInfo info(s52ilePath);
+    configFileDirectory = info.absolutePath();
+    name = info.fileName();
+    extension = info.suffix();
+    QString fullFilePath = configFileDirectory + QDir::separator() + xmlFileName;
 
-    if( wxFileName::FileExists( xmlFileName ) ) {
+    if( QFile::exists(xmlFileName )) {
         fullFilePath = xmlFileName;
-        configFileDirectory = _T(".");
+        configFileDirectory = (".");
     }
 
-    if( !wxFileName::FileExists( fullFilePath ) ) {
-        QString msg( _T("ChartSymbols ConfigFile not found: ") );
-        msg += fullFilePath;
-        ZCHX_LOGMSG( msg );
+    if( !QFile::exists( fullFilePath ) ) {
+        qDebug("ChartSymbols ConfigFile not found: %s", fullFilePath.toUtf8().data() );
         return false;
     }
 
 #if 1   
-    if(m_symbolsDoc.load_file( fullFilePath.fn_str() ) ){
-        QString msg( _T("ChartSymbols loaded from ") );
-        msg += fullFilePath;
-        ZCHX_LOGMSG( msg );
-        
+    if(m_symbolsDoc.load_file( fullFilePath.toUtf8().data() ) ){
+        qDebug("ChartSymbols loaded from %1", fullFilePath.toUtf8().data());
         pugi::xml_node elements = m_symbolsDoc.child("chartsymbols");
         
         for (pugi::xml_node element = elements.first_child(); element; element = element.next_sibling()){
@@ -1162,36 +1161,36 @@ bool ChartSymbols::LoadConfigFile(s52plib* plibArg, const QString & s52ilePath)
     }    
     
 #else
-    if( !doc.LoadFile( (const char *) fullFilePath.mb_str() ) ) {
-        QString msg( _T("    ChartSymbols ConfigFile Failed to load ") );
+    if( !doc.LoadFile( (const char *) fullFilePath.toUtf8().data() ) ) {
+        QString msg( ("    ChartSymbols ConfigFile Failed to load ") );
         msg += fullFilePath;
         ZCHX_LOGMSG( msg );
         return false;
     }
 
-    QString msg( _T("ChartSymbols loaded from ") );
+    QString msg( ("ChartSymbols loaded from ") );
     msg += fullFilePath;
     ZCHX_LOGMSG( msg );
     
     TiXmlHandle hRoot( doc.RootElement() );
     
-    QString root = QString( doc.RootElement()->Value(), wxConvUTF8 );
-    if( root != _T("chartsymbols" ) ) {
+    QString root = QString( doc.RootElement()->Value());
+    if( root != ("chartsymbols" ) ) {
         ZCHX_LOGMSG(
-                _T("    ChartSymbols::LoadConfigFile(): Expected XML Root <chartsymbols> not found.") );
+                ("    ChartSymbols::LoadConfigFile(): Expected XML Root <chartsymbols> not found.") );
         return false;
     }
 
     TiXmlElement* pElem = hRoot.FirstChild().Element();
 
     for( ; pElem != 0; pElem = pElem->NextSiblingElement() ) {
-        QString child = QString( pElem->Value(), wxConvUTF8 );
+        QString child = QString( pElem->Value());
 
-        if( child == _T("color-tables") ) ProcessColorTables( pElem );
-        if( child == _T("lookups") ) ProcessLookups( pElem );
-        if( child == _T("line-styles") ) ProcessLinestyles( pElem );
-        if( child == _T("patterns") ) ProcessPatterns( pElem );
-        if( child == _T("symbols") ) ProcessSymbols( pElem );
+        if( child == ("color-tables") ) ProcessColorTables( pElem );
+        if( child == ("lookups") ) ProcessLookups( pElem );
+        if( child == ("line-styles") ) ProcessLinestyles( pElem );
+        if( child == ("patterns") ) ProcessPatterns( pElem );
+        if( child == ("symbols") ) ProcessSymbols( pElem );
 
     }
 #endif
@@ -1213,32 +1212,31 @@ int ChartSymbols::LoadRasterFileForColorTable( int tableNo, bool flush )
             if(rasterSymbolsTexture)
                 return true;
 #ifdef ocpnUSE_GL            
-            else if( !g_texture_rectangle_format && rasterSymbols.IsOk()) 
+            else if( !g_texture_rectangle_format && !rasterSymbols.isNull())
                 return true;
 #endif            
         }
-        if( rasterSymbols.IsOk())
+        if( !rasterSymbols.isNull())
             return true;
     }
         
     
-    colTable* coltab = (colTable *) colorTables->Item( tableNo );
+    colTable* coltab = (colTable *) colorTables->at( tableNo );
 
-    QString filename = configFileDirectory + wxFileName::GetPathSeparator()
-            + coltab->rasterFileName;
+    QString filename = configFileDirectory + QDir::separator() + coltab->rasterFileName;
 
-    wxImage rasterFileImg;
-    if( rasterFileImg.LoadFile( filename, QBitmap_TYPE_PNG ) ) {
+    QImage rasterFileImg;
+    if( rasterFileImg.load(filename, /*QBitmap_TYPE_PNG*/"PNG" ) ) {
 #ifdef ocpnUSE_GL
         /* for opengl mode, load the symbols into a texture */
         if( g_bopengl && g_texture_rectangle_format) {
 
-            int w = rasterFileImg.GetWidth();
-            int h = rasterFileImg.GetHeight();
+            int w = rasterFileImg.width();
+            int h = rasterFileImg.height();
 
             //    Get the glRGBA format data from the wxImage
-            unsigned char *d = rasterFileImg.GetData();
-            unsigned char *a = rasterFileImg.GetAlpha();
+            unsigned char *d = rasterFileImg.bits();
+            unsigned char *a = rasterFileImg.alphaChannel().bits();
 
             /* combine rgb with alpha */
             unsigned char *e = (unsigned char *) malloc( w * h * 4 );
@@ -1274,16 +1272,14 @@ int ChartSymbols::LoadRasterFileForColorTable( int tableNo, bool flush )
         } 
 #endif
         {
-            rasterSymbols = QBitmap( rasterFileImg, -1/*32*/);
+            rasterSymbols = QBitmap::fromImage(rasterFileImg);
         }
 
         rasterSymbolsLoadedColorMapNumber = tableNo;
         return true;
     }
 
-    QString msg( _T("ChartSymbols...Failed to load raster symbols file ") );
-    msg += filename;
-    ZCHX_LOGMSG( msg );
+    qDebug("ChartSymbols...Failed to load raster symbols file %s", filename.toUtf8().data() );
     return false;
 }
 
@@ -1296,30 +1292,30 @@ wxArrayPtrVoid* ChartSymbols::GetColorTables()
 S52color* ChartSymbols::GetColor( const char *colorName, int fromTable )
 {
     colTable *colortable;
-    QString key( colorName, wxConvUTF8, 5 );
-    colortable = (colTable *) colorTables->Item( fromTable );
-    return &( colortable->colors[key] );
+    QString key = QString::fromUtf8(colorName, 5 );
+    colortable = (colTable *) colorTables->at( fromTable );
+    return &( colortable->S52Colors[key] );
 }
 
-wxColor ChartSymbols::GetwxColor( const QString &colorName, int fromTable )
+QColor ChartSymbols::GetQColor( const QString &colorName, int fromTable )
 {
     colTable *colortable;
-    colortable = (colTable *) colorTables->Item( fromTable );
-    wxColor c = colortable->wxColors[colorName];
+    colortable = (colTable *) colorTables->at( fromTable );
+    QColor c = colortable->QColors[colorName];
     return c;
 }
 
-wxColor ChartSymbols::GetwxColor( const char *colorName, int fromTable )
+QColor ChartSymbols::GetQColor( const char *colorName, int fromTable )
 {
-    QString key( colorName, wxConvUTF8, 5 );
-    return GetwxColor( key, fromTable );
+    QString key = QString::fromUtf8(colorName, 5 );
+    return GetQColor( key, fromTable );
 }
 
 int ChartSymbols::FindColorTable(const QString & tableName)
 {
-    for( unsigned int i = 0; i < colorTables->GetCount(); i++ ) {
-        colTable *ct = (colTable *) colorTables->Item( i );
-        if( tableName.IsSameAs( *ct->tableName ) ) {
+    for( unsigned int i = 0; i < colorTables->count(); i++ ) {
+        colTable *ct = (colTable *) colorTables->at( i );
+        if( tableName == ct->tableName  ) {
             return i;
         }
     }
@@ -1331,18 +1327,17 @@ QString ChartSymbols::HashKey( const char* symbolName )
     char key[9];
     key[8] = 0;
     strncpy( key, symbolName, 8 );
-    return QString( key, wxConvUTF8 );
+    return QString( key);
 }
 
-wxImage ChartSymbols::GetImage( const char* symbolName )
+QImage ChartSymbols::GetImage( const char* symbolName )
 {
     QRect bmArea = ( *symbolGraphicLocations )[HashKey( symbolName )];
-    if(rasterSymbols.IsOk()){
-        QBitmap bitmap = rasterSymbols.GetSubBitmap( bmArea );
-        return bitmap.ConvertToImage();
+    if(!rasterSymbols.isNull()){
+        return rasterSymbols.copy(bmArea).toImage();
     }
     else
-        return wxImage(1,1);
+        return QImage(1,1, QImage::Format_RGB32);
 }
 
 unsigned int ChartSymbols::GetGLTextureRect( QRect &rect, const char* symbolName )

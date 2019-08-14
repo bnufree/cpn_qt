@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S52 Presentation Library
@@ -30,7 +30,7 @@
 
 #include "s52s57.h"                 //types
 
-class wxGLContext;
+class QGLContext;
 
 #include "LLRegion.h"
 #include "_def.h"
@@ -155,9 +155,9 @@ public:
     void FlushSymbolCaches();
 
     //    For DC's
-    int RenderObjectToDC( wxDC *pdc, ObjRazRules *rzRules, ViewPort *vp );
-    int RenderObjectToDCText( wxDC *pdc, ObjRazRules *rzRules, ViewPort *vp );
-    int RenderAreaToDC( wxDC *pdc, ObjRazRules *rzRules, ViewPort *vp, render_canvas_parms *pb_spec );
+    int RenderObjectToDC( QPainter *pdc, ObjRazRules *rzRules, ViewPort *vp );
+    int RenderObjectToDCText( QPainter *pdc, ObjRazRules *rzRules, ViewPort *vp );
+    int RenderAreaToDC( QPainter *pdc, ObjRazRules *rzRules, ViewPort *vp, render_canvas_parms *pb_spec );
 
     // Accessors
     bool GetShowSoundings() { return m_bShowSoundg; }
@@ -203,9 +203,9 @@ public:
     static void DestroyRulesChain( Rules *top );
     
     //    For OpenGL
-    int RenderObjectToGL( const wxGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
-    int RenderAreaToGL( const wxGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
-    int RenderObjectToGLText( const wxGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
+    int RenderObjectToGL( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
+    int RenderAreaToGL( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
+    int RenderObjectToGLText( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
     
     void RenderPolytessGL( ObjRazRules *rzRules, ViewPort *vp,double z_clip_geom, QPoint *ptp );
     
@@ -275,8 +275,8 @@ private:
     
     bool PreloadOBJLFromCSV(const QString &csv_file);
 
-    int DoRenderObject( wxDC *pdcin, ObjRazRules *rzRules, ViewPort *vp );
-    int DoRenderObjectTextOnly( wxDC *pdcin, ObjRazRules *rzRules, ViewPort *vp );
+    int DoRenderObject( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp );
+    int DoRenderObjectTextOnly( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp );
     
     //    Area Renderers
     int RenderToBufferAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp,
@@ -318,7 +318,7 @@ private:
         S52color *c, render_canvas_parms *pb_spec,
         render_canvas_parms *patt_spec, ViewPort *vp );
 
-    void draw_lc_poly( wxDC *pdc, QColor &color, int width, QPoint *ptp,
+    void draw_lc_poly( QPainter *pdc, QColor &color, int width, QPoint *ptp,
         int npt, float sym_len, float sym_factor, Rule *draw_rule,
         ViewPort *vp );
 
@@ -328,7 +328,7 @@ private:
         ViewPort *vp, float rot_angle = 0. );
     QImage RuleXBMToImage( Rule *prule );
 
-    bool RenderText( wxDC *pdc, S52_TextC *ptext, int x, int y,
+    bool RenderText( QPainter *pdc, S52_TextC *ptext, int x, int y,
         QRect *pRectDrawn, S57Obj *pobj, bool bCheckOverlap, ViewPort *vp );
 
     bool CheckTextRectList( const QRect &test_rect, S52_TextC *ptext );
@@ -378,10 +378,10 @@ private:
     bool bUseRasterSym;
     bool useLegacyRaster;
 
-    wxDC *m_pdc; // The current DC
+    QPainter *m_pdc; // The current DC
     
 //#ifdef ocpnUSE_GL
-    wxGLContext *m_glcc;
+    QGLContext *m_glcc;
 //#endif
 
     int *ledge;
@@ -437,7 +437,7 @@ public:
     RenderFromHPGL( s52plib* plibarg );
     ~RenderFromHPGL(  );
     
-    void SetTargetDC( wxDC* pdc );
+    void SetTargetDC( QPainter* pdc );
     void SetTargetOpenGl();
 #if wxUSE_GRAPHICS_CONTEXT
     void SetTargetGCDC( wxGCDC* gdc );
@@ -456,7 +456,7 @@ private:
     s52plib* plib;
     double scaleFactor;
 
-    wxDC* targetDC;
+    QPainter* targetDC;
 #if wxUSE_GRAPHICS_CONTEXT
     wxGCDC* targetGCDC;
 #endif

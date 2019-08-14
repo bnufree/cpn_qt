@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Symbols
@@ -26,8 +26,10 @@
 #pragma once
 
 #include "s52plib.h"
-#include "tinyxml.h"
+#include "tinyxml/tinyxml.h"
 #include "pugixml.hpp"
+#include <QImage>
+#include <QBitmap>
 
 
 class Lookup {
@@ -45,12 +47,11 @@ public:
 	int            comment;             // Look-Up Comment (PLib3.x put 'groupes' here,
 };
 
-
 typedef struct _SymbolSizeInfo {
-    QSize size;
-    QPoint origin;
-    QPoint pivot;
-    QPoint graphics;
+    zchxSize size;
+    zchxPoint origin;
+    zchxPoint pivot;
+    zchxPoint graphics;
 	int minDistance;
 	int maxDistance;
 } SymbolSizeInfo_t;
@@ -117,9 +118,9 @@ public:
     static QColor GetQColor( const QString &colorName, int fromTable );
     static QColor GetQColor( const char *colorName, int fromTable );
 	static QString HashKey( const char* symbolName );
-	static wxImage GetImage( const char* symbolName );
-        static unsigned int GetGLTextureRect( wxRect &rect, const char* symbolName );
-        static wxSize GLTextureSize();
+    static QImage GetImage( const char* symbolName );
+        static unsigned int GetGLTextureRect( QRect &rect, const char* symbolName );
+        static QSize GLTextureSize();
         static void SetColorTableIndex( int index );
 private:
       void ProcessVectorTag( TiXmlElement* subNodes, SymbolSizeInfo_t &vectorSize );

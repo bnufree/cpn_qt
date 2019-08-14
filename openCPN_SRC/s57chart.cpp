@@ -2019,7 +2019,7 @@ bool s57chart::DoRenderViewOnDC( wxMemoryDC& dc, const ViewPort& VPoint, RenderT
         pDIB->SelectIntoDC( dc_last );
 
         ocpnMemDC dc_new;
-        PixelCache *pDIBNew = new PixelCache( VPoint.pix_width, VPoint.pix_height, BPP );
+        PixelCache *pDIBNew = new PixelCache( VPoint.pix_width, VPoint.pix_height, ZCHXBPP );
         pDIBNew->SelectIntoDC( dc_new );
 
 //        printf("reuse blit %d %d %d %d %d %d\n",desx, desy, wu, hu,  srcx, srcy);
@@ -2091,7 +2091,7 @@ bool s57chart::DoRenderViewOnDC( wxMemoryDC& dc, const ViewPort& VPoint, RenderT
     }
 
     else if( bNewVP || (nullptr == pDIB )) {
-        pDIB.reset(new PixelCache( VPoint.pix_width, VPoint.pix_height, BPP ));     // destination
+        pDIB.reset(new PixelCache( VPoint.pix_width, VPoint.pix_height, ZCHXBPP ));     // destination
 
         wxRect full_rect( 0, 0, VPoint.pix_width, VPoint.pix_height );
         pDIB->SelectIntoDC( dc );
@@ -2129,7 +2129,7 @@ int s57chart::DCRenderRect( wxMemoryDC& dcinput, const ViewPort& vp, wxRect* rec
 
     render_canvas_parms pb_spec;
 
-    pb_spec.depth = BPP;
+    pb_spec.depth = ZCHXBPP;
     pb_spec.pb_pitch = ( ( rect->width * pb_spec.depth / 8 ) );
     pb_spec.lclip = rect->x;
     pb_spec.rclip = rect->x + rect->width - 1;
@@ -2949,7 +2949,7 @@ bool s57chart::BuildThumbnail( const wxString &bmpname )
     free( psave_viz );
 
 //      Clone pDIB into pThumbData;
-    wxBitmap bmp( vp.pix_width, vp.pix_height/*,  BPP*/);
+    wxBitmap bmp( vp.pix_width, vp.pix_height/*,  ZCHXBPP*/);
 
     wxMemoryDC dc_clone;
     dc_clone.SelectObject( bmp );

@@ -33,6 +33,7 @@
 
 #include <vector>
 #include <QList>
+#include "_def.h"
 
 #define CURRENT_SENC_FORMAT_VERSION  200
 

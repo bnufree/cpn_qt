@@ -437,7 +437,9 @@ ChartBase *ChartDB::GetChart(const char *theFilePath, ChartClassDescriptor &char
         pch = new ChartGEO;
     }
     else if (chartExt == "MBTILES") {
+#if 0
         pch = new ChartMBTiles;
+#endif
     }
     else if (chartExt == "000" || chartExt == "S57") {
         LoadS57();
@@ -450,6 +452,7 @@ ChartBase *ChartDB::GetChart(const char *theFilePath, ChartClassDescriptor &char
     }
     else
     {
+#if 0
         QRegularExpression rxName("[0-9]+");
         QRegularExpression rxExt("[A-G]");
         if (rxName.match(QFileInfo(fn).fileName()).hasMatch() && rxExt.match(chartExt).hasMatch())
@@ -460,6 +463,7 @@ ChartBase *ChartDB::GetChart(const char *theFilePath, ChartClassDescriptor &char
             if( QDir(fileName).exists() )
                 pch = new cm93compchart;
         }
+#endif
     }
 
     return pch;

@@ -1,4 +1,4 @@
-/* -----------------------------------------------------------------------------
+﻿/* -----------------------------------------------------------------------------
 
 	Copyright (c) 2006 Simon Brown                          si@sjbrown.co.uk
 
@@ -36,7 +36,7 @@
 #include "singlecolourfit.h"
 #include "singlecolourfitfast.h"
 #include "twocolourfitfast.h"
-#include <wx/thread.h>
+//#include <wx/thread.h>
 
 extern bool g_throttle_squish;
 

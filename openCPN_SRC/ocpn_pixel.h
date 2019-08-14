@@ -70,6 +70,13 @@ QImage Image_Rotate(QImage &base_image, double angle, const QPoint & centre_of_r
 //#define     ocpnUSE_ocpnBitmap
 #endif
 
+#ifdef MINGW
+#define __PIX_CACHE_WXIMAGE__
+//#define __PIX_CACHE_DIBSECTION__
+//#define     ocpnUSE_DIBSECTION
+//#define     ocpnUSE_ocpnBitmap
+#endif
+
 #ifdef __WXOSX__
 #define __PIX_CACHE_WXIMAGE__
 #endif

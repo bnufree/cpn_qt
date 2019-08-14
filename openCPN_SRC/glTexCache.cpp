@@ -46,9 +46,9 @@
 #define GL_ETC1_RGB8_OES                                        0x8D64
 #endif
 
-#include "squish.h"
-#include "lz4.h"
-#include "lz4hc.h"
+#include "texcmp/squish.h"
+#include "lz4/lz4.h"
+#include "lz4/lz4hc.h"
 
 extern bool g_bopengl;
 extern bool g_bDebugOGL;
@@ -61,7 +61,7 @@ extern int          g_memCacheLimit;
 extern ColorScheme global_color_scheme;
 
 extern ChartDB      *ChartData;
-extern ocpnGLOptions    g_GLOptions;
+extern zchxGLOptions    g_GLOptions;
 extern QString         g_PrivateDataDir;
 
 extern int              g_tile_size;

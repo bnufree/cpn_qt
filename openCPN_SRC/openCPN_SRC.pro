@@ -30,6 +30,9 @@ LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lsound
 LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -liso8211
 LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lSQLiteCPP
 LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lssl_sha1
+LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltexcmp
+LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -llz4
+LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltess2
 LIBS += -lpsapi
 
 QT       += core gui network positioning core_private opengl svg xml webkitwidgets multimedia
@@ -86,7 +89,6 @@ HEADERS += \
     chartsymbols.h \
 #    chcanv.h \
 #    ChInfoWin.h \
-    cm93.h \
 #    compass.h \
 #    concanv.h \
 #    ConfigMgr.h \
@@ -118,7 +120,6 @@ HEADERS += \
 #    LLRegion.h \
 #    macutils.h \
 #    MarkIcon.h \
-    mbtiles.h \
 #    MUIBar.h \
     mygeom.h \
 #    NavObjectCollection.h \
@@ -131,7 +132,7 @@ HEADERS += \
 #    ocpndc.h \
 #    OCPNListCtrl.h \
      OCPNPlatform.h \
-#    OCPNRegion.h \
+    OCPNRegion.h \
 #    ogr_s57.h \
     options.h \
 #    Osenc.h \
@@ -203,7 +204,9 @@ HEADERS += \
 #    zchxframe.h \
     zchxmapmainwindow.h \
     zchxconfig.h \
-    zchxs57listctrlbox.h
+    zchxs57listctrlbox.h \
+    cm93.h \
+    mbtiles.h
 
 SOURCES += \
 #    bbox.cpp \
@@ -217,7 +220,6 @@ SOURCES += \
     chartsymbols.cpp \
 #    chcanv.cpp \
 #    ChInfoWin.cpp \
-    cm93.cpp \
 #    compass.cpp \
 #    compasswin.cpp \
 #    concanv.cpp \
@@ -245,7 +247,6 @@ SOURCES += \
 #    LinkPropDlg.cpp \
 #    LLRegion.cpp \
 #    MarkInfo.cpp \
-    mbtiles.cpp \
 #    MUIBar.cpp \
 #    multiplexer.cpp \
     mygeom.cpp \
@@ -258,7 +259,7 @@ SOURCES += \
 #    ocpndc.cpp \
 #    OCPNListCtrl.cpp \
     OCPNPlatform.cpp \
-#    OCPNRegion.cpp \
+    OCPNRegion.cpp \
 #    ogrs57datasource.cpp \
 #    ogrs57layer.cpp \
     options.cpp \
@@ -318,7 +319,9 @@ SOURCES += \
     main.cpp \
     zchxmapmainwindow.cpp \
     zchxconfig.cpp \
-    zchxs57listctrlbox.cpp
+    zchxs57listctrlbox.cpp \
+    cm93.cpp \
+    mbtiles.cpp
 
 OBJECTIVE_SOURCES += \
     DarkMode.mm
