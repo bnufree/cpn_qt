@@ -4964,64 +4964,59 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     char *str = (char*) rules->INSTstr;
     //    extract the parameters from the string
     //    And creating a unique string hash as we go
-    QString inst( str, wxConvUTF8 );
+    QString inst = QString::fromUtf8(str );
     QString carc_hash;
 
-    QStringTokenizer tkz( inst, _T ( ",;" ) );
+    QStringList tkz = inst.split(",;");
 
     //    outline color
-    QString outline_color = tkz.GetNextToken();
+    int i = 0;
+    QString outline_color = tkz[i++];
     carc_hash += outline_color;
     carc_hash += ".";
 
     //    outline width
-    QString slong = tkz.GetNextToken();
-    long outline_width;
-    slong.ToLong( &outline_width );
+    QString slong = tkz[i++];
+    long outline_width = slong.toLong();
     carc_hash += slong;
     carc_hash += ".";
 
     //    arc color
-    QString arc_color = tkz.GetNextToken();
+    QString arc_color = tkz[i++];
     carc_hash += arc_color;
     carc_hash += ".";
 
     //    arc width
-    slong = tkz.GetNextToken();
-    long arc_width;
-    slong.ToLong( &arc_width );
+    slong = tkz[i++];
+    long arc_width = slong.toLong();
     carc_hash += slong;
     carc_hash += ".";
 
     //    sectr1
-    slong = tkz.GetNextToken();
-    double sectr1;
-    slong.ToDouble( &sectr1 );
+    slong = tkz[i++];
+    double sectr1 = slong.toDouble();
     carc_hash += slong;
     carc_hash += ".";
 
     //    sectr2
-    slong = tkz.GetNextToken();
-    double sectr2;
-    slong.ToDouble( &sectr2 );
+    slong = tkz[i++];
+    double sectr2 = slong.toDouble();
     carc_hash += slong;
     carc_hash += ".";
 
     //    arc radius
-    slong = tkz.GetNextToken();
-    long radius;
-    slong.ToLong( &radius );
+    slong = tkz[i++];
+    long radius = slong.toLong();
     carc_hash += slong;
     carc_hash += ".";
 
     //    sector radius
-    slong = tkz.GetNextToken();
-    long sector_radius;
-    slong.ToLong( &sector_radius );
+    slong = tkz[i++];
+    long sector_radius = slong.toLong();
     carc_hash += slong;
     carc_hash += ".";
 
-    slong.Printf( _T("%d"), m_colortable_index );
+    slong.sprintf("%d", m_colortable_index );
     carc_hash += slong;
 
     int width;
@@ -5062,8 +5057,8 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
         float radius_meters = ( radius * canvas_pix_per_mm ) / vp->view_scale_ppm;
 
         xscale = radius_meters_target / radius_meters;
-        xscale = qMin(xscale, 1.0);
-        xscale = qMax(.4, xscale);
+        xscale = fmin(xscale, 1.0);
+        xscale = fmax(.4, xscale);
 
         radius *= xscale;
         sector_radius *= xscale;
@@ -5073,7 +5068,7 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     
     carc_hash += ".";
     QString xs;
-    xs.Printf( _T("%5g"), xscale );
+    xs.sprintf("%5g", xscale );
     carc_hash += xs;
 
     if(m_pdc){          // DC rendering
@@ -5194,7 +5189,7 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
             if( arc_width ) {
                 QColor colorb = getQColor( arc_color );
 
-                if( !colorb.IsOk() ) colorb = getQColor( "CHMGD" );
+                if( !colorb.isValid() ) colorb = getQColor( "CHMGD" );
 
                 pthispen = wxThePenList->FindOrCreatePen( colorb, arc_width * scale_factor, QPenSTYLE_SOLID );
                 mdc.SetPen( *pthispen );
