@@ -143,7 +143,7 @@ int zchxMapMainWindow::GetApplicationMemoryUse( void )
 
 
     HANDLE hProcess/* = GetCurrentProcess()*/;
-    hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID );
+    hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, processID );
 #else
     HANDLE hProcess = GetCurrentProcess();
 #endif

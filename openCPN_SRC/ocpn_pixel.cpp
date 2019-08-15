@@ -52,48 +52,15 @@
 // headers
 // ----------------------------------------------------------------------------
 
-// For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
-#ifndef WX_PRECOMP
-      #include "wx/wx.h"
-#endif
-
-
 #include "dychart.h"
 #include "ocpn_pixel.h"
+#include "_def.h"
 
-#ifndef WX_PRECOMP
-    #include <stdio.h>
-
-    #include "wx/list.h"
-    #include "wx/utils.h"
-    #include "wx/app.h"
-    #include "wx/palette.h"
-    #include "wx/dcmemory.h"
-    #include "wx/bitmap.h"
-    #include "wx/icon.h"
-#endif
-
-
-#ifdef __WXMSW__
-      #include "wx/msw/private.h"
-      #include "wx/zchxlog.h"
-      #include "wx/msw/dib.h"
-#endif
-
-#include "wx/bitmap.h"
-#include "wx/icon.h"
-#include "wx/zchxlog.h"
-#include "wx/image.h"
-#include "wx/app.h"
-#include "wx/math.h"
-#include "wx/gdicmn.h"
-#include "wx/palette.h"
 
 
 // missing from mingw32 header
 #ifndef CLR_INVALID
-    #define CLR_INVALID ((COLORREF)-1)
+#define CLR_INVALID ((COLORREF)-1)
 #endif // no CLR_INVALID
 
 
@@ -155,7 +122,7 @@ static void *x_malloc(size_t t)
 
         p = buf;
         while( *p ) {
-//                        printf("%c", *p++);
+            //                        printf("%c", *p++);
         }
 
         exit( 0 );
@@ -165,7 +132,7 @@ static void *x_malloc(size_t t)
     else {
         if( t > malloc_max ) {
             malloc_max = t;
-//                      ZCHX_LOGMSG(_T("New malloc_max: %d", malloc_max));
+            //                      ZCHX_LOGMSG(_T("New malloc_max: %d", malloc_max));
         }
 
         return pr;                                      // good return
@@ -193,7 +160,7 @@ ocpnXImage::ocpnXImage(int width, int height)
 
 #ifdef ocpUSE_MITSHM
 
-//      Check to see if the basic extension is supported
+    //      Check to see if the basic extension is supported
     int ignore;
     bool bMIT_SHM = XQueryExtension( xdisplay, "MIT-SHM", &ignore, &ignore, &ignore );
 
@@ -205,11 +172,11 @@ ocpnXImage::ocpnXImage(int width, int height)
                                  width, height );
         if (m_img == NULL)
         {
-              wxLogError(_T("XShmCreateImage failed!"));
+            wxLogError(_T("XShmCreateImage failed!"));
             goto after_check;
         }
 
-//    Identify and allocate the shared memory buffer
+        //    Identify and allocate the shared memory buffer
         shminfo.shmid = shmget( IPC_PRIVATE, m_img->bytes_per_line * m_img->height, IPC_CREAT|0777 );
         if (shminfo.shmid < 0)
         {
@@ -229,18 +196,18 @@ ocpnXImage::ocpnXImage(int width, int height)
             goto after_check;
         }
 
-//    Make some further checks
+        //    Make some further checks
         shminfo.readOnly = False;
         MITErrorFlag = 0;
 
         XSetErrorHandler( HandleXError );
-// This may trigger the X protocol error we're ready to catch:
+        // This may trigger the X protocol error we're ready to catch:
         XShmAttach( xdisplay, &shminfo );
         XSync( xdisplay, False );
 
         if (MITErrorFlag)
         {
-// we are on a remote display, this error is normal, don't print it
+            // we are on a remote display, this error is normal, don't print it
             XFlush( xdisplay );
             MITErrorFlag = 0;
             XDestroyImage( m_img );
@@ -256,7 +223,7 @@ ocpnXImage::ocpnXImage(int width, int height)
     }
 
 after_check:
-          // if bMIT_SHM
+    // if bMIT_SHM
 #endif
 
     if(NULL == m_img)
@@ -333,137 +300,137 @@ PixelCache::PixelCache(int width, int height, int depth)
     m_rgbo = RGB;                        // default value;
     pData = NULL;
 
-    bytes_per_pixel = ZCHXBPP / 8;
+    bytes_per_pixel = BPP / 8;
     line_pitch_bytes = bytes_per_pixel * width;
 
 
 #ifdef ocpnUSE_ocpnBitmap
-      m_rgbo = BGR;
+    m_rgbo = BGR;
 #endif
 
 #ifdef __PIX_CACHE_PIXBUF__
-      m_rgbo = RGB;
+    m_rgbo = RGB;
 #endif
 
 #ifdef __PIX_CACHE_DIBSECTION__
-      m_pDS = new wxDIB(width, -height, ZCHXBPP);
-      pData = m_pDS->GetData();
-      //        For DIBsections, each scan line is DWORD aligned, padded on the right
-      line_pitch_bytes = (((m_width * 24) + 31) & ~31) >> 3;
-      
+    m_pDS = new wxDIB(width, -height, ZCHXBPP);
+    pData = m_pDS->GetData();
+    //        For DIBsections, each scan line is DWORD aligned, padded on the right
+    line_pitch_bytes = (((m_width * 24) + 31) & ~31) >> 3;
+
 #endif
 
 
-#ifdef __PIX_CACHE_WXIMAGE__
-      m_pimage = new wxImage(m_width, m_height, (bool)FALSE);
-      pData = m_pimage->GetData();
+#ifdef __PIX_CACHE_QImage__
+    m_pimage = new QImage(m_width, m_height, (bool)false);
+    pData = m_pimage->GetData();
 #endif
 
 #ifdef __PIX_CACHE_X11IMAGE__
-      m_pocpnXI = new ocpnXImage(width, height);
-      pData = (unsigned char *)m_pocpnXI->m_img->data;
+    m_pocpnXI = new ocpnXImage(width, height);
+    pData = (unsigned char *)m_pocpnXI->m_img->data;
 #endif            //__PIX_CACHE_X11IMAGE__
 
 #ifdef __PIX_CACHE_PIXBUF__
-//      m_pbm = new ocpnBitmap((unsigned char *)NULL, m_width, m_height, m_depth);
+    //      m_pbm = new ocpnBitmap((unsigned char *)NULL, m_width, m_height, m_depth);
 
-///      m_pbm = new ocpnBitmap();
-///      m_pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
-///                                           1,
-///                                           8, m_width, m_height);
+    ///      m_pbm = new ocpnBitmap();
+    ///      m_pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
+    ///                                           1,
+    ///                                           8, m_width, m_height);
 
-///      m_pixbuf = m_pbm->GetPixbuf();
-///      pData = gdk_pixbuf_get_pixels(m_pixbuf);
-///      m_pbm->SetPixbuf(m_pixbuf, 32);
+    ///      m_pixbuf = m_pbm->GetPixbuf();
+    ///      pData = gdk_pixbuf_get_pixels(m_pixbuf);
+    ///      m_pbm->SetPixbuf(m_pixbuf, 32);
 
-      pData = (unsigned char *)malloc(m_width * m_height * 4);
-///      memset(pData, 255, m_width * m_height * 4);       // set alpha channel to 1
+    pData = (unsigned char *)malloc(m_width * m_height * 4);
+    ///      memset(pData, 255, m_width * m_height * 4);       // set alpha channel to 1
 #endif
 }
 
 PixelCache::~PixelCache()
 {
-#ifdef __PIX_CACHE_WXIMAGE__
-      delete m_pimage;
-      delete m_pbm;
+#ifdef __PIX_CACHE_QImage__
+    delete m_pimage;
+    delete m_pbm;
 #endif
 
 
 #ifdef __PIX_CACHE_DIBSECTION__
-      delete m_pDS;
+    delete m_pDS;
 #endif
 
 #ifdef __PIX_CACHE_X11IMAGE__
-      delete m_pbm;
-      delete m_pocpnXI;
+    delete m_pbm;
+    delete m_pocpnXI;
 #endif
 
 #ifdef __PIX_CACHE_PIXBUF__
-      free(pData);
-      delete m_pbm;
+    free(pData);
+    delete m_pbm;
 #endif
 
 }
 
 size_t PixelCache::GetLength(void)
 {
-#ifdef __PIX_CACHE_WXIMAGE__
+#ifdef __PIX_CACHE_QImage__
     return m_width * m_height * 3;
 #else
     return 0;
 #endif    
 }
-    
+
 
 void PixelCache::Update(void)
 {
-#ifdef __PIX_CACHE_WXIMAGE__
+#ifdef __PIX_CACHE_QImage__
     delete m_pbm;                       // kill the old one
     m_pbm = NULL;
 #endif
 }
 
 
-void PixelCache::SelectIntoDC(wxMemoryDC &dc)
+void PixelCache::SelectIntoDC(QPainter &dc)
 {
 
 #ifdef __PIX_CACHE_DIBSECTION__
-      ocpnMemDC *pmdc = dynamic_cast<ocpnMemDC*>(&dc);
-      pmdc->SelectObject (*m_pDS);
+    ocpnMemDC *pmdc = dynamic_cast<ocpnMemDC*>(&dc);
+    pmdc->SelectObject (*m_pDS);
 
 #endif      //__PIX_CACHE_DIBSECTION__
 
 
-#ifdef __PIX_CACHE_WXIMAGE__
-//    delete m_pbm;                       // kill the old one
+#ifdef __PIX_CACHE_QImage__
+    //    delete m_pbm;                       // kill the old one
 
-      //    Convert image to bitmap
+    //    Convert image to bitmap
 #ifdef ocpnUSE_ocpnBitmap
-      if(!m_pbm)
-            m_pbm = new ocpnBitmap(*m_pimage, m_depth);
+    if(!m_pbm)
+        m_pbm = new ocpnBitmap(*m_pimage, m_depth);
 #else
-      if(!m_pbm)
-            m_pbm = new wxBitmap (*m_pimage, -1);
+    if(!m_pbm)
+        m_pbm = new wxBitmap (*m_pimage, -1);
 #endif
 
-      if(m_pbm)
-            dc.SelectObject(*m_pbm);
-#endif            // __PIX_CACHE_WXIMAGE__
+    if(m_pbm)
+        dc.SelectObject(*m_pbm);
+#endif            // __PIX_CACHE_QImage__
 
 
 #ifdef __PIX_CACHE_X11IMAGE__
-      if(!m_pbm)
+    if(!m_pbm)
         m_pbm = new ocpnBitmap(m_pocpnXI, m_width, m_height, m_depth);
-      dc.SelectObject(*m_pbm);
+    dc.SelectObject(*m_pbm);
 #endif            //__PIX_CACHE_X11IMAGE__
 
 #ifdef __PIX_CACHE_PIXBUF__
-      if(!m_pbm)
-            m_pbm = new ocpnBitmap(pData, m_width, m_height, m_depth);
-      if(m_pbm)
-      {
-          dc.SelectObject(*m_pbm);
-      }
+    if(!m_pbm)
+        m_pbm = new ocpnBitmap(pData, m_width, m_height, m_depth);
+    if(m_pbm)
+    {
+        dc.SelectObject(*m_pbm);
+    }
 #endif          //__PIX_CACHE_PIXBUF__
 
 
@@ -594,8 +561,8 @@ bool ocpnBitmap::CreateFromData( void *pPix, int width, int height, int depth )
     /////////////////////
     Create(width, height, 32);
 
-//    GdkPixbuf* pixbuf = wx_static_cast(wxBitmapRefData*, m_refData))->m_pixbuf;
- //   GdkPixbuf* pixbuf = M_BMPDATA->m_pixbuf;
+    //    GdkPixbuf* pixbuf = wx_static_cast(wxBitmapRefData*, m_refData))->m_pixbuf;
+    //   GdkPixbuf* pixbuf = M_BMPDATA->m_pixbuf;
 
     // Copy the data:
     if(NULL != pPix)
@@ -612,9 +579,9 @@ bool ocpnBitmap::CreateFromData( void *pPix, int width, int height, int depth )
 
         for (int y = 0; y < height; y++, out += rowpad)
         {
-///            memcpy(out, in, width * 4);
-///            in  += 4 * width;
-///            out += 4 * width;
+            ///            memcpy(out, in, width * 4);
+            ///            in  += 4 * width;
+            ///            out += 4 * width;
 
 
             for (int x = 0; x < width; x++, out += 4, in += 4)
@@ -632,7 +599,7 @@ bool ocpnBitmap::CreateFromData( void *pPix, int width, int height, int depth )
 }
 
 /*
-bool wxBitmap::CreateFromImageAsPixbuf(const wxImage& image)
+bool wxBitmap::CreateFromImageAsPixbuf(const QImage& image)
 {
     wxASSERT(image.HasAlpha());
 
@@ -679,7 +646,7 @@ bool wxBitmap::CreateFromImageAsPixbuf(const wxImage& image)
 
 bool ocpnBitmap::CreateFromocpnXImage( ocpnXImage *poXI, int width, int height, int depth )
 {
-//    Do some basic setup in the parent  wxBitmap class
+    //    Do some basic setup in the parent  wxBitmap class
     Create(width, height, -1);
 
     Display *xdisplay = (Display *)GetDisplay();
@@ -687,16 +654,16 @@ bool ocpnBitmap::CreateFromocpnXImage( ocpnXImage *poXI, int width, int height, 
     XImage *data_image = poXI->m_img;
     bool bShared = poXI->buse_mit;
 
-// Blit picture
+    // Blit picture
 
     Pixmap mypixmap = ((Pixmap )GetPixmap());
 
     GC gc = XCreateGC( xdisplay, mypixmap, 0, NULL );
 
     if(bShared)
-            XShmPutImage( xdisplay, mypixmap, gc, data_image, 0, 0, 0, 0, width, height, False );
+        XShmPutImage( xdisplay, mypixmap, gc, data_image, 0, 0, 0, 0, width, height, False );
     else
-            XPutImage( xdisplay, mypixmap, gc, data_image, 0, 0, 0, 0, width, height );
+        XPutImage( xdisplay, mypixmap, gc, data_image, 0, 0, 0, 0, width, height );
 
     XFreeGC( xdisplay, gc );
 
@@ -712,7 +679,7 @@ bool ocpnBitmap::CreateFromData( void *pPix, int width, int height, int depth )
 
     XImage *img = NULL;
 
-//    Do some basic setup in the parent wxBitmap class
+    //    Do some basic setup in the parent wxBitmap class
     Create(width, height, -1);
 
     Display *xdisplay = (Display *)GetDisplay();
@@ -720,7 +687,7 @@ bool ocpnBitmap::CreateFromData( void *pPix, int width, int height, int depth )
     ocpnXImage *pXI = new ocpnXImage(width, height);
     img = pXI->m_img;
 
-//    Faster render from a 24 or 32 bit pixel buffer
+    //    Faster render from a 24 or 32 bit pixel buffer
 
     if((pPix != NULL ) && (NULL != img))
     {
@@ -756,7 +723,7 @@ bool ocpnBitmap::CreateFromData( void *pPix, int width, int height, int depth )
         }
     }
 
-        // Blit picture
+    // Blit picture
 
     Pixmap mypixmap = ((Pixmap )GetPixmap());
     GC gc = XCreateGC( xdisplay, mypixmap, 0, NULL );
@@ -767,7 +734,7 @@ bool ocpnBitmap::CreateFromData( void *pPix, int width, int height, int depth )
 
     XFreeGC( xdisplay, gc );
 
-    return TRUE;
+    return true;
 }
 
 #endif            //__WXX11__
@@ -780,15 +747,15 @@ bool ocpnBitmap::CreateFromData( void *pPix, int width, int height, int depth )
 // ----------------------------------------------------------------------------
 bool ocpnBitmap::CreateFromData( void *pPix, int width, int height, int depth )
 {
-      m_refData = CreateData();                 // found in wxBitmap
-//    int width = image.GetWidth();
-//    int height0 = image.GetHeight();
+    m_refData = CreateData();                 // found in wxBitmap
+    //    int width = image.GetWidth();
+    //    int height0 = image.GetHeight();
 
-      int height0 = height;
+    int height0 = height;
     int sizeLimit = 1280*1024 *3;
 
     int bmpHeight = height0;
-//    int height = bmpHeight;
+    //    int height = bmpHeight;
 
     // calc the number of bytes per scanline and padding
     int bytePerLine = width*3;
@@ -811,7 +778,7 @@ bool ocpnBitmap::CreateFromData( void *pPix, int width, int height, int depth )
     // create a DIB header
     int headersize = sizeof(BITMAPINFOHEADER);
     BITMAPINFO *lpDIBh = (BITMAPINFO *) malloc( headersize );
-    wxCHECK_MSG( lpDIBh, FALSE, wxT("could not allocate memory for DIB header") );
+    wxCHECK_MSG( lpDIBh, false, wxT("could not allocate memory for DIB header") );
     // Fill in the DIB header
     lpDIBh->bmiHeader.biSize = headersize;
     lpDIBh->bmiHeader.biWidth = (DWORD)width;
@@ -834,22 +801,22 @@ bool ocpnBitmap::CreateFromData( void *pPix, int width, int height, int depth )
     {
         wxFAIL_MSG( wxT("could not allocate memory for DIB") );
         free( lpDIBh );
-        return FALSE;
+        return false;
     }
 
     // create and set the device-dependent bitmap
     HDC hdc = ::GetDC(NULL);
     HDC memdc = ::CreateCompatibleDC( hdc );
     HBITMAP hbitmap;
-//    hbitmap = ::CreateCompatibleBitmap( hdc, width, bmpHeight );
+    //    hbitmap = ::CreateCompatibleBitmap( hdc, width, bmpHeight );
 
-//    if(hbitmap == NULL)
-//          int cop =0;
+    //    if(hbitmap == NULL)
+    //          int cop =0;
 
-//    ::SelectObject( memdc, hbitmap);
+    //    ::SelectObject( memdc, hbitmap);
 
 
-// copy image data into DIB data
+    // copy image data into DIB data
     unsigned char *data = (unsigned char *)pPix;
     int i, j;
     unsigned char *ptdata = data;
@@ -858,45 +825,45 @@ bool ocpnBitmap::CreateFromData( void *pPix, int width, int height, int depth )
     ptbits = lpBits;
 
     if(pPix)
-      {
-            for( j=0; j<height; j++ )
-            {
+    {
+        for( j=0; j<height; j++ )
+        {
 
-                  memcpy(ptbits, ptdata, width * 3);
-                  ptbits += width * 3;
-                  ptdata += width * 3;
+            memcpy(ptbits, ptdata, width * 3);
+            ptbits += width * 3;
+            ptdata += width * 3;
 
-                  for( i=0; i< padding; i++ )   *(ptbits++) = 0;
-            }
-      }
+            for( i=0; i< padding; i++ )   *(ptbits++) = 0;
+        }
+    }
 
-      else
-      {
-            for( j=0; j<height; j++ )
-            {
+    else
+    {
+        for( j=0; j<height; j++ )
+        {
 
-                  memset(ptbits, 0,  width * 3);
-                  ptbits += width * 3;
+            memset(ptbits, 0,  width * 3);
+            ptbits += width * 3;
 
-                  for( i=0; i< padding; i++ )   *(ptbits++) = 0;
-            }
-      }
-
-
+            for( i=0; i< padding; i++ )   *(ptbits++) = 0;
+        }
+    }
 
 
-hbitmap = CreateDIBitmap( hdc, &(lpDIBh->bmiHeader), CBM_INIT, lpBits, lpDIBh, DIB_RGB_COLORS );
-// The above line is equivalent to the following two lines.
-//    hbitmap = ::CreateCompatibleBitmap( hdc, width, height );
-//    ::SetDIBits( hdc, hbitmap, 0, height, lpBits, lpDIBh, DIB_RGB_COLORS);
+
+
+    hbitmap = CreateDIBitmap( hdc, &(lpDIBh->bmiHeader), CBM_INIT, lpBits, lpDIBh, DIB_RGB_COLORS );
+    // The above line is equivalent to the following two lines.
+    //    hbitmap = ::CreateCompatibleBitmap( hdc, width, height );
+    //    ::SetDIBits( hdc, hbitmap, 0, height, lpBits, lpDIBh, DIB_RGB_COLORS);
     // or the following lines
-//    hbitmap = ::CreateCompatibleBitmap( hdc, width, height );
-//    HDC memdc = ::CreateCompatibleDC( hdc );
-//    ::SelectObject( memdc, hbitmap);
-//    ::SetDIBitsToDevice( memdc, 0, 0, width, height,
-//              0, 0, 0, height, (void *)lpBits, lpDIBh, DIB_RGB_COLORS);
-//    ::SelectObject( memdc, 0 );
-//    ::DeleteDC( memdc );
+    //    hbitmap = ::CreateCompatibleBitmap( hdc, width, height );
+    //    HDC memdc = ::CreateCompatibleDC( hdc );
+    //    ::SelectObject( memdc, hbitmap);
+    //    ::SetDIBitsToDevice( memdc, 0, 0, width, height,
+    //              0, 0, 0, height, (void *)lpBits, lpDIBh, DIB_RGB_COLORS);
+    //    ::SelectObject( memdc, 0 );
+    //    ::DeleteDC( memdc );
     SetHBITMAP( (WXHBITMAP) hbitmap );
 
 
@@ -906,7 +873,7 @@ hbitmap = CreateDIBitmap( hdc, &(lpDIBh->bmiHeader), CBM_INIT, lpBits, lpDIBh, D
     free(lpDIBh);
     free(lpBits);
 
-    return TRUE;
+    return true;
 }
 
 
@@ -915,15 +882,15 @@ hbitmap = CreateDIBitmap( hdc, &(lpDIBh->bmiHeader), CBM_INIT, lpBits, lpDIBh, D
 
 
 // ----------------------------------------------------------------------------
-// wxImage from conversion
+// QImage from conversion
 // ----------------------------------------------------------------------------
 
 
-bool ocpnBitmap::CreateFromImage( const wxImage& image, int depth )
+bool ocpnBitmap::CreateFromImage( const QImage& image, int depth )
 {
-//    wxCHECK_MSG( image.Ok(), FALSE, wxT("invalid image") )
+    //    wxCHECK_MSG( image.Ok(), false, wxT("invalid image") )
 
-      m_refData = CreateData();                 // found in wxBitmap
+    m_refData = CreateData();                 // found in wxBitmap
 
     // sizeLimit is the MS upper limit for the DIB size
     int sizeLimit = 1280*1024 *3;
@@ -956,7 +923,7 @@ bool ocpnBitmap::CreateFromImage( const wxImage& image, int depth )
     }
 
     // set bitmap parameters
-    wxCHECK_MSG( image.Ok(), FALSE, wxT("invalid image") );
+    wxCHECK_MSG( image.Ok(), false, wxT("invalid image") );
     SetWidth( width );
     SetHeight( bmpHeight );
     if (depth == -1) depth = wxDisplayDepth();
@@ -970,7 +937,7 @@ bool ocpnBitmap::CreateFromImage( const wxImage& image, int depth )
     // create a DIB header
     int headersize = sizeof(BITMAPINFOHEADER);
     BITMAPINFO *lpDIBh = (BITMAPINFO *) malloc( headersize );
-    wxCHECK_MSG( lpDIBh, FALSE, wxT("could not allocate memory for DIB header") );
+    wxCHECK_MSG( lpDIBh, false, wxT("could not allocate memory for DIB header") );
     // Fill in the DIB header
     lpDIBh->bmiHeader.biSize = headersize;
     lpDIBh->bmiHeader.biWidth = (DWORD)width;
@@ -993,25 +960,25 @@ bool ocpnBitmap::CreateFromImage( const wxImage& image, int depth )
     {
         wxFAIL_MSG( wxT("could not allocate memory for DIB") );
         free( lpDIBh );
-        return FALSE;
+        return false;
     }
 
     // create and set the device-dependent bitmap
     HDC hdc = ::GetDC(NULL);
     HDC memdc = ::CreateCompatibleDC( hdc );
     HBITMAP hbitmap;
-//    hbitmap = ::CreateCompatibleBitmap( hdc, width, bmpHeight );
+    //    hbitmap = ::CreateCompatibleBitmap( hdc, width, bmpHeight );
 
-//    if(hbitmap == NULL)
-//          int cop =0;
+    //    if(hbitmap == NULL)
+    //          int cop =0;
 
-//    ::SelectObject( memdc, hbitmap);
+    //    ::SelectObject( memdc, hbitmap);
 
 #if wxUSE_PALETTE
     HPALETTE hOldPalette = 0;
     if (image.GetPalette().Ok())
     {
-        hOldPalette = ::SelectPalette(memdc, (HPALETTE) image.GetPalette().GetHPALETTE(), FALSE);
+        hOldPalette = ::SelectPalette(memdc, (HPALETTE) image.GetPalette().GetHPALETTE(), false);
         ::RealizePalette(memdc);
     }
 #endif // wxUSE_PALETTE
@@ -1039,10 +1006,10 @@ bool ocpnBitmap::CreateFromImage( const wxImage& image, int depth )
         {
 
             memcpy(ptbits, ptdata, width * 3);
-                  ptbits += width * 3;
-                  ptdata += width * 3;
+            ptbits += width * 3;
+            ptdata += width * 3;
 
-/*
+            /*
                   for( i=0; i<width; i++ )
             {
                 *(ptbits++) = *(ptdata+2);
@@ -1053,34 +1020,34 @@ bool ocpnBitmap::CreateFromImage( const wxImage& image, int depth )
 */
             for( i=0; i< padding; i++ )   *(ptbits++) = 0;
         }
-//        ::StretchDIBits( memdc, 0, origin, width, height,
-//            0, 0, width, height, lpBits, lpDIBh, DIB_RGB_COLORS, SRCCOPY);
+        //        ::StretchDIBits( memdc, 0, origin, width, height,
+        //            0, 0, width, height, lpBits, lpDIBh, DIB_RGB_COLORS, SRCCOPY);
         origin += height;
         // if numDIB = 1,  lines below can also be used
-    hbitmap = CreateDIBitmap( hdc, &(lpDIBh->bmiHeader), CBM_INIT, lpBits, lpDIBh, DIB_RGB_COLORS );
-//      if(hbitmap == NULL)
-//            int cop =0;
+        hbitmap = CreateDIBitmap( hdc, &(lpDIBh->bmiHeader), CBM_INIT, lpBits, lpDIBh, DIB_RGB_COLORS );
+        //      if(hbitmap == NULL)
+        //            int cop =0;
 
         // The above line is equivalent to the following two lines.
-//    hbitmap = ::CreateCompatibleBitmap( hdc, width, height );
-//    ::SetDIBits( hdc, hbitmap, 0, height, lpBits, lpDIBh, DIB_RGB_COLORS);
+        //    hbitmap = ::CreateCompatibleBitmap( hdc, width, height );
+        //    ::SetDIBits( hdc, hbitmap, 0, height, lpBits, lpDIBh, DIB_RGB_COLORS);
         // or the following lines
-//    hbitmap = ::CreateCompatibleBitmap( hdc, width, height );
-//    HDC memdc = ::CreateCompatibleDC( hdc );
-//    ::SelectObject( memdc, hbitmap);
-//    ::SetDIBitsToDevice( memdc, 0, 0, width, height,
-//              0, 0, 0, height, (void *)lpBits, lpDIBh, DIB_RGB_COLORS);
-//    ::SelectObject( memdc, 0 );
-//    ::DeleteDC( memdc );
+        //    hbitmap = ::CreateCompatibleBitmap( hdc, width, height );
+        //    HDC memdc = ::CreateCompatibleDC( hdc );
+        //    ::SelectObject( memdc, hbitmap);
+        //    ::SetDIBitsToDevice( memdc, 0, 0, width, height,
+        //              0, 0, 0, height, (void *)lpBits, lpDIBh, DIB_RGB_COLORS);
+        //    ::SelectObject( memdc, 0 );
+        //    ::DeleteDC( memdc );
     }
     SetHBITMAP( (WXHBITMAP) hbitmap );
 
-//      if(!this->Ok())
-//         int cop = this->Ok();
+    //      if(!this->Ok())
+    //         int cop = this->Ok();
 
 #if wxUSE_PALETTE
     if (hOldPalette)
-        SelectPalette(memdc, hOldPalette, FALSE);
+        SelectPalette(memdc, hOldPalette, false);
 #endif // wxUSE_PALETTE
 
     // similarly, created an mono-bitmap for the possible mask
@@ -1134,7 +1101,7 @@ bool ocpnBitmap::CreateFromImage( const wxImage& image, int depth )
                 for( i=0; i< padding; i++ )   *(ptbits++) = zero;
             }
             ::StretchDIBits( memdc, 0, origin, width, height,\
-                0, 0, width, height, lpBits, lpDIBh, DIB_RGB_COLORS, SRCCOPY);
+                             0, 0, width, height, lpBits, lpDIBh, DIB_RGB_COLORS, SRCCOPY);
             origin += height;
         }
         // create a wxMask object
@@ -1162,7 +1129,7 @@ bool ocpnBitmap::CreateFromImage( const wxImage& image, int depth )
     GetBitmapData()->SetOk();
 #endif // WXWIN_COMPATIBILITY_2
 
-    return TRUE;
+    return true;
 }
 
 
@@ -1177,7 +1144,7 @@ bool ocpnBitmap::CreateFromImage( const wxImage& image, int depth )
 // ocpnMemDC implementation
 // ============================================================================
 
-IMPLEMENT_DYNAMIC_CLASS(ocpnMemDC, wxMemoryDC)
+//IMPLEMENT_DYNAMIC_CLASS(ocpnMemDC, QPainter)
 
 
 ocpnMemDC::ocpnMemDC()
@@ -1191,22 +1158,22 @@ void ocpnMemDC::SelectObject(wxDIB& dib)
     // select old bitmap out of the device context
     if ( m_oldBitmap )
     {
-            ::SelectObject(GetHdc(), (HBITMAP) m_oldBitmap);
-            if ( m_selectedBitmap.Ok() )
-            {
+        ::SelectObject(GetHdc(), (HBITMAP) m_oldBitmap);
+        if ( m_selectedBitmap.Ok() )
+        {
 #ifdef __WXDEBUG__
- //           m_selectedBitmap.SetSelectedInto(NULL);
+            //           m_selectedBitmap.SetSelectedInto(NULL);
 #endif
             m_selectedBitmap = wxNullBitmap;
-            }
+        }
     }
 
-// check for whether the bitmap is already selected into a device context
-//    wxASSERT_MSG( !bitmap.GetSelectedInto() ||
-//                  (bitmap.GetSelectedInto() == this),
-//                  wxT("Bitmap is selected in another wxMemoryDC, delete the first wxMemoryDC or use SelectObject(NULL)") );
+    // check for whether the bitmap is already selected into a device context
+    //    wxASSERT_MSG( !bitmap.GetSelectedInto() ||
+    //                  (bitmap.GetSelectedInto() == this),
+    //                  wxT("Bitmap is selected in another QPainter, delete the first QPainter or use SelectObject(NULL)") );
 
-/*
+    /*
     m_selectedBitmap = bitmap;
     WXHBITMAP hBmp = m_selectedBitmap.GetHBITMAP();
     if ( !hBmp )
@@ -1218,25 +1185,25 @@ void ocpnMemDC::SelectObject(wxDIB& dib)
         return;                             // already selected
 
 #ifdef __WXDEBUG__
-//    m_selectedBitmap.SetSelectedInto(this);
+    //    m_selectedBitmap.SetSelectedInto(this);
 #endif
 
-//    hBmp = (WXHBITMAP)::SelectObject(GetHdc(), (HBITMAP)hBmp);
+    //    hBmp = (WXHBITMAP)::SelectObject(GetHdc(), (HBITMAP)hBmp);
 
-      hDIB = (HBITMAP)::SelectObject(GetHdc(), hDIB);
+    hDIB = (HBITMAP)::SelectObject(GetHdc(), hDIB);
 
 
-      if ( !hDIB )
-      {
-          wxLogLastError(wxT("SelectObject(ocpnMemDC, DIB)"));
+    if ( !hDIB )
+    {
+        wxLogLastError(wxT("SelectObject(ocpnMemDC, DIB)"));
 
-          wxFAIL_MSG(wxT("Couldn't select a DIB into ocpnMemDC"));
-      }
+        wxFAIL_MSG(wxT("Couldn't select a DIB into ocpnMemDC"));
+    }
 
-      else if ( !m_oldBitmap )
-      {
-          m_oldBitmap = hDIB;
-      }
+    else if ( !m_oldBitmap )
+    {
+        m_oldBitmap = hDIB;
+    }
 
 }
 
@@ -1259,150 +1226,148 @@ static const double wxROTATE_EPSILON = 1e-10;
 // be computed and stored in the calling function.
 
 
-static inline wxRealPoint
-            wxRotatePoint(const wxRealPoint& p, double cos_angle, double sin_angle,
-                          const wxRealPoint& p0)
+static inline zchxPointF
+wxRotatePoint(const zchxPointF& p, double cos_angle, double sin_angle,
+              const zchxPointF& p0)
 {
-      return wxRealPoint(p0.x + (p.x - p0.x) * cos_angle - (p.y - p0.y) * sin_angle,
-                         p0.y + (p.y - p0.y) * cos_angle + (p.x - p0.x) * sin_angle);
+    return zchxPointF(p0.x + (p.x - p0.x) * cos_angle - (p.y - p0.y) * sin_angle,
+                      p0.y + (p.y - p0.y) * cos_angle + (p.x - p0.x) * sin_angle);
 }
 
-static inline wxRealPoint
-            wxRotatePoint(double x, double y, double cos_angle, double sin_angle,
-                          const wxRealPoint & p0)
+static inline zchxPointF
+wxRotatePoint(double x, double y, double cos_angle, double sin_angle,
+              const zchxPointF & p0)
 {
-      return wxRotatePoint (wxRealPoint(x,y), cos_angle, sin_angle, p0);
+    return wxRotatePoint (zchxPointF(x,y), cos_angle, sin_angle, p0);
 }
 
 
-wxImage Image_Rotate(wxImage &base_image, double angle, const wxPoint & centre_of_rotation, bool interpolating, wxPoint * offset_after_rotation)
+QImage Image_Rotate(QImage &base_image, double angle, const zchxPoint & centre_of_rotation, bool interpolating, zchxPoint * offset_after_rotation)
 {
-      int i;
-      angle = -angle;     // screen coordinates are a mirror image of "real" coordinates
+    int i;
+    angle = -angle;     // screen coordinates are a mirror image of "real" coordinates
 
-      bool has_alpha = base_image.HasAlpha();
+    bool has_alpha = base_image.hasAlphaChannel();
 
-      const int w = base_image.GetWidth(),
-                             h = base_image.GetHeight();
+    const int w = base_image.width(), h = base_image.height();
 
-    // Create pointer-based array to accelerate access to wxImage's data
-                             unsigned char ** data = new unsigned char * [h];
-                             data[0] = base_image.GetData();
-                             for (i = 1; i < h; i++)
-                                   data[i] = data[i - 1] + (3 * w);
+    // Create pointer-based array to accelerate access to QImage's data
+    unsigned char ** data = new unsigned char * [h];
+    data[0] = base_image.bits();
+    for (i = 1; i < h; i++)
+        data[i] = data[i - 1] + (3 * w);
 
     // Same for alpha channel
-                             unsigned char ** alpha = NULL;
-                             if (has_alpha)
-                             {
-                                   alpha = new unsigned char * [h];
-                                   alpha[0] = base_image.GetAlpha();
-                                   for (i = 1; i < h; i++)
-                                         alpha[i] = alpha[i - 1] + w;
-                             }
+    unsigned char ** alpha = NULL;
+    if (has_alpha)
+    {
+        alpha = new unsigned char * [h];
+        alpha[0] = base_image.alphaChannel().bits();
+        for (i = 1; i < h; i++)
+            alpha[i] = alpha[i - 1] + w;
+    }
 
     // precompute coefficients for rotation formula
     // (sine and cosine of the angle)
-                             const double cos_angle = cos(angle);
-                             const double sin_angle = sin(angle);
+    const double cos_angle = cos(angle);
+    const double sin_angle = sin(angle);
 
     // Create new Image to store the result
     // First, find rectangle that covers the rotated image;  to do that,
     // rotate the four corners
 
-                             const wxRealPoint p0(centre_of_rotation.x, centre_of_rotation.y);
+    const zchxPointF p0(centre_of_rotation.x, centre_of_rotation.y);
 
-                             wxRealPoint p1 = wxRotatePoint (0, 0, cos_angle, sin_angle, p0);
-                             wxRealPoint p2 = wxRotatePoint (0, h, cos_angle, sin_angle, p0);
-                             wxRealPoint p3 = wxRotatePoint (w, 0, cos_angle, sin_angle, p0);
-                             wxRealPoint p4 = wxRotatePoint (w, h, cos_angle, sin_angle, p0);
+    zchxPointF p1 = wxRotatePoint (0, 0, cos_angle, sin_angle, p0);
+    zchxPointF p2 = wxRotatePoint (0, h, cos_angle, sin_angle, p0);
+    zchxPointF p3 = wxRotatePoint (w, 0, cos_angle, sin_angle, p0);
+    zchxPointF p4 = wxRotatePoint (w, h, cos_angle, sin_angle, p0);
 
-                             int x1a = (int) floor (wxMin (wxMin(p1.x, p2.x), wxMin(p3.x, p4.x)));
-                             int y1a = (int) floor (wxMin (wxMin(p1.y, p2.y), wxMin(p3.y, p4.y)));
-                             int x2a = (int) ceil (wxMax (wxMax(p1.x, p2.x), wxMax(p3.x, p4.x)));
-                             int y2a = (int) ceil (wxMax (wxMax(p1.y, p2.y), wxMax(p3.y, p4.y)));
+    int x1a = (int) floor (qMin (qMin(p1.x, p2.x), qMin(p3.x, p4.x)));
+    int y1a = (int) floor (qMin (qMin(p1.y, p2.y), qMin(p3.y, p4.y)));
+    int x2a = (int) ceil (qMax (qMax(p1.x, p2.x), qMax(p3.x, p4.x)));
+    int y2a = (int) ceil (qMax (qMax(p1.y, p2.y), qMax(p3.y, p4.y)));
 
     // Create rotated image
-                             wxImage rotated (x2a - x1a + 1, y2a - y1a + 1, false);
+    QImage rotated (x2a - x1a + 1, y2a - y1a + 1, QImage::Format_ARGB32);
     // With alpha channel
-                             if (has_alpha)
-                                   rotated.SetAlpha();
+    if (has_alpha) rotated.setAlphaChannel(QImage());
 
-                             if (offset_after_rotation != NULL)
-                             {
-                                   *offset_after_rotation = wxPoint (x1a, y1a);
-                             }
+    if (offset_after_rotation != NULL)
+    {
+        *offset_after_rotation = zchxPoint (x1a, y1a);
+    }
 
     // GRG: The rotated (destination) image is always accessed
     //      sequentially, so there is no need for a pointer-based
     //      array here (and in fact it would be slower).
-                             //
-                             unsigned char * dst = rotated.GetData();
+    //
+    unsigned char * dst = rotated.bits();
 
-                             unsigned char * alpha_dst = NULL;
-                             if (has_alpha)
-                                   alpha_dst = rotated.GetAlpha();
+    unsigned char * alpha_dst = NULL;
+    if (has_alpha)
+        alpha_dst = rotated.alphaChannel().bits();
 
     // GRG: if the original image has a mask, use its RGB values
     //      as the blank pixel, else, fall back to default (black).
-                             //
-                             unsigned char blank_r = 0;
-                             unsigned char blank_g = 0;
-                             unsigned char blank_b = 0;
+    //
+    unsigned char blank_r = 0;
+    unsigned char blank_g = 0;
+    unsigned char blank_b = 0;
 
-                             if (base_image.HasMask())
-                             {
-                                   blank_r = base_image.GetMaskRed();
-                                   blank_g = base_image.GetMaskGreen();
-                                   blank_b = base_image.GetMaskBlue();
-                                   rotated.SetMaskColour( blank_r, blank_g, blank_b );
-                             }
+//    if (base_image.HasMask())
+//    {
+//        blank_r = base_image.GetMaskRed();
+//        blank_g = base_image.GetMaskGreen();
+//        blank_b = base_image.GetMaskBlue();
+//        rotated.SetMaskColour( blank_r, blank_g, blank_b );
+//    }
 
     // Now, for each point of the rotated image, find where it came from, by
     // performing an inverse rotation (a rotation of -angle) and getting the
     // pixel at those coordinates
 
-                             const int rH = rotated.GetHeight();
-                             const int rW = rotated.GetWidth();
+    const int rH = rotated.height();
+    const int rW = rotated.width();
 
     // GRG: I've taken the (interpolating) test out of the loops, so that
     //      it is done only once, instead of repeating it for each pixel.
 
-                             if (interpolating)
-                             {
-                                   for (int y = 0; y < rH; y++)
-                                   {
-                                         for (int x = 0; x < rW; x++)
-                                         {
-                                               wxRealPoint src = wxRotatePoint (x + x1a, y + y1a, cos_angle, -sin_angle, p0);
+    if (interpolating)
+    {
+        for (int y = 0; y < rH; y++)
+        {
+            for (int x = 0; x < rW; x++)
+            {
+                zchxPointF src = wxRotatePoint (x + x1a, y + y1a, cos_angle, -sin_angle, p0);
 
-                                               if (-0.25 < src.x && src.x < w - 0.75 &&
-                                                    -0.25 < src.y && src.y < h - 0.75)
-                                               {
+                if (-0.25 < src.x && src.x < w - 0.75 &&
+                        -0.25 < src.y && src.y < h - 0.75)
+                {
                     // interpolate using the 4 enclosing grid-points.  Those
                     // points can be obtained using floor and ceiling of the
                     // exact coordinates of the point
-                                                     int x1, y1, x2, y2;
+                    int x1, y1, x2, y2;
 
-                                                     if (0 < src.x && src.x < w - 1)
-                                                     {
-                                                           x1 = wxRound(floor(src.x));
-                                                           x2 = wxRound(ceil(src.x));
-                                                     }
-                                                     else    // else means that x is near one of the borders (0 or width-1)
-                                                     {
-                                                           x1 = x2 = wxRound (src.x);
-                                                     }
+                    if (0 < src.x && src.x < w - 1)
+                    {
+                        x1 = qRound(floor(src.x));
+                        x2 = qRound(ceil(src.x));
+                    }
+                    else    // else means that x is near one of the borders (0 or width-1)
+                    {
+                        x1 = x2 = qRound (src.x);
+                    }
 
-                                                     if (0 < src.y && src.y < h - 1)
-                                                     {
-                                                           y1 = wxRound(floor(src.y));
-                                                           y2 = wxRound(ceil(src.y));
-                                                     }
-                                                     else
-                                                     {
-                                                           y1 = y2 = wxRound (src.y);
-                                                     }
+                    if (0 < src.y && src.y < h - 1)
+                    {
+                        y1 = qRound(floor(src.y));
+                        y2 = qRound(ceil(src.y));
+                    }
+                    else
+                    {
+                        y1 = y2 = qRound (src.y);
+                    }
 
                     // get four points and the distances (square of the distance,
                     // for efficiency reasons) for the interpolation formula
@@ -1412,10 +1377,10 @@ wxImage Image_Rotate(wxImage &base_image, double angle, const wxPoint & centre_o
                     //      just one, instead of four, if d1, d2, d3
                     //      or d4 are < wxROTATE_EPSILON
 
-                                                     const double d1 = (src.x - x1) * (src.x - x1) + (src.y - y1) * (src.y - y1);
-                                                     const double d2 = (src.x - x2) * (src.x - x2) + (src.y - y1) * (src.y - y1);
-                                                     const double d3 = (src.x - x2) * (src.x - x2) + (src.y - y2) * (src.y - y2);
-                                                     const double d4 = (src.x - x1) * (src.x - x1) + (src.y - y2) * (src.y - y2);
+                    const double d1 = (src.x - x1) * (src.x - x1) + (src.y - y1) * (src.y - y1);
+                    const double d2 = (src.x - x2) * (src.x - x2) + (src.y - y1) * (src.y - y1);
+                    const double d3 = (src.x - x2) * (src.x - x2) + (src.y - y2) * (src.y - y2);
+                    const double d4 = (src.x - x1) * (src.x - x1) + (src.y - y2) * (src.y - y2);
 
                     // Now interpolate as a weighted average of the four surrounding
                     // points, where the weights are the distances to each of those points
@@ -1424,159 +1389,159 @@ wxImage Image_Rotate(wxImage &base_image, double angle, const wxPoint & centre_o
                     // image, then don't interpolate -- just assign the pixel
 
                     // d1,d2,d3,d4 are positive -- no need for abs()
-                                                     if (d1 < wxROTATE_EPSILON)
-                                                     {
-                                                           unsigned char *p = data[y1] + (3 * x1);
-                                                           *(dst++) = *(p++);
-                                                           *(dst++) = *(p++);
-                                                           *(dst++) = *p;
+                    if (d1 < wxROTATE_EPSILON)
+                    {
+                        unsigned char *p = data[y1] + (3 * x1);
+                        *(dst++) = *(p++);
+                        *(dst++) = *(p++);
+                        *(dst++) = *p;
 
-                                                           if (has_alpha)
-                                                                 *(alpha_dst++) = *(alpha[y1] + x1);
-                                                     }
-                                                     else if (d2 < wxROTATE_EPSILON)
-                                                     {
-                                                           unsigned char *p = data[y1] + (3 * x2);
-                                                           *(dst++) = *(p++);
-                                                           *(dst++) = *(p++);
-                                                           *(dst++) = *p;
+                        if (has_alpha)
+                            *(alpha_dst++) = *(alpha[y1] + x1);
+                    }
+                    else if (d2 < wxROTATE_EPSILON)
+                    {
+                        unsigned char *p = data[y1] + (3 * x2);
+                        *(dst++) = *(p++);
+                        *(dst++) = *(p++);
+                        *(dst++) = *p;
 
-                                                           if (has_alpha)
-                                                                 *(alpha_dst++) = *(alpha[y1] + x2);
-                                                     }
-                                                     else if (d3 < wxROTATE_EPSILON)
-                                                     {
-                                                           unsigned char *p = data[y2] + (3 * x2);
-                                                           *(dst++) = *(p++);
-                                                           *(dst++) = *(p++);
-                                                           *(dst++) = *p;
+                        if (has_alpha)
+                            *(alpha_dst++) = *(alpha[y1] + x2);
+                    }
+                    else if (d3 < wxROTATE_EPSILON)
+                    {
+                        unsigned char *p = data[y2] + (3 * x2);
+                        *(dst++) = *(p++);
+                        *(dst++) = *(p++);
+                        *(dst++) = *p;
 
-                                                           if (has_alpha)
-                                                                 *(alpha_dst++) = *(alpha[y2] + x2);
-                                                     }
-                                                     else if (d4 < wxROTATE_EPSILON)
-                                                     {
-                                                           unsigned char *p = data[y2] + (3 * x1);
-                                                           *(dst++) = *(p++);
-                                                           *(dst++) = *(p++);
-                                                           *(dst++) = *p;
+                        if (has_alpha)
+                            *(alpha_dst++) = *(alpha[y2] + x2);
+                    }
+                    else if (d4 < wxROTATE_EPSILON)
+                    {
+                        unsigned char *p = data[y2] + (3 * x1);
+                        *(dst++) = *(p++);
+                        *(dst++) = *(p++);
+                        *(dst++) = *p;
 
-                                                           if (has_alpha)
-                                                                 *(alpha_dst++) = *(alpha[y2] + x1);
-                                                     }
-                                                     else
-                                                     {
+                        if (has_alpha)
+                            *(alpha_dst++) = *(alpha[y2] + x1);
+                    }
+                    else
+                    {
                         // weights for the weighted average are proportional to the inverse of the distance
-                                                           unsigned char *v1 = data[y1] + (3 * x1);
-                                                           unsigned char *v2 = data[y1] + (3 * x2);
-                                                           unsigned char *v3 = data[y2] + (3 * x2);
-                                                           unsigned char *v4 = data[y2] + (3 * x1);
+                        unsigned char *v1 = data[y1] + (3 * x1);
+                        unsigned char *v2 = data[y1] + (3 * x2);
+                        unsigned char *v3 = data[y2] + (3 * x2);
+                        unsigned char *v4 = data[y2] + (3 * x1);
 
-                                                           const double w1 = 1/d1, w2 = 1/d2, w3 = 1/d3, w4 = 1/d4;
+                        const double w1 = 1/d1, w2 = 1/d2, w3 = 1/d3, w4 = 1/d4;
 
                         // GRG: Unrolled.
 
-                                                           *(dst++) = (unsigned char)
-                                                                       ( (w1 * *(v1++) + w2 * *(v2++) +
-                                                                       w3 * *(v3++) + w4 * *(v4++)) /
-                                                                       (w1 + w2 + w3 + w4) );
-                                                           *(dst++) = (unsigned char)
-                                                                       ( (w1 * *(v1++) + w2 * *(v2++) +
-                                                                       w3 * *(v3++) + w4 * *(v4++)) /
-                                                                       (w1 + w2 + w3 + w4) );
-                                                           *(dst++) = (unsigned char)
-                                                                       ( (w1 * *v1 + w2 * *v2 +
-                                                                       w3 * *v3 + w4 * *v4) /
-                                                                       (w1 + w2 + w3 + w4) );
+                        *(dst++) = (unsigned char)
+                                ( (w1 * *(v1++) + w2 * *(v2++) +
+                                   w3 * *(v3++) + w4 * *(v4++)) /
+                                  (w1 + w2 + w3 + w4) );
+                        *(dst++) = (unsigned char)
+                                ( (w1 * *(v1++) + w2 * *(v2++) +
+                                   w3 * *(v3++) + w4 * *(v4++)) /
+                                  (w1 + w2 + w3 + w4) );
+                        *(dst++) = (unsigned char)
+                                ( (w1 * *v1 + w2 * *v2 +
+                                   w3 * *v3 + w4 * *v4) /
+                                  (w1 + w2 + w3 + w4) );
 
-                                                           if (has_alpha)
-                                                           {
-                                                                 v1 = alpha[y1] + (x1);
-                                                                 v2 = alpha[y1] + (x2);
-                                                                 v3 = alpha[y2] + (x2);
-                                                                 v4 = alpha[y2] + (x1);
+                        if (has_alpha)
+                        {
+                            v1 = alpha[y1] + (x1);
+                            v2 = alpha[y1] + (x2);
+                            v3 = alpha[y2] + (x2);
+                            v4 = alpha[y2] + (x1);
 
-                                                                 *(alpha_dst++) = (unsigned char)
-                                                                             ( (w1 * *v1 + w2 * *v2 +
-                                                                             w3 * *v3 + w4 * *v4) /
-                                                                             (w1 + w2 + w3 + w4) );
-                                                           }
-                                                     }
-                                               }
-                                               else
-                                               {
-                                                     *(dst++) = blank_r;
-                                                     *(dst++) = blank_g;
-                                                     *(dst++) = blank_b;
+                            *(alpha_dst++) = (unsigned char)
+                                    ( (w1 * *v1 + w2 * *v2 +
+                                       w3 * *v3 + w4 * *v4) /
+                                      (w1 + w2 + w3 + w4) );
+                        }
+                    }
+                }
+                else
+                {
+                    *(dst++) = blank_r;
+                    *(dst++) = blank_g;
+                    *(dst++) = blank_b;
 
-                                                     if (has_alpha)
-                                                           *(alpha_dst++) = 0;
-                                               }
-                                         }
-                                   }
-                             }
-                             else    // not interpolating
-                             {
-                                   double x0 = p0.x;
-                                   double y0 = p0.y;
-                                   double x1b = x1a - p0.x;
-                                   double y1b = y1a - p0.y;
-                                   double msa = -sin_angle;
+                    if (has_alpha)
+                        *(alpha_dst++) = 0;
+                }
+            }
+        }
+    }
+    else    // not interpolating
+    {
+        double x0 = p0.x;
+        double y0 = p0.y;
+        double x1b = x1a - p0.x;
+        double y1b = y1a - p0.y;
+        double msa = -sin_angle;
 
-                                   for (int y = 0; y < rH; y++)
-                                   {
-                                         for (int x = 0; x < rW; x++)
-                                         {
-//                                               wxRealPoint src = wxRotatePoint (x + x1a, y + y1a, cos_angle, -sin_angle, p0);
+        for (int y = 0; y < rH; y++)
+        {
+            for (int x = 0; x < rW; x++)
+            {
+                //                                               zchxPointF src = wxRotatePoint (x + x1a, y + y1a, cos_angle, -sin_angle, p0);
 
-//                                               double sx = p0.x + (x + x1a - p0.x) * cos_angle - (y + y1a - p0.y) * -sin_angle;
-//                                               double sy=  p0.y + (y + y1a - p0.y) * cos_angle + (x + x1a - p0.x) * -sin_angle;
+                //                                               double sx = p0.x + (x + x1a - p0.x) * cos_angle - (y + y1a - p0.y) * -sin_angle;
+                //                                               double sy=  p0.y + (y + y1a - p0.y) * cos_angle + (x + x1a - p0.x) * -sin_angle;
 
-                                               double sx = x0 + (x + x1b) * cos_angle - (y + y1b) * msa;
-                                               double sy=  y0 + (y + y1b) * cos_angle + (x + x1b) * msa;
+                double sx = x0 + (x + x1b) * cos_angle - (y + y1b) * msa;
+                double sy=  y0 + (y + y1b) * cos_angle + (x + x1b) * msa;
 
-                                               const int xs = (int)sx;
-                                               const int ys = (int)sy;
-
-
-//                                               return wxRealPoint(p0.x + (p.x - p0.x) * cos_angle - (p.y - p0.y) * sin_angle,
-//                                                           p0.y + (p.y - p0.y) * cos_angle + (p.x - p0.x) * sin_angle);
-
-//                                               const int xs = /*wxRound*/ (src.x);      // wxRound rounds to the
-//                                               const int ys = /*wxRound*/ (src.y);      // closest integer
-
-                                               if (0 <= xs && xs < w && 0 <= ys && ys < h)
-                                               {
-                                                     unsigned char *p = data[ys] + (3 * xs);
-                                                     *(dst++) = *(p++);
-                                                     *(dst++) = *(p++);
-                                                     *(dst++) = *p;
+                const int xs = (int)sx;
+                const int ys = (int)sy;
 
 
+                //                                               return zchxPointF(p0.x + (p.x - p0.x) * cos_angle - (p.y - p0.y) * sin_angle,
+                //                                                           p0.y + (p.y - p0.y) * cos_angle + (p.x - p0.x) * sin_angle);
 
-                                                     if (has_alpha)
-                                                           *(alpha_dst++) = *(alpha[ys] + (xs));
-                                               }
-                                               else
-                                               {
-                                                     *(dst++) = blank_r;
-                                                     *(dst++) = blank_g;
-                                                     *(dst++) = blank_b;
+                //                                               const int xs = /*qRound*/ (src.x);      // qRound rounds to the
+                //                                               const int ys = /*qRound*/ (src.y);      // closest integer
 
-                                                     if (has_alpha)
-                                                           *(alpha_dst++) = 255;
-                                               }
+                if (0 <= xs && xs < w && 0 <= ys && ys < h)
+                {
+                    unsigned char *p = data[ys] + (3 * xs);
+                    *(dst++) = *(p++);
+                    *(dst++) = *(p++);
+                    *(dst++) = *p;
 
-                                         }
-                                   }
-                             }
 
-                             delete [] data;
 
-                             if (has_alpha)
-                                   delete [] alpha;
+                    if (has_alpha)
+                        *(alpha_dst++) = *(alpha[ys] + (xs));
+                }
+                else
+                {
+                    *(dst++) = blank_r;
+                    *(dst++) = blank_g;
+                    *(dst++) = blank_b;
 
-                             return rotated;
+                    if (has_alpha)
+                        *(alpha_dst++) = 255;
+                }
+
+            }
+        }
+    }
+
+    delete [] data;
+
+    if (has_alpha)
+        delete [] alpha;
+
+    return rotated;
 }
 
 

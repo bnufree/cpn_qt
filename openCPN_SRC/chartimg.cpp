@@ -249,7 +249,7 @@ ThumbData *ChartDummy::GetThumbData(int tnx, int tny, float lat, float lon)
 
 bool ChartDummy::UpdateThumbData(double lat, double lon)
 {
-    return FALSE;
+    return false;
 }
 
 
@@ -2447,7 +2447,7 @@ ThumbData *ChartBaseBSB::GetThumbData(int tnx, int tny, float lat, float lon)
 bool ChartBaseBSB::UpdateThumbData(double lat, double lon)
 {
     //    Plot the supplied Lat/Lon on the thumbnail
-    //  Return TRUE if the pixel location of ownship has changed
+    //  Return true if the pixel location of ownship has changed
 
     int divx = Size_X / pThumbData->Thumb_Size_X;
     int divy = Size_Y / pThumbData->Thumb_Size_Y;
@@ -2472,10 +2472,10 @@ bool ChartBaseBSB::UpdateThumbData(double lat, double lon)
     {
         pThumbData->ShipX = pixx_test;
         pThumbData->ShipY = pixy_test;
-        return TRUE;
+        return true;
     }
     else
-        return FALSE;
+        return false;
 }
 
 
@@ -3627,7 +3627,7 @@ bool ChartBaseBSB::GetView( QRect& source, QRect& dest, ScaleTypeEnum scale_type
     cached_image_ok = 1;
 
 
-    return TRUE;
+    return true;
 }
 
 

@@ -40,7 +40,7 @@ typedef QHash<int, QString>  MyNatsurHash;
 
 typedef QList<LUPrec *> wxArrayOfLUPrec;
 
-typedef QList<S52_TextC> TextObjList;
+typedef QList<S52_TextC*> TextObjList;
 
 struct CARC_Buffer {
     unsigned char color[3][4];
@@ -111,7 +111,7 @@ public:
         S57Obj *pObj, bool bStrict = 0 );
     int _LUP2rules( LUPrec *LUP, S57Obj *pObj );
     S52color* getColor( const char *colorName );
-    QColor getwxColour( const QString &colorName );
+    QColor getQColor( const QString &colorName );
 
     void UpdateMarinerParams( void );
     void ClearCNSYLUPArray( void );
@@ -207,7 +207,7 @@ public:
     int RenderAreaToGL( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
     int RenderObjectToGLText( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
     
-    void RenderPolytessGL( ObjRazRules *rzRules, ViewPort *vp,double z_clip_geom, QPoint *ptp );
+    void RenderPolytessGL( ObjRazRules *rzRules, ViewPort *vp,double z_clip_geom, zchxPoint *ptp );
     
     bool EnableGLLS(bool benable);
 
@@ -302,7 +302,7 @@ private:
     
     void UpdateOBJLArray( S57Obj *obj );
 
-    int reduceLOD( double LOD_meters, int nPoints, double *source, QPointF **dest);
+    int reduceLOD( double LOD_meters, int nPoints, double *source, zchxPointF **dest);
     
     int RenderLSLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp );
     int RenderLCLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp );
@@ -318,13 +318,13 @@ private:
         S52color *c, render_canvas_parms *pb_spec,
         render_canvas_parms *patt_spec, ViewPort *vp );
 
-    void draw_lc_poly( QPainter *pdc, QColor &color, int width, QPoint *ptp,
+    void draw_lc_poly( QPainter *pdc, QColor &color, int width, zchxPoint *ptp,
         int npt, float sym_len, float sym_factor, Rule *draw_rule,
         ViewPort *vp );
 
-    bool RenderHPGL( ObjRazRules *rzRules, Rule * rule_in, QPoint &r,
+    bool RenderHPGL( ObjRazRules *rzRules, Rule * rule_in, zchxPoint &r,
         ViewPort *vp, float rot_angle = 0. );
-    bool RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, QPoint &r,
+    bool RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &r,
         ViewPort *vp, float rot_angle = 0. );
     QImage RuleXBMToImage( Rule *prule );
 
@@ -336,9 +336,9 @@ private:
 
     int PrioritizeLineFeature( ObjRazRules *rzRules, int npriority );
 
-    int dda_tri( QPoint *ptp, S52color *c, render_canvas_parms *pb_spec,
+    int dda_tri( zchxPoint *ptp, S52color *c, render_canvas_parms *pb_spec,
         render_canvas_parms *pPatt_spec );
-    int dda_trap( QPoint *segs, int lseg, int rseg, int ytop, int ybot,
+    int dda_trap( zchxPoint *segs, int lseg, int rseg, int ytop, int ybot,
         S52color *c, render_canvas_parms *pb_spec, render_canvas_parms *pPatt_spec );
 
     LUPrec *FindBestLUP( wxArrayOfLUPrec *LUPArray, unsigned int startIndex, unsigned int count,
@@ -360,10 +360,10 @@ private:
     void DestroyLUPArray( wxArrayOfLUPrec *pLUPArray );
 
     bool TextRenderCheck( ObjRazRules *rzRules );
-    bool inter_tri_rect( QPoint *ptp, render_canvas_parms *pb_spec );
+    bool inter_tri_rect( zchxPoint *ptp, render_canvas_parms *pb_spec );
 
-    bool GetPointPixArray( ObjRazRules *rzRules, QPointF* pd, QPoint *pp, int nv, ViewPort *vp );
-    bool GetPointPixSingle( ObjRazRules *rzRules, float north, float east, QPoint *r, ViewPort *vp );
+    bool GetPointPixArray( ObjRazRules *rzRules, zchxPointF* pd, zchxPoint *pp, int nv, ViewPort *vp );
+    bool GetPointPixSingle( ObjRazRules *rzRules, float north, float east, zchxPoint *r, ViewPort *vp );
     void GetPixPointSingle( int pixx, int pixy, double *plat, double *plon, ViewPort *vp );
     void GetPixPointSingleNoRotate( int pixx, int pixy, double *plat, double *plon, ViewPort *vpt );
     
@@ -442,15 +442,15 @@ public:
 #if wxUSE_GRAPHICS_CONTEXT
     void SetTargetGCDC( wxGCDC* gdc );
 #endif
-    bool Render(char *str, char *col, QPoint &r, QPoint &pivot, QPoint origin, float scale, double rot_angle, bool bSymbol);
+    bool Render(char *str, char *col, zchxPoint &r, zchxPoint &pivot, zchxPoint origin, float scale, double rot_angle, bool bSymbol);
 
 private:
     const char* findColorNameInRef( char colorCode, char* col );
-    void RotatePoint( QPoint& point, QPoint origin, double angle );
-    QPoint ParsePoint( QString& argument );
+    void RotatePoint( zchxPoint& point, zchxPoint origin, double angle );
+    zchxPoint ParsePoint( QString& argument );
     void SetPen();
-    void Line( QPoint from, QPoint to );
-    void Circle( QPoint center, int radius, bool filled = false );
+    void Line( zchxPoint from, zchxPoint to );
+    void Circle( zchxPoint center, int radius, bool filled = false );
     void Polygon();
 
     s52plib* plib;
@@ -462,14 +462,14 @@ private:
 #endif
 
     QColor penColor;
-    QPen* pen;
+    QPen    *mPen;
     QColor brushColor;
-    QBrush* brush;
+    QBrush  *mBrush;
     long penWidth;
     int transparency;
     
     int noPoints;
-    QPoint polygon[100];
+    zchxPoint polygon[100];
     
     float m_currentColor[4];
 

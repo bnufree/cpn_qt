@@ -34,8 +34,9 @@
 #include "dychart.h"                // for configuration stuff
 #include <QImage>
 #include <QPainter>
+#include "_def.h"
 
-QImage Image_Rotate(QImage &base_image, double angle, const QPoint & centre_of_rotation, bool interpolating, QPoint * offset_after_rotation);
+QImage Image_Rotate(QImage &base_image, double angle, const zchxPoint & centre_of_rotation, bool interpolating, zchxPoint * offset_after_rotation);
 
 //--------------------------------------------------------------------------
 //      Set the desired compile time conditionals related to display optimization

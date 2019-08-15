@@ -70,7 +70,7 @@
 //    Fwd Definitions
 class       wxFileConfig;
 class       wxNotebook;
-class       wxFont;
+class       QFont;
 class       wxAuiManager;
 class       wxScrolledWindow;
 class       wxGLCanvas;
@@ -674,7 +674,7 @@ extern "C"  DECL_EXP void GetCanvasLLPix( PlugIn_ViewPort *vp, QPoint p, double 
 
 extern "C"  DECL_EXP QWindow *GetOCPNCanvasWindow();
 
-extern "C"  DECL_EXP wxFont *OCPNGetFont(QString TextElement, int default_size);
+extern "C"  DECL_EXP QFont *OCPNGetFont(QString TextElement, int default_size);
 
 extern "C"  DECL_EXP QString *GetpSharedDataLocation();
 
@@ -1084,8 +1084,8 @@ extern DECL_EXP bool GetSingleWaypoint( QString GUID, PlugIn_Waypoint *pwaypoint
 extern DECL_EXP bool CheckEdgePan_PlugIn( int x, int y, bool dragging, int margin, int delta );
 extern DECL_EXP QBitmap GetIcon_PlugIn(const QString & name);
 extern DECL_EXP void SetCursor_PlugIn( QCursor *pPlugin_Cursor = NULL );
-extern DECL_EXP wxFont *GetOCPNScaledFont_PlugIn(QString TextElement, int default_size = 0);
-extern DECL_EXP wxFont GetOCPNGUIScaledFont_PlugIn(QString item);
+extern DECL_EXP QFont *GetOCPNScaledFont_PlugIn(QString TextElement, int default_size = 0);
+extern DECL_EXP QFont GetOCPNGUIScaledFont_PlugIn(QString item);
 extern DECL_EXP double GetOCPNGUIToolScaleFactor_PlugIn(int GUIScaledFactor);
 extern DECL_EXP double GetOCPNGUIToolScaleFactor_PlugIn();
 extern DECL_EXP float  GetOCPNChartScaleFactor_Plugin();
@@ -1267,7 +1267,7 @@ extern DECL_EXP double PlugInGetDisplaySizeMM();
 
 // 
 extern DECL_EXP QFont* FindOrCreateFont_PlugIn( int point_size, const QString& family,
-                    QFont::Style style, QFont::Weight weight, bool underline = false,
+                    QFont::Style style, /*QFont::Weight*/int weight, bool underline = false,
                     const QString &facename = QString(),
                     const QString &encoding = QString() );
 

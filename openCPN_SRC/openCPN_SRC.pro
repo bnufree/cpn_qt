@@ -134,7 +134,7 @@ HEADERS += \
      OCPNPlatform.h \
     OCPNRegion.h \
 #    ogr_s57.h \
-    options.h \
+#    options.h \
 #    Osenc.h \
 #    piano.h \
 #    pluginmanager.h \
@@ -262,7 +262,7 @@ SOURCES += \
     OCPNRegion.cpp \
 #    ogrs57datasource.cpp \
 #    ogrs57layer.cpp \
-    options.cpp \
+#    options.cpp \
 #    Osenc.cpp \
 #    piano.cpp \
 #    pluginmanager.cpp \

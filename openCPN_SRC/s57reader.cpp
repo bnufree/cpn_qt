@@ -55,7 +55,7 @@ S57Reader::S57Reader( const char * pszFilename )
     nSOMF = 10;
 
     poRegistrar = NULL;
-    bFileIngested = FALSE;
+    bFileIngested = false;
 
     nNextFEIndex = 0;
     nNextVIIndex = 0;
@@ -70,8 +70,8 @@ S57Reader::S57Reader( const char * pszFilename )
 
     nOptionFlags = S57M_UPDATES;
 
-    bMissingWarningIssued = FALSE;
-    bAttrWarningIssued = FALSE;
+    bMissingWarningIssued = false;
+    bAttrWarningIssued = false;
     
     Nall = 0;
     Aall = 0;
@@ -102,7 +102,7 @@ int S57Reader::Open( int bTestOpen )
     if( poModule != NULL )
     {
         Rewind();
-        return TRUE;
+        return true;
     }
 
     poModule = new DDFModule();
@@ -111,7 +111,7 @@ int S57Reader::Open( int bTestOpen )
         // notdef: test bTestOpen.
         delete poModule;
         poModule = NULL;
-        return FALSE;
+        return false;
     }
 
     // note that the following won't work for catalogs.
@@ -125,7 +125,7 @@ int S57Reader::Open( int bTestOpen )
         }
         delete poModule;
         poModule = NULL;
-        return FALSE;
+        return false;
     }
 
     // Make sure the FSPT field is marked as repeating.
@@ -133,7 +133,7 @@ int S57Reader::Open( int bTestOpen )
     if( poFSPT != NULL && !poFSPT->IsRepeating() )
     {
         CPLDebug( "S57", "Forcing FSPT field to be repeating." );
-        poFSPT->SetRepeatingFlag( TRUE );
+        poFSPT->SetRepeatingFlag( true );
     }
 
     nNextFEIndex = 0;
@@ -142,7 +142,7 @@ int S57Reader::Open( int bTestOpen )
     nNextVEIndex = 0;
     nNextVFIndex = 0;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -165,7 +165,7 @@ void S57Reader::Close()
         delete poModule;
         poModule = NULL;
 
-        bFileIngested = FALSE;
+        bFileIngested = false;
 
         CPLFreeConfig();
 
@@ -381,7 +381,7 @@ int S57Reader::Ingest(CallBackFunction pcallback)
                 break;
 
               default:
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 break;
             }
 
@@ -425,7 +425,7 @@ int S57Reader::Ingest(CallBackFunction pcallback)
 
     }
 
-    bFileIngested = TRUE;
+    bFileIngested = true;
 
 
 /* -------------------------------------------------------------------- */
@@ -814,7 +814,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         {
             if( !bAttrWarningIssued )
             {
-                bAttrWarningIssued = TRUE;
+                bAttrWarningIssued = true;
                 CPLError( CE_Warning, CPLE_AppDefined,
                         "Illegal feature attribute id (ATTF:ATTL[%d]) of %d\n"
                         "on feature FIDN=%d, FIDS=%d.\n"
@@ -840,7 +840,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         {
             if( !bMissingWarningIssued )
             {
-                bMissingWarningIssued = TRUE;
+                bMissingWarningIssued = true;
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "For feature \"%s\", attribute \"%s\" ignored, not in expected schema.\n",
                           poFeature->GetDefnRef()->GetName(), pszAcronym );
@@ -902,11 +902,11 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         {
 //            poRecord->Dump(stdout);
 //            int     xnAttrId = poRecord->GetIntSubfield("NATF",0,"ATTL",iAttr);
-            static int bAttrWarningIssued = FALSE;
+            static int bAttrWarningIssued = false;
 
             if( !bAttrWarningIssued )
             {
-                bAttrWarningIssued = TRUE;
+                bAttrWarningIssued = true;
                 CPLError( CE_Warning, CPLE_AppDefined,
                         "Illegal feature attribute id (NATF:ATTL[%d]) of %d\n"
                         "on feature FIDN=%d, FIDS=%d.\n"
@@ -1130,7 +1130,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return NULL;
     }
 
@@ -1155,7 +1155,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
 
     if( poFDefn == NULL )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return NULL;
     }
 
@@ -1349,7 +1349,7 @@ int S57Reader::FetchPoint( int nRCNM, int nRCID,
         poSRecord = oVC_Index.FindRecord( nRCID );
 
     if( poSRecord == NULL )
-        return FALSE;
+        return false;
 
     //      Fetch the quality information
     if(NULL != pnquality)
@@ -1384,7 +1384,7 @@ int S57Reader::FetchPoint( int nRCNM, int nRCID,
         dfZ = poSRecord->GetIntSubfield("SG3D",0,"VE3D",0) / (double)nSOMF;
     }
     else
-        return FALSE;
+        return false;
 
     if( pdfX != NULL )
         *pdfX = dfX;
@@ -1393,7 +1393,7 @@ int S57Reader::FetchPoint( int nRCNM, int nRCID,
     if( pdfZ != NULL )
         *pdfZ = dfZ;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -1432,7 +1432,7 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
     int nquality = 10;                          // default is "precisely known"
     if( !FetchPoint( nRCNM, nRCID, &dfX, &dfY, &dfZ, &nquality ) )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return;
     }
 
@@ -1921,7 +1921,7 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 
     poPolygon = (OGRPolygon *)
         OGRBuildPolygonFromEdges( (OGRGeometryH) poLines,
-                                  TRUE, FALSE, 0.0, &eErr );
+                                  true, false, 0.0, &eErr );
     if( eErr != OGRERR_NONE )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -2045,7 +2045,7 @@ void S57Reader::AddFeatureDefn( OGRFeatureDefn * poFDefn )
 int S57Reader::CollectClassList(int *panClassCount, int nMaxClass )
 
 {
-    int         bSuccess = TRUE;
+    int         bSuccess = true;
 
     if( !bFileIngested )
         Ingest();
@@ -2056,7 +2056,7 @@ int S57Reader::CollectClassList(int *panClassCount, int nMaxClass )
         int     nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
 
         if( nOBJL >= nMaxClass )
-            bSuccess = FALSE;
+            bSuccess = false;
         else
             panClassCount[nOBJL]++;
 
@@ -2090,8 +2090,8 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
                   poUpdate->GetIntSubfield( pszKey, 0, "RVER", 0 ),
                   poTarget->GetIntSubfield( pszKey, 0, "RVER", 0 ) );
 
-        CPLAssert( FALSE );
-        return FALSE;
+        CPLAssert( false );
+        return false;
     }
 
     //    More checks for validity
@@ -2108,7 +2108,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
           "On RecordUpdate, mismatched FIDN/FIDS.... target FIDN=%d, target FIDS=%d   update FIDN=%d, update FIDS=%d.",
           tar_FIDN, tar_FIDS, up_FIDN, up_FIDS);
 
-          return FALSE;
+          return false;
     }
 */
           int up_PRIM = poUpdate->GetIntSubfield( "FRID", 0, "PRIM", 0 );
@@ -2118,7 +2118,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "On RecordUpdate, mismatched PRIM.... target PRIM=%d, update PRIM=%d",
                           tar_PRIM, up_PRIM);
-                return FALSE;
+                return false;
           }
     }
 
@@ -2132,13 +2132,13 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
     if( poKey == NULL )
     {
-        CPLAssert( FALSE );
-        return FALSE;
+        CPLAssert( false );
+        return false;
     }
 
     poRVER_SFD = poKey->GetFieldDefn()->FindSubfieldDefn( "RVER" );
     if( poRVER_SFD == NULL )
-        return FALSE;
+        return false;
 
     pnRVER = (unsigned int *) poKey->GetSubfieldData( poRVER_SFD, NULL, 0 );
 
@@ -2159,8 +2159,8 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
         if( (poSrcFSPT == NULL && nFSUI != 2) || poDstFSPT == NULL )
         {
-            CPLAssert( FALSE );
-            return FALSE;
+            CPLAssert( false );
+            return false;
         }
 
         nPtrSize = poDstFSPT->GetFieldDefn()->GetFixedWidth();
@@ -2228,8 +2228,8 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
         if( (poSrcVRPT == NULL && nVPUI != 2) || poDstVRPT == NULL )
         {
-            CPLAssert( FALSE );
-            return FALSE;
+            CPLAssert( false );
+            return false;
         }
 
         nPtrSize = poDstVRPT->GetFieldDefn()->GetFixedWidth();
@@ -2308,14 +2308,14 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             // Trying to delete a coordinate that does not exist...
             // Theoretically, this is an error.
             //  But we have seen this from some HOs, (China/HongKong) and seems to be OK to ignore
-            return TRUE;
+            return true;
         }
 
         if( (poSrcSG2D == NULL && nCCUI != 2)
             || (poDstSG2D == NULL && nCCUI != 1) )
         {
-            //CPLAssert( FALSE );
-            return FALSE;
+            //CPLAssert( false );
+            return false;
         }
         
         if (poDstSG2D == NULL)
@@ -2323,8 +2323,8 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             poTarget->AddField(poTarget->GetModule()->FindFieldDefn("SG2D"));
             poDstSG2D = poTarget->FindField("SG2D");
             if (poDstSG2D == NULL) {
-                //CPLAssert( FALSE );
-                return FALSE;
+                //CPLAssert( false );
+                return false;
             }
             
             // Delete null default data that was created
@@ -2472,7 +2472,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 //            poTarget->Dump(stdout);
             
 //            CPLDebug( "S57","Could not find target ATTF field for attribute update");
-//           return FALSE;
+//           return false;
         }
         
         int     nRepeatCount = poSrcATTF->GetRepeatCount();
@@ -2512,7 +2512,7 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         }
     }
     
-    return TRUE;
+    return true;
 }
 
 
@@ -2572,7 +2572,7 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule, int iUpdate )
                     break;
 
                   default:
-                    CPLAssert( FALSE );
+                    CPLAssert( false );
                     break;
                 }
             }
@@ -2676,7 +2676,7 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
 
 {
     int         iUpdate;
-    int         bSuccess = TRUE;
+    int         bSuccess = true;
     int         ret_code = 0;
 
     if( pszPath == NULL )
@@ -2701,7 +2701,7 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
 
         pszUpdateFilename = CPLStrdup(CPLResetExtension(pszPath,szExtension));
 
-        bSuccess = oUpdateModule.Open( pszUpdateFilename, TRUE );
+        bSuccess = oUpdateModule.Open( pszUpdateFilename, true );
 
         if( bSuccess )
             CPLDebug( "S57", "Applying feature updates from %s.",
@@ -2746,7 +2746,7 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 /*      We will scan all the low level vector elements for extents      */
 /*      coordinates.                                                    */
 /* -------------------------------------------------------------------- */
-    int         bGotExtents = FALSE;
+    int         bGotExtents = false;
     int         nXMin=0, nXMax=0, nYMin=0, nYMax=0;
 
     apoIndex[0] = &oVI_Index;
@@ -2786,7 +2786,7 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
                     {
                         nXMin = nXMax = nX;
                         nYMin = nYMax = nY;
-                        bGotExtents = TRUE;
+                        bGotExtents = true;
                     }
                 }
             }
@@ -2812,7 +2812,7 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
                     {
                         nXMin = nXMax = nX;
                         nYMin = nYMax = nY;
-                        bGotExtents = TRUE;
+                        bGotExtents = true;
                     }
                 }
             }

@@ -46,6 +46,20 @@ QVariant zchxConfig::getCustomValue(const QString& prefix,const QString &keys, c
     return value(prefix+"/"+keys,defaultValue);
 }
 
+int  zchxConfig::getChildCount(const QString& prefix)
+{
+    return getChildKeys(prefix).size();
+}
+
+QStringList zchxConfig::getChildKeys(const QString& prefix)
+{
+    QStringList keys;
+    beginGroup(prefix);
+    keys = childKeys();
+    endGroup();
+    return keys;
+}
+
 //bool zchxConfig::isExpert()
 //{
 //    return value(COMMON_SEC, OPENGL_EXPERT, false).toBool();

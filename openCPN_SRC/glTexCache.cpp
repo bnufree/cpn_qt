@@ -786,9 +786,9 @@ void glTexFactory::PrepareTiles(const ViewPort &vp, bool use_norm_vp, ChartBase 
                         tile->m_texcoords[idx+1] = v[j];
 
                         if(use_norm_vp) {
-                            QPointF p = nvp.GetDoublePixFromLL(lat[j], lon[j]);
-                            tile->m_coords[idx+0] = p.rx();
-                            tile->m_coords[idx+1] = p.ry();
+                            zchxPointF p = nvp.GetDoublePixFromLL(lat[j], lon[j]);
+                            tile->m_coords[idx+0] = p.x;
+                            tile->m_coords[idx+1] = p.y;
                         } else {
                             tile->m_coords[idx+0] = lat[j];
                             tile->m_coords[idx+1] = lon[j];

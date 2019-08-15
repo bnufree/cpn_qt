@@ -129,11 +129,11 @@ int S57ClassRegistrar::FindFile( const char *pszTarget,
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to open %s.\n",
                       pszFilename );
-        return FALSE;
+        return false;
     }
 #endif
 
-    return TRUE;
+    return true;
 }
 
 
@@ -238,13 +238,13 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     FILE        *fp;
 
     if( NULL == pszDirectory)
-        return FALSE;
+        return false;
 
 /* ==================================================================== */
 /*      Read the s57objectclasses file.                                 */
 /* ==================================================================== */
     if( !FindFile( "s57objectclasses.csv", pszDirectory, bReportErr, &fp ) )
-        return FALSE;
+        return false;
 
     pszRLBuffer = (char *) VSIRealloc(pszRLBuffer, 512);
     nRLBufferSize = 512;
@@ -260,7 +260,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "s57objectclasses columns don't match expected format!\n" );
-        return FALSE;
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -278,7 +278,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     while( nClasses < MAX_CLASSES
            && (pszLine = ReadLine(fp)) != NULL )
     {
-        papszTempFields = CSLTokenizeStringComplex( pszLine,",", TRUE, TRUE );
+        papszTempFields = CSLTokenizeStringComplex( pszLine,",", true, true );
 
         pnClassesOBJL[nClasses] = atoi(papszTempFields[0]);
 
@@ -302,13 +302,13 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     iCurrentClass = -1;
 
     if( nClasses == 0 )
-        return FALSE;
+        return false;
 
 /* ==================================================================== */
 /*      Read the attributes list.                                       */
 /* ==================================================================== */
     if( !FindFile( "s57attributes.csv", pszDirectory, bReportErr, &fp ) )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Skip the line defining the column titles.                       */
@@ -320,7 +320,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "s57attributes columns don't match expected format!\n" );
-        return FALSE;
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -342,12 +342,12 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     while( (pszLine = ReadLine(fp)) != NULL )
     {
         char    **papszTokens = CSLTokenizeStringComplex( pszLine, ",",
-                                                          TRUE, TRUE );
+                                                          true, true );
 
         if( CSLCount(papszTokens) < 5 )
         {
             CSLDestroy( papszTokens );
-            CPLAssert( FALSE );
+            CPLAssert( false );
             continue;
         }
 
@@ -356,7 +356,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
             || papszAttrNames[iAttr] != NULL )
         {
             CSLDestroy( papszTokens );
-            CPLAssert( FALSE );
+            CPLAssert( false );
             continue;
         }
 
@@ -388,7 +388,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 
     do
     {
-        bModified = FALSE;
+        bModified = false;
         for( iAttr = 0; iAttr < nAttrCount-1; iAttr++ )
         {
             if( strcmp(papszAttrAcronym[panAttrIndex[iAttr]],
@@ -400,12 +400,12 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
                 panAttrIndex[iAttr] = panAttrIndex[iAttr+1];
                 panAttrIndex[iAttr+1] = nTemp;
 
-                bModified = TRUE;
+                bModified = true;
             }
         }
     } while( bModified );
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -416,13 +416,13 @@ int S57ClassRegistrar::SelectClassByIndex( int nNewIndex )
 
 {
     if( nNewIndex < 0 || nNewIndex >= nClasses )
-        return FALSE;
+        return false;
 
     papszCurrentFields = papapszClassesTokenized[nNewIndex];
 
     iCurrentClass = nNewIndex;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -438,7 +438,7 @@ int S57ClassRegistrar::SelectClass( int nOBJL )
             return SelectClassByIndex( i );
     }
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -454,10 +454,10 @@ int S57ClassRegistrar::SelectClass( const char *pszAcronym )
             continue;
 
         if( EQUAL(GetAcronym(),pszAcronym) )
-            return TRUE;
+            return true;
     }
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -532,7 +532,7 @@ char **S57ClassRegistrar::GetAttributeList( const char * pszType )
 
         papszTokens =
             CSLTokenizeStringComplex( papszCurrentFields[iColumn], ";",
-                                      TRUE, FALSE );
+                                      true, false );
 
         papszTempResult = CSLInsertStrings( papszTempResult, -1,
                                             papszTokens );
@@ -570,7 +570,7 @@ char **S57ClassRegistrar::GetPrimitives()
         CSLDestroy( papszTempResult );
         papszTempResult =
             CSLTokenizeStringComplex( papszCurrentFields[7], ";",
-                                      TRUE, FALSE );
+                                      true, false );
         return papszTempResult;
     }
     else

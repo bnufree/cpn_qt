@@ -1745,7 +1745,7 @@ int CCW(MyFlPoint p0, MyFlPoint p1, MyFlPoint p2) ;
  * the point is inside the polygon.
  *
  * RETURN VALUE
- * (bool) TRUE if the point is inside the polygon, FALSE if not.
+ * (bool) true if the point is inside the polygon, false if not.
  *************************************************************************/
 
 
@@ -1805,7 +1805,7 @@ bool G_FloatPtInPolygon(MyFlPoint *rgpts, int wnumpts, float x, float y)
  * Given two line segments, determine if they intersect.
  *
  * RETURN VALUE
- * TRUE if they intersect, FALSE if not.
+ * true if they intersect, false if not.
  *************************************************************************/
 
 

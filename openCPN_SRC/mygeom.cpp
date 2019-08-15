@@ -137,9 +137,9 @@ void poolFree( void* userData, void* ptr )
 
 
 /**
- * Returns TRUE if the ring has clockwise winding.
+ * Returns true if the ring has clockwise winding.
  *
- * @return TRUE if clockwise otherwise FALSE.
+ * @return true if clockwise otherwise false.
  */
 
 bool isRingClockwise(zchxPointF *pp, int nPointCount)
@@ -149,12 +149,12 @@ bool isRingClockwise(zchxPointF *pp, int nPointCount)
     
     for( int iVert = 0; iVert < nPointCount-1; iVert++ )
     {
-        dfSum += pp[iVert].m_x * pp[iVert+1].m_y
-        - pp[iVert].m_y * pp[iVert+1].m_x;
+        dfSum += pp[iVert].x * pp[iVert+1].y
+        - pp[iVert].y * pp[iVert+1].x;
     }
     
-    dfSum += pp[nPointCount-1].m_x * pp[0].m_y
-    - pp[nPointCount-1].m_y * pp[0].m_x;
+    dfSum += pp[nPointCount-1].x * pp[0].y
+    - pp[nPointCount-1].y * pp[0].x;
     
     return dfSum < 0.0;
 }
@@ -485,13 +485,13 @@ int PolyTessGeo::BuildTessGLU()
 
       if(cw)
       {
-            x0 = pp->m_x;
-            y0 = pp->m_y;
+            x0 = pp->x;
+            y0 = pp->y;
       }
       else
       {
-            x0 = pp[m_cntr[0]-1].m_x;
-            y0 = pp[m_cntr[0]-1].m_y;
+            x0 = pp[m_cntr[0]-1].x;
+            y0 = pp[m_cntr[0]-1].y;
       }
 
 
@@ -511,8 +511,8 @@ int PolyTessGeo::BuildTessGLU()
             else
                   pidx = ip;
 
-            x = pp[pidx].m_x;
-            y = pp[pidx].m_y;
+            x = pp[pidx].x;
+            y = pp[pidx].y;
 
             if((fabs(x-x0) > EQUAL_EPS) || (fabs(y-y0) > EQUAL_EPS))
             {
@@ -608,13 +608,13 @@ int PolyTessGeo::BuildTessGLU()
 
             if(cw)
             {
-                  x0 = pp[0].m_x;
-                  y0 = pp[0].m_y;
+                  x0 = pp[0].x;
+                  y0 = pp[0].y;
             }
             else
             {
-                  x0 = pp[npti-1].m_x;
-                  y0 = pp[npti-1].m_y;
+                  x0 = pp[npti-1].x;
+                  y0 = pp[npti-1].y;
             }
 
 //  Transcribe points to vertex array, in proper order with no duplicates
@@ -628,8 +628,8 @@ int PolyTessGeo::BuildTessGLU()
                         pidx = ip;
 
 
-                  x = pp[pidx].m_x;
-                  y = pp[pidx].m_y;
+                  x = pp[pidx].x;
+                  y = pp[pidx].y;
 
                   if((fabs(x-x0) > EQUAL_EPS) || (fabs(y-y0) > EQUAL_EPS))
                   {
@@ -795,8 +795,8 @@ int PolyTessGeo::BuildTessGLU()
     free (geoPt);
 
     //      Free up any "Combine" vertices created
-    for(unsigned int i = 0; i < m_pCombineVertexArray->GetCount() ; i++)
-          free (m_pCombineVertexArray->Item(i));
+    for(unsigned int i = 0; i < m_pCombineVertexArray->count() ; i++)
+          free (m_pCombineVertexArray->at(i));
     delete m_pCombineVertexArray;
 
     m_bOK = true;
@@ -861,7 +861,7 @@ int PolyTessGeo::BuildTess(void)
 
       for( iir=0 ; iir < m_ncnt-1 ; iir++){
             int nptr = m_cntr[iir+1];
-            npta = wxMax(npta, nptr); 
+            npta = qMax(npta, nptr);
       }
 
 
@@ -888,13 +888,13 @@ int PolyTessGeo::BuildTess(void)
 
       if(cw)
       {
-            x0 = pp->m_x;
-            y0 = pp->m_y;
+            x0 = pp->x;
+            y0 = pp->y;
       }
       else
       {
-            x0 = pp[npte-1].m_x;
-            y0 = pp[npte-1].m_y;
+            x0 = pp[npte-1].x;
+            y0 = pp[npte-1].y;
       }
 
 
@@ -910,8 +910,8 @@ int PolyTessGeo::BuildTess(void)
             else
                   pidx = ip;
 
-            x = pp[pidx].m_x;
-            y = pp[pidx].m_y;
+            x = pp[pidx].x;
+            y = pp[pidx].y;
 
             if((fabs(x-x0) > EQUAL_EPS) || (fabs(y-y0) > EQUAL_EPS))
             {
@@ -995,13 +995,13 @@ int PolyTessGeo::BuildTess(void)
 
             if(!cw)
             {
-                  x0 = pp[0].m_x;
-                  y0 = pp[0].m_y;
+                  x0 = pp[0].x;
+                  y0 = pp[0].y;
             }
             else
             {
-                  x0 = pp[npti-1].m_x;
-                  y0 = pp[npti-1].m_y;
+                  x0 = pp[npti-1].x;
+                  y0 = pp[npti-1].y;
             }
 
 //  Transcribe points to vertex array, in proper order with no duplicates
@@ -1016,8 +1016,8 @@ int PolyTessGeo::BuildTess(void)
                         pidx = ip;
 
 
-                  x = pp[pidx].m_x;
-                  y = pp[pidx].m_y;
+                  x = pp[pidx].x;
+                  y = pp[pidx].y;
 
                   if((fabs(x-x0) > EQUAL_EPS) || (fabs(y-y0) > EQUAL_EPS))
                   {
@@ -1185,16 +1185,16 @@ int PolyTessGeo::BuildTess(void)
                             double lon= ( valx / ( DEGREE * CM93_semimajor_axis_meters ) );
 
 
-                            sxmax = wxMax(lon, sxmax);
-                            sxmin = wxMin(lon, sxmin);
-                            symax = wxMax(lat, symax);
-                            symin = wxMin(lat, symin);
+                            sxmax = qMax(lon, sxmax);
+                            sxmin = qMin(lon, sxmin);
+                            symax = qMax(lat, symax);
+                            symin = qMin(lat, symin);
                         }
                         else{
-                            sxmax = wxMax(xd, sxmax);
-                            sxmin = wxMin(xd, sxmin);
-                            symax = wxMax(yd, symax);
-                            symin = wxMin(yd, symin);
+                            sxmax = qMax(xd, sxmax);
+                            sxmin = qMin(xd, sxmin);
+                            symax = qMax(yd, symax);
+                            symin = qMin(yd, symin);
                         }
                         
                     //  Append this point to TriPrim vbo
@@ -1270,16 +1270,16 @@ int PolyTessGeo::BuildTess(void)
                     double lon= ( valx / ( DEGREE * CM93_semimajor_axis_meters ) );
 
 
-                    sxmax = wxMax(lon, sxmax);
-                    sxmin = wxMin(lon, sxmin);
-                    symax = wxMax(lat, symax);
-                    symin = wxMin(lat, symin);
+                    sxmax = qMax(lon, sxmax);
+                    sxmin = qMin(lon, sxmin);
+                    symax = qMax(lat, symax);
+                    symin = qMin(lat, symin);
                 }
                 else{
-                    sxmax = wxMax(xd, sxmax);
-                    sxmin = wxMin(xd, sxmin);
-                    symax = wxMax(yd, symax);
-                    symin = wxMin(yd, symin);
+                    sxmax = qMax(xd, sxmax);
+                    sxmin = qMin(xd, sxmin);
+                    symax = qMax(yd, symax);
+                    symin = qMin(yd, symin);
                 }
                 
                 //  Append this point to TriPrim, converting to SM if called for
@@ -1481,10 +1481,10 @@ void  endCallback(void *polyData)
                        double lat = ( 2.0 * atan ( exp ( valy/CM93_semimajor_axis_meters ) ) - PI/2. ) / DEGREE;
                        double lon = ( valx / ( DEGREE * CM93_semimajor_axis_meters ) );
  
-                       sxmax = wxMax(lon, sxmax);
-                       sxmin = wxMin(lon, sxmin);
-                       symax = wxMax(lat, symax);
-                       symin = wxMin(lat, symin);
+                       sxmax = qMax(lon, sxmax);
+                       sxmin = qMin(lon, sxmin);
+                       symax = qMax(lat, symax);
+                       symin = qMin(lat, symin);
                 }
                 else
                 {
@@ -1492,10 +1492,10 @@ void  endCallback(void *polyData)
                        double valx = ( xd * pThis->mx_rate ) + pThis->mx_offset + pThis->m_feature_easting;
                        double valy = ( yd * pThis->my_rate ) + pThis->my_offset + pThis->m_feature_northing;
  
-                       sxmax = wxMax(valx, sxmax);
-                       sxmin = wxMin(valx, sxmin);
-                       symax = wxMax(valy, symax);
-                       symin = wxMin(valy, symin);
+                       sxmax = qMax(valx, sxmax);
+                       sxmin = qMin(valx, sxmin);
+                       symax = qMax(valy, symax);
+                       symin = qMin(valy, symin);
                 }
             }
             
@@ -1607,12 +1607,12 @@ void  combineCallback(GLdouble coords[3],
 
     *dataOut = vertex;
 
-    pThis->m_pCombineVertexArray->Add(vertex);
+    pThis->m_pCombineVertexArray->append(vertex);
 }
 
 
 
-wxStopWatch *s_stwt;
+//wxStopWatch *s_stwt;
 
 
 //------------------------------------------------------------------------------

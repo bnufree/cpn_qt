@@ -718,9 +718,9 @@ bool s57chart::UpdateThumbData( double lat, double lon )
     if( ( test_x != pThumbData->ShipX ) || ( test_y != pThumbData->ShipY ) ) {
         pThumbData->ShipX = test_x;
         pThumbData->ShipY = test_y;
-        return TRUE;
+        return true;
     } else
-        return FALSE;
+        return false;
 }
 
 void s57chart::SetFullExtent( Extent& ext )
@@ -3719,8 +3719,8 @@ int s57chart::ValidateAndCountUpdates( const wxFileName file000, const wxString 
         bool bSuccess;
         DDFModule oUpdateModule;
 
-//            bSuccess = !(oUpdateModule.Open( m_tmpup_array->Last().mb_str(), TRUE ) == 0);
-        bSuccess = !( oUpdateModule.Open( lastfile.GetFullPath().mb_str(), TRUE ) == 0 );
+//            bSuccess = !(oUpdateModule.Open( m_tmpup_array->Last().mb_str(), true ) == 0);
+        bSuccess = !( oUpdateModule.Open( lastfile.GetFullPath().mb_str(), true ) == 0 );
 
         if( bSuccess ) {
 //      Get publish/update date
@@ -4699,7 +4699,7 @@ wxString s57chart::GetAttributeDecode( wxString& att, int ival )
     CSVIngest( ei_file.mb_str() );
 
     char **papszFields = NULL;
-    int bSelected = FALSE;
+    int bSelected = false;
 
     /* -------------------------------------------------------------------- */
     /*      Scan from in-core lines.                                        */
@@ -4712,7 +4712,7 @@ wxString s57chart::GetAttributeDecode( wxString& att, int ival )
         if( !strcmp( papszFields[0], att_code ) ) {
             if( atoi( papszFields[1] ) == ival ) {
                 ret_val = wxString( papszFields[2], wxConvUTF8 );
-                bSelected = TRUE;
+                bSelected = true;
             }
         }
 
@@ -5626,7 +5626,7 @@ bool s57chart::InitENCMinimal( const wxString &FullPath )
 
     m_pENCDS->SetS57Registrar( g_poRegistrar );             ///172
 
-    if( !m_pENCDS->OpenMin( FullPath.mb_str(), TRUE ) )       ///172
+    if( !m_pENCDS->OpenMin( FullPath.mb_str(), true ) )       ///172
     return false;
 
     S57Reader *pENCReader = m_pENCDS->GetModule( 0 );
@@ -5790,7 +5790,7 @@ bool s57_GetChartExtent( const wxString& FullPath, Extent *pext )
     //   Fix this  find extents of which?? layer??
     /*
      OGRS57DataSource *poDS = new OGRS57DataSource;
-     poDS->Open(pFullPath, TRUE);
+     poDS->Open(pFullPath, true);
 
      if( poDS == NULL )
      return false;

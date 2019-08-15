@@ -143,11 +143,11 @@
 #define         B_EXTEND_LIGHT_SECTORS              "bExtendLightSectors"
 #define         B_DEL_CLUTTER_TEXT                  "bDeClutterText"
 #define         B_SHOW_NATIONAL_TEXT                "bShowNationalText"
-#define         S52_MAR_SAFETY_CONTOUR              "S52_MAR_SAFETY_CONTOUR"
-#define         S52_MAR_SHALLOW_CONTOUR             "S52_MAR_SHALLOW_CONTOUR"
-#define         S52_MAR_DEEP_CONTOUR                "S52_MAR_DEEP_CONTOUR"
-#define         S52_MAR_TWO_SHADES                  "S52_MAR_TWO_SHADES"
-#define         S52_DEPTH_UNIT_SHOW                 "S52_DEPTH_UNIT_SHOW"
+#define         S52_MAR_SAFETY_CONTOUR_S              "S52_MAR_SAFETY_CONTOUR"
+#define         S52_MAR_SHALLOW_CONTOUR_S             "S52_MAR_SHALLOW_CONTOUR"
+#define         S52_MAR_DEEP_CONTOUR_S                "S52_MAR_DEEP_CONTOUR"
+#define         S52_MAR_TWO_SHADES_S                  "S52_MAR_TWO_SHADES"
+#define         S52_DEPTH_UNIT_SHOW_S                 "S52_DEPTH_UNIT_SHOW"
 #define         OWN_SHIO_LAT_LON                    "OwnShipLatLon"
 #define         N_COLOR_SCHEME                      "nColorScheme"
 #define         FRAMW_WIN_X                         "FrameWinX"
@@ -439,7 +439,9 @@ public:
     zchxConfig(const QString &LocalFileName = QString("%1/opencpn.ini").arg(MAP_DIR));
     void setDefault(const QString & prefix,const QString &key, const QVariant &value);
     void setCustomValue(const QString & prefix,const QString & key, const QVariant & value);
-    QVariant getCustomValue(const QString& prefix,const QString &keys, const QVariant &defaultValue);
+    QVariant getCustomValue(const QString& prefix,const QString &keys, const QVariant &defaultValue = QVariant());
+    int  getChildCount(const QString& prefix);
+    QStringList getChildKeys(const QString& prefix);
 
 
     //    int LoadMyConfig();

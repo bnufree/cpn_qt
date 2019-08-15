@@ -72,7 +72,7 @@ extern bool                      g_bUpgradeInProcess;
 extern int                       quitflag;
 extern MyFrame                   *gFrame;
 
-extern MyConfig                  *pConfig;
+extern zchxConfig                  *pConfig;
 
 extern ocpnStyle::StyleManager* g_StyleManager;
 
@@ -200,7 +200,7 @@ extern Select                    *pSelectTC;
 extern Select                    *pSelectAIS;
 
 #ifdef ocpnUSE_GL
-extern ocpnGLOptions            g_GLOptions;
+extern zchxGLOptions            g_GLOptions;
 #endif
 extern int                      g_default_font_size;
 extern int                       options_lastPage;
@@ -627,7 +627,7 @@ double OCPNPlatform::getFontPointsperPixel( void )
     double pt_per_pixel = 1.0;
     if(m_pt_per_pixel == 0)
     {
-        QFont *f = FontMgr::Get().FindOrCreateFont( 12, "Microsoft YH", QFont::StyleNormal, QFont::Bold, FALSE);
+        QFont *f = FontMgr::Get().FindOrCreateFont( 12, "Microsoft YH", QFont::StyleNormal, QFont::Bold, false);
         double width = QFontMetricsF(*f).width("H");
         double height = QFontMetricsF(*f).height();
         if(height > 0) m_pt_per_pixel = 12.0 / height;

@@ -34,28 +34,63 @@
 #include <QRegion>
 #include "_def.h"
 
-//#if defined(__WXOSX__)
-#define USE_NEW_REGION
-//#endif
-
-
 // ----------------------------------------------------------------------------
 // OCPNRegion
 // ----------------------------------------------------------------------------
-class OGdkRegion;
-class OCPNRegion
-#ifdef USE_NEW_REGION
-// : public QObject
-#else
- : public QRegion
-#endif
+typedef enum
 {
-    Q_OBJECT
+    OGDK_EVEN_ODD_RULE,
+    OGDK_WINDING_RULE
+} OGdkFillRule;
+
+typedef enum
+{
+    OGDK_OVERLAP_RECTANGLE_IN,
+    OGDK_OVERLAP_RECTANGLE_OUT,
+    OGDK_OVERLAP_RECTANGLE_PART
+} OGdkOverlapType;
+
+#define EMPTY_REGION(pReg) pReg->numRects = 0
+#define REGION_NOT_EMPTY(pReg) pReg->numRects
+
+typedef struct _OGdkPoint
+{
+    int x;
+    int y;
+}OGdkPoint;
+
+typedef struct _OGdkRectangle
+{
+    int x;
+    int y;
+    int width;
+    int height;
+}OGdkRectangle;
+
+typedef struct _OGdkSegment
+{
+    int x1;
+    int y1;
+    int x2;
+    int y2;
+}OGdkSegment, OGdkRegionBox;
+
+typedef struct _OGdkRegion
+{
+    long size;
+    long numRects;
+    OGdkRegionBox *rects;
+    OGdkRegionBox extents;
+}OGdkRegion;
+
+
+class OCPNRegion
+{
 public:
-    OCPNRegion() { }
+    OCPNRegion() {m_region = 0;}
 
     OCPNRegion( int x, int y, int w, int h );
-    OCPNRegion( const QPoint& topLeft, const QPoint& bottomRight );
+    OCPNRegion( const zchxPoint& topLeft, const zchxPoint& bottomRight );
     OCPNRegion( const QRect& rect );
     OCPNRegion( const QRegion& region );
     OCPNRegion( size_t n, const zchxPoint *points, int fillStyle = Qt::OddEvenFill );
@@ -63,10 +98,6 @@ public:
     virtual ~OCPNRegion();
     
     QRegion *GetNew_QRegion() const;
-    
-    
-#ifdef USE_NEW_REGION    
-
     // common part of ctors for a rectangle region
     void InitRect(int x, int y, int w, int h);
  
@@ -90,8 +121,8 @@ public:
     // Test if the given point or rectangle is inside this region
     bool Contains(int x, int y) const
     { return ODoContainsPoint(x, y); }
-    bool Contains(const QPoint& pt) const
-    { return ODoContainsPoint(pt.x(), pt.y()); }
+    bool Contains(const zchxPoint& pt) const
+    { return ODoContainsPoint(pt.x, pt.y); }
     bool Contains(int x, int y, int w, int h) const
     { return ODoContainsRect(QRect(x, y, w, h)); }
     bool Contains(const QRect& rect) const
@@ -113,7 +144,7 @@ public:
     void *GetRegion() const;
 
     bool Offset(int x, int y)   { return ODoOffset(x, y); }
-    bool Offset(const QPoint& pt)      { return ODoOffset(pt.x(), pt.y()); }
+    bool Offset(const zchxPoint& pt)      { return ODoOffset(pt.x, pt.y); }
     bool Intersect(const OCPNRegion& region) { return ODoIntersect(region); }
     bool Union(const OCPNRegion& region) { return ODoUnionWithRegion(region); }
             bool Union(int x, int y, int w, int h) { return ODoUnionWithRect(QRect(x, y, w, h)); }
@@ -141,11 +172,8 @@ protected:
 private:
     OGdkRegion*             m_region;
     
-
-#endif
-    
 private:
-    DECLARE_DYNAMIC_CLASS(OCPNRegion);
+//    DECLARE_DYNAMIC_CLASS(OCPNRegion);
 };
 
 // ----------------------------------------------------------------------------
@@ -167,7 +195,6 @@ public:
     QRect GetRect() const;
 
 private:
-#ifdef USE_NEW_REGION
     void Init();
     void CreateRects( const OCPNRegion& r );
 
@@ -176,9 +203,6 @@ private:
 
     QRect *m_rects;
     size_t  m_numRects;
-#else
-    QRegionIterator *m_ri;
-#endif
 };
 
 

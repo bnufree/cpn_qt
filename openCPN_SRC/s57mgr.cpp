@@ -262,7 +262,7 @@ bool s57mgr::GetChartExtent(char *pFullPath, Extent *pext)
  //   Fix this  find extents of which?? layer??
 /*
         OGRS57DataSource *poDS = new OGRS57DataSource;
-    poDS->Open(pFullPath, TRUE);
+    poDS->Open(pFullPath, true);
 
     if( poDS == NULL )
        return false;

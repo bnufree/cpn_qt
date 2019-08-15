@@ -25,7 +25,7 @@
  **************************************************************************/
 
 #pragma once
-#include <tinyxml.h>
+#include "tinyxml/tinyxml.h"
 
 #include "_def.h"
 #include <QBitmap>

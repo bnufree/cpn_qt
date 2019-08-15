@@ -42,7 +42,7 @@ static void s57_initialize( const wxString& csv_dir )
     if( g_poRegistrar == NULL ) {
         g_poRegistrar = new S57ClassRegistrar();
 
-        if( !g_poRegistrar->LoadInfo( csv_dir.mb_str(), FALSE ) ) {
+        if( !g_poRegistrar->LoadInfo( csv_dir.mb_str(), false ) ) {
             ZCHX_LOGMSG( wxString::Format(_T("   Error: Could not load S57 ClassInfo from %s"), csv_dir.mb_str() ));
 
             delete g_poRegistrar;

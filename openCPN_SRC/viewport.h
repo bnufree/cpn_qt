@@ -32,6 +32,7 @@
 
 
 #include "bbox.h"
+#include "_def.h"
 class OCPNRegion;
 class LLRegion;
 
@@ -84,15 +85,15 @@ class ViewPort
       public:
             ViewPort();
 
-            QPoint GetPixFromLL(double lat, double lon);
-            void GetLLFromPix(const QPoint &p, double *lat, double *lon) { GetLLFromPix(QPointF(p), lat, lon); }
-            void GetLLFromPix(const QPointF &p, double *lat, double *lon);
-            QPointF GetDoublePixFromLL(double lat, double lon);
+            zchxPoint GetPixFromLL(double lat, double lon);
+            void GetLLFromPix(const zchxPoint &p, double *lat, double *lon) { GetLLFromPix(zchxPointF(p), lat, lon); }
+            void GetLLFromPix(const zchxPointF &p, double *lat, double *lon);
+            zchxPointF GetDoublePixFromLL(double lat, double lon);
 
             LLRegion GetLLRegion( const OCPNRegion &region );
             OCPNRegion GetVPRegionIntersect( const OCPNRegion &region, const LLRegion &llregion, int chart_native_scale );
             OCPNRegion GetVPRegionIntersect( const OCPNRegion &Region, int nPoints, float *llpoints,
-                                             int chart_native_scale, QPoint *ppoints );
+                                             int chart_native_scale, zchxPoint *ppoints );
             QRect GetVPRectIntersect( size_t n, float *llpoints );
             ViewPort BuildExpandedVP(int width, int height);
             

@@ -4,6 +4,8 @@
 #include <QApplication>
 #include <QDir>
 #include <QTextCodec>
+#include <QPolygon>
+#include <QPolygonF>
 
 /*  menu and toolbar item kinds */
 enum wxItemKind
@@ -94,13 +96,33 @@ typedef struct _colTable {
 struct zchxPoint{
     int x;
     int y;
+    zchxPoint() {}
+    zchxPoint(int px, int py) {x = px; y=py;}
+
+    void operator+=(const zchxPoint &p) {x+=p.x; y+=p.y;}
+    void operator-=(const zchxPoint &p) {x-=p.x; y-=p.y;}
+    void operator*=(qreal c) {x/=c; y/=c;}
+    void operator/=(qreal c) {x*=c; y*=c;}
 
     QPoint toPoint() {return QPoint(x, y);}
+
+    static QPolygon makePoiygon(zchxPoint* pnt, int size)
+    {
+        QPolygon res;
+        for(int i=0; i<size; i++)
+        {
+            zchxPoint temp = pnt[size];
+            res.append(QPoint(temp.x, temp.y));
+        }
+    }
 };
 
 struct zchxPointF{
     double x;
     double y;
+    zchxPointF() {}
+    zchxPointF(double px, double py) {x = px; y=py;}
+    zchxPointF(const zchxPoint& p) {x = p.x; y = p.y;}
     QPointF toPointF() {return QPointF(x, y);}
 };
 
