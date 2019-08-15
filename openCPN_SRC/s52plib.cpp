@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S52 Presentation Library
@@ -2481,8 +2481,8 @@ int s52plib::RenderT_All( ObjRazRules *rzRules, Rules *rules, ViewPort *vp, bool
         {
             double latmin, lonmin, latmax, lonmax, extent = 0;
 
-            GetPixPointSingleNoRotate( rect.GetX(), rect.GetY() + rect.GetHeight(), &latmin, &lonmin, vp );
-            GetPixPointSingleNoRotate( rect.GetX() + rect.GetWidth(), rect.GetY(), &latmax, &lonmax, vp );
+            GetPixPointSingleNoRotate( rect.x(), rect.y() + rect.height(), &latmin, &lonmin, vp );
+            GetPixPointSingleNoRotate( rect.x() + rect.width(), rect.y(), &latmax, &lonmax, vp );
             LLBBox bbtext;
             bbtext.Set( latmin, lonmin, latmax, lonmax );
 
@@ -2527,8 +2527,8 @@ bool s52plib::RenderHPGL( ObjRazRules *rzRules, Rule *prule, zchxPoint &r, ViewP
         float target_length = 1852;
         
         xscale = target_length / scaled_length;
-        xscale = qMin(xscale, 1.0);
-        xscale = qMax(.4, xscale);
+        xscale = qMin(xscale, 1.0f);
+        xscale = qMax(0.4f, xscale);
         
         //printf("scaled length: %g   xscale: %g\n", scaled_length, xscale);
         
@@ -2605,33 +2605,16 @@ bool s52plib::RenderHPGL( ObjRazRules *rzRules, Rule *prule, zchxPoint &r, ViewP
         rzRules->obj->BBObj.Expand( symbox );
         
     } else {
-
-#if (( defined(__WXGTK__) || defined(__WXMAC__) ) && !wxCHECK_VERSION(2,9,4))
-        wxBitmap *pbm = new wxBitmap( width, height );
-#else
-        wxBitmap *pbm = new wxBitmap( width, height, 32 );
-# if !wxCHECK_VERSION(2,9,4)
-        pbm->UseAlpha();
-# endif
-#endif
-        wxMemoryDC mdc( *pbm );
-        if(!mdc.IsOk()){
-            QString msg;
-            msg.Printf(_T("RenderHPGL: width %d  height %d"), width, height);
-            ZCHX_LOGMSG(msg);
+        QImage *pbm = new QImage( width, height, QImage::Format_ARGB32);
+        //pbm->UseAlpha();
+        QPainter mdc;
+        if(!mdc.begin(pbm)){
+            qDebug("RenderHPGL: width %d  height %d", width, height);
             return false;
         }
-        
-#if wxUSE_GRAPHICS_CONTEXT
-        wxGCDC gdc( mdc );
-        HPGL->SetTargetGCDC( &gdc );
-#else
-        wxMemoryDC &gdc( mdc );
-        HPGL->SetTargetDC( &gdc );
-#endif
+        HPGL->SetTargetDC(&mdc);
         HPGL->Render( str, col, r0, pivot, origin, xscale, (double) rot_angle, true );
-
-        int bm_width = ( gdc.MaxX() - gdc.MinX() ) + 4;
+        int bm_width = ( mdc.ManX() - gdc.MinX() ) + 4;
         int bm_height = ( gdc.MaxY() - gdc.MinY() ) + 4;
         int bm_orgx = qMax ( 0, gdc.MinX()-2 );
         int bm_orgy = qMax ( 0, gdc.MinY()-2 );
@@ -5285,23 +5268,24 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
             //    Draw narrower color arc, overlaying the drawn outline.
             colorb = getQColor( arc_color );
-            buffer.color[1][0] = colorb.red());
+            buffer.color[1][0] = colorb.red();
             buffer.color[1][1] = colorb.green();
             buffer.color[1][2] = colorb.blue();
             buffer.color[1][3] = 150;
-            buffer.line_width[1] = qMax(g_GLMinSymbolLineWidth, (arc_width  * scale_factor) + .8);
+            buffer.line_width[1] = qMax(double(g_GLMinSymbolLineWidth), (arc_width  * scale_factor) + .8);
 
             //    Draw the sector legs
             if( sector_radius > 0 ) {
                 int leg_len = (int) ( sector_radius * canvas_pix_per_mm );
 
                 //QColor c = GetGlobalColor( _T ( "CHBLK" ) );
-                QColor c; GetGlobalColor( _T ( "CHBLK" ), &c);
+                QColor c;
+                GetGlobalColor( "CHBLK" , &c);
 
-                buffer.color[2][0] = c.red());
+                buffer.color[2][0] = c.red();
                 buffer.color[2][1] = c.green();
                 buffer.color[2][2] = c.blue();
-                buffer.color[2][3] = c.Alpha();
+                buffer.color[2][3] = c.alpha();
                 //buffer.line_width[2] = qMax(g_GLMinSymbolLineWidth, (float)0.5) * scale_factor;
                 buffer.line_width[2] = qMax(1.0, floor(GetPPMM() * 0.2));             //0.4 mm nominal, but not less than 1 pixel
 
@@ -5430,7 +5414,7 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
         if( sector_radius > 0 ) {
             int leg_len = (int) ( sector_radius * canvas_pix_per_mm );
 
-            wxDash dash1[2];
+            QVector<qreal> dash1(2);
             dash1[0] = (int) ( 3.6 * canvas_pix_per_mm ); //8// Long dash  <---------+
             dash1[1] = (int) ( 1.8 * canvas_pix_per_mm ); //2// Short gap            |
 
@@ -5521,9 +5505,9 @@ int s52plib::RenderObjectToDC( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *
 }
 
 
-int s52plib::RenderObjectToGL( const wxGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp )
+int s52plib::RenderObjectToGL( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp )
 {
-    m_glcc = (wxGLContext *) &glcc;
+    m_glcc = (QGLContext *) &glcc;
     return DoRenderObject( NULL, rzRules, vp );
 }
 
@@ -5532,9 +5516,9 @@ int s52plib::RenderObjectToDCText( QPainter *pdcin, ObjRazRules *rzRules, ViewPo
     return DoRenderObjectTextOnly( pdcin, rzRules, vp );
 }
 
-int s52plib::RenderObjectToGLText( const wxGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp )
+int s52plib::RenderObjectToGLText( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp )
 {
-    m_glcc = (wxGLContext *) &glcc;
+    m_glcc = (QGLContext *) &glcc;
     return DoRenderObjectTextOnly( NULL, rzRules, vp );
 }
 
@@ -5713,7 +5697,7 @@ bool s52plib::PreloadOBJLFromCSV(const QString &csv_file)
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) return false;
 
     QString str = file.readLine();
-    wxChar quote[] = { '\"', 0 };
+    QChar quote[] = { '\"', 0 };
     QString description;
     QString token;
 
@@ -5740,20 +5724,20 @@ bool s52plib::PreloadOBJLFromCSV(const QString &csv_file)
             bool bdup = false;
             for( unsigned int iPtr = 0; iPtr < pOBJLArray->count(); iPtr++ ) {
                 OBJLElement *pOLEt = (OBJLElement *) ( pOBJLArray->at( iPtr ) );
-                if( !token.CmpNoCase( QString( pOLEt->OBJLName, wxConvUTF8 ) ) ) {
+                if( !token.compare(QString::fromUtf8(pOLEt->OBJLName), Qt::CaseInsensitive) ) {
                     bdup = true;
                     break;
                 }
             }
 
             if( !bdup ) {
-                wxCharBuffer buffer=token.ToUTF8();
+                QByteArray buffer = token.toUtf8();
                 if(buffer.data()) {
                     OBJLElement *pOLE = (OBJLElement *) calloc( sizeof(OBJLElement), 1 );
                     memcpy( pOLE->OBJLName, buffer.data(), 6 );
                     pOLE->nViz = 0;
 
-                    pOBJLArray->Add( (void *) pOLE );
+                    pOBJLArray->append( (void *) pOLE );
 
                     OBJLDescriptions.push_back( description );
                 }
@@ -5785,7 +5769,7 @@ void s52plib::UpdateOBJLArray( S57Obj *obj )
         memcpy( pOLE->OBJLName, obj->FeatureName, OBJL_NAME_LEN );
         pOLE->nViz = 1;
 
-        pOBJLArray->Add( (void *) pOLE );
+        pOBJLArray->append( (void *) pOLE );
         obj->iOBJL = pOBJLArray->count() - 1;
     }
 
@@ -7258,9 +7242,7 @@ int s52plib::RenderToGLAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                     (s_glBindBuffer)(GL_ARRAY_BUFFER, vboId);
                     GLenum err = glGetError();
                     if(err){
-                        QString msg;
-                        msg.Printf(_T("VBO Error A: %d"), err);
-                        ZCHX_LOGMSG(msg);
+                        qDebug("VBO Error A: %d", err);
                         return 0;
                     }
                     
@@ -7270,9 +7252,7 @@ int s52plib::RenderToGLAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                                      ppg_vbo->single_buffer_size, ppg_vbo->single_buffer, GL_STATIC_DRAW);
                     err = glGetError();
                     if(err){
-                        QString msg;
-                        msg.Printf(_T("VBO Error B: %d"), err);
-                        ZCHX_LOGMSG(msg);
+                        qDebug("VBO Error B: %d", err);
                         return 0;
                     }
                     
@@ -7281,9 +7261,7 @@ int s52plib::RenderToGLAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                     (s_glBindBuffer)(GL_ARRAY_BUFFER, rzRules->obj->auxParm0);
                     GLenum err = glGetError();
                     if(err){
-                        QString msg;
-                        msg.Printf(_T("VBO Error C: %d"), err);
-                        ZCHX_LOGMSG(msg);
+                        qDebug("VBO Error C: %d", err);
                         return 0;
                     }
                     
@@ -7892,7 +7870,7 @@ void s52plib::RenderPolytessGL(ObjRazRules *rzRules, ViewPort *vp, double z_clip
 
 #ifdef ocpnUSE_GL
 
-int s52plib::RenderAreaToGL( const wxGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp )
+int s52plib::RenderAreaToGL( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp )
 {
     if( !ObjectRenderCheckRules( rzRules, vp, true ) )
         return 0;
@@ -7997,7 +7975,7 @@ render_canvas_parms* s52plib::CreatePatternBufferSpec( ObjRazRules *rzRules, Rul
         int height = (int) dheight + 1;
         
         //      Instantiate the vector pattern to a wxBitmap
-        wxMemoryDC mdc;
+        QPainter mdc;
         
         //  TODO
         // This ought to work for wxOSX, but DOES NOT.
@@ -8006,15 +7984,15 @@ render_canvas_parms* s52plib::CreatePatternBufferSpec( ObjRazRules *rzRules, Rul
         
         // Best we can do is set the background color very dark, and hope for the best
 
-        wxBitmap *pbm = NULL;
+        QBitmap *pbm = NULL;
 
         if( ( 0 != width ) && ( 0 != height ) )
         {
-            pbm = new wxBitmap( width, height );
+            pbm = new QBitmap( width, height );
 
-            mdc.SelectObject( *pbm );
-            mdc.SetBackground( wxBrush( local_unused_QColor ) );
-            mdc.Clear();
+            mdc.begin(pbm );
+            mdc.setBackground( QBrush( local_unused_QColor ) );
+//            mdc.Clear();
 
             int pivot_x = prule->pos.patt.pivot_x.PACL;
             int pivot_y = prule->pos.patt.pivot_y.PARW;
@@ -8034,16 +8012,17 @@ render_canvas_parms* s52plib::CreatePatternBufferSpec( ObjRazRules *rzRules, Rul
             HPGL->Render( str, col, r0, pivot, origin, 1.0, 0, false);
         } else
         {
-            pbm = new wxBitmap( 2, 2 );       // substitute small, blank pattern
-            mdc.SelectObject( *pbm );
-            mdc.SetBackground( wxBrush( local_unused_QColor ) );
-            mdc.Clear();
+            pbm = new QBitmap( 2, 2 );       // substitute small, blank pattern
+            mdc.begin(pbm );
+            mdc.setBackground( QBrush( local_unused_QColor ) );
+//            mdc.Clear();
         }
 
-        mdc.SelectObject( wxNullBitmap );
+//        mdc.SelectObject( wxNullBitmap );
+        mdc.end();
 
         //    Build a wxImage from the wxBitmap
-        Image = pbm->ConvertToImage();
+        Image = pbm->toImage();
 
         delete pbm;
     }
@@ -8152,9 +8131,10 @@ render_canvas_parms* s52plib::CreatePatternBufferSpec( ObjRazRules *rzRules, Rul
                         unsigned char b = *ps++;
                         
                         if(b_filter){
-                            wxImage::RGBValue rgb(r,g,b);
-                            wxImage::HSVValue hsv = wxImage::RGBtoHSV( rgb );
-                            double ratio = hsv.value/reference_value;
+                            QColor rgb(r,g,b);
+                            int h, s, v;
+                            rgb.getHsv(&h, &s, &v);
+                            double ratio = v/reference_value;
                             
                             if(ratio > 0.5){
                                 *pd++ = primary_r;
@@ -8957,10 +8937,11 @@ void s52plib::AdjustTextList( int dx, int dy, int screenw, int screenh )
     //        2.. Remove any list elements that are off screen after applied offset
 
     for(int i=0; i < m_textObjList.size(); ) {
-        QRect *pcurrent = &(m_textObjList[i].rText );
-        pcurrent->translate(dx, dy );
-        if( !pcurrent->intersects(rScreen ) ) {
+        S52_TextC* data = m_textObjList[i];
+        data->rText.translate(dx, dy );
+        if( !data->rText.intersects(rScreen ) ) {
             m_textObjList.removeAt(i);
+            delete data;
             continue;
         }
         i++;
