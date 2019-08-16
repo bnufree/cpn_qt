@@ -37,7 +37,7 @@ LIBS += -lpsapi
 
 QT       += core gui network positioning core_private opengl svg xml webkitwidgets multimedia
 
-DEFINES += ocpnUSE_GL TIXML_USE_STL
+DEFINES += ocpnUSE_GL TIXML_USE_STL __WXQT__
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -206,7 +206,8 @@ HEADERS += \
     zchxconfig.h \
     zchxs57listctrlbox.h \
     cm93.h \
-    mbtiles.h
+    mbtiles.h \
+    zchxpainter.h
 
 SOURCES += \
 #    bbox.cpp \
@@ -321,7 +322,8 @@ SOURCES += \
     zchxconfig.cpp \
     zchxs57listctrlbox.cpp \
     cm93.cpp \
-    mbtiles.cpp
+    mbtiles.cpp \
+    zchxpainter.cpp
 
 OBJECTIVE_SOURCES += \
     DarkMode.mm

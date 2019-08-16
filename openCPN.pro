@@ -5,4 +5,5 @@
 #-------------------------------------------------
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = Libs openCPN_SRC
+SUBDIRS = Libs openCPN_SRC \
+    wxQtPaintClasses

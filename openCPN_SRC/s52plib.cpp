@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S52 Presentation Library
@@ -42,6 +42,7 @@
 #include "gdal/cpl_csv.h"
 #include <QFile>
 #include "zchxconfig.h"
+#include "zchxpainter.h"
 
 
 #ifndef PROJECTION_MERCATOR
@@ -2782,8 +2783,8 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
     if(!m_pdc) {
         texture = ChartSymbols::GetGLTextureRect(texrect, prule->name.SYNM);
         if(texture) {
-            prule->parm2 = texrect.width * scale_factor;
-            prule->parm3 = texrect.height * scale_factor;
+            prule->parm2 = texrect.width() * scale_factor;
+            prule->parm3 = texrect.height() * scale_factor;
         }
     }
     
@@ -2974,16 +2975,16 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
             glEnable(g_texture_rectangle_format);
             glBindTexture(g_texture_rectangle_format, texture);
 
-            int w = texrect.width, h = texrect.height;
+            int w = texrect.width(), h = texrect.height();
             
-            float tx1 = texrect.x, ty1 = texrect.y;
+            float tx1 = texrect.x(), ty1 = texrect.y();
             float tx2 = tx1 + w, ty2 = ty1 + h;
 
             glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
             if(g_texture_rectangle_format == GL_TEXTURE_2D) {
-                wxSize size = ChartSymbols::GLTextureSize();
-                tx1 /= size.x, tx2 /= size.x;
-                ty1 /= size.y, ty2 /= size.y;
+                QSize size = ChartSymbols::GLTextureSize();
+                tx1 /= size.width(), tx2 /= size.width();
+                ty1 /= size.height(), ty2 /= size.height();
             }
             
             if(fabs( vp->rotation ) > .01){
@@ -3440,56 +3441,56 @@ int s52plib::RenderLS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     w = atoi( str + 5 ); // Width
 
     double scale_factor = vp->ref_scale/vp->chart_scale;
-    double scaled_line_width = qMax((scale_factor - g_overzoom_emphasis_base), 1);
+    double scaled_line_width = fmax((scale_factor - g_overzoom_emphasis_base), 1);
     bool b_wide_line = g_oz_vector_scale && vp->b_quilt && (scale_factor > g_overzoom_emphasis_base);
     
-    QPen wide_pen(*wxBLACK_PEN);
-    wxDash dashw[2];
+    QPen wide_pen(Qt::black);
+    QVector<qreal> dashw(2);
     dashw[0] = 3;
     dashw[1] = 1;
     
     if( b_wide_line)
     {
-        int w = qMax(scaled_line_width, 2);            // looks better
+        int w = qMax((int)scaled_line_width, 2);            // looks better
         w = qMin(w, 50);                               // upper bound
-        wide_pen.SetWidth( w );
-        wide_pen.SetColour(color);
+        wide_pen.setWidth( w );
+        wide_pen.setColor(color);
         
         if( !strncmp( str, "DOTT", 4 ) ) {
             dashw[0] = 1;
-            wide_pen.SetStyle(QPenSTYLE_USER_DASH);
-            wide_pen.SetDashes( 2, dashw );
+            wide_pen.setStyle(Qt::CustomDashLine);
+            wide_pen.setDashPattern(dashw);
         }
         else if( !strncmp( str, "DASH", 4 ) ){
-            wide_pen.SetStyle(QPenSTYLE_USER_DASH);
+            wide_pen.setStyle(Qt::CustomDashLine);
             if( m_pdc){ //DC mode
                 dashw[0] = 1;
                 dashw[1] = 2;
             }
 
-            wide_pen.SetDashes( 2, dashw );
+            wide_pen.setDashPattern(dashw);
         }
     }
 
-    QPen thispen(color, w, QPenSTYLE_SOLID);
-    wxDash dash1[2];
+    QPen thispen(color, w, Qt::SolidLine);
+    QVector<qreal> dash1(2);
     
     if( m_pdc) //DC mode
     {
         if( !strncmp( str, "DOTT", 4 ) ) {
-            thispen.SetStyle(QPenSTYLE_USER_DASH);
+            thispen.setStyle(Qt::CustomDashLine);
             dash1[0] = 1;
             dash1[1] = 2;
-            thispen.SetDashes( 2, dash1 );
+            thispen.setDashPattern(dash1 );
         }
         else if( !strncmp( str, "DASH", 4 ) ){
-            thispen.SetStyle(QPenSTYLE_SHORT_DASH);
+            thispen.setStyle(Qt::DashLine);
         }
 
         if(b_wide_line)
-            m_pdc->SetPen( wide_pen );
+            m_pdc->setPen( wide_pen );
         else
-            m_pdc->SetPen( thispen );
+            m_pdc->setPen( thispen );
         
     }
 #ifdef ocpnUSE_GL
@@ -3502,11 +3503,11 @@ int s52plib::RenderLS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
             GLint parms[2];
             glGetIntegerv( GL_ALIASED_LINE_WIDTH_RANGE, &parms[0] );
             if( w > parms[1] )
-                glLineWidth( qMax(g_GLMinCartographicLineWidth, parms[1]) );
+                glLineWidth( fmax(g_GLMinCartographicLineWidth, parms[1]) );
             else
-                glLineWidth( qMax(g_GLMinCartographicLineWidth, w) );
+                glLineWidth( fmax(g_GLMinCartographicLineWidth, w) );
         } else
-            glLineWidth( qMax(g_GLMinCartographicLineWidth, 1) );
+            glLineWidth( fmax(g_GLMinCartographicLineWidth, 1) );
         
 #ifndef ocpnUSE_GLES // linestipple is emulated poorly
         if( !strncmp( str, "DASH", 4 ) ) {
@@ -3734,10 +3735,10 @@ int s52plib::RenderLSLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
     //    Get a true pixel clipping/bounding box from the vp
     zchxPoint pbb = vp->GetPixFromLL( vp->clat, vp->clon );
-    int xmin_ = pbb.x - (vp->rv_rect.width / 2) - (4 * scaled_line_width);
-    int xmax_ = xmin_ + vp->rv_rect.width + (8 * scaled_line_width);
-    int ymin_ = pbb.y - (vp->rv_rect.height / 2) - (4 * scaled_line_width) ;
-    int ymax_ = ymin_ + vp->rv_rect.height + (8 * scaled_line_width);
+    int xmin_ = pbb.x - (vp->rv_rect.width() / 2) - (4 * scaled_line_width);
+    int xmax_ = xmin_ + vp->rv_rect.width() + (8 * scaled_line_width);
+    int ymin_ = pbb.y - (vp->rv_rect.height() / 2) - (4 * scaled_line_width) ;
+    int ymax_ = ymin_ + vp->rv_rect.height() + (8 * scaled_line_width);
 
     int x0, y0, x1, y1;
 
@@ -4231,7 +4232,7 @@ int s52plib::RenderLC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                 {
                     
                     if(nls){
-                        zchxPoint2DDouble *pReduced = 0;
+                        zchxPointF *pReduced = 0;
                         int nPointReduced = reduceLOD( LOD, nls, pdp, &pReduced);
 
                         zchxPoint *ptestp = (zchxPoint *) malloc( ( max_points ) * sizeof(zchxPoint) );
@@ -4256,7 +4257,7 @@ int s52plib::RenderLC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
             else{
                 // no more segments, so render what is available
                 if(nls){
-                    zchxPoint2DDouble *pReduced = 0;
+                    zchxPointF *pReduced = 0;
                     int nPointReduced = reduceLOD( LOD, nls, pdp, &pReduced);
                     
                     zchxPoint *ptestp = (zchxPoint *) malloc( ( max_points ) * sizeof(zchxPoint) );
@@ -4280,7 +4281,7 @@ int s52plib::RenderLC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 }
 
 
-int s52plib::reduceLOD( double LOD_meters, int nPoints, double *source, zchxPoint2DDouble **dest)
+int s52plib::reduceLOD( double LOD_meters, int nPoints, double *source, zchxPointF **dest)
 {
     //      Reduce the LOD of this linestring
     std::vector<int> index_keep;
@@ -4299,7 +4300,7 @@ int s52plib::reduceLOD( double LOD_meters, int nPoints, double *source, zchxPoin
             index_keep[i] = i;
     }
     
-    zchxPoint2DDouble *pReduced = (zchxPoint2DDouble *)malloc( ( index_keep.size() ) * sizeof(zchxPoint2DDouble) );
+    zchxPointF *pReduced = (zchxPointF *)malloc( ( index_keep.size() ) * sizeof(zchxPointF) );
     *dest = pReduced;
     
     double *ppr = source;
@@ -4311,7 +4312,7 @@ int s52plib::reduceLOD( double LOD_meters, int nPoints, double *source, zchxPoin
         
         for(unsigned int j=0 ; j < index_keep.size() ; j++){
             if(index_keep[j] == ip){
-                pReduced[ir++] = zchxPoint2DDouble(x, y);
+                pReduced[ir++] = zchxPointF(x, y);
                 break;
             }
         }
@@ -5084,12 +5085,12 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
             width = ( rad * 2 ) + 28;
             height = ( rad * 2 ) + 28;
-            wxBitmap bm( width, height, -1 );
-            wxMemoryDC mdc;
-            mdc.SelectObject( bm );
-            mdc.SetBackground( wxBrush( m_unused_QColor ) );
+            //wxBitmap bm( width, height, -1 );
+            QImage bm( width, height, QImage::Format_ARGB32 );
+            zchxPainter mdc;
+            mdc.begin(&bm);
+            mdc.setBackground( QBrush( m_unused_QColor ) );
             mdc.Clear();
-
             //    Adjust sector math for wxWidgets API
             float sb;
             float se;
@@ -5127,10 +5128,9 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 #ifndef __WXQT__        
             if( fabs( sectr2 - sectr1 ) != 360 ) // not necessary for all-round lights
             {
-                mdc.ResetBoundingBox();
-
-                QPen *pblockpen = wxThePenList->FindOrCreatePen( *wxBLACK, 10, QPenSTYLE_SOLID );
-                mdc.SetPen( *pblockpen );
+                mdc.resetBoundingBox();
+                QPen pblockpen(Qt::black, 10, Qt::SolidLine );
+                mdc.setPen( pblockpen );
 
                 float start_angle, end_angle;
                 if( se < sb ) {
@@ -5146,7 +5146,7 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                 for( float a = start_angle + .1; a <= end_angle; a += 2.0 ) {
                     int x = ( width / 2 ) + (int) ( rad * cosf( a * PI / 180. ) );
                     int y = ( height / 2 ) - (int) ( rad * sinf( a * PI / 180. ) );
-                    mdc.DrawLine( x0, y0, x, y );
+                    mdc.drawLine( x0, y0, x, y );
                     x0 = x;
                     y0 = y;
                 }
@@ -5241,7 +5241,7 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
             //    Draw wide outline arc
             QColor colorb = getQColor( outline_color );
-            buffer.color[0][0] = colorb.red());
+            buffer.color[0][0] = colorb.red();
             buffer.color[0][1] = colorb.green();
             buffer.color[0][2] = colorb.blue();
             buffer.color[0][3] = 150;
@@ -5421,7 +5421,7 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
              pdc->SetPen ( *pthispen );
              */
             //QColor c = GetGlobalColor( _T ( "CHBLK" ) );
-            QColor c; GetGlobalColor( _T ( "CHBLK" ), &c);
+            QColor c; GetGlobalColor( "CHBLK" , &c);
 
             float a = ( sectr1 - 90 ) * PI / 180;
             int x = r.x + (int) ( leg_len * cosf( a ) );
