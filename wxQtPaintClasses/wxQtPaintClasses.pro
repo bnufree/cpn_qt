@@ -22,7 +22,8 @@ SOURCES += wxqtpaintclasses.cpp \
     base/dcbase.cpp \
     base/dcbufcmn.cpp \
     base/dcgraph.cpp \
-    base/dcsvg.cpp
+    base/dcsvg.cpp \
+    qt/window.cpp
 
 HEADERS += wxqtpaintclasses.h\
         wxqtpaintclasses_global.h \
@@ -42,7 +43,8 @@ HEADERS += wxqtpaintclasses.h\
     base/dcps.h \
     base/dcscreen.h \
     base/dcsvg.h \
-    qt/_def.h
+    qt/_def.h \
+    qt/window.h
 
 unix {
     target.path = /usr/lib

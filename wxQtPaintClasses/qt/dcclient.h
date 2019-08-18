@@ -9,6 +9,7 @@
 #define _WX_QT_DCCLIENT_H_
 
 #include "dc.h"
+#include "window.h"
 
 class wxWindowDCImpl : public wxQtDCImpl
 {
