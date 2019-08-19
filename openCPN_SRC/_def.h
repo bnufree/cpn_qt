@@ -104,7 +104,7 @@ struct zchxPoint{
     void operator*=(qreal c) {x/=c; y/=c;}
     void operator/=(qreal c) {x*=c; y*=c;}
 
-    QPoint toPoint() {return QPoint(x, y);}
+    QPoint toPoint() const {return QPoint(x, y);}
 
     static QPolygon makePoiygon(zchxPoint* pnt, int size)
     {
@@ -114,6 +114,16 @@ struct zchxPoint{
             zchxPoint temp = pnt[size];
             res.append(QPoint(temp.x, temp.y));
         }
+    }
+
+    bool operator ==(const zchxPoint& other) const
+    {
+        return other.toPoint() == this->toPoint();
+    }
+
+    bool operator !=(const zchxPoint& other) const
+    {
+        return !(*this == other);
     }
 };
 

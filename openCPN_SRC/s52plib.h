@@ -155,9 +155,9 @@ public:
     void FlushSymbolCaches();
 
     //    For DC's
-    int RenderObjectToDC( QPainter *pdc, ObjRazRules *rzRules, ViewPort *vp );
-    int RenderObjectToDCText( QPainter *pdc, ObjRazRules *rzRules, ViewPort *vp );
-    int RenderAreaToDC( QPainter *pdc, ObjRazRules *rzRules, ViewPort *vp, render_canvas_parms *pb_spec );
+    int RenderObjectToDC(ObjRazRules *rzRules, ViewPort *vp );
+    int RenderObjectToDCText(ObjRazRules *rzRules, ViewPort *vp );
+    int RenderAreaToDC(ObjRazRules *rzRules, ViewPort *vp, render_canvas_parms *pb_spec );
 
     // Accessors
     bool GetShowSoundings() { return m_bShowSoundg; }
@@ -275,8 +275,8 @@ private:
     
     bool PreloadOBJLFromCSV(const QString &csv_file);
 
-    int DoRenderObject( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp );
-    int DoRenderObjectTextOnly( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp );
+    int DoRenderObject(ObjRazRules *rzRules, ViewPort *vp );
+    int DoRenderObjectTextOnly(ObjRazRules *rzRules, ViewPort *vp );
     
     //    Area Renderers
     int RenderToBufferAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp,
@@ -318,7 +318,7 @@ private:
         S52color *c, render_canvas_parms *pb_spec,
         render_canvas_parms *patt_spec, ViewPort *vp );
 
-    void draw_lc_poly( QPainter *pdc, QColor &color, int width, zchxPoint *ptp,
+    void draw_lc_poly(QColor &color, int width, zchxPoint *ptp,
         int npt, float sym_len, float sym_factor, Rule *draw_rule,
         ViewPort *vp );
 
@@ -328,7 +328,7 @@ private:
         ViewPort *vp, float rot_angle = 0. );
     QImage RuleXBMToImage( Rule *prule );
 
-    bool RenderText( QPainter *pdc, S52_TextC *ptext, int x, int y,
+    bool RenderText(S52_TextC *ptext, int x, int y,
         QRect *pRectDrawn, S57Obj *pobj, bool bCheckOverlap, ViewPort *vp );
 
     bool CheckTextRectList( const QRect &test_rect, S52_TextC *ptext );
@@ -378,7 +378,7 @@ private:
     bool bUseRasterSym;
     bool useLegacyRaster;
 
-    QPainter *m_pdc; // The current DC
+//    QPainter *m_pdc; // The current DC
     
 //#ifdef ocpnUSE_GL
     QGLContext *m_glcc;

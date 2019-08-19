@@ -135,7 +135,7 @@ HEADERS += \
     OCPNRegion.h \
 #    ogr_s57.h \
 #    options.h \
-#    Osenc.h \
+    Osenc.h \
 #    piano.h \
 #    pluginmanager.h \
 #    PositionParser.h \
@@ -207,7 +207,8 @@ HEADERS += \
     zchxs57listctrlbox.h \
     cm93.h \
     mbtiles.h \
-    zchxpainter.h
+    zchxpainter.h \
+    bitmap.h
 
 SOURCES += \
 #    bbox.cpp \
@@ -264,7 +265,7 @@ SOURCES += \
 #    ogrs57datasource.cpp \
 #    ogrs57layer.cpp \
 #    options.cpp \
-#    Osenc.cpp \
+    Osenc.cpp \
 #    piano.cpp \
 #    pluginmanager.cpp \
 #    PositionParser.cpp \
@@ -323,7 +324,8 @@ SOURCES += \
     zchxs57listctrlbox.cpp \
     cm93.cpp \
     mbtiles.cpp \
-    zchxpainter.cpp
+    zchxpainter.cpp \
+    bitmap.cpp
 
 OBJECTIVE_SOURCES += \
     DarkMode.mm

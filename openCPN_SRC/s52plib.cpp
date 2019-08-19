@@ -43,6 +43,7 @@
 #include <QFile>
 #include "zchxconfig.h"
 #include "zchxpainter.h"
+#include "bitmap.h"
 
 
 #ifndef PROJECTION_MERCATOR
@@ -1744,8 +1745,8 @@ static void rotate(QRect *r, ViewPort const &vp)
     r->setY( x*s + y*c +cy);
 }
 
-bool s52plib::RenderText( QPainter *pdc, S52_TextC *ptext, int x, int y, QRect *pRectDrawn,
-                          S57Obj *pobj, bool bCheckOverlap, ViewPort *vp )
+bool s52plib::RenderText(S52_TextC *ptext, int x, int y, QRect *pRectDrawn,
+                         S57Obj *pobj, bool bCheckOverlap, ViewPort *vp )
 {
 #ifdef DrawText
 #undef DrawText
@@ -1768,280 +1769,147 @@ bool s52plib::RenderText( QPainter *pdc, S52_TextC *ptext, int x, int y, QRect *
     //  Place an upper bound on the scaled text size
     scale_factor = qMin(scale_factor, 4.0);
 
-    if( !pdc ) // OpenGL
-    {
-#ifdef ocpnUSE_GL
-        
-        bool b_force_no_texture = false;
-        if(scale_factor > 1.){
-            b_force_no_texture = true;
-            
-            int old_size = ptext->pFont->pointSize();
-            int new_size = old_size * scale_factor;
-            scaled_font = FindOrCreateFont_PlugIn( new_size, ptext->pFont->family(),
-                                                   ptext->pFont->style(), ptext->pFont->weight(), false );
-            //            wxScreenDC sdc;
-            //            sdc.GetTextExtent( ptext->frmtd, &w_scaled, &h_scaled, &descent, &exlead, scaled_font ); // measure the text
-            QFontMetrics mecs(*scaled_font);
-            w_scaled = mecs.width(ptext->frmtd);
-            h_scaled = mecs.height();
-            descent = mecs.descent();
-            exlead = mecs.leading();
-            
-            // Has font size changed?  If so, clear the cached bitmap, and rebuild it
-            if( (h_scaled - descent) != ptext->rendered_char_height){
-                glDeleteTextures(1, (GLuint *)&ptext->texobj);
-                ptext->texobj = 0;
-            }
-            
-            // We cannot get the font ascent value to remove the interline spacing from the font "height".
-            // So we have to estimate based on conventional Arial metrics
-            ptext->rendered_char_height = (h_scaled - descent) * 8 / 10;
-            
+    bool b_force_no_texture = false;
+    if(scale_factor > 1.){
+        b_force_no_texture = true;
+
+        int old_size = ptext->pFont->pointSize();
+        int new_size = old_size * scale_factor;
+        scaled_font = FindOrCreateFont_PlugIn( new_size, ptext->pFont->family(),
+                                               ptext->pFont->style(), ptext->pFont->weight(), false );
+        //            wxScreenDC sdc;
+        //            sdc.GetTextExtent( ptext->frmtd, &w_scaled, &h_scaled, &descent, &exlead, scaled_font ); // measure the text
+        QFontMetrics mecs(*scaled_font);
+        w_scaled = mecs.width(ptext->frmtd);
+        h_scaled = mecs.height();
+        descent = mecs.descent();
+        exlead = mecs.leading();
+
+        // Has font size changed?  If so, clear the cached bitmap, and rebuild it
+        if( (h_scaled - descent) != ptext->rendered_char_height){
+            glDeleteTextures(1, (GLuint *)&ptext->texobj);
+            ptext->texobj = 0;
         }
-        // We render string with "special" characters the old, hard way, since we don't necessarily have the glyphs in our font,
-        // or if we do we would need a hashmap to cache and extract them
-        // And we also do this if the text is to be scaled up artificially.
-        if( (ptext->bspecial_char) || b_force_no_texture) {
-            if( !ptext->texobj ) // is texture ready?
-            {
-                //                wxScreenDC sdc;
-                
-                if(scale_factor <= 1.){
-                    //                    sdc.GetTextExtent( ptext->frmtd, &w_scaled, &h_scaled, &descent, &exlead, scaled_font ); // measure the text
-                    QFontMetrics mecs(*scaled_font);
-                    w_scaled = mecs.width(ptext->frmtd);
-                    h_scaled = mecs.height();
-                    descent = mecs.descent();
-                    exlead = mecs.leading();
-                    // We cannot get the font ascent value to remove the interline spacing from the font "height".
-                    // So we have to estimate based on conventional Arial metrics
-                    ptext->rendered_char_height = (h_scaled - descent) * 8 / 10;
-                }
-                
-                ptext->text_width = w_scaled;
-                ptext->text_height = h_scaled;
-                
-                /* make power of 2 */
-                int tex_w, tex_h;
-                for(tex_w = 1; tex_w < ptext->text_width; tex_w *= 2);
-                for(tex_h = 1; tex_h < ptext->text_height; tex_h *= 2);
 
-                QBitmap bmp( tex_w, tex_h );
-                QPainter mdc;
-                mdc.begin(&bmp);
-                mdc.setFont(*( scaled_font ) );
-                //  Render the text as white on black, so that underlying anti-aliasing of
-                //  QPainter text rendering can be extracted and converted to alpha-channel values.
+        // We cannot get the font ascent value to remove the interline spacing from the font "height".
+        // So we have to estimate based on conventional Arial metrics
+        ptext->rendered_char_height = (h_scaled - descent) * 8 / 10;
 
-                mdc.setBackground(QBrush( QColor( 0, 0, 0 ) ) );
-                mdc.setBackgroundMode(Qt::TransparentMode );
-                QPen pen = mdc.pen();
-                pen.setColor(QColor( 255, 255, 255 ) );
-                mdc.setPen(pen);
-                mdc.drawText(0, 0, ptext->frmtd);
-                mdc.end();
-                QImage image = bmp.toImage();
-                int ws = image.width(), hs = image.height();
+    }
+    // We render string with "special" characters the old, hard way, since we don't necessarily have the glyphs in our font,
+    // or if we do we would need a hashmap to cache and extract them
+    // And we also do this if the text is to be scaled up artificially.
+    if( (ptext->bspecial_char) || b_force_no_texture) {
+        if( !ptext->texobj ) // is texture ready?
+        {
+            //                wxScreenDC sdc;
 
-                ptext->RGBA_width = ws;
-                ptext->RGBA_height = hs;
-                unsigned char *pRGBA = (unsigned char *) malloc( 4 * ws * hs );
+            if(scale_factor <= 1.){
+                //                    sdc.GetTextExtent( ptext->frmtd, &w_scaled, &h_scaled, &descent, &exlead, scaled_font ); // measure the text
+                QFontMetrics mecs(*scaled_font);
+                w_scaled = mecs.width(ptext->frmtd);
+                h_scaled = mecs.height();
+                descent = mecs.descent();
+                exlead = mecs.leading();
+                // We cannot get the font ascent value to remove the interline spacing from the font "height".
+                // So we have to estimate based on conventional Arial metrics
+                ptext->rendered_char_height = (h_scaled - descent) * 8 / 10;
+            }
 
-                unsigned char *d = image.bits();
-                unsigned char *pdest = pRGBA;
-                S52color *ccolor = ptext->pcol;
+            ptext->text_width = w_scaled;
+            ptext->text_height = h_scaled;
 
-                if(d){
-                    for( int y = 0; y < hs; y++ )
-                        for( int x = 0; x < ws; x++ ) {
-                            unsigned char r, g, b;
-                            int off = ( y * ws + x );
+            /* make power of 2 */
+            int tex_w, tex_h;
+            for(tex_w = 1; tex_w < ptext->text_width; tex_w *= 2);
+            for(tex_h = 1; tex_h < ptext->text_height; tex_h *= 2);
 
-                            r = d[off * 3 + 0];
-                            g = d[off * 3 + 1];
-                            b = d[off * 3 + 2];
+            QBitmap bmp( tex_w, tex_h );
+            QPainter mdc;
+            mdc.begin(&bmp);
+            mdc.setFont(*( scaled_font ) );
+            //  Render the text as white on black, so that underlying anti-aliasing of
+            //  QPainter text rendering can be extracted and converted to alpha-channel values.
 
-                            pdest[off * 4 + 0] = ccolor->R;
-                            pdest[off * 4 + 1] = ccolor->G;
-                            pdest[off * 4 + 2] = ccolor->B;
+            mdc.setBackground(QBrush( QColor( 0, 0, 0 ) ) );
+            mdc.setBackgroundMode(Qt::TransparentMode );
+            QPen pen = mdc.pen();
+            pen.setColor(QColor( 255, 255, 255 ) );
+            mdc.setPen(pen);
+            mdc.drawText(0, 0, ptext->frmtd);
+            mdc.end();
+            QImage image = bmp.toImage();
+            int ws = image.width(), hs = image.height();
 
-                            int alpha = ( r + g + b ) / 3;
-                            pdest[off * 4 + 3] = (unsigned char) ( alpha & 0xff );
-                        }
-                }
+            ptext->RGBA_width = ws;
+            ptext->RGBA_height = hs;
+            unsigned char *pRGBA = (unsigned char *) malloc( 4 * ws * hs );
 
+            unsigned char *d = image.bits();
+            unsigned char *pdest = pRGBA;
+            S52color *ccolor = ptext->pcol;
 
-                int draw_width = ptext->RGBA_width;
-                int draw_height = ptext->RGBA_height;
+            if(d){
+                for( int y = 0; y < hs; y++ )
+                    for( int x = 0; x < ws; x++ ) {
+                        unsigned char r, g, b;
+                        int off = ( y * ws + x );
 
-                glEnable( GL_TEXTURE_2D );
+                        r = d[off * 3 + 0];
+                        g = d[off * 3 + 1];
+                        b = d[off * 3 + 2];
 
-                GLuint texobj;
-                glGenTextures( 1, &texobj );
+                        pdest[off * 4 + 0] = ccolor->R;
+                        pdest[off * 4 + 1] = ccolor->G;
+                        pdest[off * 4 + 2] = ccolor->B;
 
-                glBindTexture( GL_TEXTURE_2D, texobj );
-
-                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST/*GL_LINEAR*/ );
-                glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-
-                glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, draw_width, draw_height, 0,
-                              GL_RGBA, GL_UNSIGNED_BYTE, pRGBA );
-
-                free( pRGBA );
-
-                ptext->texobj = texobj;
-            } // Building texobj
-            
-            //    Render the texture
-            if( ptext->texobj ) {
-                //  Adjust the y position to account for the convention that S52 text is drawn
-                //  with the lower left corner at the specified point, instead of the wx convention
-                //  using upper right corner
-                int yadjust = 0;
-                int xadjust = 0;
-                
-                yadjust =  -ptext->rendered_char_height;
-                
-                
-                //  Add in the offsets, specified in units of nominal font height
-                yadjust += ptext->yoffs * ( ptext->rendered_char_height );
-                //  X offset specified in units of average char width
-                xadjust += ptext->xoffs * ptext->avgCharWidth;
-                
-                // adjust for text justification
-                int w = ptext->avgCharWidth * ptext->frmtd.length();
-                switch ( ptext->hjust){
-                case '1':               // centered
-                    xadjust -= w/2;
-                    break;
-                case '2':               // right
-                    xadjust -= w;
-                    break;
-                case '3':               // left (default)
-                default:
-                    break;
-                }
-                
-                switch ( ptext->vjust){
-                case '3':               // top
-                    yadjust += ptext->rendered_char_height;
-                    break;
-                case '2':               // centered
-                    yadjust += ptext->rendered_char_height/2;
-                    break;
-                case '1':               // bottom (default)
-                default:
-                    break;
-                }
-                
-                int xp = x;
-                int yp = y;
-
-                if(fabs(vp->rotation) > 0.01){
-                    float c = cosf(-vp->rotation );
-                    float s = sinf(-vp->rotation );
-                    float x = xadjust;
-                    float y = yadjust;
-                    xp += x*c - y*s;
-                    yp += x*s + y*c;
-                    
-                }
-                else{
-                    xp+= xadjust;
-                    yp+= yadjust;
-                }
-                
-                
-                pRectDrawn->setX( xp );
-                pRectDrawn->setY( yp );
-                pRectDrawn->setWidth( ptext->text_width );
-                pRectDrawn->setHeight( ptext->text_height );
-                
-                if( bCheckOverlap ) {
-                    if( CheckTextRectList( *pRectDrawn, ptext ) )
-                        bdraw = false;
-                }
-                
-                if( bdraw ) {
-                    
-                    int draw_width = ptext->text_width;
-                    int draw_height = ptext->text_height;
-                    
-                    extern GLenum       g_texture_rectangle_format;
-                    
-                    glEnable( GL_BLEND );
-                    glEnable( GL_TEXTURE_2D );
-                    
-                    glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
-                    
-                    glBindTexture( GL_TEXTURE_2D, ptext->texobj );
-                    
-                    glPushMatrix();
-                    glTranslatef(xp, yp, 0);
-                    
-                    /* undo previous rotation to make text level */
-                    glRotatef(vp->rotation*180/PI, 0, 0, -1);
-                    
-                    
-                    float tx1 = 0, tx2 = draw_width;
-                    float ty1 = 0, ty2 = draw_height;
-                    
-                    if(g_texture_rectangle_format == GL_TEXTURE_2D) {
-                        
-                        tx1 /= ptext->RGBA_width, tx2 /= ptext->RGBA_width;
-                        ty1 /= ptext->RGBA_height, ty2 /= ptext->RGBA_height;
+                        int alpha = ( r + g + b ) / 3;
+                        pdest[off * 4 + 3] = (unsigned char) ( alpha & 0xff );
                     }
-                    
-                    
-                    glBegin( GL_QUADS );
-                    
-                    glTexCoord2f( tx1, ty1 );  glVertex2i( 0, 0 );
-                    glTexCoord2f( tx2, ty1 );  glVertex2i( draw_width, 0 );
-                    glTexCoord2f( tx2, ty2 );  glVertex2i( draw_width, draw_height );
-                    glTexCoord2f( tx1, ty2 );  glVertex2i( 0, draw_height );
-                    
-                    glEnd();
-                    
-                    glPopMatrix();
-                    
-                    glDisable( g_texture_rectangle_format );
-                    glDisable( GL_BLEND );
-                    
-                    
-                } // bdraw
-                
             }
-            
-            bdraw = true;
-        }
-        
-        else {                                          // render using cached texture glyphs
-            TexFont *f_cache = GetTexFont(ptext->pFont);
-            int w, h;
-            f_cache->GetTextExtent(ptext->frmtd, &w, &h);
-            
-            // We don't store descent/ascent info for font texture cache
-            // So we have to estimate based on conventional Arial metrics
-            ptext->rendered_char_height = h * 65 / 100;
-            
+
+
+            int draw_width = ptext->RGBA_width;
+            int draw_height = ptext->RGBA_height;
+
+            glEnable( GL_TEXTURE_2D );
+
+            GLuint texobj;
+            glGenTextures( 1, &texobj );
+
+            glBindTexture( GL_TEXTURE_2D, texobj );
+
+            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST/*GL_LINEAR*/ );
+            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+
+            glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, draw_width, draw_height, 0,
+                          GL_RGBA, GL_UNSIGNED_BYTE, pRGBA );
+
+            free( pRGBA );
+
+            ptext->texobj = texobj;
+        } // Building texobj
+
+        //    Render the texture
+        if( ptext->texobj ) {
             //  Adjust the y position to account for the convention that S52 text is drawn
             //  with the lower left corner at the specified point, instead of the wx convention
             //  using upper right corner
             int yadjust = 0;
             int xadjust = 0;
-            
+
             yadjust =  -ptext->rendered_char_height;
-            
-            
+
+
             //  Add in the offsets, specified in units of nominal font height
             yadjust += ptext->yoffs * ( ptext->rendered_char_height );
             //  X offset specified in units of average char width
             xadjust += ptext->xoffs * ptext->avgCharWidth;
-            
+
             // adjust for text justification
+            int w = ptext->avgCharWidth * ptext->frmtd.length();
             switch ( ptext->hjust){
             case '1':               // centered
                 xadjust -= w/2;
@@ -2053,7 +1921,7 @@ bool s52plib::RenderText( QPainter *pdc, S52_TextC *ptext, int x, int y, QRect *
             default:
                 break;
             }
-            
+
             switch ( ptext->vjust){
             case '3':               // top
                 yadjust += ptext->rendered_char_height;
@@ -2068,85 +1936,93 @@ bool s52plib::RenderText( QPainter *pdc, S52_TextC *ptext, int x, int y, QRect *
 
             int xp = x;
             int yp = y;
-            
-            
+
             if(fabs(vp->rotation) > 0.01){
                 float c = cosf(-vp->rotation );
                 float s = sinf(-vp->rotation );
                 float x = xadjust;
                 float y = yadjust;
-                xadjust =  x*c - y*s;
-                yadjust =  x*s + y*c;
-                
+                xp += x*c - y*s;
+                yp += x*s + y*c;
+
             }
-            
-            xp+= xadjust;
-            yp+= yadjust;
-            
+            else{
+                xp+= xadjust;
+                yp+= yadjust;
+            }
+
+
             pRectDrawn->setX( xp );
             pRectDrawn->setY( yp );
-            pRectDrawn->setWidth( w );
-            pRectDrawn->setHeight( h );
-            
+            pRectDrawn->setWidth( ptext->text_width );
+            pRectDrawn->setHeight( ptext->text_height );
+
             if( bCheckOverlap ) {
-                if(fabs( vp->rotation ) > .01){
-                    rotate(pRectDrawn, *vp );
-                }
-                if( CheckTextRectList( *pRectDrawn, ptext ) ) bdraw = false;
+                if( CheckTextRectList( *pRectDrawn, ptext ) )
+                    bdraw = false;
             }
-            
+
             if( bdraw ) {
-                QColor wcolor = GetFontColour_PlugIn("ChartTexts");
-                
-                // If the user has not changed the color from BLACK, then use the color specified in the S52 LUP
-                if( wcolor == Qt::black )
-                    glColor3ub( ptext->pcol->R, ptext->pcol->G, ptext->pcol->B );
-                else
-                    glColor3ub( wcolor.red(), wcolor.green(), wcolor.blue() );
-                
+
+                int draw_width = ptext->text_width;
+                int draw_height = ptext->text_height;
+
+                extern GLenum       g_texture_rectangle_format;
+
                 glEnable( GL_BLEND );
                 glEnable( GL_TEXTURE_2D );
+
                 glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
-                
+
+                glBindTexture( GL_TEXTURE_2D, ptext->texobj );
+
                 glPushMatrix();
                 glTranslatef(xp, yp, 0);
-                
+
                 /* undo previous rotation to make text level */
                 glRotatef(vp->rotation*180/PI, 0, 0, -1);
-                
-                f_cache->RenderString(ptext->frmtd);
+
+
+                float tx1 = 0, tx2 = draw_width;
+                float ty1 = 0, ty2 = draw_height;
+
+                if(g_texture_rectangle_format == GL_TEXTURE_2D) {
+
+                    tx1 /= ptext->RGBA_width, tx2 /= ptext->RGBA_width;
+                    ty1 /= ptext->RGBA_height, ty2 /= ptext->RGBA_height;
+                }
+
+
+                glBegin( GL_QUADS );
+
+                glTexCoord2f( tx1, ty1 );  glVertex2i( 0, 0 );
+                glTexCoord2f( tx2, ty1 );  glVertex2i( draw_width, 0 );
+                glTexCoord2f( tx2, ty2 );  glVertex2i( draw_width, draw_height );
+                glTexCoord2f( tx1, ty2 );  glVertex2i( 0, draw_height );
+
+                glEnd();
+
                 glPopMatrix();
-                
-                glDisable( GL_TEXTURE_2D );
+
+                glDisable( g_texture_rectangle_format );
                 glDisable( GL_BLEND );
-            }
-        }
-        
-#endif
-    } else {                // Not OpenGL
-        pdc->save();
-        QFont oldfont = pdc->font(); // save current font
-        if(scale_factor > 1){
-            QFont* pf = ptext->pFont;
-            int old_size = pf->pointSize();
-            int new_size = old_size * scale_factor;
-            QFont *scaled_font = FindOrCreateFont_PlugIn( new_size, pf->family(), pf->style(), pf->weight(), false);
-            pdc->setFont(*scaled_font);
-        } else{
-            pdc->setFont( *( ptext->pFont ) );
+
+
+            } // bdraw
+
         }
 
-        int w, h, descent, exlead;
-//        pdc->GetTextExtent( ptext->frmtd, &w, &h, &descent, &exlead ); // measure the text
-        QFontMetrics mecs(pdc->font());
-        w = mecs.width(ptext->frmtd);
-        h = mecs.height();
-        descent = mecs.descent();
-        exlead = mecs.leading();
+        bdraw = true;
+    }
 
-        // We cannot get the font ascent value to remove the interline spacing.
+    else {                                          // render using cached texture glyphs
+        TexFont *f_cache = GetTexFont(ptext->pFont);
+        int w, h;
+        f_cache->GetTextExtent(ptext->frmtd, &w, &h);
+
+        // We don't store descent/ascent info for font texture cache
         // So we have to estimate based on conventional Arial metrics
-        int rendered_text_height = (h - descent) * 8 / 10;
+        ptext->rendered_char_height = h * 65 / 100;
 
         //  Adjust the y position to account for the convention that S52 text is drawn
         //  with the lower left corner at the specified point, instead of the wx convention
@@ -2154,11 +2030,11 @@ bool s52plib::RenderText( QPainter *pdc, S52_TextC *ptext, int x, int y, QRect *
         int yadjust = 0;
         int xadjust = 0;
 
-        yadjust =  - ( rendered_text_height );
+        yadjust =  -ptext->rendered_char_height;
+
 
         //  Add in the offsets, specified in units of nominal font height
-        yadjust += ptext->yoffs * ( rendered_text_height );
-
+        yadjust += ptext->yoffs * ( ptext->rendered_char_height );
         //  X offset specified in units of average char width
         xadjust += ptext->xoffs * ptext->avgCharWidth;
 
@@ -2177,10 +2053,10 @@ bool s52plib::RenderText( QPainter *pdc, S52_TextC *ptext, int x, int y, QRect *
 
         switch ( ptext->vjust){
         case '3':               // top
-            yadjust += rendered_text_height;
+            yadjust += ptext->rendered_char_height;
             break;
         case '2':               // centered
-            yadjust += rendered_text_height/2;
+            yadjust += ptext->rendered_char_height/2;
             break;
         case '1':               // bottom (default)
         default:
@@ -2192,14 +2068,12 @@ bool s52plib::RenderText( QPainter *pdc, S52_TextC *ptext, int x, int y, QRect *
 
 
         if(fabs(vp->rotation) > 0.01){
-            float cx = vp->pix_width/2.;
-            float cy = vp->pix_height/2.;
-            float c = cosf(vp->rotation );
-            float s = sinf(vp->rotation );
-            float x = xp -cx;
-            float y = yp -cy;
-            xp =  x*c - y*s +cx + vp->rv_rect.x();
-            yp =  x*s + y*c +cy + vp->rv_rect.y();
+            float c = cosf(-vp->rotation );
+            float s = sinf(-vp->rotation );
+            float x = xadjust;
+            float y = yadjust;
+            xadjust =  x*c - y*s;
+            yadjust =  x*s + y*c;
 
         }
 
@@ -2212,8 +2086,10 @@ bool s52plib::RenderText( QPainter *pdc, S52_TextC *ptext, int x, int y, QRect *
         pRectDrawn->setHeight( h );
 
         if( bCheckOverlap ) {
-            if( CheckTextRectList( *pRectDrawn, ptext ) )
-                bdraw = false;
+            if(fabs( vp->rotation ) > .01){
+                rotate(pRectDrawn, *vp );
+            }
+            if( CheckTextRectList( *pRectDrawn, ptext ) ) bdraw = false;
         }
 
         if( bdraw ) {
@@ -2221,17 +2097,26 @@ bool s52plib::RenderText( QPainter *pdc, S52_TextC *ptext, int x, int y, QRect *
 
             // If the user has not changed the color from BLACK, then use the color specified in the S52 LUP
             if( wcolor == Qt::black )
-            {
-                wcolor = QColor( ptext->pcol->R, ptext->pcol->G, ptext->pcol->B );
-            }
-            QPen pen = pdc->pen();
-            pen.setColor(wcolor);
-            pdc->setPen(pen);
-            pdc->drawText(xp, yp, ptext->frmtd );
-        }
-//        pdc->SetFont( oldfont ); // restore last font
-        pdc->restore();
+                glColor3ub( ptext->pcol->R, ptext->pcol->G, ptext->pcol->B );
+            else
+                glColor3ub( wcolor.red(), wcolor.green(), wcolor.blue() );
 
+            glEnable( GL_BLEND );
+            glEnable( GL_TEXTURE_2D );
+            glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+
+            glPushMatrix();
+            glTranslatef(xp, yp, 0);
+
+            /* undo previous rotation to make text level */
+            glRotatef(vp->rotation*180/PI, 0, 0, -1);
+
+            f_cache->RenderString(ptext->frmtd);
+            glPopMatrix();
+
+            glDisable( GL_TEXTURE_2D );
+            glDisable( GL_BLEND );
+        }
     }
     return bdraw;
     
@@ -2429,7 +2314,7 @@ int s52plib::RenderT_All( ObjRazRules *rzRules, Rules *rules, ViewPort *vp, bool
         GetPointPixSingle( rzRules, rzRules->obj->y, rzRules->obj->x, &r, vp );
 
         QRect rect;
-        bool bwas_drawn = RenderText( m_pdc, text, r.x, r.y, &rect, rzRules->obj, m_bDeClutterText, vp );
+        bool bwas_drawn = RenderText(text, r.x, r.y, &rect, rzRules->obj, m_bDeClutterText, vp );
 
         //  If this is an un-cached text render, it probably means that a single object has two or more
         //  text renders in its rule set.  RDOCAL is one example.  There are others
@@ -2583,94 +2468,25 @@ bool s52plib::RenderHPGL( ObjRazRules *rzRules, Rule *prule, zchxPoint &r, ViewP
     char *str = prule->vector.LVCT;
     char *col = prule->colRef.LCRF;
     zchxPoint r0( (int) ( pivot_x / fsf ), (int) ( pivot_y / fsf ) );
+    HPGL->SetTargetOpenGl();
+    HPGL->Render( str, col, r, pivot, origin, xscale, render_angle, true );
 
-    if( !m_pdc ) { // OpenGL Mode, do a direct render
-        HPGL->SetTargetOpenGl();
-        HPGL->Render( str, col, r, pivot, origin, xscale, render_angle, true );
+    //  Update the object Bounding box
+    //  so that subsequent drawing operations will redraw the item fully
 
-        //  Update the object Bounding box
-        //  so that subsequent drawing operations will redraw the item fully
+    int r_width = prule->pos.symb.bnbox_w.SYHL;
+    r_width = (int) ( r_width / fsf );
+    int r_height = prule->pos.symb.bnbox_h.SYVL;
+    r_height = (int) ( r_height / fsf );
+    int maxDim = qMax(r_height, r_width);
 
-        int r_width = prule->pos.symb.bnbox_w.SYHL;
-        r_width = (int) ( r_width / fsf );
-        int r_height = prule->pos.symb.bnbox_h.SYVL;
-        r_height = (int) ( r_height / fsf );
-        int maxDim = qMax(r_height, r_width);
-        
-        double latmin, lonmin, latmax, lonmax;
-        GetPixPointSingleNoRotate( r.x - maxDim, r.y + maxDim, &latmin, &lonmin, vp );
-        GetPixPointSingleNoRotate( r.x + maxDim, r.y - maxDim, &latmax,  &lonmax, vp );
-        LLBBox symbox;
-        symbox.Set( latmin, lonmin, latmax, lonmax );
-        
-        rzRules->obj->BBObj.Expand( symbox );
-        
-    } else {
-        QImage *pbm = new QImage( width, height, QImage::Format_ARGB32);
-        //pbm->UseAlpha();
-        QPainter mdc;
-        if(!mdc.begin(pbm)){
-            qDebug("RenderHPGL: width %d  height %d", width, height);
-            return false;
-        }
-        HPGL->SetTargetDC(&mdc);
-        HPGL->Render( str, col, r0, pivot, origin, xscale, (double) rot_angle, true );
-        int bm_width = ( mdc.ManX() - gdc.MinX() ) + 4;
-        int bm_height = ( gdc.MaxY() - gdc.MinY() ) + 4;
-        int bm_orgx = qMax ( 0, gdc.MinX()-2 );
-        int bm_orgy = qMax ( 0, gdc.MinY()-2 );
-        int screenOriginX = r.x + ( bm_orgx - (int) ( pivot_x / fsf ) );
-        int screenOriginY = r.y + ( bm_orgy - (int) ( pivot_y / fsf ) );
+    double latmin, lonmin, latmax, lonmax;
+    GetPixPointSingleNoRotate( r.x - maxDim, r.y + maxDim, &latmin, &lonmin, vp );
+    GetPixPointSingleNoRotate( r.x + maxDim, r.y - maxDim, &latmax,  &lonmax, vp );
+    LLBBox symbox;
+    symbox.Set( latmin, lonmin, latmax, lonmax );
 
-        //      Pre-clip the sub-bitmap to avoid assert errors
-        if( ( bm_height + bm_orgy ) > height ) bm_height = height - bm_orgy;
-        if( ( bm_width + bm_orgx ) > width ) bm_width = width - bm_orgx;
-
-        mdc.SelectObject( wxNullBitmap );
-
-        //  Grab a copy of the existing screen DC rectangle
-        wxBitmap targetBm( bm_width, bm_height, 24 );
-        wxMemoryDC targetDc( targetBm );
-        if(!targetDc.IsOk())
-            return false;
-        targetDc.Blit( 0, 0, bm_width, bm_height, m_pdc, screenOriginX, screenOriginY );
-        
-
-#if wxUSE_GRAPHICS_CONTEXT /*&& (( defined(__WXGTK__) || defined(__WXMAC__) ) && !wxCHECK_VERSION(2,9,4))*/
-        //  Re-render onto the screen-grab copy, since QPainter::DrawBitmap() for alpha channel bitmaps is broken somehow in wxGCDC
-        wxGCDC targetGcdc( targetDc );
-        r0 -= zchxPoint( bm_orgx, bm_orgy );
-        HPGL->SetTargetGCDC( &targetGcdc );
-        HPGL->Render( str, col, r0, pivot,origin, xscale, (double) rot_angle, true );
-#else
-        //  We can use the bitmap already rendered
-        //  Get smallest containing bitmap
-        wxBitmap *sbm = new wxBitmap( pbm->GetSubBitmap( QRect( bm_orgx, bm_orgy, bm_width, bm_height ) ) );
-
-        //  render the symbol graphics onto the screen-grab copy, with transparency...
-        targetDc.DrawBitmap( *sbm, 0, 0 );
-        delete sbm;
-#endif
-        
-        //  Render the final bitmap onto the screen DC
-        m_pdc->Blit( screenOriginX, screenOriginY, bm_width, bm_height, &targetDc, 0, 0 );
-
-        // Clean up
-        delete pbm;
-        targetDc.SelectObject( wxNullBitmap );
-
-        //  Update the object Bounding box
-        //  so that subsequent drawing operations will redraw the item fully
-
-        double latmin, lonmin, latmax, lonmax;
-        GetPixPointSingleNoRotate( r.x + prule->parm2, r.y + prule->parm3 + bm_height, &latmin, &lonmin, vp );
-        GetPixPointSingleNoRotate( r.x + prule->parm2 + bm_width, r.y + prule->parm3, &latmax,  &lonmax, vp );
-        LLBBox symbox;
-        symbox.Set( latmin, lonmin, latmax, lonmax );
-
-        rzRules->obj->BBObj.Expand( symbox );
-    }
-
+    rzRules->obj->BBObj.Expand( symbox );
     return true;
 }
 
@@ -2678,7 +2494,7 @@ bool s52plib::RenderHPGL( ObjRazRules *rzRules, Rule *prule, zchxPoint &r, ViewP
 //      Instantiate a Symbol or Pattern stored as XBM ascii in a rule
 //      Producing a wxImage
 //-----------------------------------------------------------------------------------------
-wxImage s52plib::RuleXBMToImage( Rule *prule )
+QImage s52plib::RuleXBMToImage( Rule *prule )
 {
     //      Decode the color definitions
     wxArrayPtrVoid *pColorArray = new wxArrayPtrVoid;
@@ -2696,7 +2512,7 @@ wxImage s52plib::RuleXBMToImage( Rule *prule )
         colname[5] = 0;
         S52color *pColor = getColor( colname );
 
-        pColorArray->Add( (void *) pColor );
+        pColorArray->append( (void *) pColor );
 
         i += 5;
     }
@@ -2707,24 +2523,24 @@ wxImage s52plib::RuleXBMToImage( Rule *prule )
 
     QString gstr( *prule->bitmap.SBTM ); // the bit array
 
-    wxImage Image( width, height );
+    QImage Image( width, height, QImage::Format_RGB32 );
 
     for( int iy = 0; iy < height; iy++ ) {
-        QString thisrow = gstr( iy * width, width ); // extract a row
+        QString thisrow = gstr.mid(iy * width, width ); // extract a row
 
         for( int ix = 0; ix < width; ix++ ) {
-            int cref = (int) ( thisrow[ix] - 'A' ); // make an index
+            int cref = (int) ( thisrow[ix].unicode() - 'A' ); // make an index
+            S52color *now = &m_unused_color;
             if( cref >= 0 ) {
-                S52color *pthisbitcolor = (S52color *) ( pColorArray->at( cref ) );
-                Image.SetRGB( ix, iy, pthisbitcolor->R, pthisbitcolor->G, pthisbitcolor->B );
-            } else {
-                Image.SetRGB( ix, iy, m_unused_color.R, m_unused_color.G, m_unused_color.B );
+                now = (S52color *) ( pColorArray->at( cref ) );
             }
-
+            //RGB转pixel
+            int color = (now->R << 16) + (now->G << 8) + now->B;
+            Image.setPixel(ix, iy, color);
         }
     }
 
-    pColorArray->Clear();
+    pColorArray->clear();
     delete pColorArray;
     return Image;
 }
@@ -2744,8 +2560,8 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
     
     if(g_oz_vector_scale && vp->b_quilt){
         double sfactor = vp->ref_scale/vp->chart_scale;
-        scale_factor = qMax((sfactor - g_overzoom_emphasis_base)  / 4., scale_factor);
-        scale_factor = qMin(scale_factor, 20);
+        scale_factor = fmax((sfactor - g_overzoom_emphasis_base)  / 4., scale_factor);
+        scale_factor = fmin(scale_factor, 20);
     }
 
     // a few special cases here
@@ -2758,7 +2574,7 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
         QRect trect;
         ChartSymbols::GetGLTextureRect( trect, prule->name.SYNM );
         
-        int scale_dim = qMax(trect.width, trect.height);
+        int scale_dim = qMax(trect.width(), trect.height());
         
         double scaled_size = scale_dim / vp->view_scale_ppm;
         
@@ -2780,37 +2596,28 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
     // For opengl, hopefully the symbols are loaded in a texture
     unsigned int texture = 0;
     QRect texrect;
-    if(!m_pdc) {
-        texture = ChartSymbols::GetGLTextureRect(texrect, prule->name.SYNM);
-        if(texture) {
-            prule->parm2 = texrect.width() * scale_factor;
-            prule->parm3 = texrect.height() * scale_factor;
-        }
+    texture = ChartSymbols::GetGLTextureRect(texrect, prule->name.SYNM);
+    if(texture) {
+        prule->parm2 = texrect.width() * scale_factor;
+        prule->parm3 = texrect.height() * scale_factor;
     }
     
-    if( m_pdc || !texture ) {
+    if(!texture ) {
 
         //    Check to see if any cached data is valid
         bool b_dump_cache = false;
         if( prule->pixelPtr ) {
-            
-            // Detect switches between DC and GL modes, flush if switch occurs
-            if( m_pdc ) {
-                if( prule->parm0 != ID_wxBitmap ) b_dump_cache = true;
-            } else {
-                if( prule->parm0 != ID_RGBA ) b_dump_cache = true;
-            }
+            if( prule->parm0 != ID_RGBA ) b_dump_cache = true;
         }
 
         // If the requested scaled symbol size is not the same as is currently cached,
         // we have to dump the cache
         QRect trect;
         ChartSymbols::GetGLTextureRect( trect, prule->name.SYNM );
-        if(prule->parm2 != trect.width * scale_factor)
-            b_dump_cache = true;
+        if(prule->parm2 != trect.width() * scale_factor)  b_dump_cache = true;
         
         wxBitmap *pbm = NULL;
-        wxImage Image;
+        QImage Image;
 
         //Instantiate the symbol if necessary
         if( ( prule->pixelPtr == NULL ) || ( prule->parm1 != m_colortable_index ) || b_dump_cache ) {
@@ -2821,111 +2628,52 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
             ClearRulesCache( prule );
 
             // always display something, TMARDEF1 as width of 2
-            int w0 = qMax(1, Image.GetWidth() * scale_factor);
-            int h0 = qMax(1, Image.GetHeight() * scale_factor);
-            Image.Rescale(w0 , h0 , wxIMAGE_QUALITY_HIGH);
+            int w0 = qMax(1, int(Image.width() * scale_factor));
+            int h0 = qMax(1, int(Image.height() * scale_factor));
+            Image.scaled(w0 , h0 , Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
             
-            int w = Image.GetWidth();
-            int h = Image.GetHeight();
+            int w = Image.width();
+            int h = Image.height();
+            //    Get the glRGBA format data from the wxImage
+            unsigned char *d = Image.bits();
+            unsigned char *a = Image.alphaChannel().bits();
 
-            if( !m_pdc )          // opengl, not using textures
-            {
-                //    Get the glRGBA format data from the wxImage
-                unsigned char *d = Image.GetData();
-                unsigned char *a = Image.GetAlpha();
-                
-                Image.SetMaskColour( m_unused_QColor.red()), m_unused_QColor.green(),
-                        m_unused_QColor.blue() );
-                unsigned char mr, mg, mb;
-                if( !a && !Image.GetOrFindMaskColour( &mr, &mg, &mb ) )
-                    printf( "trying to use mask to draw a bitmap without alpha or mask\n" );
-                
-                unsigned char *e = (unsigned char *) malloc( w * h * 4 );
-                // XXX FIXME a or e ?
-                if( d && a){
-                    for( int y = 0; y < h; y++ ) {
-                        for( int x = 0; x < w; x++ ) {
-                            unsigned char r, g, b;
-                            int off = ( y * w + x );
-                            r = d[off * 3 + 0];
-                            g = d[off * 3 + 1];
-                            b = d[off * 3 + 2];
-                            
-                            e[off * 4 + 0] = r;
-                            e[off * 4 + 1] = g;
-                            e[off * 4 + 2] = b;
-                            
-                            e[off * 4 + 3] =
-                                    a ? a[off] : ( ( r == mr ) && ( g == mg ) && ( b == mb ) ? 0 : 255 );
-                        }
+            //                Image.SetMaskColour( m_unused_QColor.red(), m_unused_QColor.green(),
+            //                        m_unused_QColor.blue() );
+            unsigned char mr, mg, mb;
+            mr = m_unused_color.R;
+            mg = m_unused_color.G;
+            mb = m_unused_color.B;
+            //                if( !a && !Image.GetOrFindMaskColour( &mr, &mg, &mb ) )
+            //                    printf( "trying to use mask to draw a bitmap without alpha or mask\n" );
+
+            unsigned char *e = (unsigned char *) malloc( w * h * 4 );
+            // XXX FIXME a or e ?
+            if( d && a){
+                for( int y = 0; y < h; y++ ) {
+                    for( int x = 0; x < w; x++ ) {
+                        unsigned char r, g, b;
+                        int off = ( y * w + x );
+                        r = d[off * 3 + 0];
+                        g = d[off * 3 + 1];
+                        b = d[off * 3 + 2];
+
+                        e[off * 4 + 0] = r;
+                        e[off * 4 + 1] = g;
+                        e[off * 4 + 2] = b;
+
+                        e[off * 4 + 3] =
+                                a ? a[off] : ( ( r == mr ) && ( g == mg ) && ( b == mb ) ? 0 : 255 );
                     }
                 }
-                
-                //      Save the bitmap ptr and aux parms in the rule
-                prule->pixelPtr = e;
-                prule->parm0 = ID_RGBA;
-                prule->parm1 = m_colortable_index;
-                prule->parm2 = w;
-                prule->parm3 = h;
-            } else {
-                //      Make the masked Bitmap
-                if( useLegacyRaster ) {
-                    pbm = new wxBitmap( Image );
-                    wxMask *pmask = new wxMask( *pbm, m_unused_QColor );
-                    pbm->SetMask( pmask );
-                }
-                
-                bool b_has_trans = false;
-#if (defined(__WXGTK__) || defined(__WXMAC__))
-                
-                //    Blitting of wxBitmap with transparency in wxGTK is broken....
-                //    We can do it the hard way, by manually alpha blending the
-                //    symbol with a clip taken from the current screen DC contents.
-                
-                //    Inspect the symbol image, to see if it actually has alpha transparency
-                if(Image.HasAlpha())
-                {
-                    unsigned char *a = Image.GetAlpha();
-                    for(int i = 0; i < Image.GetHeight(); i++, a++)
-                    {
-                        for(int j = 0; j < Image.GetWidth(); j++)
-                        {
-                            if((*a) && (*a != 255)) {
-                                b_has_trans = true;
-                                break;
-                            }
-                        }
-                        if(b_has_trans)
-                            break;
-                    }
-                }
-#ifdef __WXMAC__
-                b_has_trans = true;
-#endif
-                
-                //    If the symbol image has no transparency, then a standard QPainter:Blit() will work
-                if(!b_has_trans) {
-                    pbm = new wxBitmap( Image, -1 );
-                    wxMask *pmask = new wxMask( *pbm, m_unused_QColor );
-                    pbm->SetMask( pmask );
-                }
-                
-#else
-                if( !useLegacyRaster ) {
-                    pbm = new wxBitmap( Image, 32 );                // windows
-                    wxMask *pmask = new wxMask( *pbm, m_unused_QColor );
-                    pbm->SetMask( pmask );
-                }
-#endif
-                
-                //      Save the bitmap ptr and aux parms in the rule
-                prule->pixelPtr = pbm;
-                prule->parm0 = ID_wxBitmap;
-                prule->parm1 = m_colortable_index;
-                prule->parm2 = w;
-                prule->parm3 = h;
-                
             }
+
+            //      Save the bitmap ptr and aux parms in the rule
+            prule->pixelPtr = e;
+            prule->parm0 = ID_RGBA;
+            prule->parm1 = m_colortable_index;
+            prule->parm2 = w;
+            prule->parm3 = h;
         }               // instantiation
     }
 
@@ -2937,7 +2685,7 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
     LLBBox symbox;
     double latmin, lonmin, latmax, lonmax;
 
-    if( !m_pdc && fabs( vp->rotation ) > .01)          // opengl
+    if(fabs( vp->rotation ) > .01)          // opengl
     {
         float cx = vp->pix_width/2.;
         float cy = vp->pix_height/2.;
@@ -2950,9 +2698,6 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
         x = r.x - pivot_x + b_width -cx;
         y = r.y - pivot_y -cy;
         GetPixPointSingle( x*c - y*s +cx, x*s + y*c +cy, &latmax, &lonmax, vp );
-    } else {
-        GetPixPointSingle( r.x - pivot_x, r.y - pivot_y + b_height, &latmin, &lonmin, vp );
-        GetPixPointSingle( r.x - pivot_x + b_width, r.y - pivot_y, &latmax, &lonmax, vp );
     }
     symbox.Set( latmin, lonmin, latmax, lonmax );
 
@@ -2963,180 +2708,103 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
     }
 
     //      Now render the symbol
+    glEnable( GL_BLEND );
 
-    if( !m_pdc )          // opengl
-    {
-#ifdef ocpnUSE_GL
-        glEnable( GL_BLEND );
-        
-        if(texture) {
-            extern GLenum       g_texture_rectangle_format;
+    if(texture) {
+        extern GLenum       g_texture_rectangle_format;
 
-            glEnable(g_texture_rectangle_format);
-            glBindTexture(g_texture_rectangle_format, texture);
+        glEnable(g_texture_rectangle_format);
+        glBindTexture(g_texture_rectangle_format, texture);
 
-            int w = texrect.width(), h = texrect.height();
-            
-            float tx1 = texrect.x(), ty1 = texrect.y();
-            float tx2 = tx1 + w, ty2 = ty1 + h;
+        int w = texrect.width(), h = texrect.height();
 
-            glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
-            if(g_texture_rectangle_format == GL_TEXTURE_2D) {
-                QSize size = ChartSymbols::GLTextureSize();
-                tx1 /= size.width(), tx2 /= size.width();
-                ty1 /= size.height(), ty2 /= size.height();
-            }
-            
-            if(fabs( vp->rotation ) > .01){
+        float tx1 = texrect.x(), ty1 = texrect.y();
+        float tx2 = tx1 + w, ty2 = ty1 + h;
+
+        glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
+        if(g_texture_rectangle_format == GL_TEXTURE_2D) {
+            QSize size = ChartSymbols::GLTextureSize();
+            tx1 /= size.width(), tx2 /= size.width();
+            ty1 /= size.height(), ty2 /= size.height();
+        }
+
+        if(fabs( vp->rotation ) > .01){
+            glPushMatrix();
+
+            glTranslatef(r.x, r.y, 0);
+            glRotatef(vp->rotation * 180/PI, 0, 0, -1);
+            glTranslatef(-pivot_x, -pivot_y, 0);
+            glScalef(scale_factor, scale_factor, 1);
+
+            glBegin(GL_QUADS);
+            glTexCoord2f(tx1, ty1);    glVertex2i( 0, 0);
+            glTexCoord2f(tx2, ty1);    glVertex2i( w, 0);
+            glTexCoord2f(tx2, ty2);    glVertex2i( w, h);
+            glTexCoord2f(tx1, ty2);    glVertex2i( 0, h);
+            glEnd();
+
+            glPopMatrix();
+        }
+        else {
+
+            if(1/*scale_factor > 1.0*/){
                 glPushMatrix();
 
                 glTranslatef(r.x, r.y, 0);
-                glRotatef(vp->rotation * 180/PI, 0, 0, -1);
                 glTranslatef(-pivot_x, -pivot_y, 0);
                 glScalef(scale_factor, scale_factor, 1);
-                
+
                 glBegin(GL_QUADS);
                 glTexCoord2f(tx1, ty1);    glVertex2i( 0, 0);
                 glTexCoord2f(tx2, ty1);    glVertex2i( w, 0);
                 glTexCoord2f(tx2, ty2);    glVertex2i( w, h);
                 glTexCoord2f(tx1, ty2);    glVertex2i( 0, h);
                 glEnd();
-                
+
                 glPopMatrix();
             }
             else {
-                
-                if(1/*scale_factor > 1.0*/){
-                    glPushMatrix();
-                    
-                    glTranslatef(r.x, r.y, 0);
-                    glTranslatef(-pivot_x, -pivot_y, 0);
-                    glScalef(scale_factor, scale_factor, 1);
-                    
-                    glBegin(GL_QUADS);
-                    glTexCoord2f(tx1, ty1);    glVertex2i( 0, 0);
-                    glTexCoord2f(tx2, ty1);    glVertex2i( w, 0);
-                    glTexCoord2f(tx2, ty2);    glVertex2i( w, h);
-                    glTexCoord2f(tx1, ty2);    glVertex2i( 0, h);
-                    glEnd();
-                    
-                    glPopMatrix();
-                }
-                else {
-                    float ddx = pivot_x;
-                    float ddy = pivot_y;
+                float ddx = pivot_x;
+                float ddy = pivot_y;
 
-                    glBegin(GL_QUADS);
-                    glTexCoord2f(tx1, ty1);    glVertex2i(  r.x - ddx, r.y - ddy );
-                    glTexCoord2f(tx2, ty1);    glVertex2i(  r.x - ddx + w, r.y - ddy );
-                    glTexCoord2f(tx2, ty2);    glVertex2i(  r.x - ddx + w, r.y - ddy + h );
-                    glTexCoord2f(tx1, ty2);    glVertex2i(  r.x - ddx, r.y - ddy + h);
-                    glEnd();
-                }
-            }
-
-            glDisable(g_texture_rectangle_format);
-        } else { /* this is only for legacy mode, or systems without NPOT textures */
-            float cr = cosf( vp->rotation );
-            float sr = sinf( vp->rotation );
-            float ddx = pivot_x * cr + pivot_y * sr;
-            float ddy = pivot_y * cr - pivot_x * sr;
-
-            glColor4f( 1, 1, 1, 1 );
-
-            //  Since draw pixels is so slow, lets not draw anything we don't have to
-            QRect sym_rect(r.x - ddx, r.y - ddy, b_width, b_height);
-            if(vp->rv_rect.Intersects(sym_rect) ) {
-                
-                glPushAttrib( GL_SCISSOR_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-                
-                glDisable( GL_SCISSOR_TEST );
-                glDisable( GL_STENCIL_TEST );
-                glDisable( GL_DEPTH_TEST );
-                
-                glRasterPos2f( r.x - ddx, r.y - ddy );
-                glPixelZoom( 1, -1 );
-                glDrawPixels( b_width, b_height, GL_RGBA, GL_UNSIGNED_BYTE, prule->pixelPtr );
-                glPixelZoom( 1, 1 );
-
-                glPopAttrib();
+                glBegin(GL_QUADS);
+                glTexCoord2f(tx1, ty1);    glVertex2i(  r.x - ddx, r.y - ddy );
+                glTexCoord2f(tx2, ty1);    glVertex2i(  r.x - ddx + w, r.y - ddy );
+                glTexCoord2f(tx2, ty2);    glVertex2i(  r.x - ddx + w, r.y - ddy + h );
+                glTexCoord2f(tx1, ty2);    glVertex2i(  r.x - ddx, r.y - ddy + h);
+                glEnd();
             }
         }
 
-        glDisable( GL_BLEND );
-#endif
-    } else {
+        glDisable(g_texture_rectangle_format);
+    } else { /* this is only for legacy mode, or systems without NPOT textures */
+        float cr = cosf( vp->rotation );
+        float sr = sinf( vp->rotation );
+        float ddx = pivot_x * cr + pivot_y * sr;
+        float ddy = pivot_y * cr - pivot_x * sr;
 
-        if( !( prule->pixelPtr ) )                // This symbol requires manual alpha blending
-        {
-            //    Don't bother if the symbol is off the true screen,
-            //    as for instance when an area-centered symbol is called for.
-            if( ( r.x - pivot_x  < vp->pix_width ) && ( r.y - pivot_y < vp->pix_height ) ) {
-                
-                // Get the current screen contents to a wxImage
-                wxBitmap b1( b_width, b_height, -1 );
-                wxMemoryDC mdc1( b1 );
-                mdc1.Blit( 0, 0, b_width, b_height, m_pdc, r.x - pivot_x, r.y - pivot_y, wxCOPY );
-                wxImage im_back = b1.ConvertToImage();
+        glColor4f( 1, 1, 1, 1 );
 
-                //    Get the scaled symbol as a wxImage
-                wxImage im_sym = ChartSymbols::GetImage( prule->name.SYNM );
-                im_sym.Rescale(b_width, b_height, wxIMAGE_QUALITY_HIGH);
+        //  Since draw pixels is so slow, lets not draw anything we don't have to
+        QRect sym_rect(r.x - ddx, r.y - ddy, b_width, b_height);
+        if(vp->rv_rect.intersects(sym_rect) ) {
 
-                wxImage im_result( b_width, b_height );
-                unsigned char *pdest = im_result.GetData();
-                unsigned char *pback = im_back.GetData();
-                unsigned char *psym = im_sym.GetData();
+            glPushAttrib( GL_SCISSOR_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-                unsigned char *asym = NULL;
-                if( im_sym.HasAlpha() )
-                    asym = im_sym.GetAlpha();
+            glDisable( GL_SCISSOR_TEST );
+            glDisable( GL_STENCIL_TEST );
+            glDisable( GL_DEPTH_TEST );
 
-                //    Do alpha blending, the hard way
+            glRasterPos2f( r.x - ddx, r.y - ddy );
+            glPixelZoom( 1, -1 );
+            glDrawPixels( b_width, b_height, GL_RGBA, GL_UNSIGNED_BYTE, prule->pixelPtr );
+            glPixelZoom( 1, 1 );
 
-                if(pdest && psym && pback){
-                    for( int i = 0; i < b_height; i++ ) {
-                        for( int j = 0; j < b_width; j++ ) {
-                            double alpha = 1.0;
-                            if(asym)
-                                alpha = ( *asym++ ) / 256.0;
-                            unsigned char r = ( *psym++ * alpha ) + ( *pback++ * ( 1.0 - alpha ) );
-                            *pdest++ = r;
-                            unsigned char g = ( *psym++ * alpha ) + ( *pback++ * ( 1.0 - alpha ) );
-                            *pdest++ = g;
-                            unsigned char b = ( *psym++ * alpha ) + ( *pback++ * ( 1.0 - alpha ) );
-                            *pdest++ = b;
-                        }
-                    }
-                }
-
-                wxBitmap result( im_result );
-                wxMemoryDC result_dc( result );
-
-                m_pdc->Blit( r.x - pivot_x, r.y - pivot_y, b_width, b_height, &result_dc, 0, 0,  wxCOPY, false );
-
-                result_dc.SelectObject( wxNullBitmap );
-                mdc1.SelectObject( wxNullBitmap );
-            }
-        } else {
-            //      Get the symbol bitmap into a memory dc
-            wxBitmap &bmp = (wxBitmap &) ( *( (wxBitmap *) ( prule->pixelPtr ) ) );
-            wxMemoryDC mdc(bmp);
-
-            //      Blit it into the target dc, with mask
-            m_pdc->Blit( r.x - pivot_x, r.y - pivot_y, bmp.GetWidth(), bmp.GetHeight(), &mdc, 0, 0, wxCOPY, true );
-
-            mdc.SelectObject( wxNullBitmap );
-
+            glPopAttrib();
         }
-        // Debug
-        //if(m_pdc){
-        //m_pdc->SetPen(QPen(*wxGREEN, 1));
-        //m_pdc->SetBrush(wxBrush(*wxGREEN, wxTRANSPARENT));
-        //m_pdc->DrawRectangle(r.x - pivot_x, r.y - pivot_y, b_width, b_height);
-        //}
-
     }
+
+    glDisable( GL_BLEND );
 
     //  Update the object Bounding box
     //  so that subsequent drawing operations will redraw the item fully
@@ -3278,11 +2946,11 @@ int s52plib::RenderGLLS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
         GLint parms[2];
         glGetIntegerv( GL_ALIASED_LINE_WIDTH_RANGE, &parms[0] );
         if( w > parms[1] )
-            lineWidth = qMax(g_GLMinCartographicLineWidth, parms[1]);
+            lineWidth = fmax(g_GLMinCartographicLineWidth, parms[1]);
         else
-            lineWidth = qMax(g_GLMinCartographicLineWidth, w);
+            lineWidth = fmax(g_GLMinCartographicLineWidth, w);
     } else
-        lineWidth = qMax(g_GLMinCartographicLineWidth, 1);
+        lineWidth = fmax(g_GLMinCartographicLineWidth, 1);
 
     // Manage super high density displays
     float target_w_mm = 0.5 * w;
@@ -3296,18 +2964,11 @@ int s52plib::RenderGLLS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
     glDisable( GL_LINE_SMOOTH );
     glDisable( GL_BLEND );
-    
-#ifdef __OCPN__ANDROID__
-    lineWidth = qMin(lineWidth, parms[1]);
-    glLineWidth(lineWidth);
-    
-#else    
     glLineWidth(lineWidth);
     if(lineWidth > 4.0 && m_GLLineSmoothing){
         glEnable( GL_LINE_SMOOTH );
         glEnable( GL_BLEND );
     }
-#endif
     
 #ifndef ocpnUSE_GLES // linestipple is emulated poorly
     if( !strncmp( str, "DASH", 4 ) ) {
@@ -3463,78 +3124,52 @@ int s52plib::RenderLS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
         }
         else if( !strncmp( str, "DASH", 4 ) ){
             wide_pen.setStyle(Qt::CustomDashLine);
-            if( m_pdc){ //DC mode
-                dashw[0] = 1;
-                dashw[1] = 2;
-            }
-
             wide_pen.setDashPattern(dashw);
         }
     }
 
     QPen thispen(color, w, Qt::SolidLine);
     QVector<qreal> dash1(2);
-    
-    if( m_pdc) //DC mode
-    {
-        if( !strncmp( str, "DOTT", 4 ) ) {
-            thispen.setStyle(Qt::CustomDashLine);
-            dash1[0] = 1;
-            dash1[1] = 2;
-            thispen.setDashPattern(dash1 );
-        }
-        else if( !strncmp( str, "DASH", 4 ) ){
-            thispen.setStyle(Qt::DashLine);
-        }
+    glColor3ub( c->R, c->G, c->B );
 
-        if(b_wide_line)
-            m_pdc->setPen( wide_pen );
+    //    Set drawing width
+    if( w > 1 ) {
+        GLint parms[2];
+        glGetIntegerv( GL_ALIASED_LINE_WIDTH_RANGE, &parms[0] );
+        if( w > parms[1] )
+            glLineWidth( fmax(g_GLMinCartographicLineWidth, parms[1]) );
         else
-            m_pdc->setPen( thispen );
-        
-    }
-#ifdef ocpnUSE_GL
-    else // OpenGL mode
+            glLineWidth( fmax(g_GLMinCartographicLineWidth, w) );
+    } else
     {
-        glColor3ub( c->R, c->G, c->B );
-        
-        //    Set drawing width
-        if( w > 1 ) {
-            GLint parms[2];
-            glGetIntegerv( GL_ALIASED_LINE_WIDTH_RANGE, &parms[0] );
-            if( w > parms[1] )
-                glLineWidth( fmax(g_GLMinCartographicLineWidth, parms[1]) );
-            else
-                glLineWidth( fmax(g_GLMinCartographicLineWidth, w) );
-        } else
-            glLineWidth( fmax(g_GLMinCartographicLineWidth, 1) );
-        
+        glLineWidth( fmax(g_GLMinCartographicLineWidth, 1) );
+    }
+
 #ifndef ocpnUSE_GLES // linestipple is emulated poorly
-        if( !strncmp( str, "DASH", 4 ) ) {
-            glLineStipple( 1, 0x3F3F );
-            glEnable( GL_LINE_STIPPLE );
-        }
-        else if( !strncmp( str, "DOTT", 4 ) ) {
-            glLineStipple( 1, 0x3333 );
-            glEnable( GL_LINE_STIPPLE );
-        }
-        else
-            glDisable( GL_LINE_STIPPLE );
-#endif
-        if(w >= 2 && m_GLLineSmoothing){
-            glEnable( GL_LINE_SMOOTH );
-            glEnable( GL_BLEND );
-        }
+    if( !strncmp( str, "DASH", 4 ) ) {
+        glLineStipple( 1, 0x3F3F );
+        glEnable( GL_LINE_STIPPLE );
+    }
+    else if( !strncmp( str, "DOTT", 4 ) ) {
+        glLineStipple( 1, 0x3333 );
+        glEnable( GL_LINE_STIPPLE );
+    }
+    else {
+        glDisable( GL_LINE_STIPPLE );
     }
 #endif
-    
+    if(w >= 2 && m_GLLineSmoothing){
+        glEnable( GL_LINE_SMOOTH );
+        glEnable( GL_BLEND );
+    }
+
 
     //    Get a true pixel clipping/bounding box from the vp
     zchxPoint pbb = vp->GetPixFromLL( vp->clat, vp->clon );
-    int xmin_ = pbb.x - (vp->rv_rect.width / 2) - (4 * scaled_line_width);
-    int xmax_ = xmin_ + vp->rv_rect.width + (8 * scaled_line_width);
-    int ymin_ = pbb.y - (vp->rv_rect.height / 2) - (4 * scaled_line_width) ;
-    int ymax_ = ymin_ + vp->rv_rect.height + (8 * scaled_line_width);
+    int xmin_ = pbb.x - (vp->rv_rect.width() / 2) - (4 * scaled_line_width);
+    int xmax_ = xmin_ + vp->rv_rect.width() + (8 * scaled_line_width);
+    int ymin_ = pbb.y - (vp->rv_rect.height() / 2) - (4 * scaled_line_width) ;
+    int ymax_ = ymin_ + vp->rv_rect.height() + (8 * scaled_line_width);
 
     int x0, y0, x1, y1;
 
@@ -3543,22 +3178,17 @@ int s52plib::RenderLS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     int priority_current = rzRules->LUP->DPRI - '0';
     if(rzRules->obj->m_DPRI >= 0)
         priority_current = rzRules->obj->m_DPRI;
-    
+
     if( rzRules->obj->m_ls_list )
     {
         float *ppt;
 
         unsigned char *vbo_point = (unsigned char *)rzRules->obj->m_chart_context->vertex_buffer;
         line_segment_element *ls = rzRules->obj->m_ls_list;
-
-#ifdef ocpnUSE_GL
-        if( !m_pdc && !b_wide_line)
+        if(!b_wide_line)
             glBegin( GL_LINES );
-#endif
-
         while(ls){
             if( ls->priority == priority_current  ) {
-
                 int nPoints;
                 // fetch the first point
                 if( (ls->ls_type == TYPE_EE) || (ls->ls_type == TYPE_EE_REV) ){
@@ -3583,49 +3213,31 @@ int s52plib::RenderLS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
                     // Do not draw null segments
                     if( ( x0 != x1 ) || ( y0 != y1 ) ){
-
-                        if(m_pdc){
-
-                            if( cohen_sutherland_line_clip_i( &x0, &y0, &x1, &y1, xmin_, xmax_,
-                                                              ymin_, ymax_ ) != Invisible )
-                                m_pdc->DrawLine( x0, y0, x1, y1 );
+                        // simplified faster test, let opengl do the rest
+                        if((x0 > xmin_ || x1 > xmin_) && (x0 < xmax_ || x1 < xmax_) &&
+                                (y0 > ymin_ || y1 > ymin_) && (y0 < ymax_ || y1 < ymax_)) {
+                            if(!b_wide_line) {
+                                glVertex2i( x0, y0 );
+                                glVertex2i( x1, y1 );
+                            } else
+                                PLIBDrawGLThickLine( x0, y0, x1, y1, wide_pen, true );
                         }
-#ifdef ocpnUSE_GL
-                        else {
-                            // simplified faster test, let opengl do the rest
-                            if((x0 > xmin_ || x1 > xmin_) && (x0 < xmax_ || x1 < xmax_) &&
-                                    (y0 > ymin_ || y1 > ymin_) && (y0 < ymax_ || y1 < ymax_)) {
-                                if(!b_wide_line) {
-                                    glVertex2i( x0, y0 );
-                                    glVertex2i( x1, y1 );
-                                } else
-                                    PLIBDrawGLThickLine( x0, y0, x1, y1, wide_pen, true );
-                            }
-                        }
-#endif      
-                        
+
                     }
 
                     l = r;
                     ppt += 2;
                 }
             }
-            
+
             ls = ls->next;
         }
-#ifdef ocpnUSE_GL
-        if(!m_pdc && !b_wide_line)
+        if(!b_wide_line)
             glEnd();
-#endif              
     }
-    
-#ifdef ocpnUSE_GL
-    if( !m_pdc ){
-        glDisable( GL_LINE_STIPPLE );
-        glDisable( GL_LINE_SMOOTH );
-        glDisable( GL_BLEND );
-    }
-#endif                
+    glDisable( GL_LINE_STIPPLE );
+    glDisable( GL_LINE_SMOOTH );
+    glDisable( GL_BLEND );
     return 1;
 }
 
@@ -3645,93 +3257,60 @@ int s52plib::RenderLSLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     w = atoi( str + 5 ); // Width
 
     double scale_factor = vp->ref_scale/vp->chart_scale;
-    double scaled_line_width = qMax((scale_factor - g_overzoom_emphasis_base), 1);
+    double scaled_line_width = fmax((scale_factor - g_overzoom_emphasis_base), 1);
     bool b_wide_line = g_oz_vector_scale && vp->b_quilt && (scale_factor > g_overzoom_emphasis_base);
     
-    QPen wide_pen(*wxBLACK_PEN);
-    wxDash dashw[2];
+    QPen wide_pen(Qt::black);
+    QVector<qreal> dashw(2);
     dashw[0] = 3;
     dashw[1] = 1;
     
     if( b_wide_line)
     {
-        int w = qMax(scaled_line_width, 2);            // looks better
+        int w = fmax(scaled_line_width, 2);            // looks better
         w = qMin(w, 50);                               // upper bound
-        wide_pen.SetWidth( w );
-        wide_pen.SetColour(color);
+        wide_pen.setWidth( w );
+        wide_pen.setColor(color);
         
         if( !strncmp( str, "DOTT", 4 ) ) {
             dashw[0] = 1;
-            wide_pen.SetStyle(QPenSTYLE_USER_DASH);
-            wide_pen.SetDashes( 2, dashw );
+            wide_pen.setStyle(Qt::CustomDashLine);
+            wide_pen.setDashPattern(dashw);
         }
         else if( !strncmp( str, "DASH", 4 ) ){
-            wide_pen.SetStyle(QPenSTYLE_USER_DASH);
-            if( m_pdc){ //DC mode
-                dashw[0] = 1;
-                dashw[1] = 2;
-            }
-
-            wide_pen.SetDashes( 2, dashw );
+            wide_pen.setStyle(Qt::CustomDashLine);
+            wide_pen.setDashPattern(dashw);
         }
     }
+    glColor3ub( c->R, c->G, c->B );
 
-    QPen thispen(color, w, QPenSTYLE_SOLID);
-    wxDash dash1[2];
-    
-    if( m_pdc) //DC mode
-    {
-        if( !strncmp( str, "DOTT", 4 ) ) {
-            thispen.SetStyle(QPenSTYLE_USER_DASH);
-            dash1[0] = 1;
-            dash1[1] = 2;
-            thispen.SetDashes( 2, dash1 );
-        }
-        else if( !strncmp( str, "DASH", 4 ) ){
-            thispen.SetStyle(QPenSTYLE_SHORT_DASH);
-        }
-
-        if(b_wide_line)
-            m_pdc->SetPen( wide_pen );
+    //    Set drawing width
+    if( w > 1 ) {
+        GLint parms[2];
+        glGetIntegerv( GL_ALIASED_LINE_WIDTH_RANGE, &parms[0] );
+        if( w > parms[1] )
+            glLineWidth( fmax(g_GLMinCartographicLineWidth, parms[1]) );
         else
-            m_pdc->SetPen( thispen );
-        
-    }
-
-#ifdef ocpnUSE_GL
-    else // OpenGL mode
-    {
-        glColor3ub( c->R, c->G, c->B );
-        
-        //    Set drawing width
-        if( w > 1 ) {
-            GLint parms[2];
-            glGetIntegerv( GL_ALIASED_LINE_WIDTH_RANGE, &parms[0] );
-            if( w > parms[1] )
-                glLineWidth( qMax(g_GLMinCartographicLineWidth, parms[1]) );
-            else
-                glLineWidth( qMax(g_GLMinCartographicLineWidth, w) );
-        } else
-            glLineWidth( qMax(g_GLMinCartographicLineWidth, 1) );
+            glLineWidth( fmax(g_GLMinCartographicLineWidth, w) );
+    } else
+        glLineWidth( fmax(g_GLMinCartographicLineWidth, 1) );
 
 #ifndef ocpnUSE_GLES // linestipple is emulated poorly
-        if( !strncmp( str, "DASH", 4 ) ) {
-            glLineStipple( 1, 0x3F3F );
-            glEnable( GL_LINE_STIPPLE );
-        }
-        else if( !strncmp( str, "DOTT", 4 ) ) {
-            glLineStipple( 1, 0x3333 );
-            glEnable( GL_LINE_STIPPLE );
-        }
-        else
-            glDisable( GL_LINE_STIPPLE );
-#endif
-        if(w >= 2 && m_GLLineSmoothing){
-            glEnable( GL_LINE_SMOOTH );
-            glEnable( GL_BLEND );
-        }
+    if( !strncmp( str, "DASH", 4 ) ) {
+        glLineStipple( 1, 0x3F3F );
+        glEnable( GL_LINE_STIPPLE );
     }
+    else if( !strncmp( str, "DOTT", 4 ) ) {
+        glLineStipple( 1, 0x3333 );
+        glEnable( GL_LINE_STIPPLE );
+    }
+    else
+        glDisable( GL_LINE_STIPPLE );
 #endif
+    if(w >= 2 && m_GLLineSmoothing){
+        glEnable( GL_LINE_SMOOTH );
+        glEnable( GL_BLEND );
+    }
 
     //    Get a true pixel clipping/bounding box from the vp
     zchxPoint pbb = vp->GetPixFromLL( vp->clat, vp->clon );
@@ -3760,11 +3339,8 @@ int s52plib::RenderLSLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
         float *ppt;
 
         VC_Element *pnode;
-
-#ifdef ocpnUSE_GL
         if(!b_wide_line)
             glBegin( GL_LINES );
-#endif
         for( int iseg = 0; iseg < rzRules->obj->m_n_lsindex; iseg++ ) {
             int seg_index = iseg * 3;
             index_run = &rzRules->obj->m_lsindex_array[seg_index];
@@ -3828,25 +3404,15 @@ int s52plib::RenderLSLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
                             // Do not draw null segments
                             if( ( x0 == x1 ) && ( y0 == y1 ) ) continue;
-
-                            if( m_pdc ) {
-                                if( cohen_sutherland_line_clip_i( &x0, &y0, &x1, &y1, xmin_, xmax_,
-                                                                  ymin_, ymax_ ) != Invisible )
-                                    m_pdc->DrawLine( x0, y0, x1, y1 );
+                            // simplified faster test, let opengl do the rest
+                            if((x0 > xmin_ || x1 > xmin_) && (x0 < xmax_ || x1 < xmax_) &&
+                                    (y0 > ymin_ || y1 > ymin_) && (y0 < ymax_ || y1 < ymax_)) {
+                                if(!b_wide_line) {
+                                    glVertex2i( x0, y0 );
+                                    glVertex2i( x1, y1 );
+                                } else
+                                    PLIBDrawGLThickLine( x0, y0, x1, y1, wide_pen, true );
                             }
-#ifdef ocpnUSE_GL
-                            else {
-                                // simplified faster test, let opengl do the rest
-                                if((x0 > xmin_ || x1 > xmin_) && (x0 < xmax_ || x1 < xmax_) &&
-                                        (y0 > ymin_ || y1 > ymin_) && (y0 < ymax_ || y1 < ymax_)) {
-                                    if(!b_wide_line) {
-                                        glVertex2i( x0, y0 );
-                                        glVertex2i( x1, y1 );
-                                    } else
-                                        PLIBDrawGLThickLine( x0, y0, x1, y1, wide_pen, true );
-                                }
-                            }
-#endif      
                         }
 
                         l = r;
@@ -3857,18 +3423,12 @@ int s52plib::RenderLSLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                     lastvalid = false;
             }
         }
-#ifdef ocpnUSE_GL
         if(!b_wide_line)
             glEnd();
-#endif              
     }
-#ifdef ocpnUSE_GL
-    if( !m_pdc ){
-        glDisable( GL_LINE_STIPPLE );
-        glDisable( GL_LINE_SMOOTH );
-        glDisable( GL_BLEND );
-    }
-#endif                
+    glDisable( GL_LINE_STIPPLE );
+    glDisable( GL_LINE_SMOOTH );
+    glDisable( GL_BLEND );
     return 1;
 }
 
@@ -3893,98 +3453,65 @@ int s52plib::RenderLSPlugIn( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     w = atoi( str + 5 ); // Width
     
     double scale_factor = vp->ref_scale/vp->chart_scale;
-    double scaled_line_width = qMax((scale_factor - g_overzoom_emphasis_base), 1);
+    double scaled_line_width = fmax((scale_factor - g_overzoom_emphasis_base), 1);
     bool b_wide_line = g_oz_vector_scale && vp->b_quilt && (scale_factor > g_overzoom_emphasis_base);
     
-    QPen wide_pen(*wxBLACK_PEN);
-    wxDash dashw[2];
+    QPen wide_pen(Qt::black);
+    QVector<qreal> dashw(2);
     dashw[0] = 3;
     dashw[1] = 1;
     
     if( b_wide_line)
     {
-        int w = qMax(scaled_line_width, 2);            // looks better
+        int w = fmax(scaled_line_width, 2);            // looks better
         w = qMin(w, 50);                               // upper bound
-        wide_pen.SetWidth( w );
-        wide_pen.SetColour(color);
+        wide_pen.setWidth( w );
+        wide_pen.setColor(color);
         
         if( !strncmp( str, "DOTT", 4 ) ) {
             dashw[0] = 1;
-            wide_pen.SetStyle(QPenSTYLE_USER_DASH);
-            wide_pen.SetDashes( 2, dashw );
+            wide_pen.setStyle(Qt::CustomDashLine);
+            wide_pen.setDashPattern(dashw);
         }
         else if( !strncmp( str, "DASH", 4 ) ){
-            wide_pen.SetStyle(QPenSTYLE_USER_DASH);
-            if( m_pdc){ //DC mode
-                dashw[0] = 1;
-                dashw[1] = 2;
-            }
-            
-            wide_pen.SetDashes( 2, dashw );
+            wide_pen.setStyle(Qt::CustomDashLine);
+            wide_pen.setDashPattern(dashw);
         }
     }
-    
-    QPen thispen(color, w, QPenSTYLE_SOLID);
-    wxDash dash1[2];
-    
-    if( m_pdc) //DC mode
-    {
-        if( !strncmp( str, "DOTT", 4 ) ) {
-            thispen.SetStyle(QPenSTYLE_USER_DASH);
-            dash1[0] = 1;
-            dash1[1] = 2;
-            thispen.SetDashes( 2, dash1 );
-        }
-        else if( !strncmp( str, "DASH", 4 ) ){
-            thispen.SetStyle(QPenSTYLE_SHORT_DASH);
-        }
-        
-        if(b_wide_line)
-            m_pdc->SetPen( wide_pen );
-        else
-            m_pdc->SetPen( thispen );
-        
-    }
-    
-#ifdef ocpnUSE_GL
-    else // OpenGL mode
-    {
-        glColor3ub( c->R, c->G, c->B );
-        
-        //    Set drawing width
-        if( w > 1 ) {
-            GLint parms[2];
-            glGetIntegerv( GL_ALIASED_LINE_WIDTH_RANGE, &parms[0] );
-            if( w > parms[1] )
-                glLineWidth( qMax(g_GLMinCartographicLineWidth, parms[1]) );
-            else
-                glLineWidth( qMax(g_GLMinCartographicLineWidth, w) );
-        } else
-            glLineWidth( qMax(g_GLMinCartographicLineWidth, 1) );
-        
-#ifndef ocpnUSE_GLES // linestipple is emulated poorly
-        if( !strncmp( str, "DASH", 4 ) ) {
-            glLineStipple( 1, 0x3F3F );
-            glEnable( GL_LINE_STIPPLE );
-        }
-        else if( !strncmp( str, "DOTT", 4 ) ) {
-            glLineStipple( 1, 0x3333 );
-            glEnable( GL_LINE_STIPPLE );
-        }
-        else
-            glDisable( GL_LINE_STIPPLE );
-#endif
 
+    glColor3ub( c->R, c->G, c->B );
+
+    //    Set drawing width
+    if( w > 1 ) {
+        GLint parms[2];
+        glGetIntegerv( GL_ALIASED_LINE_WIDTH_RANGE, &parms[0] );
+        if( w > parms[1] )
+            glLineWidth( fmax(g_GLMinCartographicLineWidth, parms[1]) );
+        else
+            glLineWidth( fmax(g_GLMinCartographicLineWidth, w) );
+    } else
+        glLineWidth( fmax(g_GLMinCartographicLineWidth, 1) );
+
+#ifndef ocpnUSE_GLES // linestipple is emulated poorly
+    if( !strncmp( str, "DASH", 4 ) ) {
+        glLineStipple( 1, 0x3F3F );
+        glEnable( GL_LINE_STIPPLE );
     }
+    else if( !strncmp( str, "DOTT", 4 ) ) {
+        glLineStipple( 1, 0x3333 );
+        glEnable( GL_LINE_STIPPLE );
+    }
+    else
+        glDisable( GL_LINE_STIPPLE );
 #endif
     
     
     //    Get a true pixel clipping/bounding box from the vp
     zchxPoint pbb = vp->GetPixFromLL( vp->clat, vp->clon );
-    int xmin_ = pbb.x - (vp->rv_rect.width / 2) - (4 * scaled_line_width);
-    int xmax_ = xmin_ + vp->rv_rect.width + (8 * scaled_line_width);
-    int ymin_ = pbb.y - (vp->rv_rect.height / 2) - (4 * scaled_line_width) ;
-    int ymax_ = ymin_ + vp->rv_rect.height + (8 * scaled_line_width);
+    int xmin_ = pbb.x - (vp->rv_rect.width() / 2) - (4 * scaled_line_width);
+    int xmax_ = xmin_ + vp->rv_rect.width() + (8 * scaled_line_width);
+    int ymin_ = pbb.y - (vp->rv_rect.height() / 2) - (4 * scaled_line_width) ;
+    int ymax_ = ymin_ + vp->rv_rect.height() + (8 * scaled_line_width);
     
     int x0, y0, x1, y1;
     
@@ -4005,12 +3532,8 @@ int s52plib::RenderLSPlugIn( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
         unsigned char *vbo_point = (unsigned char *)rzRules->obj->m_chart_context->vertex_buffer;
         PI_line_segment_element *ls = rzRules->obj->m_ls_list_legacy;
-
-#ifdef ocpnUSE_GL
-        if(!b_wide_line && !m_pdc)
+        if(!b_wide_line)
             glBegin( GL_LINES );
-#endif
-
         while(ls){
             if( ls->priority == priority_current  ) {
 
@@ -4041,25 +3564,15 @@ int s52plib::RenderLSPlugIn( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                     // Do not draw null segments
                     if( ( x0 != x1 ) || ( y0 != y1 ) ){
 
-                        if(m_pdc){
-
-                            if( cohen_sutherland_line_clip_i( &x0, &y0, &x1, &y1, xmin_, xmax_,
-                                                              ymin_, ymax_ ) != Invisible )
-                                m_pdc->DrawLine( x0, y0, x1, y1 );
+                        // simplified faster test, let opengl do the rest
+                        if((x0 > xmin_ || x1 > xmin_) && (x0 < xmax_ || x1 < xmax_) &&
+                                (y0 > ymin_ || y1 > ymin_) && (y0 < ymax_ || y1 < ymax_)) {
+                            if(!b_wide_line) {
+                                glVertex2i( x0, y0 );
+                                glVertex2i( x1, y1 );
+                            } else
+                                PLIBDrawGLThickLine( x0, y0, x1, y1, wide_pen, true );
                         }
-#ifdef ocpnUSE_GL
-                        else {
-                            // simplified faster test, let opengl do the rest
-                            if((x0 > xmin_ || x1 > xmin_) && (x0 < xmax_ || x1 < xmax_) &&
-                                    (y0 > ymin_ || y1 > ymin_) && (y0 < ymax_ || y1 < ymax_)) {
-                                if(!b_wide_line) {
-                                    glVertex2i( x0, y0 );
-                                    glVertex2i( x1, y1 );
-                                } else
-                                    PLIBDrawGLThickLine( x0, y0, x1, y1, wide_pen, true );
-                            }
-                        }
-#endif
 
                     }
 
@@ -4070,16 +3583,11 @@ int s52plib::RenderLSPlugIn( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
             ls = ls->next;
         }
-#ifdef ocpnUSE_GL
-        if(!b_wide_line && !m_pdc)
+        if(!b_wide_line)
             glEnd();
-#endif
     }
-    
-#ifdef ocpnUSE_GL
-    if( !m_pdc )
-        glDisable( GL_LINE_STIPPLE );
-#endif
+
+    glDisable( GL_LINE_STIPPLE );
     return 1;
 }
 
@@ -4239,7 +3747,7 @@ int s52plib::RenderLC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                         GetPointPixArray( rzRules, pReduced, ptestp, nPointReduced, vp );
                         free(pReduced);
 
-                        draw_lc_poly( m_pdc, color, w, ptestp, nPointReduced, sym_len, sym_factor, rules->razRule, vp );
+                        draw_lc_poly(color, w, ptestp, nPointReduced, sym_len, sym_factor, rules->razRule, vp );
                         free(ptestp);
 
                         ndraw++;
@@ -4264,7 +3772,7 @@ int s52plib::RenderLC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                     GetPointPixArray( rzRules, pReduced, ptestp, nPointReduced, vp );
                     free(pReduced);
                     
-                    draw_lc_poly( m_pdc, color, w, ptestp, nPointReduced, sym_len, sym_factor, rules->razRule, vp );
+                    draw_lc_poly(color, w, ptestp, nPointReduced, sym_len, sym_factor, rules->razRule, vp );
                     free( ptestp );
                 }
             }
@@ -4448,9 +3956,9 @@ int s52plib::RenderLCLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
             }
 
             if( ( inode ) && ( jnode ) )
-                draw_lc_poly( m_pdc, color, w, ptp, nls + 2, sym_len, sym_factor, rules->razRule, vp );
+                draw_lc_poly(color, w, ptp, nls + 2, sym_len, sym_factor, rules->razRule, vp );
             else if(nls)
-                draw_lc_poly( m_pdc, color, w, &ptp[1], nls, sym_len, sym_factor, rules->razRule, vp );
+                draw_lc_poly(color, w, &ptp[1], nls, sym_len, sym_factor, rules->razRule, vp );
 
         }
         free( ptp );
@@ -4482,8 +3990,7 @@ int s52plib::RenderLCLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                     float plat = ppolygeo[ctr_offset + 1];
                     GetPointPixSingle( rzRules, plat, plon, pr, vp );
 
-                    draw_lc_poly( m_pdc, color, w, ptp, npt + 1, sym_len, sym_factor, rules->razRule,
-                                  vp );
+                    draw_lc_poly(color, w, ptp, npt + 1, sym_len, sym_factor, rules->razRule, vp );
 
                     free( ptp );
 
@@ -4528,7 +4035,7 @@ int s52plib::RenderLCPlugIn( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
         
 
         while(ls){
-            int nPoints;
+            uint nPoints;
             // fetch the first point
             if(ls->type == TYPE_EE){
                 pedge = (VE_Element *)ls->private0;
@@ -4575,7 +4082,7 @@ int s52plib::RenderLCPlugIn( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                 }
 
                 if(nPoints)
-                    draw_lc_poly( m_pdc, color, w, &ptp[0], nPoints, sym_len, sym_factor, rules->razRule, vp );
+                    draw_lc_poly(color, w, &ptp[0], nPoints, sym_len, sym_factor, rules->razRule, vp );
             }
 
             ls = ls->next;
@@ -4589,8 +4096,8 @@ int s52plib::RenderLCPlugIn( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
 //      Render Line Complex Polyline
 
-void s52plib::draw_lc_poly( QPainter *pdc, QColor &color, int width, zchxPoint *ptp, int npt,
-                            float sym_len, float sym_factor, Rule *draw_rule, ViewPort *vp )
+void s52plib::draw_lc_poly(QColor &color, int width, zchxPoint *ptp, int npt,
+                           float sym_len, float sym_factor, Rule *draw_rule, ViewPort *vp )
 {
     if(npt < 2)
         return;
@@ -4610,225 +4117,132 @@ void s52plib::draw_lc_poly( QPainter *pdc, QColor &color, int width, zchxPoint *
     
     //    Get a true pixel clipping/bounding box from the vp
     zchxPoint pbb = vp->GetPixFromLL( vp->clat, vp->clon );
-    int xmin_ = pbb.x - vp->rv_rect.width / 2;
-    int xmax_ = xmin_ + vp->rv_rect.width;
-    int ymin_ = pbb.y - vp->rv_rect.height / 2;
-    int ymax_ = ymin_ + vp->rv_rect.height;
+    int xmin_ = pbb.x - vp->rv_rect.width() / 2;
+    int xmax_ = xmin_ + vp->rv_rect.width();
+    int ymin_ = pbb.y - vp->rv_rect.height() / 2;
+    int ymax_ = ymin_ + vp->rv_rect.height();
 
     int x0, y0, x1, y1;
+    //    Set up the color
+    glColor4ub( color.red(), color.green(), color.blue(), color.alpha() );
 
-    if( pdc ) {
-        QPen *pthispen = wxThePenList->FindOrCreatePen( color, width, QPenSTYLE_SOLID );
-        m_pdc->SetPen( *pthispen );
+    // Adjust line width up a bit, to improve render quality for GL_BLEND/GL_LINE_SMOOTH
+    float awidth = fmax(g_GLMinCartographicLineWidth, (float)(width * 0.7));
+    awidth = fmax(awidth, 1.5);
+    glLineWidth( awidth );
 
-        int start_seg = 0;
-        int end_seg = npt - 1;
-        int inc = 1;
-        
-        if( cw ){
-            start_seg = npt - 1;
-            end_seg = 0;
-            inc = -1;
-        }
-        
-        float dx, dy, seg_len, theta;
-        
-        bool done = false;
-        int iseg = start_seg;
-        while( !done ){
-            
-            // Do not bother with segments that are invisible
+    int start_seg = 0;
+    int end_seg = npt - 1;
+    int inc = 1;
 
-            x0 = ptp[iseg].x;
-            y0 = ptp[iseg].y;
-            x1 = ptp[iseg + inc].x;
-            y1 = ptp[iseg + inc].y;
+    if( cw ){
+        start_seg = npt - 1;
+        end_seg = 0;
+        inc = -1;
+    }
 
-            ClipResult res = cohen_sutherland_line_clip_i( &x0, &y0, &x1, &y1, xmin_, xmax_, ymin_,
-                                                           ymax_ );
+    float dx, dy, seg_len, theta;
 
-            if( res == Invisible )
-                goto next_seg_dc;
+    bool done = false;
+    int iseg = start_seg;
+    while( !done ){
+        // Do not bother with segments that are invisible
 
-            dx = ptp[iseg + inc].x - ptp[iseg].x;
-            dy = ptp[iseg + inc].y - ptp[iseg].y;
-            seg_len = sqrt( dx * dx + dy * dy );
-            
-            if( seg_len >= 1.0 ) {
-                if( seg_len <= sym_len * sym_factor ) {
-                    int xst1 = ptp[iseg].x;
-                    int yst1 = ptp[iseg].y;
-                    float xst2, yst2;
-                    if( seg_len >= sym_len ) {
-                        xst2 = xst1 + ( sym_len * dx / seg_len );
-                        yst2 = yst1 + ( sym_len * dy / seg_len );
-                    } else {
-                        xst2 = ptp[iseg + inc].x;
-                        yst2 = ptp[iseg + inc].y;
-                    }
-                    
-                    pdc->DrawLine( xst1, yst1, (int) floor( xst2 ), (int) floor( yst2 ) );
-                }
+        x0 = ptp[iseg].x;
+        y0 = ptp[iseg].y;
+        x1 = ptp[iseg + inc].x;
+        y1 = ptp[iseg + inc].y;
 
-                else {
-                    float s = 0;
-                    float xs = ptp[iseg].x;
-                    float ys = ptp[iseg].y;
+        ClipResult res = cohen_sutherland_line_clip_i( &x0, &y0, &x1, &y1, xmin_, xmax_, ymin_,
+                                                       ymax_ );
 
-                    while( s + ( sym_len * sym_factor ) < seg_len ) {
-                        r.x = (int) xs;
-                        r.y = (int) ys;
-                        char *str = draw_rule->vector.LVCT;
-                        char *col = draw_rule->colRef.LCRF;
-                        zchxPoint pivot( draw_rule->pos.line.pivot_x.LICL,
-                                         draw_rule->pos.line.pivot_y.LIRW );
+        if( res == Invisible )
+            goto next_seg;
 
-                        HPGL->SetTargetDC( pdc );
-                        theta = atan2f( dy, dx );
-                        HPGL->Render( str, col, r, pivot, pivot, 1.0, theta * 180. / PI, false );
+        dx = ptp[iseg + inc].x - ptp[iseg].x;
+        dy = ptp[iseg + inc].y - ptp[iseg].y;
+        seg_len = sqrt( dx * dx + dy * dy );
 
-                        xs += sym_len * dx / seg_len * sym_factor;
-                        ys += sym_len * dy / seg_len * sym_factor;
-                        s += sym_len * sym_factor;
-                    }
+        if( seg_len >= 1.0 ) {
+            if( seg_len <= sym_len * sym_factor ) {
+                int xst1 = ptp[iseg].x;
+                int yst1 = ptp[iseg].y;
+                float xst2, yst2;
 
-                    pdc->DrawLine( (int) xs, (int) ys, ptp[iseg + inc].x, ptp[iseg + inc].y );
-                }
-            }
-next_seg_dc:            
-            iseg += inc;
-            if(iseg == end_seg)
-                done = true;
-            
-        } // while
-    } // if pdc
-    
-#ifdef ocpnUSE_GL
-    else // opengl
-    {
-        //    Set up the color
-        glColor4ub( color.red(), color.green(), color.blue(), color.alpha() );
-        
-        // Adjust line width up a bit, to improve render quality for GL_BLEND/GL_LINE_SMOOTH
-        float awidth = qMax(g_GLMinCartographicLineWidth, (float)(width * 0.7));
-        awidth = qMax(awidth, 1.5);
-        glLineWidth( awidth );
-        
-        int start_seg = 0;
-        int end_seg = npt - 1;
-        int inc = 1;
-        
-        if( cw ){
-            start_seg = npt - 1;
-            end_seg = 0;
-            inc = -1;
-        }
-        
-        float dx, dy, seg_len, theta;
-        
-        bool done = false;
-        int iseg = start_seg;
-        while( !done ){
-            // Do not bother with segments that are invisible
-
-            x0 = ptp[iseg].x;
-            y0 = ptp[iseg].y;
-            x1 = ptp[iseg + inc].x;
-            y1 = ptp[iseg + inc].y;
-
-            ClipResult res = cohen_sutherland_line_clip_i( &x0, &y0, &x1, &y1, xmin_, xmax_, ymin_,
-                                                           ymax_ );
-
-            if( res == Invisible )
-                goto next_seg;
-
-            dx = ptp[iseg + inc].x - ptp[iseg].x;
-            dy = ptp[iseg + inc].y - ptp[iseg].y;
-            seg_len = sqrt( dx * dx + dy * dy );
-            
-            if( seg_len >= 1.0 ) {
-                if( seg_len <= sym_len * sym_factor ) {
-                    int xst1 = ptp[iseg].x;
-                    int yst1 = ptp[iseg].y;
-                    float xst2, yst2;
-
-                    if( seg_len >= sym_len ) {
-                        xst2 = xst1 + ( sym_len * dx / seg_len );
-                        yst2 = yst1 + ( sym_len * dy / seg_len );
-                    } else {
-                        xst2 = ptp[iseg + inc].x;
-                        yst2 = ptp[iseg + inc].y;
-                    }
-
-                    //      Enable anti-aliased lines, at best quality
-#ifndef __OCPN__ANDROID__
-                    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                    glEnable (GL_BLEND);
-                    
-                    if( m_GLLineSmoothing )
-                    {
-                        glEnable (GL_LINE_SMOOTH);
-                        glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
-                    }
-#endif
-                    {
-                        glBegin( GL_LINES );
-                        glVertex2i( xst1, yst1 );
-                        glVertex2i( (int) floor( xst2 ), (int) floor( yst2 ) );
-                        glEnd();
-                    }
-                    
-                    glDisable( GL_LINE_SMOOTH );
-                    glDisable( GL_BLEND );
+                if( seg_len >= sym_len ) {
+                    xst2 = xst1 + ( sym_len * dx / seg_len );
+                    yst2 = yst1 + ( sym_len * dy / seg_len );
                 } else {
-                    float s = 0;
-                    float xs = ptp[iseg].x;
-                    float ys = ptp[iseg].y;
+                    xst2 = ptp[iseg + inc].x;
+                    yst2 = ptp[iseg + inc].y;
+                }
 
-                    while( s + ( sym_len * sym_factor ) < seg_len ) {
-                        r.x = (int) xs;
-                        r.y = (int) ys;
-                        char *str = draw_rule->vector.LVCT;
-                        char *col = draw_rule->colRef.LCRF;
-                        zchxPoint pivot( draw_rule->pos.line.pivot_x.LICL,
-                                         draw_rule->pos.line.pivot_y.LIRW );
-
-                        HPGL->SetTargetOpenGl();
-                        theta = atan2f( dy, dx );
-                        HPGL->Render( str, col, r, pivot, pivot, 1.0, theta * 180. / PI, false );
-
-                        xs += sym_len * dx / seg_len * sym_factor;
-                        ys += sym_len * dy / seg_len * sym_factor;
-                        s += sym_len * sym_factor;
-                    }
+                //      Enable anti-aliased lines, at best quality
 #ifndef __OCPN__ANDROID__
-                    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                    glEnable (GL_BLEND);
+                glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glEnable (GL_BLEND);
 
-                    if( m_GLLineSmoothing ) {
-                        glEnable (GL_LINE_SMOOTH);
-                        glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
-                    }
+                if( m_GLLineSmoothing )
+                {
+                    glEnable (GL_LINE_SMOOTH);
+                    glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
+                }
+#endif
+                {
+                    glBegin( GL_LINES );
+                    glVertex2i( xst1, yst1 );
+                    glVertex2i( (int) floor( xst2 ), (int) floor( yst2 ) );
+                    glEnd();
+                }
+
+                glDisable( GL_LINE_SMOOTH );
+                glDisable( GL_BLEND );
+            } else {
+                float s = 0;
+                float xs = ptp[iseg].x;
+                float ys = ptp[iseg].y;
+
+                while( s + ( sym_len * sym_factor ) < seg_len ) {
+                    r.x = (int) xs;
+                    r.y = (int) ys;
+                    char *str = draw_rule->vector.LVCT;
+                    char *col = draw_rule->colRef.LCRF;
+                    zchxPoint pivot( draw_rule->pos.line.pivot_x.LICL,
+                                     draw_rule->pos.line.pivot_y.LIRW );
+
+                    HPGL->SetTargetOpenGl();
+                    theta = atan2f( dy, dx );
+                    HPGL->Render( str, col, r, pivot, pivot, 1.0, theta * 180. / PI, false );
+
+                    xs += sym_len * dx / seg_len * sym_factor;
+                    ys += sym_len * dy / seg_len * sym_factor;
+                    s += sym_len * sym_factor;
+                }
+#ifndef __OCPN__ANDROID__
+                glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glEnable (GL_BLEND);
+
+                if( m_GLLineSmoothing ) {
+                    glEnable (GL_LINE_SMOOTH);
+                    glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
+                }
 
 #endif
-                    {
-                        glBegin( GL_LINES );
-                        glVertex2i( xs, ys );
-                        glVertex2i( ptp[iseg + inc].x, ptp[iseg + inc].y );
-                        glEnd();
-                    }
-                    glDisable( GL_LINE_SMOOTH );
-                    glDisable( GL_BLEND );
+                {
+                    glBegin( GL_LINES );
+                    glVertex2i( xs, ys );
+                    glVertex2i( ptp[iseg + inc].x, ptp[iseg + inc].y );
+                    glEnd();
                 }
+                glDisable( GL_LINE_SMOOTH );
+                glDisable( GL_BLEND );
             }
+        }
 next_seg:            
-            iseg += inc;
-            if(iseg == end_seg)
-                done = true;
-        } // while
-
-    } //opengl
-#endif    
+        iseg += inc;
+        if(iseg == end_seg)
+            done = true;
+    } // while
 }
 
 // Multipoint Sounding
@@ -4862,7 +4276,7 @@ int s52plib::RenderMPS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
         point_obj.bIsClone = true;
         point_rzRules.obj = &point_obj;
         
-        Rules *ru_cs = StringToRules( _T ( "CS(SOUNDG03;" ) );
+        Rules *ru_cs = StringToRules("CS(SOUNDG03;");
 
         zchxPoint p;
         double *pd = rzRules->obj->geoPtz; // the SM points
@@ -4888,12 +4302,12 @@ int s52plib::RenderMPS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
             point_obj.BBObj.Invalidate();
             
             char *rule_str1 = RenderCS( &point_rzRules, ru_cs );
-            QString cs_string( rule_str1, wxConvUTF8 );
+            QString cs_string = QString::fromUtf8(rule_str1 );
             free( rule_str1 );
 
             Rules *rule_chain = StringToRules( cs_string );
             
-            rzRules->mps->cs_rules->Add( rule_chain );
+            rzRules->mps->cs_rules->append( rule_chain );
             
         }
 
@@ -4913,7 +4327,7 @@ int s52plib::RenderMPS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     //  adjust the inclusion test bounding box
     
     double scale_factor = vp->ref_scale/vp->chart_scale;
-    double box_mult = qMax((scale_factor - g_overzoom_emphasis_base), 1);
+    double box_mult = fmax((scale_factor - g_overzoom_emphasis_base), 1);
     int box_dim = 32 * box_mult;
     
     // We need a pixel bounding rectangle of the passed ViewPort.
@@ -4921,7 +4335,7 @@ int s52plib::RenderMPS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
     zchxPoint cr0 = vp_local.GetPixFromLL( vp_local.GetBBox().GetMaxLat(), vp_local.GetBBox().GetMinLon());
     zchxPoint cr1 = vp_local.GetPixFromLL( vp_local.GetBBox().GetMinLat(), vp_local.GetBBox().GetMaxLon());
-    QRect clip_rect(cr0, cr1);
+    QRect clip_rect(cr0.toPoint(), cr1.toPoint());
     
     for( int ip = 0; ip < npt; ip++ ) {
         
@@ -4933,7 +4347,7 @@ int s52plib::RenderMPS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
         QRect rr(r.x-(box_dim/2), r.y-(box_dim/2), box_dim, box_dim);
         
         //      After all the setup, the render inclusion test is trivial....
-        if(!clip_rect.Intersects(rr))
+        if(!clip_rect.intersects(rr))
             continue;
         
         double angle = 0;
@@ -5072,251 +4486,90 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     xs.sprintf("%5g", xscale );
     carc_hash += xs;
 
-    if(m_pdc){          // DC rendering
-        if(fabs(prule->parm7 - xscale) > .00001){
-            ClearRulesCache( prule );
+    CARC_Buffer buffer;
+    //    Is there not already an generated vbo the CARC_hashmap for this object?
+    rad = (int) ( radius * canvas_pix_per_mm );
+    if( m_CARC_hashmap.find( carc_hash ) == m_CARC_hashmap.end() ) {
+
+        if( sectr1 > sectr2 ) sectr2 += 360;
+
+        /* to ensure that the final segment lands exactly on sectr2 */
+
+        //    Draw wide outline arc
+        QColor colorb = getQColor( outline_color );
+        buffer.color[0][0] = colorb.red();
+        buffer.color[0][1] = colorb.green();
+        buffer.color[0][2] = colorb.blue();
+        buffer.color[0][3] = 150;
+        buffer.line_width[0] = qMax(g_GLMinSymbolLineWidth, outline_width * scale_factor);
+
+        int steps = ceil((sectr2 - sectr1) / 12) + 1; // max of 12 degree step
+        float step = (sectr2 - sectr1) / (steps - 1);
+
+        buffer.steps = steps;
+        buffer.size = 2*(steps + 4);
+        buffer.data = new float[buffer.size];
+
+        int s = 0;
+        for(int i = 0; i < steps; i++) {
+            float a = (sectr1 + i * step) * M_PI / 180.0;
+            buffer.data[s++] = rad * sinf( a );
+            buffer.data[s++] = -rad * cosf( a );
         }
 
-        //Instantiate the symbol if necessary
-        if( ( rules->razRule->pixelPtr == NULL ) || ( rules->razRule->parm1 != m_colortable_index ) ) {
-            //  Render the sector light to a bitmap
+        //    Draw narrower color arc, overlaying the drawn outline.
+        colorb = getQColor( arc_color );
+        buffer.color[1][0] = colorb.red();
+        buffer.color[1][1] = colorb.green();
+        buffer.color[1][2] = colorb.blue();
+        buffer.color[1][3] = 150;
+        buffer.line_width[1] = qMax(double(g_GLMinSymbolLineWidth), (arc_width  * scale_factor) + .8);
 
-            rad = (int) ( radius * canvas_pix_per_mm );
+        //    Draw the sector legs
+        if( sector_radius > 0 ) {
+            int leg_len = (int) ( sector_radius * canvas_pix_per_mm );
 
-            width = ( rad * 2 ) + 28;
-            height = ( rad * 2 ) + 28;
-            //wxBitmap bm( width, height, -1 );
-            QImage bm( width, height, QImage::Format_ARGB32 );
-            zchxPainter mdc;
-            mdc.begin(&bm);
-            mdc.setBackground( QBrush( m_unused_QColor ) );
-            mdc.Clear();
-            //    Adjust sector math for wxWidgets API
-            float sb;
-            float se;
+            //QColor c = GetGlobalColor( _T ( "CHBLK" ) );
+            QColor c;
+            GetGlobalColor( "CHBLK" , &c);
 
-            //      For some reason, the __WXMSW__ build flips the sense of
-            //      start and end angles on DrawEllipticArc()
-#ifndef __WXMSW__
-            if ( sectr2 > sectr1 )
-            {
-                sb = 90 - sectr1;
-                se = 90 - sectr2;
-            }
-            else
-            {
-                sb = 360 + ( 90 - sectr1 );
-                se = 90 - sectr2;
-            }
-#else
-            if( sectr2 > sectr1 ) {
-                se = 90 - sectr1;
-                sb = 90 - sectr2;
-            } else {
-                se = 360 + ( 90 - sectr1 );
-                sb = 90 - sectr2;
-            }
-#endif
+            buffer.color[2][0] = c.red();
+            buffer.color[2][1] = c.green();
+            buffer.color[2][2] = c.blue();
+            buffer.color[2][3] = c.alpha();
+            //buffer.line_width[2] = qMax(g_GLMinSymbolLineWidth, (float)0.5) * scale_factor;
+            buffer.line_width[2] = qMax(1.0, floor(GetPPMM() * 0.2));             //0.4 mm nominal, but not less than 1 pixel
 
-            //      Here is a goofy way of computing the dc drawing extents exactly
-            //      Draw a series of fat line segments approximating the arc using dc.DrawLine()
-            //      This will properly establish the drawing box in the dc
+            float a = ( sectr1 - 90 ) * PI / 180.;
+            buffer.data[s++] = 0;
+            buffer.data[s++] = 0;
+            buffer.data[s++] = leg_len * cosf( a );
+            buffer.data[s++] = leg_len * sinf( a );
 
-            int border_fluff = 4; // by how much should the blit bitmap be "fluffed"
-
-            //  QPainter min/max calculations are currently broken in wxQT, so we use the entire circle instead of arcs...
-#ifndef __WXQT__        
-            if( fabs( sectr2 - sectr1 ) != 360 ) // not necessary for all-round lights
-            {
-                mdc.resetBoundingBox();
-                QPen pblockpen(Qt::black, 10, Qt::SolidLine );
-                mdc.setPen( pblockpen );
-
-                float start_angle, end_angle;
-                if( se < sb ) {
-                    start_angle = se;
-                    end_angle = sb;
-                } else {
-                    start_angle = sb;
-                    end_angle = se;
-                }
-
-                int x0 = ( width / 2 ) + (int) ( rad * cos( start_angle * PI / 180. ) );
-                int y0 = ( height / 2 ) - (int) ( rad * sin( start_angle * PI / 180. ) );
-                for( float a = start_angle + .1; a <= end_angle; a += 2.0 ) {
-                    int x = ( width / 2 ) + (int) ( rad * cosf( a * PI / 180. ) );
-                    int y = ( height / 2 ) - (int) ( rad * sinf( a * PI / 180. ) );
-                    mdc.drawLine( x0, y0, x, y );
-                    x0 = x;
-                    y0 = y;
-                }
-
-                bm_width = ( mdc.MaxX() - mdc.MinX() ) + ( border_fluff * 2 );
-                bm_height = ( mdc.MaxY() - mdc.MinY() ) + ( border_fluff * 2 );
-                bm_orgx = mdc.MinX()-border_fluff - width/2; //qMax ( 0, mdc.MinX()-border_fluff );
-                bm_orgy = mdc.MinY()-border_fluff - height/2; //qMax ( 0, mdc.MinY()-border_fluff );
-
-                mdc.Clear();
-            }
-
-            else {
-                bm_width = rad * 2 + ( border_fluff * 2 );
-                bm_height = rad * 2 + ( border_fluff * 2 );
-                bm_orgx = -bm_width / 2;
-                bm_orgy = -bm_height / 2;
-
-            }
-
-#else
-            bm_width = rad * 2 + ( border_fluff * 2 );
-            bm_height = rad * 2 + ( border_fluff * 2 );
-            bm_orgx = -bm_width / 2;
-            bm_orgy = -bm_height / 2;
-#endif        
-
-            wxBitmap *sbm = NULL;
-
-            //    Draw the outer border
-            QColor color = getQColor( outline_color );
-
-            QPen *pthispen = wxThePenList->FindOrCreatePen( color, outline_width * scale_factor, QPenSTYLE_SOLID );
-            mdc.SetPen( *pthispen );
-            wxBrush *pthisbrush = wxTheBrushList->FindOrCreateBrush( color, wxBRUSHSTYLE_TRANSPARENT );
-            mdc.SetBrush( *pthisbrush );
-
-            mdc.DrawEllipticArc( width / 2 - rad, height / 2 - rad, rad * 2, rad * 2, sb, se );
-
-            if( arc_width ) {
-                QColor colorb = getQColor( arc_color );
-
-                if( !colorb.isValid() ) colorb = getQColor( "CHMGD" );
-
-                pthispen = wxThePenList->FindOrCreatePen( colorb, arc_width * scale_factor, QPenSTYLE_SOLID );
-                mdc.SetPen( *pthispen );
-
-                mdc.DrawEllipticArc( width / 2 - rad, height / 2 - rad, rad * 2, rad * 2, sb, se );
-
-            }
-
-            mdc.SelectObject( wxNullBitmap );
-
-            //          Get smallest containing bitmap
-            sbm = new wxBitmap(
-                        bm.GetSubBitmap( QRect( width/2 + bm_orgx, height/2 + bm_orgy, bm_width, bm_height ) ) );
-
-            //      Make the mask
-            wxMask *pmask = new wxMask( *sbm, m_unused_QColor );
-
-            //      Associate the mask with the bitmap
-            sbm->SetMask( pmask );
-
-            // delete any old private data
-            ClearRulesCache( rules->razRule );
-            
-            //      Save the bitmap ptr and aux parms in the rule
-            prule->pixelPtr = sbm;
-            prule->parm0 = ID_wxBitmap;
-            prule->parm1 = m_colortable_index;
-            prule->parm2 = bm_orgx;
-            prule->parm3 = bm_orgy;
-            prule->parm5 = bm_width;
-            prule->parm6 = bm_height;
-            prule->parm7 = xscale;
-        } // instantiation
-    }
-
-#ifdef ocpnUSE_GL
-    CARC_Buffer buffer;
-
-    
-    if( !m_pdc ) // opengl
-    {
-        //    Is there not already an generated vbo the CARC_hashmap for this object?
-        rad = (int) ( radius * canvas_pix_per_mm );
-        if( m_CARC_hashmap.find( carc_hash ) == m_CARC_hashmap.end() ) {
-            
-            if( sectr1 > sectr2 ) sectr2 += 360;
-
-            /* to ensure that the final segment lands exactly on sectr2 */
-
-            //    Draw wide outline arc
-            QColor colorb = getQColor( outline_color );
-            buffer.color[0][0] = colorb.red();
-            buffer.color[0][1] = colorb.green();
-            buffer.color[0][2] = colorb.blue();
-            buffer.color[0][3] = 150;
-            buffer.line_width[0] = qMax(g_GLMinSymbolLineWidth, outline_width * scale_factor);
-
-            int steps = ceil((sectr2 - sectr1) / 12) + 1; // max of 12 degree step
-            float step = (sectr2 - sectr1) / (steps - 1);
-
-            buffer.steps = steps;
-            buffer.size = 2*(steps + 4);
-            buffer.data = new float[buffer.size];
-
-            int s = 0;
-            for(int i = 0; i < steps; i++) {
-                float a = (sectr1 + i * step) * M_PI / 180.0;
-                buffer.data[s++] = rad * sinf( a );
-                buffer.data[s++] = -rad * cosf( a );
-            }
-
-            //    Draw narrower color arc, overlaying the drawn outline.
-            colorb = getQColor( arc_color );
-            buffer.color[1][0] = colorb.red();
-            buffer.color[1][1] = colorb.green();
-            buffer.color[1][2] = colorb.blue();
-            buffer.color[1][3] = 150;
-            buffer.line_width[1] = qMax(double(g_GLMinSymbolLineWidth), (arc_width  * scale_factor) + .8);
-
-            //    Draw the sector legs
-            if( sector_radius > 0 ) {
-                int leg_len = (int) ( sector_radius * canvas_pix_per_mm );
-
-                //QColor c = GetGlobalColor( _T ( "CHBLK" ) );
-                QColor c;
-                GetGlobalColor( "CHBLK" , &c);
-
-                buffer.color[2][0] = c.red();
-                buffer.color[2][1] = c.green();
-                buffer.color[2][2] = c.blue();
-                buffer.color[2][3] = c.alpha();
-                //buffer.line_width[2] = qMax(g_GLMinSymbolLineWidth, (float)0.5) * scale_factor;
-                buffer.line_width[2] = qMax(1.0, floor(GetPPMM() * 0.2));             //0.4 mm nominal, but not less than 1 pixel
-
-                float a = ( sectr1 - 90 ) * PI / 180.;
-                buffer.data[s++] = 0;
-                buffer.data[s++] = 0;
-                buffer.data[s++] = leg_len * cosf( a );
-                buffer.data[s++] = leg_len * sinf( a );
-
-                a = ( sectr2 - 90 ) * PI / 180.;
-                buffer.data[s++] = 0;
-                buffer.data[s++] = 0;
-                buffer.data[s++] = leg_len * cosf( a );
-                buffer.data[s++] = leg_len * sinf( a );
-            } else
-                buffer.line_width[2] = 0;
-
-            m_CARC_hashmap[carc_hash] = buffer;
-
+            a = ( sectr2 - 90 ) * PI / 180.;
+            buffer.data[s++] = 0;
+            buffer.data[s++] = 0;
+            buffer.data[s++] = leg_len * cosf( a );
+            buffer.data[s++] = leg_len * sinf( a );
         } else
-            buffer = m_CARC_hashmap[carc_hash];
-        
-        int border_fluff = 4; // by how much should the blit bitmap be "fluffed"
-        bm_width = rad * 2 + ( border_fluff * 2 );
-        bm_height = rad * 2 + ( border_fluff * 2 );
-        bm_orgx = -bm_width / 2;
-        bm_orgy = -bm_height / 2;
-        
-        prule->parm2 = bm_orgx;
-        prule->parm3 = bm_orgy;
-        prule->parm5 = bm_width;
-        prule->parm6 = bm_height;
-        prule->parm7 = xscale;
-        
-    } // instantiation
-#endif
+            buffer.line_width[2] = 0;
+
+        m_CARC_hashmap[carc_hash] = buffer;
+
+    } else
+        buffer = m_CARC_hashmap[carc_hash];
+
+    int border_fluff = 4; // by how much should the blit bitmap be "fluffed"
+    bm_width = rad * 2 + ( border_fluff * 2 );
+    bm_height = rad * 2 + ( border_fluff * 2 );
+    bm_orgx = -bm_width / 2;
+    bm_orgy = -bm_height / 2;
+
+    prule->parm2 = bm_orgx;
+    prule->parm3 = bm_orgy;
+    prule->parm5 = bm_width;
+    prule->parm6 = bm_height;
+    prule->parm7 = xscale;
 
 
     //  Render arcs at object's x/y
@@ -5324,52 +4577,49 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     GetPointPixSingle( rzRules, rzRules->obj->y, rzRules->obj->x, &r, vp );
 
     //      Now render the symbol
-    if( !m_pdc ) // opengl
-    {
-#ifdef ocpnUSE_GL
-        glPushMatrix();
-        glTranslatef( r.x, r.y, 0 );
+    glPushMatrix();
+    glTranslatef( r.x, r.y, 0 );
 
-        //        glScalef(scale_factor, scale_factor, 1);
-        glVertexPointer(2, GL_FLOAT, 2 * sizeof(float), buffer.data);
+    //        glScalef(scale_factor, scale_factor, 1);
+    glVertexPointer(2, GL_FLOAT, 2 * sizeof(float), buffer.data);
 
 #ifndef __OCPN__ANDROID__
-        glEnable( GL_BLEND );
-        if( m_GLLineSmoothing )
-            glEnable( GL_LINE_SMOOTH );
+    glEnable( GL_BLEND );
+    if( m_GLLineSmoothing )
+        glEnable( GL_LINE_SMOOTH );
 #endif        
-        glEnableClientState(GL_VERTEX_ARRAY);             // activate vertex coords array
+    glEnableClientState(GL_VERTEX_ARRAY);             // activate vertex coords array
 
-        glColor3ubv(buffer.color[0]);
-        glLineWidth(buffer.line_width[0]);
-        glDrawArrays(GL_LINE_STRIP, 0, buffer.steps);
+    glColor3ubv(buffer.color[0]);
+    glLineWidth(buffer.line_width[0]);
+    glDrawArrays(GL_LINE_STRIP, 0, buffer.steps);
 
 
-        glColor3ubv(buffer.color[1]);
-        glLineWidth(buffer.line_width[1]);
-        glDrawArrays(GL_LINE_STRIP, 0, buffer.steps);
+    glColor3ubv(buffer.color[1]);
+    glLineWidth(buffer.line_width[1]);
+    glDrawArrays(GL_LINE_STRIP, 0, buffer.steps);
 
-        //qDebug() << buffer.line_width[0] << buffer.line_width[1] << buffer.line_width[2];
-        
-        if(buffer.line_width[2]) {
+    //qDebug() << buffer.line_width[0] << buffer.line_width[1] << buffer.line_width[2];
+
+    if(buffer.line_width[2]) {
 #ifndef ocpnUSE_GLES // linestipple is emulated poorly
-            glLineStipple( 1, 0x3F3F );
-            glEnable( GL_LINE_STIPPLE );
+        glLineStipple( 1, 0x3F3F );
+        glEnable( GL_LINE_STIPPLE );
 #endif
-            glColor3ubv(buffer.color[2]);
-            glLineWidth(buffer.line_width[2]);
-            glDrawArrays(GL_LINES, buffer.steps, 4);
+        glColor3ubv(buffer.color[2]);
+        glLineWidth(buffer.line_width[2]);
+        glDrawArrays(GL_LINES, buffer.steps, 4);
 #ifndef ocpnUSE_GLES
-            glDisable( GL_LINE_STIPPLE );
+        glDisable( GL_LINE_STIPPLE );
 #endif
-        }
+    }
 
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisable( GL_LINE_SMOOTH );
-        glDisable( GL_BLEND );
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisable( GL_LINE_SMOOTH );
+    glDisable( GL_BLEND );
 
-        // Debug the symbol bounding box.....
-        /*
+    // Debug the symbol bounding box.....
+    /*
         {
             int x0 = rules->razRule->parm2;
             int y0 = rules->razRule->parm3;
@@ -5387,63 +4637,8 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
         }
         */
 
-        //        glTranslatef( -r.x, -r.y, 0 );
-        glPopMatrix();
-#endif        
-    } else {
-        int b_width = prule->parm5;
-        int b_height = prule->parm6;
-        
-        //      Get the bitmap into a memory dc
-        wxMemoryDC mdc;
-        mdc.SelectObject( (wxBitmap &) ( *( (wxBitmap *) ( rules->razRule->pixelPtr ) ) ) );
-
-        //      Blit it into the target dc, using mask
-        m_pdc->Blit( r.x + rules->razRule->parm2, r.y + rules->razRule->parm3, b_width, b_height,
-                     &mdc, 0, 0, wxCOPY, true );
-
-        mdc.SelectObject( wxNullBitmap );
-
-        //    Draw the sector legs directly on the target DC
-        //    so that anti-aliasing works against the drawn image (cannot be cached...)
-        if( sector_radius > 0 ) {
-            int leg_len = (int) ( sector_radius * canvas_pix_per_mm );
-
-            QVector<qreal> dash1(2);
-            dash1[0] = (int) ( 3.6 * canvas_pix_per_mm ); //8// Long dash  <---------+
-            dash1[1] = (int) ( 1.8 * canvas_pix_per_mm ); //2// Short gap            |
-
-            /*
-             QPen *pthispen = new QPen(*wxBLACK_PEN);
-             pthispen->SetStyle(QPenSTYLE_USER_DASH);
-             pthispen->SetDashes( 2, dash1 );
-             //      Undocumented "feature":  Pen must be fully specified <<<BEFORE>>> setting into DC
-             pdc->SetPen ( *pthispen );
-             */
-            //QColor c = GetGlobalColor( _T ( "CHBLK" ) );
-            QColor c; GetGlobalColor( "CHBLK" , &c);
-
-            float a = ( sectr1 - 90 ) * PI / 180;
-            int x = r.x + (int) ( leg_len * cosf( a ) );
-            int y = r.y + (int) ( leg_len * sinf( a ) );
-            DrawAALine( m_pdc, r.x, r.y, x, y, c, dash1[0], dash1[1] );
-
-            a = ( sectr2 - 90 ) * PI / 180.;
-            x = r.x + (int) ( leg_len * cosf( a ) );
-            y = r.y + (int) ( leg_len * sinf( a ) );
-            DrawAALine( m_pdc, r.x, r.y, x, y, c, dash1[0], dash1[1] );
-        }
-        
-        // Debug the symbol bounding box.....
-        /*
-        if(m_pdc){
-            m_pdc->SetPen(QPen(*wxGREEN, 1));
-            m_pdc->SetBrush(wxBrush(*wxGREEN, wxTRANSPARENT));
-            m_pdc->DrawRectangle( r.x + rules->razRule->parm2, r.y + rules->razRule->parm3, b_width, b_height);
-        }
-        */
-    }
-
+    //        glTranslatef( -r.x, -r.y, 0 );
+    glPopMatrix();
     //  Update the object Bounding box,
     //  so that subsequent drawing operations will redraw the item fully
 
@@ -5494,32 +4689,32 @@ char *s52plib::RenderCS( ObjRazRules *rzRules, Rules *rules )
     return (char *) ret;
 }
 
-int s52plib::RenderObjectToDC( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp )
+int s52plib::RenderObjectToDC(ObjRazRules *rzRules, ViewPort *vp )
 {
-    return DoRenderObject( pdcin, rzRules, vp );
+    return DoRenderObject(rzRules, vp );
 }
 
 
 int s52plib::RenderObjectToGL( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp )
 {
     m_glcc = (QGLContext *) &glcc;
-    return DoRenderObject( NULL, rzRules, vp );
+    return DoRenderObject(rzRules, vp );
 }
 
-int s52plib::RenderObjectToDCText( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp )
+int s52plib::RenderObjectToDCText(ObjRazRules *rzRules, ViewPort *vp )
 {
-    return DoRenderObjectTextOnly( pdcin, rzRules, vp );
+    return DoRenderObjectTextOnly(rzRules, vp );
 }
 
 int s52plib::RenderObjectToGLText( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp )
 {
     m_glcc = (QGLContext *) &glcc;
-    return DoRenderObjectTextOnly( NULL, rzRules, vp );
+    return DoRenderObjectTextOnly(rzRules, vp );
 }
 
 
 
-int s52plib::DoRenderObject( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp )
+int s52plib::DoRenderObject(ObjRazRules *rzRules, ViewPort *vp )
 {
     //TODO  Debugging
     //      if(rzRules->obj->Index != 1103)
@@ -5531,7 +4726,6 @@ int s52plib::DoRenderObject( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp
     if( !ObjectRenderCheckRules( rzRules, vp, true ) )
         return 0;
 
-    m_pdc = pdcin; // use this DC
     Rules *rules = rzRules->LUP->ruleList;
 
     while( rules != NULL ) {
@@ -5546,10 +4740,7 @@ int s52plib::DoRenderObject( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp
             RenderSY( rzRules, rules, vp );
             break; // SY
         case RUL_SIM_LN:
-            if(m_pdc)
-                RenderLS( rzRules, rules, vp );
-            else
-                RenderGLLS( rzRules, rules, vp );
+            RenderGLLS( rzRules, rules, vp );
             break; // LS
         case RUL_COM_LN:
             RenderLC( rzRules, rules, vp );
@@ -5584,10 +4775,7 @@ int s52plib::DoRenderObject( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp
                     RenderSY( rzRules, rules, vp );
                     break;
                 case RUL_SIM_LN:
-                    if(m_pdc)
-                        RenderLS( rzRules, rules, vp );
-                    else
-                        RenderGLLS( rzRules, rules, vp );
+                    RenderGLLS( rzRules, rules, vp );
                     break; // LS
                 case RUL_COM_LN:
                     RenderLC( rzRules, rules, vp );
@@ -5621,7 +4809,7 @@ int s52plib::DoRenderObject( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp
     return 1;
 }
 
-int s52plib::DoRenderObjectTextOnly( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp )
+int s52plib::DoRenderObjectTextOnly(ObjRazRules *rzRules, ViewPort *vp )
 {
     //    if(strncmp(rzRules->obj->FeatureName, "RDOCAL", 6))
     //        return 0;
@@ -5632,7 +4820,6 @@ int s52plib::DoRenderObjectTextOnly( QPainter *pdcin, ObjRazRules *rzRules, View
     if( !ObjectRenderCheckRules( rzRules, vp, true ) )
         return 0;
 
-    m_pdc = pdcin; // use this DC
     Rules *rules = rzRules->LUP->ruleList;
     
     while( rules != NULL ) {
@@ -7987,7 +7174,7 @@ render_canvas_parms* s52plib::CreatePatternBufferSpec( ObjRazRules *rzRules, Rul
 
             mdc.begin(pbm );
             mdc.setBackground( QBrush( local_unused_QColor ) );
-//            mdc.Clear();
+            //            mdc.Clear();
 
             int pivot_x = prule->pos.patt.pivot_x.PACL;
             int pivot_y = prule->pos.patt.pivot_y.PARW;
@@ -8010,10 +7197,10 @@ render_canvas_parms* s52plib::CreatePatternBufferSpec( ObjRazRules *rzRules, Rul
             pbm = new QBitmap( 2, 2 );       // substitute small, blank pattern
             mdc.begin(pbm );
             mdc.setBackground( QBrush( local_unused_QColor ) );
-//            mdc.Clear();
+            //            mdc.Clear();
         }
 
-//        mdc.SelectObject( wxNullBitmap );
+        //        mdc.SelectObject( wxNullBitmap );
         mdc.end();
 
         //    Build a wxImage from the wxBitmap
@@ -8253,14 +7440,12 @@ int s52plib::RenderToBufferAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp,
     return 1;
 }
 
-int s52plib::RenderAreaToDC( QPainter *pdcin, ObjRazRules *rzRules, ViewPort *vp,
+int s52plib::RenderAreaToDC(ObjRazRules *rzRules, ViewPort *vp,
                              render_canvas_parms *pb_spec )
 {
 
     if( !ObjectRenderCheckRules( rzRules, vp, true ) )
         return 0;
-
-    m_pdc = pdcin; // use this DC
     Rules *rules = rzRules->LUP->ruleList;
 
     while( rules != NULL ) {
