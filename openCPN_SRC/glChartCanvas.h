@@ -35,10 +35,6 @@
 
  #define FORMAT_BITS           GL_RGB
 
-#ifdef __OCPN__ANDROID__
-#include "wx/qt/private/wxQtGesture.h"
-#endif
-
 
 class glTexFactory;
 class ChartCanvas;
@@ -88,7 +84,7 @@ class ChartBaseBSB;
 class ChartBase;
 
 #include <QOpenGLWindow>
-class glChartCanvas : public QOpenGLWindow
+class glChartCanvas : public wxGLCanvas
 {
 public:
     static bool CanClipViewport(const ViewPort &vp);

@@ -58,7 +58,7 @@ private:
 #if defined(__OCPN__ANDROID__)
 #include "androidUTIL.h"
 #elif defined(__WXQT__)
-#include <GL/glx.h>
+#include "GL/glx.h"
 #endif
 
 #include "dychart.h"
@@ -68,7 +68,6 @@ private:
 #include "s52plib.h"
 #include "Quilt.h"
 #include "pluginmanager.h"
-#include "routeman.h"
 #include "chartbase.h"
 #include "chartimg.h"
 #include "ChInfoWin.h"
@@ -78,7 +77,6 @@ private:
 #include "TexFont.h"
 #include "glTexCache.h"
 #include "gshhs.h"
-#include "ais.h"
 #include "OCPNPlatform.h"
 #include "toolbar.h"
 #include "piano.h"
@@ -87,7 +85,6 @@ private:
 #include "FontMgr.h"
 #include "mipmap/mipmap.h"
 #include "chartimg.h"
-#include "Track.h"
 #include "Route.h"
 #include "mbtiles.h"
 #include <vector>
@@ -101,7 +98,7 @@ private:
 #include "s57chart.h"               // for ArrayOfS57Obj
 #include "s52plib.h"
 
-#include "lz4.h"
+#include "lz4/lz4.h"
 
 #ifdef __OCPN__ANDROID__
 //  arm gcc compiler has a lot of trouble passing doubles as function aruments.
@@ -158,10 +155,7 @@ extern double           g_n_ownship_beam_meters;
 extern ChartDB          *ChartData;
 
 extern PlugInManager* g_pi_manager;
-
-extern WayPointman      *pWayPointMan;
 extern RouteList        *pRouteList;
-extern TrackList        *pTrackList;
 extern bool             b_inCompressAllCharts;
 extern bool             g_bGLexpert;
 extern bool             g_bcompression_wait;
@@ -180,7 +174,7 @@ extern unsigned int     g_canvasConfig;
 extern ChartCanvas      *g_focusCanvas;
 extern ChartCanvas      *g_overlayCanvas;
 
-ocpnGLOptions g_GLOptions;
+zchxGLOptions g_GLOptions;
 
 //    For VBO(s)
 bool         g_b_EnableVBO;
@@ -207,9 +201,6 @@ PFNGLBINDBUFFERPROC                 s_glBindBuffer;
 PFNGLBUFFERDATAPROC                 s_glBufferData;
 PFNGLDELETEBUFFERSPROC              s_glDeleteBuffers;
 
-
-#include <wx/arrimpl.cpp>
-//WX_DEFINE_OBJARRAY( ArrayOfTexDescriptors );
 
 GLuint g_raster_format = GL_RGB;
 long g_tex_mem_used;

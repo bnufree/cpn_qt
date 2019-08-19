@@ -216,7 +216,7 @@ public:
       virtual void BuildDepthContourArray(void);
       int ValidateAndCountUpdates( const QString& file000, const QString CopyDir,
                                    QString &LastUpdateDate, bool b_copyfiles);
-      static int GetUpdateFileArray(const QString& file000, QStringList *UpFiles,
+      static int GetUpdateFileArray(const QFileInfo& file000, QStringList *UpFiles,
                                     QDateTime date000, QString edtn000 );
       QString GetISDT(void);
       InitReturn PostInit( ChartInitFlag flags, ColorScheme cs );

@@ -82,9 +82,9 @@ private:
 
 };
 
-typedef QList<QuiltPatch>   PatchList;
+typedef QList<QuiltPatch*>   PatchList;
 typedef QList< QuiltCandidate*> ArrayOfSortedQuiltCandidates;
-typedef QuiltPatch         PatchListNode;
+typedef QuiltPatch*        PatchListNode;
 
 class Quilt
 {
@@ -251,7 +251,7 @@ private:
     QBitmap *m_pBM;
 
     bool m_bcomposed;
-    PatchListNode *cnode;
+    PatchListNode cnode;
     bool m_bbusy;
     int m_quilt_proj;
 

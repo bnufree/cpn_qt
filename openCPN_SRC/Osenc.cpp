@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 SENC File Object
@@ -24,19 +24,7 @@
  **************************************************************************/
 
 // For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-  #include "wx/wx.h"
-#endif //precompiled headers
-
 #include <setjmp.h>
-
-#include <wx/wfstream.h>
-#include <wx/filename.h>
-#include <wx/progdlg.h>
-#include "wx/zchxLog.h"
-
 #include "Osenc.h"
 #include "s52s57.h"
 #include "s57chart.h"           // for one static method
@@ -50,21 +38,17 @@
 #include "mygeom.h"
 #include "georef.h"
 #include <mutex>
+#include <QMessageBox>
+#include <QTemporaryFile>
 
 extern s57RegistrarMgr          *m_pRegistrarMan;
-extern wxString                 g_csv_locn;
+extern QString                 g_csv_locn;
 extern bool                     g_bGDAL_Debug;
 
 bool chain_broken_mssage_shown = false;
 
 using namespace std;
 
-#include <wx/arrimpl.cpp>
-WX_DEFINE_ARRAY( float*, MyFloatPtrArray );
-
-#ifndef __WXMSW__
-sigjmp_buf env_osenc_ogrf;                    // the context saved by sigsetjmp();
-#endif
 
 std::mutex m;
 
@@ -79,7 +63,7 @@ bool g_OsencVerbose;
 void OpenCPN_OGR_OSENC_ErrorHandler( CPLErr eErrClass, int nError, const char * pszErrorMsg )
 {
     
-    #define ERR_BUF_LEN 2000
+#define ERR_BUF_LEN 2000
     
     char buf[ERR_BUF_LEN + 1];
     
@@ -92,17 +76,8 @@ void OpenCPN_OGR_OSENC_ErrorHandler( CPLErr eErrClass, int nError, const char * 
         sprintf( buf, "   ERROR %d: %s\n", nError, pszErrorMsg );
     
     if( g_bGDAL_Debug  || ( CE_Debug != eErrClass) ) {          // log every warning or error
-        wxString msg( buf, wxConvUTF8 );
-		ZCHX_LOGMSG(msg);
+        qDebug(buf);
     }
-    
-    //      Do not simply return on CE_Fatal errors, as we don't want to abort()
-
-#ifndef __WXMSW__    
-    if( eErrClass == CE_Fatal ) {
-        longjmp( env_osenc_ogrf, 1 );                  // jump back to the setjmp() point
-    }
-#endif
     
 }
 
@@ -121,10 +96,10 @@ Osenc_instreamFile::~Osenc_instreamFile()
     delete m_instream;
 }
 
-bool Osenc_instreamFile::Open( const wxString &senc_file_name )
+bool Osenc_instreamFile::Open( const QString &senc_file_name )
 {
-    m_instream = new wxFFileInputStream(senc_file_name);
-    return m_instream->IsOk();
+    m_instream = new FileReadWrite(senc_file_name);
+    return m_instream->IsOK();
 }
 
 void Osenc_instreamFile::Close()
@@ -134,7 +109,10 @@ void Osenc_instreamFile::Close()
 Osenc_instream &Osenc_instreamFile::Read(void *buffer, size_t size)
 {
     if(m_instream)
-        m_ok = m_instream->Read(buffer, size).IsOk();
+    {
+        m_instream->Read(buffer, size);
+        m_ok = m_instream->IsOK();
+    }
 
     return *this;
 }
@@ -143,7 +121,7 @@ Osenc_instream &Osenc_instreamFile::Read(void *buffer, size_t size)
 bool Osenc_instreamFile::IsOk()
 {
     if(m_instream)
-        m_ok =m_instream->IsOk();
+        m_ok = m_instream->IsOK();
 
     return m_ok;
 }
@@ -178,12 +156,12 @@ Osenc_outstreamFile::~Osenc_outstreamFile()
     delete m_outstream;
 }
 
-bool Osenc_outstreamFile::Open(const wxString &file)
+bool Osenc_outstreamFile::Open(const QString &file)
 {
     Init();
-    m_outstream = new wxFFileOutputStream(file);
+    m_outstream = new FileReadWrite(file, FileReadWrite::E_Write);
     if(m_outstream)
-        m_ok= m_outstream->IsOk();
+        m_ok= m_outstream->IsOK();
     
     return m_ok;
 }
@@ -192,13 +170,19 @@ bool Osenc_outstreamFile::Open(const wxString &file)
 void Osenc_outstreamFile::Close()
 {
     if(m_outstream)
-        m_ok = m_outstream->Close();
+    {
+        m_outstream->Close();
+        m_ok = m_outstream->IsOK();
+    }
 }
 
 Osenc_outstream &Osenc_outstreamFile::Write(const void *buffer, size_t size)
 {
     if(m_outstream)
-        m_ok = m_outstream->Write(buffer, size).IsOk();
+    {
+        m_outstream->Write((char*)buffer, size);
+        m_ok = m_outstream->IsOK();
+    }
     
     return *this;
 }
@@ -207,7 +191,7 @@ Osenc_outstream &Osenc_outstreamFile::Write(const void *buffer, size_t size)
 bool Osenc_outstreamFile::IsOk()
 {
     if(m_outstream)
-        m_ok =m_outstream->IsOk();
+        m_ok = m_outstream->IsOK();
     
     return m_ok;
 }
@@ -237,7 +221,7 @@ Osenc::~Osenc()
     SENCFloatPtrArray &AuxPtrArray = getSENCReadAuxPointArray();
     std::vector<int> &AuxCntArray = getSENCReadAuxPointCountArray();
     int nCOVREntries = AuxCntArray.size();
-        for( unsigned int j = 0; j < (unsigned int) nCOVREntries; j++ ) {
+    for( unsigned int j = 0; j < (unsigned int) nCOVREntries; j++ ) {
         free(AuxPtrArray[j]);
     }
 
@@ -251,10 +235,10 @@ Osenc::~Osenc()
     free(pBuffer);
 
     
-    for( unsigned int j = 0; j < (unsigned int) m_nNoCOVREntries; j++ ) 
+    for( unsigned int j = 0; j < (unsigned int) m_nNoCOVREntries; j++ )
         free (m_pNoCOVRTable[j]);
 
-    for( unsigned int j = 0; j < (unsigned int) m_nCOVREntries; j++ ) 
+    for( unsigned int j = 0; j < (unsigned int) m_nCOVREntries; j++ )
         free (m_pCOVRTable[j]);
     
     free( m_pCOVRTablePoints );
@@ -279,7 +263,7 @@ void Osenc::init( void )
     m_ref_lat = 0;
     m_ref_lon = 0;
     
-    m_read_base_edtn = _T("-1");
+    m_read_base_edtn = ("-1");
     
     m_nNoCOVREntries = 0;
     m_nCOVREntries = 0;
@@ -313,7 +297,7 @@ void Osenc::setVerbose(bool verbose )
     g_OsencVerbose = verbose;
 }
 
-int Osenc::ingestHeader(const wxString &senc_file_name)
+int Osenc::ingestHeader(const QString &senc_file_name)
 {
     //  Read oSENC header records, stopping at the first Feature_ID record
     //  Then check to see if everything is defined as required.
@@ -321,19 +305,19 @@ int Osenc::ingestHeader(const wxString &senc_file_name)
     
     int ret_val = SENC_NO_ERROR;                    // default is OK
     
-    wxFileName fn(senc_file_name);
+    //    wxFileName fn(senc_file_name);
     
     //    Sanity check for existence of file
     
-//    int nProg = 0;
+    //    int nProg = 0;
     
-//     wxString ifs( senc_file_name );
-//     
-//     wxFFileInputStream fpx_u( ifs );
-//     if (!fpx_u.IsOk()) {
-//         return ERROR_SENCFILE_NOT_FOUND;
-//     }
-//     wxBufferedInputStream fpx( fpx_u );
+    //     QString ifs( senc_file_name );
+    //
+    //     wxFFileInputStream fpx_u( ifs );
+    //     if (!fpx_u.IsOk()) {
+    //         return ERROR_SENCFILE_NOT_FOUND;
+    //     }
+    //     wxBufferedInputStream fpx( fpx_u );
 
     //    Sanity check for existence of file
     Osenc_instreamFile fpx;
@@ -371,7 +355,7 @@ int Osenc::ingestHeader(const wxString &senc_file_name)
         //      Read a record Header
         OSENC_Record_Base record;
         
-//        off = fpx.TellI();
+        //        off = fpx.TellI();
         
         fpx.Read(&record, sizeof(OSENC_Record_Base));
         if(!fpx.IsOk()){
@@ -381,159 +365,159 @@ int Osenc::ingestHeader(const wxString &senc_file_name)
         
         // Process Records
         switch( record.record_type){
-            case HEADER_SENC_VERSION:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                uint16_t *pint = (uint16_t*)buf;
-                m_senc_file_read_version = *pint;
-                break;
+        case HEADER_SENC_VERSION:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
-            case HEADER_CELL_NAME:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                m_Name = wxString( buf, wxConvUTF8 );
-                break;
+            uint16_t *pint = (uint16_t*)buf;
+            m_senc_file_read_version = *pint;
+            break;
+        }
+        case HEADER_CELL_NAME:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
-            case HEADER_CELL_PUBLISHDATE:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                break;
+            m_Name = QString::fromUtf8((char*)buf);
+            break;
+        }
+        case HEADER_CELL_PUBLISHDATE:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
+            break;
+        }
             
-            case HEADER_CELL_EDITION:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                uint16_t *pint = (uint16_t*)buf;
-                m_read_base_edtn.Printf(_T("%d"), *pint);
-                break;
+        case HEADER_CELL_EDITION:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
+            uint16_t *pint = (uint16_t*)buf;
+            m_read_base_edtn.sprintf("%d", *pint);
+            break;
+        }
             
-            case HEADER_CELL_UPDATEDATE:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                break;
+        case HEADER_CELL_UPDATEDATE:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
+            break;
+        }
             
-            case HEADER_CELL_UPDATE:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                
-                uint16_t *pint = (uint16_t*)buf;
-                m_read_last_applied_update = *pint;
-                break;
-            }   
-            
-            case HEADER_CELL_NATIVESCALE:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                uint32_t *pint = (uint32_t*)buf;
-                m_Chart_Scale = *pint;
-                
-                break;
-            }   
-            
-            case HEADER_CELL_SENCCREATEDATE:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                m_readFileCreateDate = wxString( buf, wxConvUTF8 );
-                
-                break;
-            }
-            
-            case CELL_EXTENT_RECORD:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                _OSENC_EXTENT_Record_Payload *pPayload = (_OSENC_EXTENT_Record_Payload *)buf;
-                m_extent.NLAT = pPayload->extent_nw_lat;
-                m_extent.SLAT = pPayload->extent_se_lat;
-                m_extent.WLON = pPayload->extent_nw_lon;
-                m_extent.ELON = pPayload->extent_se_lon;
-                
-                break;
-            }
-            
-            case CELL_COVR_RECORD:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                
-                _OSENC_COVR_Record_Payload *pPayload = (_OSENC_COVR_Record_Payload*)buf;
-                
-                int point_count = pPayload->point_count;
-                m_AuxCntArray.push_back(point_count);
-                
-                float *pf = (float *)malloc(point_count * 2 * sizeof(float));
-                memcpy(pf, &pPayload->point_array, point_count * 2 * sizeof(float));
-                m_AuxPtrArray.Add(pf);
-                
-                break;
-            }
-            
-            case CELL_NOCOVR_RECORD:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                
-                _OSENC_NOCOVR_Record_Payload *pPayload = (_OSENC_NOCOVR_Record_Payload*)buf;
-                
-                int point_count = pPayload->point_count;
-                m_NoCovrCntArray.push_back(point_count);
-                
-                float *pf = (float *)malloc(point_count * 2 * sizeof(float));
-                memcpy(pf, &pPayload->point_array, point_count * 2 * sizeof(float));
-                m_NoCovrPtrArray.Add(pf);
-                
-                
-                break;
-            }
-            
-            case FEATURE_ID_RECORD:
-            {
-                dun = 1;
-                break;
+        case HEADER_CELL_UPDATE:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
 
-            default:
-            {
-                dun = 1;
-                break;
+            uint16_t *pint = (uint16_t*)buf;
+            m_read_last_applied_update = *pint;
+            break;
+        }
+            
+        case HEADER_CELL_NATIVESCALE:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
+            uint32_t *pint = (uint32_t*)buf;
+            m_Chart_Scale = *pint;
+
+            break;
+        }
+            
+        case HEADER_CELL_SENCCREATEDATE:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+            m_readFileCreateDate = QString::fromUtf8((char*)buf);
+
+            break;
+        }
+            
+        case CELL_EXTENT_RECORD:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+            _OSENC_EXTENT_Record_Payload *pPayload = (_OSENC_EXTENT_Record_Payload *)buf;
+            m_extent.NLAT = pPayload->extent_nw_lat;
+            m_extent.SLAT = pPayload->extent_se_lat;
+            m_extent.WLON = pPayload->extent_nw_lon;
+            m_extent.ELON = pPayload->extent_se_lon;
+
+            break;
+        }
+            
+        case CELL_COVR_RECORD:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+
+            _OSENC_COVR_Record_Payload *pPayload = (_OSENC_COVR_Record_Payload*)buf;
+
+            int point_count = pPayload->point_count;
+            m_AuxCntArray.push_back(point_count);
+
+            float *pf = (float *)malloc(point_count * 2 * sizeof(float));
+            memcpy(pf, &pPayload->point_array, point_count * 2 * sizeof(float));
+            m_AuxPtrArray.append(pf);
+
+            break;
+        }
+            
+        case CELL_NOCOVR_RECORD:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+
+            _OSENC_NOCOVR_Record_Payload *pPayload = (_OSENC_NOCOVR_Record_Payload*)buf;
+
+            int point_count = pPayload->point_count;
+            m_NoCovrCntArray.push_back(point_count);
+
+            float *pf = (float *)malloc(point_count * 2 * sizeof(float));
+            memcpy(pf, &pPayload->point_array, point_count * 2 * sizeof(float));
+            m_NoCovrPtrArray.append(pf);
+
+
+            break;
+        }
+            
+        case FEATURE_ID_RECORD:
+        {
+            dun = 1;
+            break;
+        }
+
+        default:
+        {
+            dun = 1;
+            break;
+        }
             
         } // switch
         
     }   // while
-                
+
     return ret_val;
 }
 
@@ -556,27 +540,27 @@ std::string Osenc::GetAttributeAcronymFromTypecode( int typeCode)
 }
 
 
-int Osenc::ingest200(const wxString &senc_file_name,
-                  S57ObjVector *pObjectVector,
-                  VE_ElementVector *pVEArray,
-                  VC_ElementVector *pVCArray)
+int Osenc::ingest200(const QString &senc_file_name,
+                     S57ObjVector *pObjectVector,
+                     VE_ElementVector *pVEArray,
+                     VC_ElementVector *pVCArray)
 {
     
     int ret_val = SENC_NO_ERROR;                    // default is OK
     
-//    wxFileName fn(senc_file_name);
-//    m_ID = fn.GetName();                          // This will be the NOAA File name, usually
+    //    wxFileName fn(senc_file_name);
+    //    m_ID = fn.GetName();                          // This will be the NOAA File name, usually
     
     
-//    int nProg = 0;
+    //    int nProg = 0;
     
-//     wxString ifs( senc_file_name );
-//     
-//     wxFFileInputStream fpx_u( ifs );
-//     if (!fpx_u.IsOk()) {
-//         return ERROR_SENCFILE_NOT_FOUND;
-//     }
-//     wxBufferedInputStream fpx( fpx_u );
+    //     QString ifs( senc_file_name );
+    //
+    //     wxFFileInputStream fpx_u( ifs );
+    //     if (!fpx_u.IsOk()) {
+    //         return ERROR_SENCFILE_NOT_FOUND;
+    //     }
+    //     wxBufferedInputStream fpx( fpx_u );
 
     //    Sanity check for existence of file
     Osenc_instreamFile fpx;
@@ -594,7 +578,7 @@ int Osenc::ingest200(const wxString &senc_file_name,
         //      Read a record Header
         OSENC_Record_Base record;
         
-//        long off = fpx.TellI();
+        //        long off = fpx.TellI();
         
         fpx.Read(&record, sizeof(OSENC_Record_Base));
         if(!fpx.IsOk()){
@@ -604,474 +588,472 @@ int Osenc::ingest200(const wxString &senc_file_name,
         
         // Process Records
         switch( record.record_type){
-            case HEADER_SENC_VERSION:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                uint16_t *pint = (uint16_t*)buf;
-                m_senc_file_read_version = *pint;
-                break;
+        case HEADER_SENC_VERSION:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
-            case HEADER_CELL_NAME:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                m_Name = wxString( buf, wxConvUTF8 );
-                break;
+            uint16_t *pint = (uint16_t*)buf;
+            m_senc_file_read_version = *pint;
+            break;
+        }
+        case HEADER_CELL_NAME:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
-            case HEADER_CELL_PUBLISHDATE:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                m_sdate000 = wxString( buf, wxConvUTF8 );
-                break;
+            m_Name = QString::fromUtf8((char*)buf);
+            break;
+        }
+        case HEADER_CELL_PUBLISHDATE:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
+            m_sdate000 = QString::fromUtf8((char*)buf);
+            break;
+        }
             
-            case HEADER_CELL_EDITION:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                uint16_t *pint = (uint16_t*)buf;
-                m_read_base_edtn.Printf(_T("%d"), *pint);
-                
-                break;
+        case HEADER_CELL_EDITION:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
-            
-            case HEADER_CELL_UPDATEDATE:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                m_LastUpdateDate = wxString( buf, wxConvUTF8 );
-                break;
-            }
-                
-            case HEADER_CELL_UPDATE:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                uint16_t *pint = (uint16_t*)buf;
-                m_read_last_applied_update = *pint;
-                
-                break;
-            }   
-            
-            case HEADER_CELL_NATIVESCALE:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                uint32_t *pint = (uint32_t*)buf;
-                m_Chart_Scale = *pint;
-                break;
-            }   
-            
-            case HEADER_CELL_SENCCREATEDATE:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                break;
-            }
-            
-            case CELL_EXTENT_RECORD:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                _OSENC_EXTENT_Record_Payload *pPayload = (_OSENC_EXTENT_Record_Payload *)buf;
-                m_extent.NLAT = pPayload->extent_nw_lat;
-                m_extent.SLAT = pPayload->extent_se_lat;
-                m_extent.WLON = pPayload->extent_nw_lon;
-                m_extent.ELON = pPayload->extent_se_lon;
-                
-                //  We declare the ref_lat/ref_lon to be the centroid of the extents
-                //  This is how the SENC was created....
-                m_ref_lat = (m_extent.NLAT + m_extent.SLAT) / 2.;
-                m_ref_lon = (m_extent.ELON + m_extent.WLON) / 2.;
-                
-                break;
-            }
-            
-            case CELL_COVR_RECORD:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                
-                break;
-            }
-            
-            case CELL_NOCOVR_RECORD:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                
-                break;
-            }
-            
-            case FEATURE_ID_RECORD:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                
-                // Starting definition of a new feature
-                _OSENC_Feature_Identification_Record_Payload *pPayload = (_OSENC_Feature_Identification_Record_Payload *)buf;
-                
-                // Get the Feature type code and ID
-                int featureTypeCode = pPayload->feature_type_code;
-                featureID = pPayload->feature_ID;
+            uint16_t *pint = (uint16_t*)buf;
+            m_read_base_edtn.sprintf("%d", *pint);
 
-                //TODO
-//                if(207 == featureID)
-//                    int yyp = 4;
-                
-                //  Look up the FeatureName from the Registrar
-               
-                std::string acronym = GetFeatureAcronymFromTypecode( featureTypeCode );
-                
-                //TODO debugging
-//                 printf("%s\n", acronym.c_str());
-//                 if(!strncmp(acronym.c_str(), "BOYLAT", 6))
-//                     int yyp = 4;
-                
-                if(acronym.length()){
-                    obj = new S57Obj(acronym.c_str());
-                    obj->Index = featureID;
-                    
-                    pObjectVector->push_back(obj);
-                }
-                
-                break;
+            break;
+        }
+            
+        case HEADER_CELL_UPDATEDATE:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
-                
-            case FEATURE_ATTRIBUTE_RECORD:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                
-                // Get the payload
-                OSENC_Attribute_Record_Payload *pPayload = (OSENC_Attribute_Record_Payload *)buf;
-                
-                int attributeTypeCode = pPayload->attribute_type_code;
-                
-                //  Handle Special cases...
-                
-                //  The primitive type of the Feature is encoded in the SENC as an attribute of defined type.
-//                if( ATTRIBUTE_ID_PRIM == attributeTypeCode ){
-//                    primitiveType = pPayload->attribute_value_int;
-//                }
-                
-                    
-                //  Get the standard attribute acronym
-                std::string acronym = GetAttributeAcronymFromTypecode( attributeTypeCode );
-                
-                int attributeValueType = pPayload->attribute_value_type;
+            m_LastUpdateDate = QString::fromUtf8((char*)buf);
+            break;
+        }
 
-                if( acronym.length() ){
-                    switch(attributeValueType){
-                        case 0:
-                        {
-                            uint32_t val = pPayload->attribute_value_int;
-                            if(obj){
-                                obj->AddIntegerAttribute( acronym.c_str(), val );
-                            }
-                            break;
-                        }
-                            
-                        case 1:             // Integer list
-                        {
-                            // Calculate the number of elements from the record size
-                            //int nCount = (record.record_length - sizeof(_OSENC_Attribute_Record)) ;
-                            
-                            break;
-                            
-                        }
-                        case 2:             // Single double precision real
-                        {
-                            double val = pPayload->attribute_value_double;
-                            if(obj)
-                                obj->AddDoubleAttribute( acronym.c_str(), val );
-                            break;
-                        }   
-                        
-                        case 3:             // List of double precision real
-                        {
-                            //TODO
-                            break;
-                        }
-                        
-                        case 4:             // Ascii String
-                        {
-                            char *val = (char *)&pPayload->attribute_value_char_ptr;
-                            if(obj)
-                                obj->AddStringAttribute( acronym.c_str(), val );
-                                
-                            break;
-                        }
-                        
-                        default:
-                            break;
+        case HEADER_CELL_UPDATE:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+            uint16_t *pint = (uint16_t*)buf;
+            m_read_last_applied_update = *pint;
+
+            break;
+        }
+            
+        case HEADER_CELL_NATIVESCALE:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+            uint32_t *pint = (uint32_t*)buf;
+            m_Chart_Scale = *pint;
+            break;
+        }
+            
+        case HEADER_CELL_SENCCREATEDATE:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+            break;
+        }
+            
+        case CELL_EXTENT_RECORD:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+            _OSENC_EXTENT_Record_Payload *pPayload = (_OSENC_EXTENT_Record_Payload *)buf;
+            m_extent.NLAT = pPayload->extent_nw_lat;
+            m_extent.SLAT = pPayload->extent_se_lat;
+            m_extent.WLON = pPayload->extent_nw_lon;
+            m_extent.ELON = pPayload->extent_se_lon;
+
+            //  We declare the ref_lat/ref_lon to be the centroid of the extents
+            //  This is how the SENC was created....
+            m_ref_lat = (m_extent.NLAT + m_extent.SLAT) / 2.;
+            m_ref_lon = (m_extent.ELON + m_extent.WLON) / 2.;
+
+            break;
+        }
+            
+        case CELL_COVR_RECORD:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+
+            break;
+        }
+            
+        case CELL_NOCOVR_RECORD:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+
+            break;
+        }
+            
+        case FEATURE_ID_RECORD:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+
+            // Starting definition of a new feature
+            _OSENC_Feature_Identification_Record_Payload *pPayload = (_OSENC_Feature_Identification_Record_Payload *)buf;
+
+            // Get the Feature type code and ID
+            int featureTypeCode = pPayload->feature_type_code;
+            featureID = pPayload->feature_ID;
+
+            //TODO
+            //                if(207 == featureID)
+            //                    int yyp = 4;
+
+            //  Look up the FeatureName from the Registrar
+
+            std::string acronym = GetFeatureAcronymFromTypecode( featureTypeCode );
+
+            //TODO debugging
+            //                 printf("%s\n", acronym.c_str());
+            //                 if(!strncmp(acronym.c_str(), "BOYLAT", 6))
+            //                     int yyp = 4;
+
+            if(acronym.length()){
+                obj = new S57Obj(acronym.c_str());
+                obj->Index = featureID;
+
+                pObjectVector->push_back(obj);
+            }
+
+            break;
+        }
+
+        case FEATURE_ATTRIBUTE_RECORD:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+
+            // Get the payload
+            OSENC_Attribute_Record_Payload *pPayload = (OSENC_Attribute_Record_Payload *)buf;
+
+            int attributeTypeCode = pPayload->attribute_type_code;
+
+            //  Handle Special cases...
+
+            //  The primitive type of the Feature is encoded in the SENC as an attribute of defined type.
+            //                if( ATTRIBUTE_ID_PRIM == attributeTypeCode ){
+            //                    primitiveType = pPayload->attribute_value_int;
+            //                }
+
+
+            //  Get the standard attribute acronym
+            std::string acronym = GetAttributeAcronymFromTypecode( attributeTypeCode );
+
+            int attributeValueType = pPayload->attribute_value_type;
+
+            if( acronym.length() ){
+                switch(attributeValueType){
+                case 0:
+                {
+                    uint32_t val = pPayload->attribute_value_int;
+                    if(obj){
+                        obj->AddIntegerAttribute( acronym.c_str(), val );
                     }
+                    break;
                 }
-                
-                break;
+
+                case 1:             // Integer list
+                {
+                    // Calculate the number of elements from the record size
+                    //int nCount = (record.record_length - sizeof(_OSENC_Attribute_Record)) ;
+
+                    break;
+
+                }
+                case 2:             // Single double precision real
+                {
+                    double val = pPayload->attribute_value_double;
+                    if(obj)
+                        obj->AddDoubleAttribute( acronym.c_str(), val );
+                    break;
+                }
+
+                case 3:             // List of double precision real
+                {
+                    //TODO
+                    break;
+                }
+
+                case 4:             // Ascii String
+                {
+                    char *val = (char *)&pPayload->attribute_value_char_ptr;
+                    if(obj)
+                        obj->AddStringAttribute( acronym.c_str(), val );
+
+                    break;
+                }
+
+                default:
+                    break;
+                }
             }
+
+            break;
+        }
             
-            case FEATURE_GEOMETRY_RECORD_POINT:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                
-                // Get the payload
-                _OSENC_PointGeometry_Record_Payload *pPayload = (_OSENC_PointGeometry_Record_Payload *)buf;
-                
-                if(obj){
-                    obj->SetPointGeometry( pPayload->lat, pPayload->lon, m_ref_lat, m_ref_lon);
-                }
-                
-                break;
+        case FEATURE_GEOMETRY_RECORD_POINT:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
 
-            case FEATURE_GEOMETRY_RECORD_AREA:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
+            // Get the payload
+            _OSENC_PointGeometry_Record_Payload *pPayload = (_OSENC_PointGeometry_Record_Payload *)buf;
 
-                // Get the payload
-                _OSENC_AreaGeometry_Record_Payload *pPayload = (_OSENC_AreaGeometry_Record_Payload *)buf;
-                
-                if(obj){
-                    unsigned char *next_byte;
-                    PolyTessGeo *pPTG = BuildPolyTessGeo( pPayload, &next_byte);
-                    
-                    obj->SetAreaGeometry(pPTG, m_ref_lat, m_ref_lon ) ;
-                    
-                    //  Set the Line geometry for the Feature
-                    LineGeometryDescriptor Descriptor;
-                    
-                    //  Copy some simple stuff
-                    Descriptor.extent_e_lon = pPayload->extent_e_lon;
-                    Descriptor.extent_w_lon = pPayload->extent_w_lon;
-                    Descriptor.extent_s_lat = pPayload->extent_s_lat;
-                    Descriptor.extent_n_lat = pPayload->extent_n_lat;
-                    
-                    Descriptor.indexCount = pPayload->edgeVector_count;
-                    
-                    // Copy the line index table, which in this case is offset in the payload
-                    Descriptor.indexTable = (int *)malloc(pPayload->edgeVector_count * 3 * sizeof(int));
-                    memcpy( Descriptor.indexTable, next_byte,
-                            pPayload->edgeVector_count * 3 * sizeof(int) );
-                    
-                    
-                    obj->SetLineGeometry( &Descriptor, GEO_AREA, m_ref_lat, m_ref_lon ) ;
-                  
-                }
-                
-                break;
-                
+            if(obj){
+                obj->SetPointGeometry( pPayload->lat, pPayload->lon, m_ref_lat, m_ref_lon);
             }
 
-            case FEATURE_GEOMETRY_RECORD_LINE:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                
-                // Get the payload & parse it
-                _OSENC_LineGeometry_Record_Payload *pPayload = (_OSENC_LineGeometry_Record_Payload *)buf;
-                LineGeometryDescriptor lD;
+            break;
+        }
 
-                //  Copy some simple stuff
-                lD.extent_e_lon = pPayload->extent_e_lon;
-                lD.extent_w_lon = pPayload->extent_w_lon;
-                lD.extent_s_lat = pPayload->extent_s_lat;
-                lD.extent_n_lat = pPayload->extent_n_lat;
-    
-                lD.indexCount = pPayload->edgeVector_count;
-
-                // Copy the payload tables
-                lD.indexTable = (int *)malloc(pPayload->edgeVector_count * 3 * sizeof(int));
-                memcpy( lD.indexTable, &pPayload->payLoad, pPayload->edgeVector_count * 3 * sizeof(int) );
-                
-                if(obj)
-                    obj->SetLineGeometry( &lD, GEO_LINE, m_ref_lat, m_ref_lon ) ;
-                
-                break;
-                
+        case FEATURE_GEOMETRY_RECORD_AREA:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
- 
-            case FEATURE_GEOMETRY_RECORD_MULTIPOINT:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
 
-                // Get the payload & parse it
-                OSENC_MultipointGeometry_Record_Payload *pPayload = (OSENC_MultipointGeometry_Record_Payload *)buf;
+            // Get the payload
+            _OSENC_AreaGeometry_Record_Payload *pPayload = (_OSENC_AreaGeometry_Record_Payload *)buf;
 
-                //  Set the Multipoint geometry for the Feature
-                MultipointGeometryDescriptor Descriptor;
-                
+            if(obj){
+                unsigned char *next_byte;
+                PolyTessGeo *pPTG = BuildPolyTessGeo( pPayload, &next_byte);
+
+                obj->SetAreaGeometry(pPTG, m_ref_lat, m_ref_lon ) ;
+
+                //  Set the Line geometry for the Feature
+                LineGeometryDescriptor Descriptor;
+
                 //  Copy some simple stuff
                 Descriptor.extent_e_lon = pPayload->extent_e_lon;
                 Descriptor.extent_w_lon = pPayload->extent_w_lon;
                 Descriptor.extent_s_lat = pPayload->extent_s_lat;
                 Descriptor.extent_n_lat = pPayload->extent_n_lat;
-                
-                Descriptor.pointCount = pPayload->point_count;
-                Descriptor.pointTable = &pPayload->payLoad;
 
-                if (obj)
-                    obj->SetMultipointGeometry( &Descriptor, m_ref_lat, m_ref_lon);
+                Descriptor.indexCount = pPayload->edgeVector_count;
 
-                break;
+                // Copy the line index table, which in this case is offset in the payload
+                Descriptor.indexTable = (int *)malloc(pPayload->edgeVector_count * 3 * sizeof(int));
+                memcpy( Descriptor.indexTable, next_byte,
+                        pPayload->edgeVector_count * 3 * sizeof(int) );
+
+
+                obj->SetLineGeometry( &Descriptor, GEO_AREA, m_ref_lat, m_ref_lon ) ;
+
             }
-                
+
+            break;
+
+        }
+
+        case FEATURE_GEOMETRY_RECORD_LINE:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+
+            // Get the payload & parse it
+            _OSENC_LineGeometry_Record_Payload *pPayload = (_OSENC_LineGeometry_Record_Payload *)buf;
+            LineGeometryDescriptor lD;
+
+            //  Copy some simple stuff
+            lD.extent_e_lon = pPayload->extent_e_lon;
+            lD.extent_w_lon = pPayload->extent_w_lon;
+            lD.extent_s_lat = pPayload->extent_s_lat;
+            lD.extent_n_lat = pPayload->extent_n_lat;
+
+            lD.indexCount = pPayload->edgeVector_count;
+
+            // Copy the payload tables
+            lD.indexTable = (int *)malloc(pPayload->edgeVector_count * 3 * sizeof(int));
+            memcpy( lD.indexTable, &pPayload->payLoad, pPayload->edgeVector_count * 3 * sizeof(int) );
+
+            if(obj)
+                obj->SetLineGeometry( &lD, GEO_LINE, m_ref_lat, m_ref_lon ) ;
+
+            break;
+
+        }
+
+        case FEATURE_GEOMETRY_RECORD_MULTIPOINT:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+
+            // Get the payload & parse it
+            OSENC_MultipointGeometry_Record_Payload *pPayload = (OSENC_MultipointGeometry_Record_Payload *)buf;
+
+            //  Set the Multipoint geometry for the Feature
+            MultipointGeometryDescriptor Descriptor;
+
+            //  Copy some simple stuff
+            Descriptor.extent_e_lon = pPayload->extent_e_lon;
+            Descriptor.extent_w_lon = pPayload->extent_w_lon;
+            Descriptor.extent_s_lat = pPayload->extent_s_lat;
+            Descriptor.extent_n_lat = pPayload->extent_n_lat;
+
+            Descriptor.pointCount = pPayload->point_count;
+            Descriptor.pointTable = &pPayload->payLoad;
+
+            if (obj)
+                obj->SetMultipointGeometry( &Descriptor, m_ref_lat, m_ref_lon);
+
+            break;
+        }
+
             
-            case VECTOR_EDGE_NODE_TABLE_RECORD:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                
-                //  Parse the buffer
-                uint8_t *pRun = (uint8_t *)buf;
-                
-                // The Feature(Object) count
-                int nCount = *(int *)pRun;
-                
-                pRun += sizeof(int);
-                
-                for(int i=0 ; i < nCount ; i++ ) {
-                    int featureIndex = *(int*)pRun;
-                    pRun += sizeof(int);
-                    
-                    int pointCount = *(int*)pRun;
-                    pRun += sizeof(int);
-                    
-                    float *pPoints = NULL;
-                    if( pointCount ) {
-                        pPoints = (float *) malloc( pointCount * 2 * sizeof(float) );
-                        memcpy(pPoints, pRun, pointCount * 2 * sizeof(float));
-                    }
-                    pRun += pointCount * 2 * sizeof(float);
-                    
-                    VE_Element *pvee = new VE_Element;
-                    pvee->index = featureIndex;
-                    pvee->nCount = pointCount;
-                    pvee->pPoints = pPoints; 
-                    pvee->max_priority = 0;            // Default
-                    
-                    pVEArray->push_back(pvee);
-                    
-                }
-                
-                
-                break;
+        case VECTOR_EDGE_NODE_TABLE_RECORD:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
             }
 
-            case VECTOR_CONNECTED_NODE_TABLE_RECORD:
-            {
-                unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
-                if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
-                    dun = 1; break;
-                }
-                
-                //  Parse the buffer
-                uint8_t *pRun = (uint8_t *)buf;
-                
-                // The Feature(Object) count
-                int nCount = *(int *)pRun;
+            //  Parse the buffer
+            uint8_t *pRun = (uint8_t *)buf;
+
+            // The Feature(Object) count
+            int nCount = *(int *)pRun;
+
+            pRun += sizeof(int);
+
+            for(int i=0 ; i < nCount ; i++ ) {
+                int featureIndex = *(int*)pRun;
                 pRun += sizeof(int);
-                
-                for(int i=0 ; i < nCount ; i++ ) {
-                    int featureIndex = *(int*)pRun;
-                    pRun += sizeof(int);
-                    
-                    float *pPoint = (float *) malloc( 2 * sizeof(float) );
-                    memcpy(pPoint, pRun, 2 * sizeof(float));
-                    pRun += 2 * sizeof(float);
-                    
-                    VC_Element *pvce = new VC_Element;
-                    pvce->index = featureIndex;
-                    pvce->pPoint = pPoint;
-                    
-                    pVCArray->push_back(pvce);
+
+                int pointCount = *(int*)pRun;
+                pRun += sizeof(int);
+
+                float *pPoints = NULL;
+                if( pointCount ) {
+                    pPoints = (float *) malloc( pointCount * 2 * sizeof(float) );
+                    memcpy(pPoints, pRun, pointCount * 2 * sizeof(float));
                 }
-                
-                
-                break;
+                pRun += pointCount * 2 * sizeof(float);
+
+                VE_Element *pvee = new VE_Element;
+                pvee->index = featureIndex;
+                pvee->nCount = pointCount;
+                pvee->pPoints = pPoints;
+                pvee->max_priority = 0;            // Default
+
+                pVEArray->push_back(pvee);
+
             }
+
+
+            break;
+        }
+
+        case VECTOR_CONNECTED_NODE_TABLE_RECORD:
+        {
+            unsigned char *buf = getBuffer( record.record_length - sizeof(OSENC_Record_Base));
+            if(!fpx.Read(buf, record.record_length - sizeof(OSENC_Record_Base)).IsOk()){
+                dun = 1; break;
+            }
+
+            //  Parse the buffer
+            uint8_t *pRun = (uint8_t *)buf;
+
+            // The Feature(Object) count
+            int nCount = *(int *)pRun;
+            pRun += sizeof(int);
+
+            for(int i=0 ; i < nCount ; i++ ) {
+                int featureIndex = *(int*)pRun;
+                pRun += sizeof(int);
+
+                float *pPoint = (float *) malloc( 2 * sizeof(float) );
+                memcpy(pPoint, pRun, 2 * sizeof(float));
+                pRun += 2 * sizeof(float);
+
+                VC_Element *pvce = new VC_Element;
+                pvce->index = featureIndex;
+                pvce->pPoint = pPoint;
+
+                pVCArray->push_back(pvce);
+            }
+
+
+            break;
+        }
             
-            default:
-                break;
-                
+        default:
+            break;
+
         }       // switch
-            
+
     }
     
     
     return ret_val;
     
 }
-        
 
 
-int Osenc::ingestCell( OGRS57DataSource *poS57DS, const wxString &FullPath000, const wxString &working_dir )
+
+int Osenc::ingestCell( OGRS57DataSource *poS57DS, const QString &FullPath000, const QString &working_dir )
 {
     //      Analyze Updates
     //      The OGR library will apply updates automatically, if enabled.
     //      Alternatively, we can explicitely find and apply updates from any source directory.
     //      We need to keep track of the last sequential update applied, to look out for new updates
     
-    wxString LastUpdateDate = m_date000.Format( _T("%Y%m%d") );
+    QString LastUpdateDate = m_date000.toString("%Y%m%d");
     
     int available_updates = ValidateAndCountUpdates( FullPath000, working_dir, LastUpdateDate, true );
     m_LastUpdateDate = LastUpdateDate;          // tentative, adjusted later on failure of update
     
     if(m_bVerbose && ( available_updates > m_UPDN ) ){
-        wxString msg1;
-        msg1.Printf( _T("Preparing to apply ENC updates, target final update is %3d."), available_updates );
-		ZCHX_LOGMSG(msg1);
+        qDebug("Preparing to apply ENC updates, target final update is %3d.", available_updates );
     }
     
-    wxString sobj;
+    QString sobj;
     
     //  Here comes the actual ISO8211 file reading
     
     //  Set up the options
     char ** papszReaderOptions = NULL;
     //    papszReaderOptions = CSLSetNameValue(papszReaderOptions, S57O_LNAM_REFS, "ON" );
-//    papszReaderOptions = CSLSetNameValue( papszReaderOptions, S57O_UPDATES, "ON" );
+    //    papszReaderOptions = CSLSetNameValue( papszReaderOptions, S57O_UPDATES, "ON" );
     papszReaderOptions = CSLSetNameValue( papszReaderOptions, S57O_RETURN_LINKAGES, "ON" );
     papszReaderOptions = CSLSetNameValue( papszReaderOptions, S57O_RETURN_PRIMITIVES, "ON" );
     poS57DS->SetOptionList( papszReaderOptions );
@@ -1083,32 +1065,31 @@ int Osenc::ingestCell( OGRS57DataSource *poS57DS, const wxString &FullPath000, c
     g_bGDAL_Debug = m_bVerbose;
     
     // Form the .000 filename
-    wxString s0_file = working_dir;
-    if( s0_file.Last() != wxFileName::GetPathSeparator() )
-        s0_file.Append( wxFileName::GetPathSeparator() );
-    wxFileName f000(FullPath000);
+    QString s0_file = working_dir;
+    if( s0_file.right(1) != QDir::separator() )
+        s0_file.append(QDir::separator());
+    QFileInfo f000(FullPath000);
     
-    s0_file.Append( f000.GetFullName() );
+    s0_file.append( f000.fileName() );
 
-    if(poS57DS->Open( s0_file.mb_str(), TRUE, NULL))
+    if(poS57DS->Open( s0_file.toUtf8().data(), TRUE, NULL))
         return 1;
 
     //      Get a pointer to the reader
     S57Reader *poReader = poS57DS->GetModule( 0 );
-     
+
     m_last_applied_update = m_UPDN;
-    wxString last_successful_update_file;
+    QString last_successful_update_file;
 
     // Apply the updates...
-    for(unsigned int i_up = 0 ; i_up < m_tmpup_array.GetCount() ; i_up++){
-        wxFileName fn(m_tmpup_array[i_up]);
-        wxString ext = fn.GetExt();
-        long n_upd;
-        ext.ToLong(&n_upd);
+    for(unsigned int i_up = 0 ; i_up < m_tmpup_array.count() ; i_up++){
+        QFileInfo fn(m_tmpup_array[i_up]);
+        QString ext = fn.suffix();
+        long n_upd = ext.toLong();
         
         if(n_upd > 0){                  // .000 is the base, not an update
             DDFModule oUpdateModule;
-            if(!oUpdateModule.Open( m_tmpup_array[i_up].mb_str(), FALSE )){
+            if(!oUpdateModule.Open( m_tmpup_array[i_up].toUtf8().data(), FALSE )){
                 break;
             }
             int upResult = poReader->ApplyUpdates( &oUpdateModule, n_upd );
@@ -1126,21 +1107,21 @@ int Osenc::ingestCell( OGRS57DataSource *poS57DS, const wxString &FullPath000, c
     //  We use the cell with all good updates applied so far, and so inform the user.
     //  "Better a slightly out-of-date chart than no chart at all..."
     
-    // The logic will attempt to build a SENC on each instance of OCPN, so eventually the 
+    // The logic will attempt to build a SENC on each instance of OCPN, so eventually the
     //  updates may be corrected, and the chart SENC is built correctly.
     //  Or, the update files following the last good update may be manually deleted.
     
     if( (available_updates > 0) && (m_last_applied_update != available_updates) ){
         
-        if(last_successful_update_file.Length()){
+        if(last_successful_update_file.length()){
             //  Get the update date from the last good update module
             bool bSuccess;
             DDFModule oUpdateModule;
-            wxString LastGoodUpdateDate;
-            wxDateTime now = wxDateTime::Now();
-            LastGoodUpdateDate = now.Format( _T("%Y%m%d") );
+            QString LastGoodUpdateDate;
+            QDateTime now = QDateTime::currentDateTime();
+            LastGoodUpdateDate = now.toString("%Y%m%d");
             
-            bSuccess = !( oUpdateModule.Open( last_successful_update_file.mb_str(), TRUE ) == 0 );
+            bSuccess = !( oUpdateModule.Open( last_successful_update_file.toUtf8().data(), TRUE ) == 0 );
             
             if( bSuccess ) {
                 //      Get publish/update date
@@ -1154,30 +1135,34 @@ int Osenc::ingestCell( OGRS57DataSource *poS57DS, const wxString &FullPath000, c
                 
                 if( u ) {
                     if( strlen( u ) ) {
-                        LastGoodUpdateDate = wxString( u, wxConvUTF8 );
+                        LastGoodUpdateDate = QString::fromUtf8(u );
                     }
                 }
                 m_LastUpdateDate = LastGoodUpdateDate;
             }
             
             // Inform the user
-            wxString msg( _T("WARNING---ENC Update failed.  Last valid update file is:"));
-            msg +=  last_successful_update_file.mb_str();
-			ZCHX_LOGMSG(msg);
-            ZCHX_LOGMSG(_T("   This ENC exchange set should be updated and SENCs rebuilt.") );
+            qDebug("WARNING---ENC Update failed.  Last valid update file is:%s", last_successful_update_file.toUtf8().data());
+            qDebug("   This ENC exchange set should be updated and SENCs rebuilt." );
             
             
             if( !m_NoErrDialog ){
-                OCPNMessageBox(NULL, 
-                    _("S57 Cell Update failed.\nENC features may be incomplete or inaccurate.\n\nCheck the logfile for details."),
-                    _("OpenCPN Create SENC Warning"), wxOK | wxICON_EXCLAMATION, 30 );
+                QMessageBox box(QMessageBox::Warning, "OpenCPN Create SENC Warning",
+                                "S57 Cell Update failed.\nENC features may be incomplete or inaccurate.\n\nCheck the logfile for details.");
+                box.addButton("OK", QMessageBox::AcceptRole);
+                box.addButton("Cancel", QMessageBox::RejectRole);
+                box.exec();
             }
         }
         else{            // no updates applied.
-                if( !m_NoErrDialog )
-                    OCPNMessageBox(NULL, 
-                               _("S57 Cell Update failed.\nNo updates could be applied.\nENC features may be incomplete or inaccurate.\n\nCheck the logfile for details."),
-                               _("OpenCPN Create SENC Warning"), wxOK | wxICON_EXCLAMATION, 30 );
+            if( !m_NoErrDialog )
+            {
+                QMessageBox box(QMessageBox::Warning, "OpenCPN Create SENC Warning",
+                                "S57 Cell Update failed.\nNo updates could be applied.\nENC features may be incomplete or inaccurate.\n\nCheck the logfile for details.");
+                box.addButton("OK", QMessageBox::AcceptRole);
+                box.addButton("Cancel", QMessageBox::RejectRole);
+                box.exec();
+            }
         }
     }
     
@@ -1194,25 +1179,25 @@ int Osenc::ingestCell( OGRS57DataSource *poS57DS, const wxString &FullPath000, c
     poReader->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
     
-    wxRemoveFile(s0_file);
+    QFile::remove(s0_file);
     
     return 0;
 }
 
 
-int Osenc::ValidateAndCountUpdates( const wxFileName file000, const wxString CopyDir,
-                                    wxString &LastUpdateDate, bool b_copyfiles )
+int Osenc::ValidateAndCountUpdates( const QFileInfo& file000, const QString CopyDir,
+                                    QString &LastUpdateDate, bool b_copyfiles )
 {
     
     int retval = 0;
-    wxFileName last_up_added;
+    QString last_up_added;
     
-    //       wxString DirName000 = file000.GetPath((int)(wxPATH_GET_SEPARATOR | wxPATH_GET_VOLUME));
+    //       QString DirName000 = file000.GetPath((int)(wxPATH_GET_SEPARATOR | wxPATH_GET_VOLUME));
     //       wxDir dir(DirName000);
-    m_UpFiles = new wxArrayString;
+    m_UpFiles = new QStringList;
     retval = s57chart::GetUpdateFileArray( file000, m_UpFiles, m_date000, m_edtn000);
     
-    if( m_UpFiles->GetCount() ) {
+    if( m_UpFiles->count() ) {
         //      The s57reader of ogr requires that update set be sequentially complete
         //      to perform all the updates.  However, some NOAA ENC distributions are
         //      not complete, as apparently some interim updates have been  withdrawn.
@@ -1230,107 +1215,112 @@ int Osenc::ValidateAndCountUpdates( const wxFileName file000, const wxString Cop
             
             unsigned int jup = 0;
             for( int iff = 0; iff < retval + 1; iff++ ) {
-                wxString upFile;
-                wxString targetFile;
+                QString upFile;
+                QString targetFile;
                 
-                if(jup < m_UpFiles->GetCount())
-                    upFile = m_UpFiles->Item(jup);
-                wxFileName upCheck(upFile);
-                long tl = -1;
-                wxString text = upCheck.GetExt();
-                text.ToLong(&tl);
+                if(jup < m_UpFiles->count())
+                    upFile = m_UpFiles->at(jup);
+                QFileInfo upCheck(upFile);
+                QString text = upCheck.suffix();
+                long tl = text.toLong();
                 if(tl == iff){
                     targetFile = upFile;
                     jup++;              // used this one
                 }
                 else{
-                    targetFile = file000.GetFullName();         // ext will be updated
+                    targetFile = file000.filePath();         // ext will be updated
                 }
                 
-                wxFileName ufile( targetFile );
-                wxString sext;
-                sext.Printf( _T("%03d"), iff );
-                ufile.SetExt( sext );
+                //重新修改扩展名
+                QFile temp_file( targetFile );
+                QString sext;
+                sext.sprintf("%03d", iff );
+                QString newfile = targetFile;
+                int ext_index = newfile.lastIndexOf(".");
+                if(ext_index >= 0)
+                {
+                    QString old_ext = newfile.mid(ext_index+1);
+                    newfile.replace(ext_index+1, old_ext.size(), sext);
+                } else
+                {
+                    newfile.append(".").append(sext);
+                }
+                temp_file.rename(newfile);
+                QFileInfo ufile(newfile);
                 
                 //      Create the target update file name
-                wxString cp_ufile = CopyDir;
-                if( cp_ufile.Last() != ufile.GetPathSeparator() ) cp_ufile.Append(
-                    ufile.GetPathSeparator() );
+                QString cp_ufile = CopyDir;
+                if( cp_ufile.right(1) != QDir::separator() ) cp_ufile.append(QDir::separator());
+                cp_ufile.append( ufile.fileName() );
                 
-                cp_ufile.Append( ufile.GetFullName() );
-                
-                wxString tfile = ufile.GetFullPath();
+                QString tfile = ufile.absolutePath();
                 
                 //      Explicit check for a short update file, possibly left over from a crash...
-                int flen = 0;
-                if( ufile.FileExists() ) {
-                    wxFile uf( ufile.GetFullPath() );
-                    if( uf.IsOpened() ) {
-                        flen = uf.Length();
-                        uf.Close();
+                int flen = ufile.size();
+//                if( QFile::exists(ufile.absoluteFilePath())) {
+//                    wxFile uf( ufile.GetFullPath() );
+//                    if( uf.IsOpened() ) {
+//                        flen = uf.Length();
+//                        uf.Close();
+//                    }
+//                }
+                
+                if( QFile::exists(ufile.absoluteFilePath()) && ( flen > 25 ) )        // a valid update file or base file
+                {
+                    //      Copy the valid file to the SENC directory
+                    bool cpok = QFile::copy(ufile.absoluteFilePath(), cp_ufile );
+                    if( !cpok ) {
+                        QString msg("   Cannot copy temporary working ENC file ") ;
+                        msg.append( ufile.absoluteFilePath() );
+                        msg.append( (" to ") );
+                        msg.append( cp_ufile );
+                        qDebug(msg.toUtf8().data());
                     }
                 }
-                
-                if( ufile.FileExists() && ( flen > 25 ) )        // a valid update file or base file
-                        {
-                            //      Copy the valid file to the SENC directory
-                            bool cpok = wxCopyFile( ufile.GetFullPath(), cp_ufile );
-                            if( !cpok ) {
-                                wxString msg( _T("   Cannot copy temporary working ENC file ") );
-                                msg.Append( ufile.GetFullPath() );
-                                msg.Append( _T(" to ") );
-                                msg.Append( cp_ufile );
-								ZCHX_LOGMSG(msg);
-                            }
-                        }
-                        
-                        else {
-                            // Create a dummy ISO8211 file with no real content
-                            // Correct this.  We should break the walk, and notify the user  See FS#1406
-                            
-                            //                             if( !chain_broken_mssage_shown ){
-                                //                                 OCPNMessageBox(NULL, 
-                                //                                                _("S57 Cell Update chain incomplete.\nENC features may be incomplete or inaccurate.\nCheck the logfile for details."),
-                                //                                                _("OpenCPN Create SENC Warning"), wxOK | wxICON_EXCLAMATION, 30 );
-                                //                                                chain_broken_mssage_shown = true;
-                                //                             }
-                                
-                                wxString msg( _T("WARNING---ENC Update chain incomplete. Substituting NULL update file: "));
-                                msg += ufile.GetFullName();
-								ZCHX_LOGMSG(msg);
-                                ZCHX_LOGMSG(_T("   Subsequent ENC updates may produce errors.") );
-                                ZCHX_LOGMSG(_T("   This ENC exchange set should be updated and SENCs rebuilt.") );
-                                
-                                bool bstat;
-                                DDFModule dupdate;
-                                dupdate.Initialize( '3', 'L', 'E', '1', '0', "!!!", 3, 4, 4 );
-                                bstat = !( dupdate.Create( cp_ufile.mb_str() ) == 0 );
-                                dupdate.Close();
-                                
-                                if( !bstat ) {
-                                    wxString msg( _T("   Error creating dummy update file: ") );
-                                    msg.Append( cp_ufile );
-									ZCHX_LOGMSG(msg);
-                                }
-                        }
-                        
-                        m_tmpup_array.Add( cp_ufile );
-                        last_up_added = cp_ufile;
+
+                else {
+                    // Create a dummy ISO8211 file with no real content
+                    // Correct this.  We should break the walk, and notify the user  See FS#1406
+
+                    //                             if( !chain_broken_mssage_shown ){
+                    //                                 OCPNMessageBox(NULL,
+                    //                                                _("S57 Cell Update chain incomplete.\nENC features may be incomplete or inaccurate.\nCheck the logfile for details."),
+                    //                                                _("OpenCPN Create SENC Warning"), wxOK | wxICON_EXCLAMATION, 30 );
+                    //                                                chain_broken_mssage_shown = true;
+                    //                             }
+
+                    QString msg(("WARNING---ENC Update chain incomplete. Substituting NULL update file: "));
+                    msg += ufile.absoluteFilePath();
+                    qDebug(msg.toUtf8().data());
+                    qDebug(("   Subsequent ENC updates may produce errors.") );
+                    qDebug(("   This ENC exchange set should be updated and SENCs rebuilt.") );
+
+                    bool bstat;
+                    DDFModule dupdate;
+                    dupdate.Initialize( '3', 'L', 'E', '1', '0', "!!!", 3, 4, 4 );
+                    bstat = !( dupdate.Create( cp_ufile.toUtf8().data() ) == 0 );
+                    dupdate.Close();
+
+                    if( !bstat ) {
+                        QString msg(("   Error creating dummy update file: ") );
+                        msg.append( cp_ufile );
+                        qDebug(msg.toUtf8().data());
+                    }
+                }
+
+                m_tmpup_array.append(cp_ufile );
+                last_up_added = cp_ufile;
             }
         }
         
         //      Extract the date field from the last of the update files
         //      which is by definition a valid, present update file....
-        
-        wxFileName lastfile( last_up_added );
-        wxString last_sext;
-        last_sext.Printf( _T("%03d"), retval );
-        lastfile.SetExt( last_sext );
-        
+        QString last_file_path;
+        zchxFuncUtil::renameFileExt(last_file_path, last_up_added, QString("").sprintf("%03d", retval));
         bool bSuccess;
         DDFModule oUpdateModule;
         
-        bSuccess = !( oUpdateModule.Open( lastfile.GetFullPath().mb_str(), TRUE ) == 0 );
+        bSuccess = !( oUpdateModule.Open( last_file_path.toUtf8().data(), true ) == 0 );
         
         if( bSuccess ) {
             //      Get publish/update date
@@ -1344,11 +1334,11 @@ int Osenc::ValidateAndCountUpdates( const wxFileName file000, const wxString Cop
             
             if( u ) {
                 if( strlen( u ) ) {
-                    LastUpdateDate = wxString( u, wxConvUTF8 );
+                    LastUpdateDate = QString::fromUtf8( u );
                 }
             } else {
-                wxDateTime now = wxDateTime::Now();
-                LastUpdateDate = now.Format( _T("%Y%m%d") );
+                QDateTime now = QDateTime::currentDateTime();
+                LastUpdateDate = now.toString( ("%Y%m%d") );
             }
         }
     }
@@ -1356,11 +1346,11 @@ int Osenc::ValidateAndCountUpdates( const wxFileName file000, const wxString Cop
     return retval;
 }
 
-bool Osenc::GetBaseFileAttr( const wxString &FullPath000 )
+bool Osenc::GetBaseFileAttr( const QString &FullPath000 )
 {
     
     DDFModule oModule;
-    if( !oModule.Open( FullPath000.mb_str() ) ) {
+    if( !oModule.Open( FullPath000.toUtf8().data()) ) {
         return false;
     }
     
@@ -1375,32 +1365,30 @@ bool Osenc::GetBaseFileAttr( const wxString &FullPath000 )
     //    Fetch the Geo Feature Count, or something like it....
     m_nGeoRecords = pr->GetIntSubfield( "DSSI", 0, "NOGR", 0 );
     if( !m_nGeoRecords ) {
-        errorMessage = _T("GetBaseFileAttr:  DDFRecord 0 does not contain DSSI:NOGR ") ;
+        errorMessage = "GetBaseFileAttr:  DDFRecord 0 does not contain DSSI:NOGR " ;
         
         m_nGeoRecords = 1;                // backstop
     }
     
     //  Use ISDT(Issue Date) here, which is the same as UADT(Updates Applied) for .000 files
-    wxString date000;
+    QString date000;
     char *u = (char *) ( pr->GetStringSubfield( "DSID", 0, "ISDT", 0 ) );
-    if( u ) date000 = wxString( u, wxConvUTF8 );
+    if( u ) date000 = QString::fromUtf8(u);
     else {
-        errorMessage =  _T("GetBaseFileAttr:  DDFRecord 0 does not contain DSID:ISDT ");
-        
-        date000 = _T("20000101");             // backstop, very early, so any new files will update?
+        errorMessage =  ("GetBaseFileAttr:  DDFRecord 0 does not contain DSID:ISDT ");
+        date000 = ("20000101");             // backstop, very early, so any new files will update?
     }
-    m_date000.ParseFormat( date000, _T("%Y%m%d") );
-    if( !m_date000.IsValid() ) m_date000.ParseFormat( _T("20000101"), _T("%Y%m%d") );
+    m_date000 = QDateTime::fromString(date000, ("%Y%m%d") );
+    if( !m_date000.isValid() ) m_date000 = QDateTime::fromString("20000101", ("%Y%m%d") );
     
-    m_date000.ResetTime();
+//    m_date000.ResetTime();
     
     //    Fetch the EDTN(Edition) field
     u = (char *) ( pr->GetStringSubfield( "DSID", 0, "EDTN", 0 ) );
-    if( u ) m_edtn000 = wxString( u, wxConvUTF8 );
+    if( u ) m_edtn000 = QString::fromUtf8(u );
     else {
-        errorMessage =  _T("GetBaseFileAttr:  DDFRecord 0 does not contain DSID:EDTN ");
-        
-        m_edtn000 = _T("1");                // backstop
+        errorMessage =  ("GetBaseFileAttr:  DDFRecord 0 does not contain DSID:EDTN ");
+        m_edtn000 = ("1");                // backstop
     }
     
     //m_SE = m_edtn000;
@@ -1408,15 +1396,12 @@ bool Osenc::GetBaseFileAttr( const wxString &FullPath000 )
     //    Fetch the UPDN(Updates Applied) field
     u = (char *) ( pr->GetStringSubfield( "DSID", 0, "UPDN", 0 ) );
     if( u ){
-        long updn = 0;
-        wxString tmp_updn = wxString( u, wxConvUTF8 );
-        if(tmp_updn.ToLong(&updn))
-            m_UPDN = updn;
+        QString tmp_updn = QString::fromUtf8(u);
+        m_UPDN = tmp_updn.toLong();
         
     }
     else {
-        errorMessage =  _T("GetBaseFileAttr:  DDFRecord 0 does not contain DSID:UPDN ");
-        
+        errorMessage =  ("GetBaseFileAttr:  DDFRecord 0 does not contain DSID:UPDN ");
         m_UPDN = 0;                // backstop
     }
     
@@ -1429,8 +1414,7 @@ bool Osenc::GetBaseFileAttr( const wxString &FullPath000 )
         }
     }
     if( !m_native_scale ) {
-        errorMessage = _T("GetBaseFileAttr:  ENC not contain DSPM:CSCL ");
-        
+        errorMessage = ("GetBaseFileAttr:  ENC not contain DSPM:CSCL ");
         m_native_scale = 1000;                // backstop
     }
 
@@ -1443,7 +1427,7 @@ bool Osenc::GetBaseFileAttr( const wxString &FullPath000 )
 //---------------------------------------------------------------------------------------------------
 /*
  *      OpenCPN OSENC Version 2 Implementation
- */ 
+ */
 //---------------------------------------------------------------------------------------------------
 
 
@@ -1451,7 +1435,7 @@ bool Osenc::GetBaseFileAttr( const wxString &FullPath000 )
 
 
 
-int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileName, bool b_showProg)
+int Osenc::createSenc200(const QString& FullPath000, const QString& SENCFileName, bool b_showProg)
 {
     lockCR.lock();
 
@@ -1461,20 +1445,21 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
     
     if(!m_poRegistrar){
         m_poRegistrar = new S57ClassRegistrar();
-        m_poRegistrar->LoadInfo( g_csv_locn.mb_str(), FALSE );
+        m_poRegistrar->LoadInfo( g_csv_locn.toUtf8().data(), false );
         m_bPrivateRegistrar = true;
         //errorMessage = _T("S57 Registrar not set.");
         //return ERROR_REGISTRAR_NOT_SET;
     }
- 
-    wxFileName SENCfile = wxFileName( SENCFileName );
-    wxFileName file000 = wxFileName( FullPath000 );
+
+    QFileInfo SENCfile( SENCFileName );
+    QFileInfo file000( FullPath000 );
     
     
     //      Make the target directory if needed
-    if( true != SENCfile.DirExists( SENCfile.GetPath() ) ) {
-        if( !SENCfile.Mkdir( SENCfile.GetPath() ) ) {
-            errorMessage = _T("Cannot create SENC file directory for ") + SENCfile.GetFullPath();
+    QDir dir(SENCfile.absolutePath());
+    if( true != dir.exists()) {
+        if( !dir.mkpath(dir.path()) ) {
+            errorMessage.sprintf("Cannot create SENC file directory for %s ", dir.path().toUtf8().data());
             lockCR.unlock();
             return ERROR_CANNOT_CREATE_SENC_DIR;
         }
@@ -1482,19 +1467,7 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
     
     
     //          Make a temp file to create the SENC in
-    wxFileName tfn;
-    wxString tmp_file = tfn.CreateTempFileName( _T("") );
-    
-//     FILE *fps57;
-//     const char *pp = "wb";
-//     fps57 = fopen( tmp_file.mb_str(), pp );
-//     
-//     if( fps57 == NULL ) {
-//         errorMessage = _T("Unable to create temp SENC file: ");
-//         errorMessage.Append( tfn.GetFullPath() );
-//         return ERROR_CANNOT_CREATE_TEMP_SENC_FILE;
-//     }
-
+    QString tmp_file = QString::number(QDateTime::currentMSecsSinceEpoch());
     if(m_pauxOutstream){
         m_pOutstream = m_pauxOutstream;
     }
@@ -1505,8 +1478,7 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
     Osenc_outstream *stream = m_pOutstream;
     
     if( !stream->Open( tmp_file) ) {
-        errorMessage = _T("Unable to create temp SENC file: ");
-        errorMessage += tmp_file;
+        errorMessage.sprintf("Unable to create temp SENC file: %s", tmp_file.toUtf8().data());
         lockCR.unlock();
         return ERROR_CANNOT_CREATE_TEMP_SENC_FILE;
     }
@@ -1525,8 +1497,8 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
     
     //  Ingest the .000 cell, with updates applied
     
-    if(ingestCell( poS57DS, FullPath000, SENCfile.GetPath())){
-        errorMessage = _T("Error ingesting: ") + FullPath000;
+    if(ingestCell( poS57DS, FullPath000, SENCfile.absolutePath())){
+        errorMessage.sprintf("Error ingesting: %s", FullPath000.toUtf8().data());
         lockCR.unlock();
         return ERROR_INGESTING000;
     }
@@ -1539,7 +1511,7 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
         return ERROR_SENCFILE_ABORT;
     }
 
-   
+
     //  Establish a common reference point for the chart, from the extent
     m_ref_lat = ( m_extent.NLAT + m_extent.SLAT ) / 2.;
     m_ref_lon = ( m_extent.WLON + m_extent.ELON ) / 2.;
@@ -1553,12 +1525,12 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
     //fprintf( fps57, "SENC Version= %d\n", 200 );
     
     // The chart cell "nice name"
-    wxString nice_name;
+    QString nice_name;
     s57chart::GetChartNameFromTXT( FullPath000, nice_name );
     
     string sname = "UTF8Error";
-    wxCharBuffer buffer=nice_name.ToUTF8();
-    if(buffer.data()) 
+    QByteArray buffer= QString::fromStdString(sname).toUtf8();
+    if(buffer.data())
         sname = buffer.data();
 
     if( !WriteHeaderRecord200( stream, HEADER_SENC_VERSION, (uint16_t)m_senc_file_create_version) ){
@@ -1573,8 +1545,8 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
         return ERROR_SENCFILE_ABORT;
     }
     
-    wxString date000 = m_date000.Format( _T("%Y%m%d") );
-    string sdata = date000.ToStdString();
+    QString date000 = m_date000.toString( "%Y%m%d" );
+    string sdata = date000.toStdString();
     if( !WriteHeaderRecord200( stream, HEADER_CELL_PUBLISHDATE, sdata) ){
         stream->Close();
         lockCR.unlock();
@@ -1582,15 +1554,14 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
     }
 
     
-    long n000 = 0;
-    m_edtn000.ToLong( &n000 );
+    long n000 = m_edtn000.toLong( );
     if( !WriteHeaderRecord200( stream, HEADER_CELL_EDITION, (uint16_t)n000) ){
         stream->Close();
         lockCR.unlock();
         return ERROR_SENCFILE_ABORT;
     }
     
-    sdata = m_LastUpdateDate.ToStdString();
+    sdata = m_LastUpdateDate.toStdString();
     if( !WriteHeaderRecord200( stream, HEADER_CELL_UPDATEDATE, sdata) ){
         stream->Close();
         lockCR.unlock();
@@ -1610,16 +1581,16 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
         return ERROR_SENCFILE_ABORT;
     }
     
-    wxDateTime now = wxDateTime::Now();
-    wxString dateNow = now.Format( _T("%Y%m%d") );
-    sdata = dateNow.ToStdString();
+    QDateTime now = QDateTime::currentDateTime();
+    QString dateNow = now.toString("%Y%m%d");
+    sdata = dateNow.toStdString();
     if( !WriteHeaderRecord200( stream, HEADER_CELL_SENCCREATEDATE, sdata) ){
         stream->Close();
         lockCR.unlock();
         return ERROR_SENCFILE_ABORT;
     }
     
- 
+
     //  Write the Coverage table Records
     if(!CreateCovrRecords(stream)){
         stream->Close();
@@ -1627,7 +1598,7 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
         return ERROR_SENCFILE_ABORT;
     }
     
- 
+
 
     poReader->Rewind();
     
@@ -1646,11 +1617,11 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
         pEdgeVectorRecordFeature = poReader->ReadVector( feid, RCNM_VE );
     }
     
-    wxString Message = SENCfile.GetFullPath();
-    Message.Append( _T("...Ingesting") );
+    QString Message = SENCfile.absoluteFilePath();
+    Message.append( "...Ingesting" );
     
-    wxString Title( _("OpenCPN S57 SENC File Create...") );
-    Title.append( SENCfile.GetFullPath() );
+    QString Title( "OpenCPN S57 SENC File Create..." );
+    Title.append( SENCfile.absoluteFilePath() );
     
 #if wxUSE_PROGRESSDLG
     
@@ -1689,8 +1660,8 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
             {
                 progsw.Start();
                 
-                wxString sobj = wxString( objectDef->GetDefnRef()->GetName(), wxConvUTF8 );
-                sobj.Append( wxString::Format( _T("  %d/%d       "), iObj, nProg ) );
+                QString sobj = QString( objectDef->GetDefnRef()->GetName(), wxConvUTF8 );
+                sobj.Append( QString::Format( _T("  %d/%d       "), iObj, nProg ) );
                 
                 bcont = m_ProgDialog->Update( iObj, sobj );
 #if defined(__WXMSW__) || defined(__WXOSX__)
@@ -1711,12 +1682,12 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
                 geoType = objectDef->GetGeometryRef()->getGeometryType();
             
             //      n.b  This next line causes skip of C_AGGR features w/o geometry
-                if( geoType != wkbUnknown ){                             // Write only if has wkbGeometry
-                    CreateSENCRecord200( objectDef, stream, 1, poReader );
-                }
-                
-                delete objectDef;
-                
+            if( geoType != wkbUnknown ){                             // Write only if has wkbGeometry
+                CreateSENCRecord200( objectDef, stream, 1, poReader );
+            }
+
+            delete objectDef;
+
         } else
             break;
         
@@ -1736,24 +1707,25 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
     
     //  Delete any temporary (working) real and dummy update files,
     //  as well as .000 file created by ValidateAndCountUpdates()
-    for( unsigned int iff = 0; iff < m_tmpup_array.GetCount(); iff++ )
-        remove( m_tmpup_array[iff].mb_str() );
+    for( unsigned int iff = 0; iff < m_tmpup_array.count(); iff++ )
+        remove( m_tmpup_array[iff].toUtf8().data() );
     
     int ret_code = 0;
     
     if( !bcont )                // aborted
     {
-        wxRemoveFile( tmp_file );                     // kill the temp file
+        QFile::remove( tmp_file );                     // kill the temp file
         ret_code = ERROR_SENCFILE_ABORT;
     }
     
     if( bcont ) {
-        bool cpok = wxRenameFile( tmp_file, SENCfile.GetFullPath() );
+        QFile file(tmp_file);
+        bool cpok = file.rename(SENCfile.absoluteFilePath() );
         if( !cpok ) {
-            errorMessage =  _T("   Cannot rename temporary SENC file ");
-            errorMessage.Append( tmp_file );
-            errorMessage.Append( _T(" to ") );
-            errorMessage.Append( SENCfile.GetFullPath() );
+            errorMessage = ("   Cannot rename temporary SENC file ");
+            errorMessage.append( tmp_file );
+            errorMessage.append( (" to ") );
+            errorMessage.append( SENCfile.absoluteFilePath() );
             ret_code = ERROR_SENCFILE_ABORT;
         } else
             ret_code = SENC_NO_ERROR;
@@ -1764,10 +1736,10 @@ int Osenc::createSenc200(const wxString& FullPath000, const wxString& SENCFileNa
 #endif    
     
     lockCR.unlock();
-   
+
     return ret_code;
- 
-   
+
+
 }
 
 bool Osenc::CreateCovrRecords(Osenc_outstream *stream)
@@ -1810,12 +1782,12 @@ bool Osenc::CreateCovrRecords(Osenc_outstream *stream)
         targetCount = sizeof(uint32_t);
         if(!stream->Write(&nPoints , targetCount).IsOk())
             return false;
-            
+
         //  Write the point array
         targetCount = nPoints * 2 * sizeof(float);
         if(!stream->Write(fpbuf , targetCount).IsOk())
             return false;
-            
+
     }
 
     for(int i=0 ; i < m_nNoCOVREntries ; i++){
@@ -1843,9 +1815,9 @@ bool Osenc::CreateCovrRecords(Osenc_outstream *stream)
         targetCount = nPoints * 2 * sizeof(float);
         if(!stream->Write(fpbuf, targetCount).IsOk())
             return false;
-                
+
     }
-   
+
     return true;
 }
 
@@ -1910,12 +1882,12 @@ bool Osenc::WriteHeaderRecord200( Osenc_outstream *stream, int recordType, uint3
     size_t targetCount = recordLength;
     if(!stream->Write(pBuffer, targetCount).IsOk())
         return false;
-    else 
+    else
         return true;
 }
 
 bool Osenc::WriteFIDRecord200( Osenc_outstream *stream, int nOBJL, int featureID, int prim){
-   
+
     
     OSENC_Feature_Identification_Record_Base record;
     memset(&record, 0, sizeof(record));
@@ -1990,7 +1962,7 @@ bool Osenc::CreateMultiPointFeatureGeometryRecord200( OGRFeature *pFeature, Osen
         double easting, northing;
         toSM( lat, lon, m_ref_lat, m_ref_lon, &easting, &northing );
         
-        #ifdef __ARM_ARCH
+#ifdef __ARM_ARCH
         float east = easting;
         float north = northing;
         float deep = depth;
@@ -1998,11 +1970,11 @@ bool Osenc::CreateMultiPointFeatureGeometryRecord200( OGRFeature *pFeature, Osen
         memcpy(pdf++, &north, sizeof(float));
         memcpy(pdf++, &deep, sizeof(float));
         
-        #else                    
+#else
         *pdf++ = easting;
         *pdf++ = northing;
         *pdf++ = (float) depth;
-        #endif
+#endif
         
         //  Keep a running calculation of min/max
         lonmax = fmax(lon, lonmax);
@@ -2017,7 +1989,7 @@ bool Osenc::CreateMultiPointFeatureGeometryRecord200( OGRFeature *pFeature, Osen
     OSENC_MultipointGeometry_Record_Base record;
     record.record_type = FEATURE_GEOMETRY_RECORD_MULTIPOINT;
     record.record_length = sizeof(OSENC_MultipointGeometry_Record_Base) +
-                            (nPoints * 3 * sizeof(float) );
+            (nPoints * 3 * sizeof(float) );
     record.extent_e_lon = lonmax;
     record.extent_w_lon = lonmin;
     record.extent_n_lat = latmax;
@@ -2058,7 +2030,7 @@ bool Osenc::CreateLineFeatureGeometryRecord200( S57Reader *poReader, OGRFeature 
     
     
     //  Capture a buffer of the raw geometry
-                    
+
     int sb_len = ( ( wkb_len - 9 ) / 2 ) + 9 + 16;  // data will be 4 byte float, not double
     
     unsigned char *psb_buffer = (unsigned char *) malloc( sb_len );
@@ -2081,37 +2053,37 @@ bool Osenc::CreateLineFeatureGeometryRecord200( S57Reader *poReader, OGRFeature 
     float latmin = 1000;
     
     for( int i = 0; i < ip; i++ ){                           // convert doubles to floats
-                                                         // computing bbox as we go
+        // computing bbox as we go
         float lon, lat;
         double easting, northing;
-    #ifdef __ARM_ARCH
+#ifdef __ARM_ARCH
         double east_d, north_d;
         memcpy(&east_d, psd++, sizeof(double));
         memcpy(&north_d, psd++, sizeof(double));
         lon = east_d;
         lat = north_d;
-    
-    //  Calculate SM from chart common reference point
+
+        //  Calculate SM from chart common reference point
         toSM( lat, lon, m_ref_lat, m_ref_lon, &easting, &northing );
         memcpy(pdf++, &easting, sizeof(float));
         memcpy(pdf++, &northing, sizeof(float));
-    
-    #else                    
+
+#else
         lon = (float) *psd++;
         lat = (float) *psd++;
-    
-    //  Calculate SM from chart common reference point
+
+        //  Calculate SM from chart common reference point
         toSM( lat, lon, m_ref_lat, m_ref_lon, &easting, &northing );
-    
+
         *pdf++ = easting;
         *pdf++ = northing;
-    #endif
+#endif
         
         lonmax = fmax(lon, lonmax);
         lonmin = fmin(lon, lonmin);
         latmax = fmax(lat, latmax);
         latmin = fmin(lat, latmin);
-    
+
     }
 
     int nEdgeVectorRecords = 0;
@@ -2128,8 +2100,8 @@ bool Osenc::CreateLineFeatureGeometryRecord200( S57Reader *poReader, OGRFeature 
     pNAME_RCID = (int *) pFeature->GetFieldAsIntegerList( "NAME_RCID", &nEdgeVectorRecords );
     pORNT = (int *) pFeature->GetFieldAsIntegerList( "ORNT", NULL );
 
-//fprintf( fpOut, "LSINDEXLIST %d\n", nEdgeVectorRecords );
-//                    fwrite(pNAME_RCID, 1, nEdgeVectorRecords * sizeof(int), fpOut);
+    //fprintf( fpOut, "LSINDEXLIST %d\n", nEdgeVectorRecords );
+    //                    fwrite(pNAME_RCID, 1, nEdgeVectorRecords * sizeof(int), fpOut);
 
 
     
@@ -2143,7 +2115,7 @@ bool Osenc::CreateLineFeatureGeometryRecord200( S57Reader *poReader, OGRFeature 
     papszReaderOptions = CSLSetNameValue( papszReaderOptions, S57O_RETURN_PRIMITIVES,"ON" );
     poReader->SetOptions( papszReaderOptions );
 
-//    Capture the beginning and end point connected nodes for each edge vector record
+    //    Capture the beginning and end point connected nodes for each edge vector record
     for( int i = 0; i < nEdgeVectorRecords; i++ ) {
         
         int *pI = (int *)pvRun;
@@ -2153,15 +2125,15 @@ bool Osenc::CreateLineFeatureGeometryRecord200( S57Reader *poReader, OGRFeature 
         int start_rcid, end_rcid;
         int target_record_feid = m_vector_helper_hash[pNAME_RCID[i]];
         pEdgeVectorRecordFeature = poReader->ReadVector( target_record_feid, RCNM_VE );
-    
+
         if( NULL != pEdgeVectorRecordFeature ) {
             start_rcid = pEdgeVectorRecordFeature->GetFieldAsInteger( "NAME_RCID_0" );
             end_rcid = pEdgeVectorRecordFeature->GetFieldAsInteger( "NAME_RCID_1" );
-        
-        //    Make sure the start and end points exist....
-        //    Note this poReader method was converted to Public access to
-        //     facilitate this test.  There might be another clean way....
-        //    Problem first found on Holand ENC 1R5YM009.000
+
+            //    Make sure the start and end points exist....
+            //    Note this poReader method was converted to Public access to
+            //     facilitate this test.  There might be another clean way....
+            //    Problem first found on Holand ENC 1R5YM009.000
             if( !poReader->FetchPoint( RCNM_VC, start_rcid, NULL, NULL, NULL, NULL ) )
                 start_rcid = -1;
             if( !poReader->FetchPoint( RCNM_VC, end_rcid, NULL, NULL, NULL, NULL ) )
@@ -2170,8 +2142,8 @@ bool Osenc::CreateLineFeatureGeometryRecord200( S57Reader *poReader, OGRFeature 
             OGRLineString *poLS = (OGRLineString *)pEdgeVectorRecordFeature->GetGeometryRef();
             
             int edge_ornt = 1;
-        
-             if( edge_ornt == 1 ){                                    // forward
+
+            if( edge_ornt == 1 ){                                    // forward
                 *pI++ = start_rcid;
                 *pI++ = edge_rcid;
                 *pI++ = end_rcid;
@@ -2185,7 +2157,7 @@ bool Osenc::CreateLineFeatureGeometryRecord200( S57Reader *poReader, OGRFeature 
         } else {
             start_rcid = -1;                                    // error indication
             end_rcid = -2;
-    
+
             *pI++ = start_rcid;
             *pI++ = edge_rcid;
             *pI++ = end_rcid;
@@ -2195,7 +2167,7 @@ bool Osenc::CreateLineFeatureGeometryRecord200( S57Reader *poReader, OGRFeature 
     }
 
 
-        //  Reset the options
+    //  Reset the options
     papszReaderOptions = CSLSetNameValue( papszReaderOptions, S57O_RETURN_PRIMITIVES,"OFF" );
     poReader->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
@@ -2206,7 +2178,7 @@ bool Osenc::CreateLineFeatureGeometryRecord200( S57Reader *poReader, OGRFeature 
     OSENC_LineGeometry_Record_Base record;
     record.record_type = FEATURE_GEOMETRY_RECORD_LINE;
     record.record_length = sizeof(OSENC_LineGeometry_Record_Base) +
-                            (nEdgeVectorRecords * 3 * sizeof(int) );
+            (nEdgeVectorRecords * 3 * sizeof(int) );
     record.extent_e_lon = lonmax;
     record.extent_w_lon = lonmin;
     record.extent_n_lat = latmax;
@@ -2231,7 +2203,7 @@ bool Osenc::CreateLineFeatureGeometryRecord200( S57Reader *poReader, OGRFeature 
     return true;
 }
 
-    
+
 
 
 
@@ -2250,11 +2222,11 @@ bool Osenc::CreateAreaFeatureGeometryRecord200(S57Reader *poReader, OGRFeature *
     lockCR.unlock();
     ppg = new PolyTessGeo( poly, true, m_ref_lat, m_ref_lon, m_LOD_meters );
     lockCR.lock();
-   
+
     error_code = ppg->ErrorCode;
     
     if( error_code ){
-        ZCHX_LOGMSG( wxString::Format(_T("   Warning: S57 SENC Geometry Error %d, Some Features ignored."), ppg->ErrorCode) );
+        qDebug("   Warning: S57 SENC Geometry Error %d, Some Features ignored.", ppg->ErrorCode );
         delete ppg;
         
         return false;
@@ -2294,7 +2266,7 @@ bool Osenc::CreateAreaFeatureGeometryRecord200(S57Reader *poReader, OGRFeature *
     //  This could be a large array, and we don't want to use a buffer.
     //  Rather, we want to write directly to the output file.
     
-    //  So, we 
+    //  So, we
     //  a  walk the TriPrim chain once to get it's length,
     //  b update the total record length,
     //  c write everything before the TriPrim chain,
@@ -2304,12 +2276,12 @@ bool Osenc::CreateAreaFeatureGeometryRecord200(S57Reader *poReader, OGRFeature *
     int geoLength = 0;
     
     TriPrim *pTP = ppg->Get_PolyTriGroup_head()->tri_prim_head;         // head of linked list of TriPrims
-  
+
     int n_TriPrims = 0;
     while(pTP)
     {
         geoLength += sizeof(uint8_t) + sizeof(uint32_t);              // type, nvert
-        geoLength += pTP->nVert * 2 * sizeof(float);                  // vertices  
+        geoLength += pTP->nVert * 2 * sizeof(float);                  // vertices
         geoLength += 4 * sizeof(double);                              // Primitive bounding box
         pTP = pTP->p_next;
         
@@ -2318,13 +2290,13 @@ bool Osenc::CreateAreaFeatureGeometryRecord200(S57Reader *poReader, OGRFeature *
     
     baseRecord.triprim_count = n_TriPrims;                            //  Set the number of TriPrims
     
- 
+
     int nEdgeVectorRecords = 0;
     unsigned char *pvec_buffer = getObjectVectorIndexTable( poReader, pFeature, nEdgeVectorRecords );
     
 #if 0    
-     //  Create the Vector Edge Index table into a memory buffer
-     //  This buffer will follow the triangle buffer in the output stream
+    //  Create the Vector Edge Index table into a memory buffer
+    //  This buffer will follow the triangle buffer in the output stream
     int *pNAME_RCID;
     int *pORNT;
     int nEdgeVectorRecords;
@@ -2431,10 +2403,10 @@ bool Osenc::CreateAreaFeatureGeometryRecord200(S57Reader *poReader, OGRFeature *
         if(!stream->Write(&pTP->nVert, sizeof(uint32_t)).IsOk())
             return false;
         
-//         fwrite (&pTP->minxt , sizeof(double), 1, fpOut);
-//         fwrite (&pTP->maxxt , sizeof(double), 1, fpOut);
-//         fwrite (&pTP->minyt , sizeof(double), 1, fpOut);
-//         fwrite (&pTP->maxyt , sizeof(double), 1, fpOut);
+        //         fwrite (&pTP->minxt , sizeof(double), 1, fpOut);
+        //         fwrite (&pTP->maxxt , sizeof(double), 1, fpOut);
+        //         fwrite (&pTP->minyt , sizeof(double), 1, fpOut);
+        //         fwrite (&pTP->maxyt , sizeof(double), 1, fpOut);
 
         double minlat, minlon, maxlat, maxlon;
         minlat = pTP->tri_box.GetMinLat();
@@ -2453,15 +2425,15 @@ bool Osenc::CreateAreaFeatureGeometryRecord200(S57Reader *poReader, OGRFeature *
             return false;
         
         // Testing TODO
-//         float *pf = (float *)pTP->p_vertex;
-//         float a = *pf++;
-//         float b = *pf;
+        //         float *pf = (float *)pTP->p_vertex;
+        //         float a = *pf++;
+        //         float b = *pf;
         
 
-            if(!stream->Write(pTP->p_vertex, pTP->nVert * 2 * sizeof(float)).IsOk())
+        if(!stream->Write(pTP->p_vertex, pTP->nVert * 2 * sizeof(float)).IsOk())
             return false;
-            
-            
+
+
         pTP = pTP->p_next;
     }
     
@@ -2562,7 +2534,7 @@ unsigned char *Osenc::getObjectVectorIndexTable( S57Reader *poReader, OGRFeature
     papszReaderOptions = CSLSetNameValue( papszReaderOptions, S57O_RETURN_PRIMITIVES,"OFF" );
     poReader->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
- 
+
     return pvec_buffer;
     
 }
@@ -2607,17 +2579,17 @@ void Osenc::CreateSENCVectorEdgeTableRecord200( Osenc_outstream *stream, S57Read
             int new_size = payloadSize + (2 * sizeof(int));
             pPayload = (uint8_t *)realloc(pPayload, new_size );
             pRun = pPayload + payloadSize;                   //  recalculate the running pointer,
-                                                        //  since realloc may have moved memory
+            //  since realloc may have moved memory
             payloadSize = new_size;
-        
-        //  Fetch and store the Record ID
+
+            //  Fetch and store the Record ID
             int record_id = pEdgeVectorRecordFeature->GetFieldAsInteger( "RCID" );
             *(int*)pRun = record_id;
             pRun += sizeof(int);
-        
-       
-        //  Transcribe points to a buffer
-        
+
+
+            //  Transcribe points to a buffer
+
             double *ppd = (double *)malloc(nPoints * 2 *sizeof(double));
             double *ppr = ppd;
             
@@ -2661,12 +2633,12 @@ void Osenc::CreateSENCVectorEdgeTableRecord200( Osenc_outstream *stream, S57Read
             int new_size_red = payloadSize + (nPointReduced* 2 * sizeof(float)) ;
             pPayload = (uint8_t *)realloc(pPayload, new_size_red );
             pRun = pPayload + payloadSize;              //  recalculate the running pointer,
-                                                        //  since realloc may have moved memory
+            //  since realloc may have moved memory
             payloadSize = new_size_red;
             
             float *npp = (float *)pRun;
             float *npp_run = npp;
-            ppr = ppd;  
+            ppr = ppd;
             for(int ip = 0 ; ip < nPoints ; ip++)
             {
                 double x = *ppr++;
@@ -2681,7 +2653,7 @@ void Osenc::CreateSENCVectorEdgeTableRecord200( Osenc_outstream *stream, S57Read
                     }
                 }
             }
-    
+
             nFeatures++;
             
             free( ppd );
@@ -2710,7 +2682,7 @@ void Osenc::CreateSENCVectorEdgeTableRecord200( Osenc_outstream *stream, S57Read
         
         //  Write out the payload
         stream->Write(pPayload, payloadSize);
-    
+
     }
     //  All done with buffer
     free(pPayload);
@@ -2737,7 +2709,7 @@ void Osenc::CreateSENCVectorConnectedTableRecord200( Osenc_outstream *stream, S5
     papszReaderOptions = CSLSetNameValue( papszReaderOptions, S57O_RETURN_LINKAGES, "ON" );
     papszReaderOptions = CSLSetNameValue( papszReaderOptions, S57O_RETURN_PRIMITIVES, "ON" );
     poReader->SetOptions( papszReaderOptions );
- 
+
     
     int feid = 0;
     OGRPoint *pP;
@@ -2748,7 +2720,7 @@ void Osenc::CreateSENCVectorConnectedTableRecord200( Osenc_outstream *stream, S5
     //  Read all the ConnectedVector Features
     while( NULL != pConnNodeRecordFeature ) {
         
-         
+
         if( pConnNodeRecordFeature->GetGeometryRef() != NULL ) {
             pGeo = pConnNodeRecordFeature->GetGeometryRef();
             if( pGeo->getGeometryType() == wkbPoint ) {
@@ -2757,7 +2729,7 @@ void Osenc::CreateSENCVectorConnectedTableRecord200( Osenc_outstream *stream, S5
                 int new_size = payloadSize + sizeof(int) + (2 * sizeof(float));
                 pPayload = (uint8_t *)realloc(pPayload, new_size );
                 pRun = pPayload + payloadSize;                   //  recalculate the running pointer,
-                                                                 //  since realloc may have moved memory
+                //  since realloc may have moved memory
                 payloadSize = new_size;
                 
                 //  Fetch and store the Record ID
@@ -2773,10 +2745,10 @@ void Osenc::CreateSENCVectorConnectedTableRecord200( Osenc_outstream *stream, S5
                 double easting, northing;
                 toSM( pP->getY(), pP->getX(), m_ref_lat, m_ref_lon, &easting, &northing );
                 
-//                 MyPoint pd;
-//                 pd.x = easting;
-//                 pd.y = northing;
-//                 memcpy(pRun, &pd, sizeof(MyPoint));
+                //                 MyPoint pd;
+                //                 pd.x = easting;
+                //                 pd.y = northing;
+                //                 memcpy(pRun, &pd, sizeof(MyPoint));
                 float *ps = (float *)pRun;
                 *ps++ = easting;
                 *ps = northing;
@@ -2796,7 +2768,7 @@ void Osenc::CreateSENCVectorConnectedTableRecord200( Osenc_outstream *stream, S5
     //  Now write the record out
     if(featureCount){
         OSENC_VCT_Record record;
-    
+
         record.record_type = VECTOR_CONNECTED_NODE_TABLE_RECORD;
         record.record_length = sizeof(OSENC_VCT_Record_Base) + payloadSize + sizeof(int);
         
@@ -2826,12 +2798,12 @@ void Osenc::CreateSENCVectorConnectedTableRecord200( Osenc_outstream *stream, S5
 bool Osenc::CreateSENCRecord200( OGRFeature *pFeature, Osenc_outstream *stream, int mode, S57Reader *poReader )
 {
     //TODO
-//    if(pFeature->GetFID() == 207)
-//        int yyp = 4;
+    //    if(pFeature->GetFID() == 207)
+    //        int yyp = 4;
     
     //  Create the Feature Identification Record
     
-    // Fetch the S57 Standard Object Class identifier    
+    // Fetch the S57 Standard Object Class identifier
     OGRFeatureDefn *pFD = pFeature->GetDefnRef();
     int nOBJL = pFD->GetOBJL();
     
@@ -2840,41 +2812,41 @@ bool Osenc::CreateSENCRecord200( OGRFeature *pFeature, Osenc_outstream *stream, 
     
     int primitive = 0;
     switch(gType){
-        
-        case wkbLineString:
-            primitive = GEO_LINE;
-            break;
-        case wkbPoint:
-            primitive = GEO_POINT;
-            break;
-        case wkbPolygon:
-            primitive = GEO_AREA;
-            break;
-        default:
-            primitive = 0;
+
+    case wkbLineString:
+        primitive = GEO_LINE;
+        break;
+    case wkbPoint:
+        primitive = GEO_POINT;
+        break;
+    case wkbPolygon:
+        primitive = GEO_AREA;
+        break;
+    default:
+        primitive = 0;
     }
     
 
     if(!WriteFIDRecord200( stream, nOBJL, pFeature->GetFID(), primitive) )
         return false;
-        
+
     
-    #define MAX_HDR_LINE    400
+#define MAX_HDR_LINE    400
     
-//    char line[MAX_HDR_LINE + 1];
-    wxString sheader;
+    //    char line[MAX_HDR_LINE + 1];
+    QString sheader;
     
-//    fprintf( fpOut, "OGRFeature(%s):%ld\n", pFeature->GetDefnRef()->GetName(), pFeature->GetFID() );
+    //    fprintf( fpOut, "OGRFeature(%s):%ld\n", pFeature->GetDefnRef()->GetName(), pFeature->GetFID() );
     
     //  In a loop, fetch attributes, and create OSENC Feature Attribute Records
     //  In the interests of output file size, DO NOT report fields that are not set.
 
     //TODO Debugging
-//     if(!strncmp(pFeature->GetDefnRef()->GetName(), "BOYLAT", 6))
-//         int yyp = 4;
+    //     if(!strncmp(pFeature->GetDefnRef()->GetName(), "BOYLAT", 6))
+    //         int yyp = 4;
     
-     if(pFeature->GetFID() == 290)
-         int yyp = 4;
+    if(pFeature->GetFID() == 290)
+        int yyp = 4;
     
     int payloadLength = 0;
     void *payloadBuffer = NULL;
@@ -2905,333 +2877,325 @@ bool Osenc::CreateSENCRecord200( OGRFeature *pFeature, Osenc_outstream *stream, 
                 
 #if 0                
                 /** Simple 32bit integer */                   OFTInteger = 0,
-                /** List of 32bit integers */                 OFTIntegerList = 1,
-                /** Double Precision floating point */        OFTReal = 2,
-                /** List of doubles */                        OFTRealList = 3,
-                /** String of ASCII chars */                  OFTString = 4,
-                /** Array of strings */                       OFTStringList = 5,
-                /** Double byte string (unsupported) */       OFTWideString = 6,
-                /** List of wide strings (unsupported) */     OFTWideStringList = 7,
-                /** Raw Binary data (unsupported) */          OFTBinary = 8
-#endif
-                switch(OGRvalueType){
-                    case 0:             // Single integer
-                    {
+                        /** List of 32bit integers */                 OFTIntegerList = 1,
+                        /** Double Precision floating point */        OFTReal = 2,
+                        /** List of doubles */                        OFTRealList = 3,
+                        /** String of ASCII chars */                  OFTString = 4,
+                        /** Array of strings */                       OFTStringList = 5,
+                        /** Double byte string (unsupported) */       OFTWideString = 6,
+                        /** List of wide strings (unsupported) */     OFTWideStringList = 7,
+                        /** Raw Binary data (unsupported) */          OFTBinary = 8
+        #endif
+                        switch(OGRvalueType){
+                        case 0:             // Single integer
+                {
                         valueType = OGRvalueType;
                         
                         if(payloadBufferLength < 4){
-                            payloadBuffer = realloc(payloadBuffer, 4);
-                            payloadBufferLength = 4;
-                        }
+                        payloadBuffer = realloc(payloadBuffer, 4);
+                        payloadBufferLength = 4;
+            }
                         
                         int aValue = pFeature->GetFieldAsInteger( iField );
                         memcpy(payloadBuffer, &aValue, sizeof(int) );
                         payloadLength = sizeof(int);
                         
                         break;
-                    }   
-                    case 1:             // Integer list
-                    {
+            }
+                        case 1:             // Integer list
+                {
                         valueType = OGRvalueType;
                         
                         int nCount = 0;
                         const int *aValueList = pFeature->GetFieldAsIntegerList( iField, &nCount );
 
                         if(payloadBufferLength < nCount * sizeof(int)){
-                            payloadBuffer = realloc(payloadBuffer, nCount * sizeof(int));
-                            payloadBufferLength = nCount * sizeof(int);
-                        }
+                        payloadBuffer = realloc(payloadBuffer, nCount * sizeof(int));
+                        payloadBufferLength = nCount * sizeof(int);
+            }
                         
                         int *pBuffRun = (int *)payloadBuffer;
                         for(int i=0 ; i < nCount ; i++){
-                            *pBuffRun++ = aValueList[i];
-                        }                            
-                        payloadLength = nCount * sizeof(int);
-
-                        break;
-                    }
-                    case 2:             // Single double precision real
-                    {
-                        valueType = OGRvalueType;
-                        
-                        if(payloadBufferLength < sizeof(double)){
-                            payloadBuffer = realloc(payloadBuffer, sizeof(double));
-                            payloadBufferLength = sizeof(double);
-                        }
-                        
-                        double aValue = pFeature->GetFieldAsDouble( iField );
-                        memcpy(payloadBuffer, &aValue, sizeof(double) );
-                        payloadLength = sizeof(double);
-                        
-                        break;
-                    }   
-
-                    case 3:             // List of double precision real
-                    {
-                        valueType = OGRvalueType;
-                        
-                        int nCount = 0;
-                        const double *aValueList = pFeature->GetFieldAsDoubleList( iField, &nCount );
-                        
-                        if(payloadBufferLength < nCount * sizeof(double)){
-                            payloadBuffer = realloc(payloadBuffer, nCount * sizeof(double));
-                            payloadBufferLength = nCount * sizeof(double);
-                        }
-                        
-                        double *pBuffRun = (double *)payloadBuffer;
-                        for(int i=0 ; i < nCount ; i++){
-                            *pBuffRun++ = aValueList[i];
-                        }                            
-                        payloadLength = nCount * sizeof(double);
-                        
-                        break;
-                    }
-                    
-                    case 4:             // Ascii String
-                    {
-                        valueType = OGRvalueType;
-                        const char *pAttrVal = pFeature->GetFieldAsString( iField );
-                        
-                        wxString wxAttrValue;
-                        
-                        if( (0 == strncmp("NOBJNM",pAttrName, 6) ) ||
-                            (0 == strncmp("NINFOM",pAttrName, 6) ) ||
-                            (0 == strncmp("NPLDST",pAttrName, 6) ) ||
-                            (0 == strncmp("NTXTDS",pAttrName, 6) ) )
-                            {
-                                if( poReader->GetNall() == 2) {     // ENC is using UCS-2 / UTF-16 encoding
-                                    wxMBConvUTF16 conv;
-                                    wxString att_conv(pAttrVal, conv);
-                                    att_conv.RemoveLast();      // Remove the \037 that terminates UTF-16 strings in S57
-                                    att_conv.Replace(_T("\n"), _T("|") );  //Replace  <new line> with special break character
-                                    wxAttrValue = att_conv;
-                                    }
-                                 else if( poReader->GetNall() == 1) {     // ENC is using Lex level 1 (ISO 8859_1) encoding
-                                    wxCSConv conv(_T("iso8859-1") );
-                                    wxString att_conv(pAttrVal, conv);
-                                    wxAttrValue = att_conv;
-                                }
-                            }
-                         else{   
-                            if( poReader->GetAall() == 1) {     // ENC is using Lex level 1 (ISO 8859_1) encoding for "General Text"
-                                wxCSConv conv(_T("iso8859-1") );
-                                wxString att_conv(pAttrVal, conv);
-                                wxAttrValue = att_conv;
-                                }
-                            else
-                                wxAttrValue = wxString(pAttrVal);  // ENC must be using Lex level 0 (ASCII) encoding for "General Text"
-                        }
-                         
-                        unsigned int stringPayloadLength = 0;
-                        
-                        wxCharBuffer buffer;
-                        if(wxAttrValue.Length()){               // need to explicitely encode as UTF8
-                            buffer=wxAttrValue.ToUTF8();
-                            pAttrVal = buffer.data();
-                            stringPayloadLength = strlen(buffer.data());
-                        }
-
-                        if(stringPayloadLength){
-                            if(payloadBufferLength < stringPayloadLength + 1){
-                                payloadBuffer = realloc(payloadBuffer, stringPayloadLength + 1);
-                                payloadBufferLength = stringPayloadLength + 1;
-                            }
-                            
-                            strcpy((char *)payloadBuffer, pAttrVal );
-                            payloadLength = stringPayloadLength + 1;
-                        }
-                        else
-                            attributeID = -1;                   // cancel this attribute record
-                            
-                        
-                        break;
-                    }
-                    
-                    default:
-                        valueType = -1;
-                        break;
+                    *pBuffRun++ = aValueList[i];
                 }
+                payloadLength = nCount * sizeof(int);
 
-                if( -1 != attributeID){
-                    // Build the record
-                    int recordLength = sizeof( OSENC_Attribute_Record_Base ) + payloadLength;
-                
-                    //  Get a reference to the class persistent buffer
-                    unsigned char *pBuffer = getBuffer( recordLength );
-                    
-                    OSENC_Attribute_Record *pRecord = (OSENC_Attribute_Record *)pBuffer;
-                    memset(pRecord, 0, sizeof(OSENC_Attribute_Record));
-                    pRecord->record_type = FEATURE_ATTRIBUTE_RECORD;
-                    pRecord->record_length = recordLength;
-                    pRecord->attribute_type = attributeID;
-                    pRecord->attribute_value_type = valueType;
-                    memcpy( &pRecord->payload, payloadBuffer, payloadLength );
-                    
-                    // Write the record out....
-                    size_t targetCount = recordLength;
-                    if(!stream->Write(pBuffer, targetCount).IsOk()) {
-                        free( payloadBuffer );
-                        return false;
-                    }
-                    
-                }
-
+                break;
             }
-        }
-    }
-    if( wkbPoint == pGeo->getGeometryType() ) {
-        OGRPoint *pp = (OGRPoint *) pGeo;
-        int nqual = pp->getnQual();
-        if( 10 != nqual )                    // only add attribute if nQual is not "precisely known"
-        {
-            int attributeID = m_pRegistrarMan->getAttributeID("QUAPOS");
-            int valueType = 0;
-            if( -1 != attributeID){
-                if(payloadBufferLength < 4){
-                    payloadBuffer = realloc(payloadBuffer, 4);
-                    payloadBufferLength = 4;
-                }
-                        
-                memcpy(payloadBuffer, &nqual, sizeof(int) );
-                payloadLength = sizeof(int);
-                // Build the record
-                int recordLength = sizeof( OSENC_Attribute_Record_Base ) + payloadLength;
-                
-                //  Get a reference to the class persistent buffer
-                unsigned char *pBuffer = getBuffer( recordLength );
-                    
-                OSENC_Attribute_Record *pRecord = (OSENC_Attribute_Record *)pBuffer;
-                memset(pRecord, 0, sizeof(OSENC_Attribute_Record));
-                pRecord->record_type = FEATURE_ATTRIBUTE_RECORD;
-                pRecord->record_length = recordLength;
-                pRecord->attribute_type = attributeID;
-                pRecord->attribute_value_type = valueType;
-                memcpy( &pRecord->payload, payloadBuffer, payloadLength );
-                    
-                // Write the record out....
-                size_t targetCount = recordLength;
-                if(!stream->Write(pBuffer, targetCount).IsOk()) {
-                        free( payloadBuffer );
-                        return false;
-                }
-            }
-        }
-    }
+            case 2:             // Single double precision real
+            {
+                valueType = OGRvalueType;
 
-    free( payloadBuffer );
-    
-#if 0    
-    //    Special geometry cases
-    ///172
-    if( wkbPoint == pGeo->getGeometryType() ) {
-        OGRPoint *pp = (OGRPoint *) pGeo;
-        int nqual = pp->getnQual();
-        if( 10 != nqual )                    // only add attribute if nQual is not "precisely known"
+                if(payloadBufferLength < sizeof(double)){
+                    payloadBuffer = realloc(payloadBuffer, sizeof(double));
+                    payloadBufferLength = sizeof(double);
+                }
+
+                double aValue = pFeature->GetFieldAsDouble( iField );
+                memcpy(payloadBuffer, &aValue, sizeof(double) );
+                payloadLength = sizeof(double);
+
+                break;
+            }
+
+            case 3:             // List of double precision real
+            {
+                valueType = OGRvalueType;
+
+                int nCount = 0;
+                const double *aValueList = pFeature->GetFieldAsDoubleList( iField, &nCount );
+
+                if(payloadBufferLength < nCount * sizeof(double)){
+                    payloadBuffer = realloc(payloadBuffer, nCount * sizeof(double));
+                    payloadBufferLength = nCount * sizeof(double);
+                }
+
+                double *pBuffRun = (double *)payloadBuffer;
+                for(int i=0 ; i < nCount ; i++){
+                    *pBuffRun++ = aValueList[i];
+                }
+                payloadLength = nCount * sizeof(double);
+
+                break;
+            }
+
+            case 4:             // Ascii String
+            {
+                valueType = OGRvalueType;
+                const char *pAttrVal = pFeature->GetFieldAsString( iField );
+
+                QString wxAttrValue;
+
+                if( (0 == strncmp("NOBJNM",pAttrName, 6) ) ||
+                        (0 == strncmp("NINFOM",pAttrName, 6) ) ||
+                        (0 == strncmp("NPLDST",pAttrName, 6) ) ||
+                        (0 == strncmp("NTXTDS",pAttrName, 6) ) )
                 {
-                    snprintf( line, MAX_HDR_LINE - 2, "  %s (%c) = %d", "QUALTY", 'I', nqual );
-                    sheader += wxString( line, wxConvUTF8 );
-                    sheader += '\n';
+                    if( poReader->GetNall() == 2) {     // ENC is using UCS-2 / UTF-16 encoding
+                        wxAttrValue = zchxFuncUtil::convertCodesStringToUtf8( pAttrVal, "UTF-16");
+                        wxAttrValue.remove(wxAttrValue.size() - 1, 1);// Remove the \037 that terminates UTF-16 strings in S57
+                        wxAttrValue.replace("\n", "|" );  //Replace  <new line> with special break character
+                    }
+                    else if( poReader->GetNall() == 1) {     // ENC is using Lex level 1 (ISO 8859_1) encoding
+                        wxAttrValue = zchxFuncUtil::convertCodesStringToUtf8( pAttrVal, "iso8859-1");
+                    }
                 }
-                
+                else{
+                    if( poReader->GetAall() == 1) {     // ENC is using Lex level 1 (ISO 8859_1) encoding for "General Text"
+                        wxAttrValue = zchxFuncUtil::convertCodesStringToUtf8( pAttrVal, "iso8859-1");
+                    }
+                    else
+                        wxAttrValue = QString(pAttrVal);  // ENC must be using Lex level 0 (ASCII) encoding for "General Text"
+                }
+
+                unsigned int stringPayloadLength = 0;
+
+                QByteArray buffer;
+                if(wxAttrValue.length()){               // need to explicitely encode as UTF8
+                    buffer = wxAttrValue.toUtf8();
+                    pAttrVal = buffer.data();
+                    stringPayloadLength = strlen(buffer.data());
+                }
+
+                if(stringPayloadLength){
+                    if(payloadBufferLength < stringPayloadLength + 1){
+                        payloadBuffer = realloc(payloadBuffer, stringPayloadLength + 1);
+                        payloadBufferLength = stringPayloadLength + 1;
+                    }
+
+                    strcpy((char *)payloadBuffer, pAttrVal );
+                    payloadLength = stringPayloadLength + 1;
+                }
+                else
+                    attributeID = -1;                   // cancel this attribute record
+
+
+                break;
+            }
+
+            default:
+                valueType = -1;
+                break;
+        }
+
+        if( -1 != attributeID){
+            // Build the record
+            int recordLength = sizeof( OSENC_Attribute_Record_Base ) + payloadLength;
+
+            //  Get a reference to the class persistent buffer
+            unsigned char *pBuffer = getBuffer( recordLength );
+
+            OSENC_Attribute_Record *pRecord = (OSENC_Attribute_Record *)pBuffer;
+            memset(pRecord, 0, sizeof(OSENC_Attribute_Record));
+            pRecord->record_type = FEATURE_ATTRIBUTE_RECORD;
+            pRecord->record_length = recordLength;
+            pRecord->attribute_type = attributeID;
+            pRecord->attribute_value_type = valueType;
+            memcpy( &pRecord->payload, payloadBuffer, payloadLength );
+
+            // Write the record out....
+            size_t targetCount = recordLength;
+            if(!stream->Write(pBuffer, targetCount).IsOk()) {
+                free( payloadBuffer );
+                return false;
+            }
+
+        }
+
     }
-    
-    if( mode == 1 ) {
-        sprintf( line, "  %s %f %f\n", pGeo->getGeometryName(), m_ref_lat, m_ref_lon );
-        sheader += wxString( line, wxConvUTF8 );
+}
+}
+if( wkbPoint == pGeo->getGeometryType() ) {
+    OGRPoint *pp = (OGRPoint *) pGeo;
+    int nqual = pp->getnQual();
+    if( 10 != nqual )                    // only add attribute if nQual is not "precisely known"
+    {
+        int attributeID = m_pRegistrarMan->getAttributeID("QUAPOS");
+        int valueType = 0;
+        if( -1 != attributeID){
+            if(payloadBufferLength < 4){
+                payloadBuffer = realloc(payloadBuffer, 4);
+                payloadBufferLength = 4;
+            }
+
+            memcpy(payloadBuffer, &nqual, sizeof(int) );
+            payloadLength = sizeof(int);
+            // Build the record
+            int recordLength = sizeof( OSENC_Attribute_Record_Base ) + payloadLength;
+
+            //  Get a reference to the class persistent buffer
+            unsigned char *pBuffer = getBuffer( recordLength );
+
+            OSENC_Attribute_Record *pRecord = (OSENC_Attribute_Record *)pBuffer;
+            memset(pRecord, 0, sizeof(OSENC_Attribute_Record));
+            pRecord->record_type = FEATURE_ATTRIBUTE_RECORD;
+            pRecord->record_length = recordLength;
+            pRecord->attribute_type = attributeID;
+            pRecord->attribute_value_type = valueType;
+            memcpy( &pRecord->payload, payloadBuffer, payloadLength );
+
+            // Write the record out....
+            size_t targetCount = recordLength;
+            if(!stream->Write(pBuffer, targetCount).IsOk()) {
+                free( payloadBuffer );
+                return false;
+            }
+        }
     }
-    
-    wxCharBuffer buffer=sheader.ToUTF8();
-    fprintf( fpOut, "HDRLEN=%lu\n", (unsigned long) strlen(buffer) );
-    fwrite( buffer.data(), 1, strlen(buffer), fpOut );
+}
+
+free( payloadBuffer );
+
+#if 0    
+//    Special geometry cases
+///172
+if( wkbPoint == pGeo->getGeometryType() ) {
+    OGRPoint *pp = (OGRPoint *) pGeo;
+    int nqual = pp->getnQual();
+    if( 10 != nqual )                    // only add attribute if nQual is not "precisely known"
+    {
+        snprintf( line, MAX_HDR_LINE - 2, "  %s (%c) = %d", "QUALTY", 'I', nqual );
+        sheader += QString( line, wxConvUTF8 );
+        sheader += '\n';
+    }
+
+}
+
+if( mode == 1 ) {
+    sprintf( line, "  %s %f %f\n", pGeo->getGeometryName(), m_ref_lat, m_ref_lon );
+    sheader += QString( line, wxConvUTF8 );
+}
+
+wxCharBuffer buffer=sheader.ToUTF8();
+fprintf( fpOut, "HDRLEN=%lu\n", (unsigned long) strlen(buffer) );
+fwrite( buffer.data(), 1, strlen(buffer), fpOut );
 
 #endif
 
-    if( ( pGeo != NULL ) ) {
-        
-        wxString msg;
-        
-        OGRwkbGeometryType gType = pGeo->getGeometryType();
-        switch( gType ){
-            
-            case wkbLineString: {
-                
-                if( !CreateLineFeatureGeometryRecord200(poReader, pFeature, stream) )
-                    return false;
-                
-                break;
-            }
-                
-            case wkbPoint: {
-                
-                OSENC_PointGeometry_Record record;
-                record.record_type = FEATURE_GEOMETRY_RECORD_POINT;
-                record.record_length = sizeof( record );
+if( ( pGeo != NULL ) ) {
 
-                int wkb_len = pGeo->WkbSize();
-                unsigned char *pwkb_buffer = (unsigned char *) malloc( wkb_len );
-                
-                //  Get the GDAL data representation
-                pGeo->exportToWkb( wkbNDR, pwkb_buffer );
-                
-                int nq_len = 4;                                     // nQual length
-                unsigned char *ps = pwkb_buffer;
-                
-                ps += 5 + nq_len;
-                double *psd = (double *) ps;
-                
-                double lat, lon;
-                #ifdef __ARM_ARCH
-                double lata, lona;
-                memcpy(&lona, psd, sizeof(double));
-                memcpy(&lata, &psd[1], sizeof(double));
-                lon = lona;
-                lat = lata;
-                #else                
-                lon = *psd++;                                      // fetch the point
-                lat = *psd;
-                #endif                
+    QString msg;
 
-                free( pwkb_buffer );
-                
-                record.lat = lat;
-                record.lon = lon;
-                
-                // Write the record out....
-                size_t targetCount = record.record_length;
-                if(!stream->Write(&record, targetCount).IsOk())
-                    return false;
-                
-                break;
-            }
-            
-            case wkbMultiPoint:
-            case wkbMultiPoint25D:{
-                
-                if(!CreateMultiPointFeatureGeometryRecord200( pFeature, stream))
-                    return false;
-                break;
-            }
-                
-#if 1                
-                //      Special case, polygons are handled separately
-                case wkbPolygon: {
-                    
-                     if( !CreateAreaFeatureGeometryRecord200(poReader, pFeature, stream) )
-                         return false;
-                   
-                    break;
-                }
-#endif                
-                //      All others
-                default:
-                    msg = _T("   Warning: Unimplemented ogr geotype record ");
-					ZCHX_LOGMSG(msg);
-                    
-                    break;
-        }       // switch
-        
+    OGRwkbGeometryType gType = pGeo->getGeometryType();
+    switch( gType ){
+
+    case wkbLineString: {
+
+        if( !CreateLineFeatureGeometryRecord200(poReader, pFeature, stream) )
+            return false;
+
+        break;
     }
-    return true;
+
+    case wkbPoint: {
+
+        OSENC_PointGeometry_Record record;
+        record.record_type = FEATURE_GEOMETRY_RECORD_POINT;
+        record.record_length = sizeof( record );
+
+        int wkb_len = pGeo->WkbSize();
+        unsigned char *pwkb_buffer = (unsigned char *) malloc( wkb_len );
+
+        //  Get the GDAL data representation
+        pGeo->exportToWkb( wkbNDR, pwkb_buffer );
+
+        int nq_len = 4;                                     // nQual length
+        unsigned char *ps = pwkb_buffer;
+
+        ps += 5 + nq_len;
+        double *psd = (double *) ps;
+
+        double lat, lon;
+#ifdef __ARM_ARCH
+        double lata, lona;
+        memcpy(&lona, psd, sizeof(double));
+        memcpy(&lata, &psd[1], sizeof(double));
+        lon = lona;
+        lat = lata;
+#else
+        lon = *psd++;                                      // fetch the point
+        lat = *psd;
+#endif
+
+        free( pwkb_buffer );
+
+        record.lat = lat;
+        record.lon = lon;
+
+        // Write the record out....
+        size_t targetCount = record.record_length;
+        if(!stream->Write(&record, targetCount).IsOk())
+            return false;
+
+        break;
+    }
+
+    case wkbMultiPoint:
+    case wkbMultiPoint25D:{
+
+        if(!CreateMultiPointFeatureGeometryRecord200( pFeature, stream))
+            return false;
+        break;
+    }
+
+#if 1                
+        //      Special case, polygons are handled separately
+    case wkbPolygon: {
+
+        if( !CreateAreaFeatureGeometryRecord200(poReader, pFeature, stream) )
+            return false;
+
+        break;
+    }
+#endif                
+        //      All others
+    default:
+        qDebug("   Warning: Unimplemented ogr geotype record ");
+        break;
+    }       // switch
+
+}
+return true;
 }
 
 
@@ -3239,7 +3203,7 @@ bool Osenc::CreateSENCRecord200( OGRFeature *pFeature, Osenc_outstream *stream, 
 //      Return an integer count of bytes consumed from the record in creating the PolyTessGeo
 PolyTessGeo *Osenc::BuildPolyTessGeo(_OSENC_AreaGeometry_Record_Payload *record, unsigned char **next_byte )
 {
-   
+
     PolyTessGeo *pPTG = new PolyTessGeo();
     
     pPTG->SetExtents(record->extent_w_lon, record->extent_s_lat, record->extent_e_lon, record->extent_n_lat);
@@ -3253,7 +3217,7 @@ PolyTessGeo *Osenc::BuildPolyTessGeo(_OSENC_AreaGeometry_Record_Payload *record,
     //  skip over the contour vertex count array, for now  TODO
     //uint8_t *pTriPrims = (uint8_t *)payLoad + (nContours * sizeof(uint32_t));
     
-  
+
     //  Create the head of the linked list of TriPrims
     PolyTriGroup *ppg = new PolyTriGroup;
     ppg->m_bSMSENC = true;
@@ -3287,13 +3251,13 @@ PolyTessGeo *Osenc::BuildPolyTessGeo(_OSENC_AreaGeometry_Record_Payload *record,
     int total_byte_size = 2 * sizeof(float);
     
     uint8_t *pPayloadRun = (uint8_t *)contour_pointcount_array_run; //Points to the start of the triangle primitives
-        
+
     for(unsigned int i=0 ; i < n_TriPrim ; i++){
         tri_type = *pPayloadRun++;
         nvert = *(uint32_t *)pPayloadRun;
         pPayloadRun += sizeof(uint32_t);
         
-  
+
         TriPrim *tp = new TriPrim;
         *p_prev_triprim = tp;                               // make the link
         p_prev_triprim = &(tp->p_next);
@@ -3302,14 +3266,14 @@ PolyTessGeo *Osenc::BuildPolyTessGeo(_OSENC_AreaGeometry_Record_Payload *record,
         tp->type = tri_type;
         tp->nVert = nvert;
 
-        nvert_max = wxMax(nvert_max, nvert);       // Keep a running tab of largest vertex count
+        nvert_max = fmax(nvert_max, nvert);       // Keep a running tab of largest vertex count
         
         //  Read the triangle primitive bounding box as lat/lon
         double *pbb = (double *)pPayloadRun;
 
         double      minxt, minyt, maxxt, maxyt;
         
-        #ifdef __ARM_ARCH
+#ifdef __ARM_ARCH
         double abox[4];
         memcpy(&abox[0], pbb, 4 * sizeof(double));
         
@@ -3317,18 +3281,18 @@ PolyTessGeo *Osenc::BuildPolyTessGeo(_OSENC_AreaGeometry_Record_Payload *record,
         maxxt = abox[1];
         minyt = abox[2];
         maxyt = abox[3];
-        #else            
+#else
         minxt = *pbb++;
         maxxt = *pbb++;
         minyt = *pbb++;
         maxyt = *pbb;
-        #endif
+#endif
         
         tp->tri_box.Set(minyt, minxt, maxyt, maxxt);
         
         pPayloadRun += 4 * sizeof(double);
         
- 
+
         int byte_size = nvert * 2 * sizeof(float);              // the vertices
         total_byte_size += byte_size;
         
@@ -3348,10 +3312,10 @@ PolyTessGeo *Osenc::BuildPolyTessGeo(_OSENC_AreaGeometry_Record_Payload *record,
     TriPrim *p_tp = ppg->tri_prim_head;
     unsigned char *p_run = vbuf;
     while( p_tp ) {
-            memcpy(p_run, p_tp->p_vertex, p_tp->nVert * 2 * sizeof(float));
-            p_tp->p_vertex = (double  *)p_run;
-            p_run += p_tp->nVert * 2 * sizeof(float);
-            p_tp = p_tp->p_next; // pick up the next in chain
+        memcpy(p_run, p_tp->p_vertex, p_tp->nVert * 2 * sizeof(float));
+        p_tp->p_vertex = (double  *)p_run;
+        p_run += p_tp->nVert * 2 * sizeof(float);
+        p_tp = p_tp->p_next; // pick up the next in chain
     }
     ppg->bsingle_alloc = true;
     ppg->single_buffer = vbuf;
@@ -3364,7 +3328,7 @@ PolyTessGeo *Osenc::BuildPolyTessGeo(_OSENC_AreaGeometry_Record_Payload *record,
     
     pPTG->Set_OK( true );
     
-        
+
     return pPTG;
     
 }
@@ -3426,11 +3390,11 @@ bool Osenc::CreateCOVRTables( S57Reader *poReader, S57ClassRegistrar *poRegistra
             }
             
             if( catcov == 1 ) {
-                pAuxPtrArray->Add( pf );
+                pAuxPtrArray->append( pf );
                 auxCntArray.push_back( npt );
             }
             else if( catcov == 2 ){
-                pNoCovrPtrArray->Add( pf );
+                pNoCovrPtrArray->append( pf );
                 noCovrCntArray.push_back( npt );
             }
             else
@@ -3454,8 +3418,7 @@ bool Osenc::CreateCOVRTables( S57Reader *poReader, S57ClassRegistrar *poRegistra
         *m_pCOVRTablePoints = auxCntArray[0];
         m_pCOVRTable = (float **) malloc( sizeof(float *) );
         *m_pCOVRTable = (float *) malloc( auxCntArray[0] * 2 * sizeof(float) );
-        memcpy( *m_pCOVRTable, pAuxPtrArray->Item( 0 ),
-                auxCntArray[0] * 2 * sizeof(float) );
+        memcpy( *m_pCOVRTable, pAuxPtrArray->at( 0 ), auxCntArray[0] * 2 * sizeof(float) );
     }
     
     else if( m_nCOVREntries > 1 ) {
@@ -3466,21 +3429,18 @@ bool Osenc::CreateCOVRTables( S57Reader *poReader, S57ClassRegistrar *poRegistra
         for( unsigned int j = 0; j < (unsigned int) m_nCOVREntries; j++ ) {
             m_pCOVRTablePoints[j] = auxCntArray[j];
             m_pCOVRTable[j] = (float *) malloc( auxCntArray[j] * 2 * sizeof(float) );
-            memcpy( m_pCOVRTable[j], pAuxPtrArray->Item(j),
-                    auxCntArray[j] * 2 * sizeof(float) );
+            memcpy( m_pCOVRTable[j], pAuxPtrArray->at(j), auxCntArray[j] * 2 * sizeof(float) );
         }
     }
     
     else                                     // strange case, found no CATCOV=1 M_COVR objects
-        {
-            wxString msg( _T("   ENC contains no useable M_COVR, CATCOV=1 features:  ") );
-            msg.Append( m_FullPath000 );
-            ZCHX_LOGMSG( msg );
-        }
-        
-        
-        //      And for the NoCovr regions
-        m_nNoCOVREntries = noCovrCntArray.size();
+    {
+        qDebug("   ENC contains no useable M_COVR, CATCOV=1 features:  %s", m_FullPath000.toUtf8().data() );
+    }
+
+
+    //      And for the NoCovr regions
+    m_nNoCOVREntries = noCovrCntArray.size();
     
     if( m_nNoCOVREntries ) {
         //    Create new NoCOVR entries
@@ -3491,8 +3451,7 @@ bool Osenc::CreateCOVRTables( S57Reader *poReader, S57ClassRegistrar *poRegistra
             int npoints = noCovrCntArray[j];
             m_pNoCOVRTablePoints[j] = npoints;
             m_pNoCOVRTable[j] = (float *) malloc( npoints * 2 * sizeof(float) );
-            memcpy( m_pNoCOVRTable[j], pNoCovrPtrArray->Item( j ),
-                    npoints * 2 * sizeof(float) );
+            memcpy( m_pNoCOVRTable[j], pNoCovrPtrArray->at( j ), npoints * 2 * sizeof(float) );
         }
     }
     else {
@@ -3500,23 +3459,19 @@ bool Osenc::CreateCOVRTables( S57Reader *poReader, S57ClassRegistrar *poRegistra
         m_pNoCOVRTable = NULL;
     }
 
-     for( unsigned int j = 0; j < (unsigned int) m_nNoCOVREntries; j++ ) 
-         free(pNoCovrPtrArray->Item(j));
-     for( unsigned int j = 0; j < (unsigned int) m_nCOVREntries; j++ )
-         free(pAuxPtrArray->Item(j));
-     
+    for( unsigned int j = 0; j < (unsigned int) m_nNoCOVREntries; j++ )
+        free(pNoCovrPtrArray->at(j));
+    for( unsigned int j = 0; j < (unsigned int) m_nCOVREntries; j++ )
+        free(pAuxPtrArray->at(j));
+
     
     delete pAuxPtrArray;
     delete pNoCovrPtrArray;
     
     
     if( 0 == m_nCOVREntries ) {                        // fallback
-        wxString msg( _T("   ENC contains no M_COVR features:  ") );
-        msg.Append( m_FullPath000 );
-        ZCHX_LOGMSG( msg );
-        
-        msg =  _T("   Calculating Chart Extents as fallback.");
-        ZCHX_LOGMSG( msg );
+        qDebug("   ENC contains no M_COVR features: %s ", m_FullPath000.toUtf8().data() );
+        qDebug("   Calculating Chart Extents as fallback.");
         
         OGREnvelope Env;
         
@@ -3548,19 +3503,16 @@ bool Osenc::CreateCOVRTables( S57Reader *poReader, S57ClassRegistrar *poRegistra
             *pfe++ = LonMin;
             
         } else {
-            wxString msg( _T("   Cannot calculate Extents for ENC:  ") );
-            msg.Append( m_FullPath000 );
-            ZCHX_LOGMSG( msg );
-            
+           qDebug("   Cannot calculate Extents for ENC:  %s", m_FullPath000.toUtf8().data() );
             return false;                     // chart is completely unusable
         }
     }
     
     //    Populate the oSENC clone of the chart's extent structure
-     m_extent.NLAT = LatMax;
-     m_extent.SLAT = LatMin;
-     m_extent.ELON = LonMax;
-     m_extent.WLON = LonMin;
+    m_extent.NLAT = LatMax;
+    m_extent.SLAT = LatMin;
+    m_extent.ELON = LonMax;
+    m_extent.WLON = LonMin;
     
     
     return true;
@@ -3569,24 +3521,24 @@ bool Osenc::CreateCOVRTables( S57Reader *poReader, S57ClassRegistrar *poRegistra
 
 OGRFeature *Osenc::GetChartFirstM_COVR( int &catcov, S57Reader *pENCReader, S57ClassRegistrar *poRegistrar )
 {
-  OGRFeature * rv = NULL;
-  
+    OGRFeature * rv = NULL;
+
     if( ( NULL != pENCReader ) && ( NULL != poRegistrar ) ) {
         
         //      Select the proper class
         poRegistrar->SelectClass( "M_COVR" );
 
-//        OGRFeatureDefn *M_COVRdef = S57GenerateObjectClassDefn( poRegistrar, 302, 0);                           
+        //        OGRFeatureDefn *M_COVRdef = S57GenerateObjectClassDefn( poRegistrar, 302, 0);
         
         //      find this feature
         bool bFound = false;
         OGRFeature *pobjectDef = pENCReader->ReadNextFeature(/*M_COVRdef*/ );
         while(!bFound){
             if( pobjectDef ) {
-            
+
                 OGRFeatureDefn *poDefn = pobjectDef->GetDefnRef();
                 if(poDefn && (poDefn->GetOBJL() == 302/*poRegistrar->GetOBJL()*/)){
-                //  Fetch the CATCOV attribute
+                    //  Fetch the CATCOV attribute
                     catcov = pobjectDef->GetFieldAsInteger( "CATCOV" );
                     rv = pobjectDef;
                     break;
@@ -3596,7 +3548,7 @@ OGRFeature *Osenc::GetChartFirstM_COVR( int &catcov, S57Reader *pENCReader, S57C
             }
             else{
                 break;
-            }        
+            }
             pobjectDef = pENCReader->ReadNextFeature( );
         }
     }
@@ -3618,7 +3570,7 @@ OGRFeature *Osenc::GetChartNextM_COVR( int &catcov, S57Reader *pENCReader )
             if( pobjectDef ) {
                 OGRFeatureDefn *poDefn = pobjectDef->GetDefnRef();
                 if(poDefn && (poDefn->GetOBJL() == 302)){
-                //  Fetch the CATCOV attribute
+                    //  Fetch the CATCOV attribute
                     catcov = pobjectDef->GetFieldAsInteger( "CATCOV" );
                     return pobjectDef;
                 }
@@ -3638,9 +3590,9 @@ OGRFeature *Osenc::GetChartNextM_COVR( int &catcov, S57Reader *pENCReader )
 }
 
 
-int Osenc::GetBaseFileInfo(const wxString& FullPath000, const wxString& SENCFileName)
+int Osenc::GetBaseFileInfo(const QString& FullPath000, const QString& SENCFileName)
 {
-    wxFileName SENCfile = wxFileName( SENCFileName );
+    QFileInfo SENCfile( SENCFileName );
     
     //  Take a quick scan of the 000 file to get some basic attributes of the exchange set.
     if(!GetBaseFileAttr( FullPath000 ) ){
@@ -3656,8 +3608,8 @@ int Osenc::GetBaseFileInfo(const wxString& FullPath000, const wxString& SENCFile
     
     //  Ingest the .000 cell, with updates applied
     
-    if(ingestCell( &oS57DS, FullPath000, SENCfile.GetPath())){
-        errorMessage = _T("Error ingesting: ") + FullPath000;
+    if(ingestCell( &oS57DS, FullPath000, SENCfile.absolutePath())){
+        errorMessage.sprintf("Error ingesting: %s", FullPath000.toUtf8().data());
         return ERROR_INGESTING000;
     }
 
@@ -3693,7 +3645,7 @@ bool Osenc::CalculateExtent( S57Reader *poReader, S57ClassRegistrar *poRegistrar
     //     //  Create arrays to hold geometry objects temporarily
     //     MyFloatPtrArray *pAuxPtrArray = new MyFloatPtrArray;
     //     wxArrayInt *pAuxCntArray = new wxArrayInt;
-    //     
+    //
     //     MyFloatPtrArray *pNoCovrPtrArray = new MyFloatPtrArray;
     //     wxArrayInt *pNoCovrCntArray = new wxArrayInt;
     
@@ -3759,6 +3711,6 @@ unsigned char *Osenc::getBuffer( size_t length){
     }
     
     return pBuffer;
-        
+
 }
 

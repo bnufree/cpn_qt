@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 SENC File Object
@@ -26,15 +26,6 @@
 #ifndef OSENC_H
 #define OSENC_H
 
-// For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-  #include "wx/wx.h"
-#endif //precompiled headers
-
-#include <wx/filename.h>
-
 #include "gdal/cpl_csv.h"
 #include "ogr_s57.h"
 #include "chartbase.h"
@@ -44,7 +35,8 @@
 #include <vector>
 #include <mutex>
 
-WX_DEFINE_ARRAY_PTR(float *, SENCFloatPtrArray);
+typedef QList<float *> SENCFloatPtrArray;
+typedef QList<float *> MyFloatPtrArray;
 
 //      Various error return enums
 #define         SENC_NO_ERROR                           0
@@ -336,7 +328,7 @@ typedef std::vector<S57Obj *> S57ObjVector;
 typedef std::vector<VE_Element *> VE_ElementVector;
 typedef std::vector<VC_Element *> VC_ElementVector;
 
-WX_DECLARE_HASH_MAP( int, int, wxIntegerHash, wxIntegerEqual, VectorHelperHash );
+typedef QHash<int, int>     VectorHelperHash;
 
 //--------------------------------------------------------------------------
 //      Osenc_instream definition
@@ -344,8 +336,8 @@ WX_DECLARE_HASH_MAP( int, int, wxIntegerHash, wxIntegerEqual, VectorHelperHash )
 class Osenc_instream
 {
 public:
-    Osenc_instream(){};
-    virtual ~Osenc_instream(){};
+    Osenc_instream(){}
+    virtual ~Osenc_instream(){}
     
     virtual bool Open( const QString &senc_file_name ) = 0;
     virtual void Close() = 0;
@@ -380,7 +372,7 @@ public:
 private:
     void Init();
 
-    wxFFileInputStream  *m_instream;
+    FileReadWrite  *m_instream;
     bool                m_ok;
     
 };
@@ -393,8 +385,8 @@ private:
 class Osenc_outstream
 {
 public:
-    Osenc_outstream(){};
-    virtual ~Osenc_outstream(){};
+    Osenc_outstream(){}
+    virtual ~Osenc_outstream(){}
 
     virtual bool Open(const QString& ofileName) = 0;
 
@@ -426,7 +418,7 @@ public:
 private:
     void Init();
     
-    wxFFileOutputStream  *m_outstream;
+    FileReadWrite  *m_outstream;
     bool                 m_ok;
     
 };
@@ -502,9 +494,9 @@ private:
     void init();
     
     int ingestCell( OGRS57DataSource *poS57DS, const QString &FullPath000, const QString &working_dir );
-    int ValidateAndCountUpdates( const wxFileName file000, const QString CopyDir,
+    int ValidateAndCountUpdates( const QFileInfo& file000, const QString CopyDir,
                                  QString &LastUpdateDate, bool b_copyfiles);
-    int GetUpdateFileArray(const wxFileName file000, wxArrayString *UpFiles);
+    int GetUpdateFileArray(const QString& file000, QStringList *UpFiles);
     bool GetBaseFileAttr( const QString &FullPath000 );
     unsigned char *getObjectVectorIndexTable( S57Reader *poReader, OGRFeature *poFeature, int &nEntries );
     
@@ -546,7 +538,7 @@ private:
     
     S57Reader           *poReader;
     
-    wxDateTime          m_date000;
+    QDateTime          m_date000;
     QString            m_sdate000;
     
     QString            m_edtn000;
@@ -562,7 +554,7 @@ private:
     VectorHelperHash    m_vector_helper_hash;
     double              m_LOD_meters;
     S57ClassRegistrar   *m_poRegistrar;
-    wxArrayString       m_tmpup_array;
+    QStringList       m_tmpup_array;
     
     wxGenericProgressDialog    *m_ProgDialog;
     
@@ -598,7 +590,7 @@ private:
     Osenc_instream        *m_pInstream;
 
     bool                  m_bVerbose;
-    wxArrayString         *m_UpFiles;
+    QStringList         *m_UpFiles;
     bool                  m_bPrivateRegistrar;
     bool                  m_NoErrDialog;
 };

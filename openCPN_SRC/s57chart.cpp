@@ -3452,89 +3452,97 @@ const char *s57chart::getName( OGRFeature *feature )
     return feature->GetDefnRef()->GetName();
 }
 
-static int ExtensionCompare( const wxString& first, const wxString& second )
+static int ExtensionCompare( const QString& first, const QString& second )
 {
-    wxFileName fn1( first );
-    wxFileName fn2( second );
-    wxString ext1( fn1.GetExt() );
-    wxString ext2( fn2.GetExt() );
+    QFileInfo fn1( first );
+    QFileInfo fn2( second );
+    QString ext1( fn1.suffix() );
+    QString ext2( fn2.suffix() );
 
-    return ext1.Cmp( ext2 );
+    return ext1.compare(ext2 );
 }
 
 
-int s57chart::GetUpdateFileArray( const wxFileName file000, wxArrayString *UpFiles,
-                                  wxDateTime date000, wxString edtn000)
+int s57chart::GetUpdateFileArray( const QFileInfo file000, QStringList *UpFiles,
+                                  QDateTime date000, QString edtn000)
 {
-    wxString DirName000 = file000.GetPath( (int) ( wxPATH_GET_SEPARATOR | wxPATH_GET_VOLUME ) );
-    wxDir dir( DirName000 );
-    if(!dir.IsOpened()){
-        DirName000.Prepend(wxFileName::GetPathSeparator());
-        DirName000.Prepend(_T("."));
-        dir.Open(DirName000);
-        if(!dir.IsOpened()){
+    QString DirName000 = file000.absolutePath();
+    QDir dir( DirName000 );
+    if(!dir.exists()){
+        DirName000.insert(0, QDir::separator());
+        DirName000.insert(0, ".");
+        dir.setPath(DirName000);
+        if(!dir.exists()){
             return 0;
         }
     }
     
-    int flags = wxDIR_DEFAULT;
+    int flags = QDir::NoFilter;
     
     // Check dir structure
     //  We look to see if the directory one level above where the .000 file is located happens to be "perfectly numeric" in name.
     //  If so, the dataset is presumed to be organized with each update in its own directory.
     //  So, we search for updates from this level, recursing into subdirs.
-    wxFileName fnDir( DirName000 );
-    fnDir.RemoveLastDir();
-    wxString sdir = fnDir.GetPath();
-    wxFileName fnTest(sdir);
-    wxString sname = fnTest.GetName();
-    long tmps;
-    if(sname.ToLong( &tmps )){
+//    wxFileName fnDir( DirName000 );
+//    fnDir.RemoveLastDir();
+//    QString sdir = fnDir.GetPath();
+//    wxFileName fnTest(sdir);
+//    QString sname = fnTest.GetName();
+    QString sdir = DirName000;
+    if(sdir.right(1) == QDir::separator())
+    {
+        sdir.remove(sdir.size() - 1, 1);
+    }
+    int last_index = sdir.lastIndexOf(QDir::separator());
+    if(last_index >= 0) sdir.remove(last_index, sdir.size() - last_index);
+    QDir fnTest(sdir);
+    QString sname = fnTest.dirName();
+    long tmps = 0;
+    bool ok = false;
+    tmps = sname.toLong(&ok);
+    if(ok){
         dir.Open(sdir);
         DirName000 = sdir;
-        flags |= wxDIR_DIRS;
+        flags |= QDir::Dirs;
+        dir.setPath(DirName000);
     }
     
-    wxString ext;
-    wxArrayString *dummy_array;
+    QString ext;
+    QStringList *dummy_array;
     int retval = 0;
     
     if( UpFiles == NULL )
-        dummy_array = new wxArrayString;
+        dummy_array = new QStringList;
     else
         dummy_array = UpFiles;
     
-    wxArrayString possibleFiles;
-    wxDir::GetAllFiles( DirName000, &possibleFiles, wxEmptyString, flags );
-    
-    for(unsigned int i=0 ; i < possibleFiles.GetCount() ; i++){
-        wxString filename(possibleFiles[i]);
-        
-        wxFileName file( filename );
-        ext = file.GetExt();
-        
-        long tmp;
+    //这里需要获取的带路径的全名
+    QFileInfoList possibleFiles = dir.entryInfoList(flags);
+    for(unsigned int i=0 ; i < possibleFiles.count() ; i++){
+        QFileInfo file(possibleFiles[i]);
+        QString filename = file.absoluteFilePath();
+        ext = file.suffix();
+        ok = true;
+        long tmp = ext.toLong(&ok);
         //  Files of interest have the same base name is the target .000 cell,
         //  and have numeric extension
-        if( ext.ToLong( &tmp ) && ( file.GetName() == file000.GetName() ) ) {
-            wxString FileToAdd = filename;
+        if( ok && ( file.fileName() == file000.fileName() ) ) {
+            QString FileToAdd = filename;
             
-            wxCharBuffer buffer=FileToAdd.ToUTF8();             // Check file namme for convertability
+            QByteArray buffer = FileToAdd.toUtf8();             // Check file namme for convertability
             
-            if( buffer.data() && !filename.IsSameAs( _T("CATALOG.031"), false ) )           // don't process catalogs
+            if( buffer.data() && !zchxFuncUtil::isSameAs(filename, "CATALOG.031", false ) )           // don't process catalogs
             {
                 //          We must check the update file for validity
                 //          1.  Is update field DSID:EDTN  equal to base .000 file DSID:EDTN?
                 //          2.  Is update file DSID.ISDT greater than or equal to base .000 file DSID:ISDT
                 
-                wxDateTime umdate;
-                wxString sumdate;
-                wxString umedtn;
+                QDateTime umdate;
+                QString sumdate;
+                QString umedtn;
                 DDFModule *poModule = new DDFModule();
-                if( !poModule->Open( FileToAdd.mb_str() ) ) {
-                    wxString msg( _T("   s57chart::BuildS57File  Unable to open update file ") );
-                    msg.Append( FileToAdd );
-                    ZCHX_LOGMSG( msg );
+                if( !poModule->Open( FileToAdd.toUtf8().data() ) ) {
+                    qDebug("   s57chart::BuildS57File  Unable to open update file %s", FileToAdd.toUtf8().data() );
                 } else {
                     poModule->Rewind();
                     
@@ -3553,53 +3561,45 @@ int s57chart::GetUpdateFileArray( const wxFileName file000, wxArrayString *UpFil
                             if( strlen( u ) ) sumdate = wxString( u, wxConvUTF8 );
                         }
                     } else {
-                        wxString msg(
-                            _T("   s57chart::BuildS57File  DDFRecord 0 does not contain DSID:ISDT in update file ") );
-                        msg.Append( FileToAdd );
-                        ZCHX_LOGMSG( msg );
-                        
-                        sumdate = _T("20000101");           // backstop, very early, so wont be used
+                        qDebug("   s57chart::BuildS57File  DDFRecord 0 does not contain DSID:ISDT in update file %s", FileToAdd.toUtf8().data() );
+                        sumdate = ("20000101");           // backstop, very early, so wont be used
                     }
                     
-                    umdate.ParseFormat( sumdate, _T("%Y%m%d") );
-                    if( !umdate.IsValid() ) umdate.ParseFormat( _T("20000101"), _T("%Y%m%d") );
-                                     
-                                     umdate.ResetTime();
+                    umdate = QDateTime::fromString(sumdate, ("%Y%m%d") );
+                    if( !umdate.isValid() ) umdate  = QDateTime::fromString( "20000101", "%Y%m%d" );
+
+                    //                                     umdate.ResetTime();
                     
                     //    Fetch the EDTN(Edition) field
-                                     if( pr ) {
-                                         u = NULL;
-                                         u = (char *) ( pr->GetStringSubfield( "DSID", 0, "EDTN", 0 ) );
-                                         if( u ) {
-                                             if( strlen( u ) ) umedtn = wxString( u, wxConvUTF8 );
-                                         }
-                                     } else {
-                                         wxString msg(
-                                             _T("   s57chart::BuildS57File  DDFRecord 0 does not contain DSID:EDTN in update file ") );
-                                         msg.Append( FileToAdd );
-                                         ZCHX_LOGMSG( msg );
-                                         
-                                         umedtn = _T("1");                // backstop
-                                     }
+                    if( pr ) {
+                        u = NULL;
+                        u = (char *) ( pr->GetStringSubfield( "DSID", 0, "EDTN", 0 ) );
+                        if( u ) {
+                            if( strlen( u ) ) umedtn = QString::fromUtf8(u);
+                        }
+                    } else {
+                        qDebug("   s57chart::BuildS57File  DDFRecord 0 does not contain DSID:EDTN in update file %s", FileToAdd.toUtf8().data() );
+
+                        umedtn = ("1");                // backstop
+                    }
                 }
                 
                 delete poModule;
                 
-                if( ( !umdate.IsEarlierThan( date000 ) ) && ( umedtn.IsSameAs( edtn000 ) ) ) // Note polarity on Date compare....
-                dummy_array->Add( FileToAdd );                    // Looking for umdate >= m_date000
+                if( ( !(umdate < date000 ) ) && ( umedtn == edtn000  ) ) // Note polarity on Date compare....
+                dummy_array->append( FileToAdd );                    // Looking for umdate >= m_date000
             }
         }
     }
     
     //      Sort the candidates
-    dummy_array->Sort( ExtensionCompare );
-    
+    qSort(dummy_array->begin(), dummy_array->end(), ExtensionCompare);
     //      Get the update number of the last in the list
-    if( dummy_array->GetCount() ) {
-        wxString Last = dummy_array->Last();
-        wxFileName fnl( Last );
-        ext = fnl.GetExt();
-        wxCharBuffer buffer=ext.ToUTF8();
+    if( dummy_array->count() ) {
+        QString Last = dummy_array->last();
+        QFileInfo fnl( Last );
+        ext = fnl.suffix();
+        QByteArray buffer=ext.toUtf8();
         if(buffer.data())            
             retval = atoi( buffer.data() );
     }

@@ -365,10 +365,47 @@ public:
         return QFile::exists(name);
     }
 
-    QTextCodec* codesOfName(const QString& name)
+    static QTextCodec* codesOfName(const QString& name)
     {
         return QTextCodec::codecForName(name.toLatin1().data());
     }
+
+    static QString convertCodesStringToUtf8(const char* str, const QString& codes)
+    {
+        QTextCodec *src_codes = codesOfName(codes);
+        QTextCodec *utf8 = codesOfName("UTF-8");
+        QString unicode = src_codes->toUnicode(str);
+        return QString::fromUtf8(utf8->fromUnicode(unicode));
+    }
+
+    static bool isSameAs(const QString& p1, const QString& p2, bool caseSensitive )
+    {
+        Qt::CaseSensitivity val = (caseSensitive == true ?  Qt::CaseSensitive : Qt::CaseInsensitive);
+        return QString::compare(p1, p2, val) == 0;
+    }
+
+    static bool renameFileExt(QString& newPath, const QString& oldFile, const QString& newExt)
+    {
+        QFile file(oldFile);
+        if(file.exists())
+        {
+            int last_index = oldFile.lastIndexOf(".");
+            if(last_index >= 0)
+            {
+                QString ext = oldFile.mid(last_index+1);
+                QString newname = oldFile;
+                newname.replace(last_index+1, ext.size(), newExt);
+                if(file.rename(newname))
+                {
+                    newPath = newname;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
 };
 
 

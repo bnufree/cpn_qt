@@ -33,6 +33,7 @@ LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lssl_sha1
 LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltexcmp
 LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -llz4
 LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltess2
+LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lmipmap
 LIBS += -lpsapi
 
 QT       += core gui network positioning core_private opengl svg xml webkitwidgets multimedia
@@ -87,7 +88,7 @@ HEADERS += \
     chartdbs.h \
     chartimg.h \
     chartsymbols.h \
-#    chcanv.h \
+    chcanv.h \
 #    ChInfoWin.h \
 #    compass.h \
 #    concanv.h \
@@ -105,7 +106,7 @@ HEADERS += \
 #    garmin_wrapper.h \
 #    geodesic.h \
 #    georef.h \
-#    glChartCanvas.h \
+    glChartCanvas.h \
     glTexCache.h \
     glTextureDescriptor.h \
     glTextureManager.h \
@@ -133,7 +134,7 @@ HEADERS += \
 #    OCPNListCtrl.h \
      OCPNPlatform.h \
     OCPNRegion.h \
-#    ogr_s57.h \
+    ogr_s57.h \
 #    options.h \
     Osenc.h \
 #    piano.h \
@@ -142,7 +143,7 @@ HEADERS += \
 #    printtable.h \
 #    pugiconfig.hpp \
 #    pugixml.hpp \
-#    Quilt.h \
+    Quilt.h \
 #    RolloverWin.h \
 #    Route.h \
 #    routeman.h \
@@ -220,7 +221,7 @@ SOURCES += \
     chartdbs.cpp \
     chartimg.cpp \
     chartsymbols.cpp \
-#    chcanv.cpp \
+    chcanv.cpp \
 #    ChInfoWin.cpp \
 #    compass.cpp \
 #    compasswin.cpp \
@@ -235,7 +236,7 @@ SOURCES += \
 #    garmin_wrapper.cpp \
 #    geodesic.cpp \
 #    georef.cpp \
-#    glChartCanvas.cpp \
+    glChartCanvas.cpp \
     glTexCache.cpp \
     glTextureDescriptor.cpp \
     glTextureManager.cpp \
@@ -262,8 +263,8 @@ SOURCES += \
 #    OCPNListCtrl.cpp \
     OCPNPlatform.cpp \
     OCPNRegion.cpp \
-#    ogrs57datasource.cpp \
-#    ogrs57layer.cpp \
+    ogrs57datasource.cpp \
+    ogrs57layer.cpp \
 #    options.cpp \
     Osenc.cpp \
 #    piano.cpp \
@@ -271,7 +272,7 @@ SOURCES += \
 #    PositionParser.cpp \
 #    printtable.cpp \
 #    pugixml.cpp \
-#    Quilt.cpp \
+    Quilt.cpp \
 #    RolloverWin.cpp \
 #    Route.cpp \
 #    routeman.cpp \
