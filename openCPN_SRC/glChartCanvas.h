@@ -32,6 +32,7 @@
 #include "LLRegion.h"
 #include "viewport.h"
 #include "TexFont.h"
+#include <QGLWidget>
 
  #define FORMAT_BITS           GL_RGB
 
@@ -84,9 +85,11 @@ class ChartBaseBSB;
 class ChartBase;
 
 #include <QOpenGLWindow>
-class glChartCanvas : public wxGLCanvas
+class glChartCanvas : public QGLWidget
 {
+    Q_OBJECT
 public:
+    glChartCanvas(QGLContext *ctx, ChartCanvas *parentCavas);
     static bool CanClipViewport(const ViewPort &vp);
     static ViewPort ClippedViewport(const ViewPort &vp, const LLRegion &region);
 
@@ -107,8 +110,7 @@ public:
     static bool         s_b_useFBO;
     
     void SendJSONConfigMessage();
-    
-    glChartCanvas(QOpenGLContext* ctx, ChartCanvas* parentCavas);
+
     ~glChartCanvas();
 
     void SetContext(QOpenGLContext *pcontext) { m_pcontext = pcontext; }

@@ -71,7 +71,6 @@ class ChartCanvas;
 class ocpnFloatingToolbarDialog;
 class OCPN_MsgEvent;
 class options;
-class Track;
 class OCPN_ThreadMessageEvent;
 class wxHtmlWindow;
 
@@ -434,10 +433,6 @@ class MyFrame: public QMainWindow
     void TrackOn(void);
     void SetENCDisplayCategory( ChartCanvas *cc, enum _DisCat nset );
     void ToggleNavobjects( ChartCanvas *cc );
-        
-    Track *TrackOff(bool do_add_point = false);
-    void TrackDailyRestart(void);
-    bool ShouldRestartTrack();
     void ToggleColorScheme();
     void SetMenubarItemState ( int item_id, bool state );
     void SetMasterToolbarItemState( int tool_id, bool state );
@@ -649,7 +644,7 @@ class TimedPopupWin: public QWidget
 public:
     TimedPopupWin( int timeout = -1, QWidget *parent = 0 );
     ~TimedPopupWin();
-    void SetBitmap( QBitmap &bmp );
+    void SetBitmap( const QBitmap &bmp );
     QBitmap* GetBitmap() { return m_pbm; }
     bool IsActive() { return isActive; }
     void IsActive( bool state ) { isActive = state; }\

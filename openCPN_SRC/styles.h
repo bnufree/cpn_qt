@@ -28,7 +28,7 @@
 #include "tinyxml/tinyxml.h"
 
 #include "_def.h"
-#include <QBitmap>
+#include "bitmap.h"
 #include <QHash>
 
 enum StyleToolIconTypes
@@ -39,9 +39,9 @@ enum StyleToolIconTypes
       TOOLICON_ACTIVE
 };
 
-void bmdump(QBitmap bm, QString name);
-QBitmap MergeBitmaps( QBitmap back, QBitmap front, QSize offset );
-QBitmap ConvertTo24Bit( QColor bgColor, QBitmap front );
+void bmdump(wxBitmap bm, QString name);
+wxBitmap MergeBitmaps( wxBitmap back, wxBitmap front, QSize offset );
+wxBitmap ConvertTo24Bit( QColor bgColor, wxBitmap front );
 
 namespace ocpnStyle {
 
@@ -54,12 +54,12 @@ public:
       QPoint rolloverLoc;
       QPoint disabledLoc;
       QPoint activeLoc;
-      QBitmap icon;
-      QBitmap rollover;
-      QBitmap rolloverToggled;
-      QBitmap disabled;
-      QBitmap active;
-      QBitmap toggled;
+      wxBitmap icon;
+      wxBitmap rollover;
+      wxBitmap rolloverToggled;
+      wxBitmap disabled;
+      wxBitmap active;
+      wxBitmap toggled;
       bool iconLoaded;
       bool rolloverLoaded;
       bool rolloverToggledLoaded;
@@ -88,7 +88,7 @@ public:
       QString name;
       QPoint iconLoc;
       QSize size;
-      QBitmap icon;
+      wxBitmap icon;
       bool loaded;
 
       void Unload(void) {
@@ -104,18 +104,18 @@ public:
       Style( void );
       ~Style( void );
 
-      QBitmap GetNormalBG();
-      QBitmap GetActiveBG();
-      QBitmap GetToggledBG();
-      QBitmap GetToolbarStart();
-      QBitmap GetToolbarEnd();
+      wxBitmap GetNormalBG();
+      wxBitmap GetActiveBG();
+      wxBitmap GetToggledBG();
+      wxBitmap GetToolbarStart();
+      wxBitmap GetToolbarEnd();
       bool HasBackground() const { return hasBackground; }
       void HasBackground( bool b ) { hasBackground = b; }
-      QBitmap GetIcon(const QString & name, int width = -1, int height = -1, bool bforceReload = false);
-      QBitmap GetToolIcon(const QString & toolname,
+      wxBitmap GetIcon(const QString & name, int width = -1, int height = -1, bool bforceReload = false);
+      wxBitmap GetToolIcon(const QString & toolname,
                            int iconType = TOOLICON_NORMAL, bool rollover = false,
                            int width = -1, int height = -1);
-      QBitmap BuildPluginIcon( QBitmap &bm, int iconType, double scale = 1.0 );
+      wxBitmap BuildPluginIcon( wxBitmap &bm, int iconType, double scale = 1.0 );
       bool NativeToolIconExists(const QString & name);
       
       int GetTopMargin() const { return toolMarginTop[currentOrientation]; }
@@ -138,11 +138,11 @@ public:
 
       bool HasToolbarStart() const { return toolbarStartLoc[currentOrientation] != QPoint(0,0); }
       bool HasToolbarEnd() const { return toolbarEndLoc[currentOrientation] != QPoint(0,0); }
-      void DrawToolbarLineStart( QBitmap& bmp, double scale = 1.0 );
-      void DrawToolbarLineEnd( QBitmap& bmp, double scale = 1.0 );
+      void DrawToolbarLineStart( wxBitmap& bmp, double scale = 1.0 );
+      void DrawToolbarLineEnd( wxBitmap& bmp, double scale = 1.0 );
 
-      static QBitmap SetBitmapBrightness( QBitmap& bitmap, ColorScheme cs );
-      static QBitmap SetBitmapBrightnessAbs( QBitmap& bitmap, double level );
+      static wxBitmap SetBitmapBrightness( wxBitmap& bitmap, ColorScheme cs );
+      static wxBitmap SetBitmapBrightnessAbs( wxBitmap& bitmap, double level );
       
       void SetOrientation( long orient );
       int GetOrientation();
@@ -177,7 +177,7 @@ public:
       intHash toolIndex;
       wxArrayPtrVoid icons;
       intHash iconIndex;
-      QBitmap* graphics;
+      wxBitmap* graphics;
 
       QColor consoleFontColor;
       QPoint consoleTextBackgroundLoc;
@@ -186,9 +186,9 @@ public:
       QSize toolbarStartSize[2];
       QPoint toolbarEndLoc[2];
       QSize toolbarEndSize[2];
-      QBitmap consoleTextBackground;
-      QBitmap toolbarStart[2];
-      QBitmap toolbarEnd[2];
+      wxBitmap consoleTextBackground;
+      wxBitmap toolbarStart[2];
+      wxBitmap toolbarEnd[2];
 
       bool marginsInvisible;
 
@@ -218,7 +218,7 @@ public:
       void SetStyleNextInvocation(const QString & name) { nextInvocationStyle = name; }
       const QString & GetStyleNextInvocation() const { return nextInvocationStyle; }
       Style* GetCurrentStyle();
-      wxArrayPtrVoid GetArrayOfStyles() { return styles; };
+      wxArrayPtrVoid GetArrayOfStyles() { return styles; }
 
 private:
       bool isOK;

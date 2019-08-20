@@ -11640,7 +11640,7 @@ void TimedPopupWin::OnTimer()
 }
 
 
-void TimedPopupWin::SetBitmap( QBitmap &bmp )
+void TimedPopupWin::SetBitmap( const QBitmap &bmp )
 {
     delete m_pbm;
     m_pbm = new QBitmap( bmp );

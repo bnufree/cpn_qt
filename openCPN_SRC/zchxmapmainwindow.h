@@ -13,6 +13,7 @@ class zchxMapMainWindow;
 class QTimer;
 class zchxOptionsDlg;
 class zchxConfig;
+class ChartCanvas;
 
 class zchxMapMainWindow : public QMainWindow
 {
@@ -36,6 +37,14 @@ public:
     bool    ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray );
     bool    UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName );
     void    startFrameTimer1();
+
+    void DoStackDown( ChartCanvas *cc );
+    void DoStackUp( ChartCanvas *cc );
+    void DoStackDelta( ChartCanvas *cc, int direction );
+    void ToggleColorScheme();
+    bool DoChartUpdate( void );
+    void UpdateRotationState( double rotation );
+    void SetChartUpdatePeriod();
 
 
 public slots:

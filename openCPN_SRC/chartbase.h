@@ -281,7 +281,7 @@ public:
 
       virtual bool GetChartExtent(Extent *pext);
 
-      virtual bool RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint,
                                         const OCPNRegion &Region);
 
       virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
@@ -297,7 +297,7 @@ public:
       virtual double GetNearestPreferredScalePPM(double target_scale_ppm){ return target_scale_ppm; }
 
 private:
-      bool RenderViewOnDC(QPainter* dc, const ViewPort& VPoint);
+      bool RenderViewOnDC(QPainter& dc, const ViewPort& VPoint);
 
       QBitmap    *m_pBM;
 };

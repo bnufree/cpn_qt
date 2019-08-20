@@ -61,8 +61,7 @@ class FontMgr
         QFont* FindOrCreateFont( int point_size, QString family,
                     QFont::Style style, int weight, bool underline = false);
         // For wxWidgets 2.8 compatability
-        QFont *FindOrCreateFont(int pointSize, QString family, int style, int weight,
-                                 bool underline = false)
+        QFont *FindOrCreateFont(int pointSize, QString family, int style, int weight,   bool underline = false)
             { return FindOrCreateFont(pointSize, family, (QFont::Style)style,
                 weight, underline); }
         

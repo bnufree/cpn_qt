@@ -915,13 +915,13 @@ void Piano::FormatKeys( void )
     m_nRegions = nKeys;
 }
 
-wxPoint Piano::GetKeyOrigin( int key_index )
+zchxPoint Piano::GetKeyOrigin( int key_index )
 {
     if( ( key_index >= 0 ) && ( key_index <= (int) m_key_array.size() - 1 ) ) {
         wxRect box = KeyRect[key_index];
-        return wxPoint( box.x, box.y );
+        return zchxPoint( box.x, box.y );
     } else
-        return wxPoint( -1, -1 );
+        return zchxPoint( -1, -1 );
 }
 
 bool Piano::MouseEvent( QMouseEvent* event )

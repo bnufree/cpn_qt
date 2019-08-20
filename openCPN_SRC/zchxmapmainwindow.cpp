@@ -8,6 +8,7 @@
 #include "zchxoptionsdlg.h"
 #include "zchxconfig.h"
 #include "chartdb.h"
+#include "chcanv.h"
 
 
 //MyFrame                   *gFrame;
@@ -18,6 +19,7 @@
 
 //ChartBase                 *Current_Vector_Ch;
 ChartDB                   *ChartData = NULL;
+arrayofCanvasPtr            g_canvasArray;
 
 zchxMapMainWindow::zchxMapMainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -1029,5 +1031,102 @@ bool zchxMapMainWindow::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b
     if( b_run ) FrameTimer1.Start( TIMER_GFRAME_1, wxTIMER_CONTINUOUS );
 
     return true;
+}
+
+
+void zchxMapMainWindow::DoStackDown( ChartCanvas *cc )
+{
+    DoStackDelta( cc, -1 );
+}
+
+void zchxMapMainWindow::DoStackUp( ChartCanvas *cc )
+{
+    DoStackDelta( cc, 1 );
+}
+
+void zchxMapMainWindow::DoStackDelta( ChartCanvas *cc, int direction )
+{
+    if(cc){
+        cc->DoCanvasStackDelta( direction );
+    }
+}
+
+void zchxMapMainWindow::ToggleColorScheme()
+{
+//    ColorScheme s = GetColorScheme();
+//    int is = (int) s;
+//    is++;
+//    s = (ColorScheme) is;
+//    if( s == N_COLOR_SCHEMES ) s = GLOBAL_COLOR_SCHEME_RGB;
+
+//    SetAndApplyColorScheme( s );
+}
+
+bool zchxMapMainWindow::DoChartUpdate( void )
+{
+    bool return_val = false;
+
+    // ..For each canvas...
+    for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
+        ChartCanvas *cc = g_canvasArray.at(i);
+        if(cc)
+            return_val |= cc->DoCanvasUpdate();
+    }
+
+    return return_val;
+
+}
+
+void zchxMapMainWindow::UpdateRotationState( double rotation )
+{
+//    //  If rotated manually, we switch to NORTHUP
+//    g_bCourseUp = false;
+
+//    if(fabs(rotation) > .001){
+//        SetMenubarItemState( ID_MENU_CHART_COGUP, false );
+//        SetMenubarItemState( ID_MENU_CHART_NORTHUP, true );
+//        if(m_pMenuBar){
+//            m_pMenuBar->SetLabel( ID_MENU_CHART_NORTHUP, _("Rotated Mode") );
+//        }
+//    }
+//    else{
+//        SetMenubarItemState( ID_MENU_CHART_COGUP, g_bCourseUp );
+//        SetMenubarItemState( ID_MENU_CHART_NORTHUP, !g_bCourseUp );
+//        if(m_pMenuBar){
+//            m_pMenuBar->SetLabel( ID_MENU_CHART_NORTHUP, _("North Up Mode") );
+//        }
+//    }
+
+//    UpdateGPSCompassStatusBoxes( true );
+    DoChartUpdate();
+}
+
+
+void zchxMapMainWindow::SetChartUpdatePeriod( )
+{
+//    //    Set the chart update period based upon chart skew and skew compensator
+
+//    g_ChartUpdatePeriod = 0;            // General default
+
+//    // In non-GL, singlele-chart mode, rotation of skewed charts is very slow
+//    //  So we need to use a slower update time constant to preserve adequate UI performance
+//    bool bskewdc = false;
+//        for(unsigned int i=0 ; i < g_canvasArray.GetCount() ; i++){
+//            ChartCanvas *cc = g_canvasArray.Item(i);
+//            if(cc){
+//                if( !g_bopengl && !cc->GetVP().b_quilt){
+//                    if ( fabs(cc->GetVP().skew) > 0.0001)
+//                        bskewdc = true;
+//                }
+//                if(cc->m_bFollow)
+//                    g_ChartUpdatePeriod = 1;
+//            }
+//        }
+
+//    if (bskewdc)
+//        g_ChartUpdatePeriod = g_SkewCompUpdatePeriod;
+
+
+//    m_ChartUpdatePeriod = g_ChartUpdatePeriod;
 }
 

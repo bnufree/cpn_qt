@@ -78,7 +78,7 @@ private:
 #include "glTexCache.h"
 #include "gshhs.h"
 #include "OCPNPlatform.h"
-#include "toolbar.h"
+//#include "toolbar.h"
 #include "piano.h"
 #include "tcmgr.h"
 #include "compass.h"
@@ -488,7 +488,7 @@ static void GetglEntryPoints( void )
     
 }
 
-glChartCanvas::glChartCanvas(QOpenGLContext* ctx, ChartCanvas* parentCavas) : QOpenGLWindow(ctx, QOpenGLWindow::NoPartialUpdate, 0)
+glChartCanvas::glChartCanvas(QGLContext* ctx, ChartCanvas* parentCavas) : QGLWidget(ctx, parentCavas)
     , m_bsetup( false )
     , m_pParentCanvas(parentCavas)
 {

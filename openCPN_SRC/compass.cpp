@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  OpenCPN Main wxWidgets Program
@@ -55,8 +55,6 @@ ocpnCompass::ocpnCompass( ChartCanvas *parent, bool bShowGPS)
 
     m_rose_angle = -999;  // force a refresh when first used
 
-    m_pStatBoxToolStaticBmp = NULL;
-
      m_rect = wxRect(style->GetCompassXOffset(), style->GetCompassYOffset(),
              _img_compass.GetWidth() + _img_gpsRed.GetWidth() + style->GetCompassLeftMargin() * 2
                      + style->GetToolSeparation(),
@@ -79,8 +77,6 @@ ocpnCompass::~ocpnCompass()
         texobj = 0;
     }
 #endif
-    
-    delete m_pStatBoxToolStaticBmp;
 }
 
 void ocpnCompass::Paint( ocpnDC& dc )

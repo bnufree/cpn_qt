@@ -29,6 +29,9 @@
 #define __statwin_H__
 
 #include "chart1.h"
+#include "bitmap.h"
+#include "_def.h"
+#include <QPainter>
 
 //----------------------------------------------------------------------------
 //   constants
@@ -40,22 +43,23 @@
 #define INFOWIN_TIMEOUT 3
 
 // Class declarations
-WX_DECLARE_OBJARRAY(wxRect, RectArray);
+typedef QList<QRect> RectArray;
 
 class MyFrame;
 class ChartCanvas;
+class ocpnDC;
 
 //----------------------------------------------------------------------------
 // Piano
 //----------------------------------------------------------------------------
-class Piano : public wxEvtHandler
+class Piano /*: public wxEvtHandler*/
 {
 public:
       Piano( ChartCanvas *parent );
       ~Piano();
 
-      void Paint(int y, wxDC &dc, wxDC *shapeDC=NULL);
-      void Paint(int y, ocpnDC &dc, wxDC *shapeDC=NULL);
+      void Paint(int y, QPainter &dc, QPainter *shapeDC=NULL);
+      void Paint(int y, ocpnDC &dc, QPainter *shapeDC=NULL);
       void DrawGL(int y);
       void FormatKeys(void);
       bool MouseEvent(QMouseEvent* event);
@@ -77,11 +81,11 @@ public:
       void SetTMercIcon(wxBitmap *picon_bmp){ if( m_pTmercIconBmp ) delete m_pTmercIconBmp; m_pTmercIconBmp = picon_bmp; }
       void SetPolyIcon(wxBitmap *picon_bmp){ if( m_pPolyIconBmp ) delete m_pPolyIconBmp; m_pPolyIconBmp = picon_bmp; }
       void ShowBusy( bool busy );
-      void onTimerEvent(wxTimerEvent &event);
+      void onTimerEvent(QTimerEvent &event);
       
-      wxPoint GetKeyOrigin(int key_index);
+      zchxPoint GetKeyOrigin(int key_index);
       void ResetRollover(void);
-      void SetRoundedRectangles(bool val){ m_brounded = val; m_hash.Clear();}
+      void SetRoundedRectangles(bool val){ m_brounded = val; m_hash.clear();}
 
       int GetHeight();
       int GetWidth();
@@ -105,14 +109,14 @@ private:
       int         m_hover_icon_last;
       int         m_hover_last;
 
-      wxBrush     m_backBrush;
-      wxBrush     m_srBrush, m_rBrush;
-      wxBrush     m_svBrush, m_vBrush;
-      wxBrush     m_unavailableBrush;
-      wxBrush     m_utileBrush, m_tileBrush;
+      QBrush     m_backBrush;
+      QBrush     m_srBrush, m_rBrush;
+      QBrush     m_svBrush, m_vBrush;
+      QBrush     m_unavailableBrush;
+      QBrush     m_utileBrush, m_tileBrush;
 
-      wxBrush     m_cBrush;
-      wxBrush     m_scBrush;
+      QBrush     m_cBrush;
+      QBrush     m_scBrush;
 
       std::vector<int> m_key_array;
       std::vector<int> m_noshow_index_array;
@@ -122,7 +126,7 @@ private:
       std::vector<int> m_tmerc_index_array;
       std::vector<int> m_poly_index_array;
       bool        m_bBusy;
-      wxTimer     m_eventTimer;
+      QTimer     m_eventTimer;
       int         m_click_sel_index;
       int         m_click_sel_dbindex;
       int         m_action;
@@ -141,26 +145,25 @@ private:
 
       GLuint      m_tex, m_texw, m_texh, m_tex_piano_height;
       int         m_width;
-      
-DECLARE_EVENT_TABLE()
 };
 
-//----------------------------------------------------------------------------
-// ChartBarWin
-//----------------------------------------------------------------------------
-class ChartBarWin: public wxDialog
-{
-public:
-      ChartBarWin(wxWindow *win);
-      ~ChartBarWin();
-      void OnSize(wxSizeEvent& event);
-      void OnPaint(wxPaintEvent& event);
-      void MouseEvent(wxMouseEvent& event);
-      int  GetFontHeight();
-      void RePosition();
-      void ReSize();
-      
-DECLARE_EVENT_TABLE()
-};
+////----------------------------------------------------------------------------
+//// ChartBarWin
+////----------------------------------------------------------------------------
+//class ChartBarWin: public QWidget
+//{
+//    Q_OBJECT
+//public:
+//      ChartBarWin(wxWindow *win);
+//      ~ChartBarWin();
+
+//protected:
+//      void OnSize(wxSizeEvent& event);
+//      void OnPaint(wxPaintEvent& event);
+//      void MouseEvent(wxMouseEvent& event);
+//      int  GetFontHeight();
+//      void RePosition();
+//      void ReSize();
+//};
 
 #endif

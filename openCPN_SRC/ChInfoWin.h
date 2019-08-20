@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -24,47 +24,48 @@
 #ifndef __CHINFOWIN_H__
 #define __CHINFOWIN_H__
 
-#include <wx/window.h>
-#include <wx/stattext.h>
-
 #include "chart1.h"
+#include <QWidget>
+#include "_def.h"
+#include <QLabel>
 
-class ChInfoWin: public wxPanel
+class ChInfoWin: public QWidget
 {
 public:
-    ChInfoWin( wxWindow *parent );
+    ChInfoWin( QWidget *parent = 0 );
     ~ChInfoWin();
 
     void SetString(const QString &s){ m_string = s; }
     const QString& GetString(void) { return m_string; }
-    void MouseEvent( wxMouseEvent& event );
     
-    void SetPosition( wxPoint pt )
+    void SetPosition( zchxPoint pt )
     {
         m_position = pt;
     }
-    void SetWinSize( wxSize sz )
+    void SetWinSize( QSize sz )
     {
         m_size = sz;
     }
     void SetBitmap( void );
     void FitToChars( int char_width, int char_height );
-    wxSize GetWinSize( void )
+    QSize GetWinSize( void )
     {
         return m_size;
     }
-    void OnPaint( wxPaintEvent& event );
-    void OnEraseBackground( wxEraseEvent& event );
 
-    wxStaticText *m_pInfoTextCtl;
+    QLabel *m_pInfoTextCtl;
     int dbIndex;
+
+protected:
+    void mousePressEvent(QMouseEvent* event );
+    void paintEvent( QPaintEvent* event );
+
+
 private:
 
     QString m_string;
-    wxSize m_size;
-    wxPoint m_position;
-
-    DECLARE_EVENT_TABLE()
+    QSize m_size;
+    zchxPoint m_position;
 };
 
 

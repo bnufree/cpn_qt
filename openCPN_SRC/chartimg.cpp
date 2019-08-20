@@ -271,12 +271,12 @@ bool ChartDummy::RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPo
 
 
 
-bool ChartDummy::RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint, const OCPNRegion &Region)
+bool ChartDummy::RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region)
 {
     return RenderViewOnDC(dc, VPoint);
 }
 
-bool ChartDummy::RenderViewOnDC(QPainter* dc, const ViewPort& VPoint)
+bool ChartDummy::RenderViewOnDC(QPainter& dc, const ViewPort& VPoint)
 {
     if( m_pBM  && !m_pBM->isNull())
     {
@@ -294,7 +294,7 @@ bool ChartDummy::RenderViewOnDC(QPainter* dc, const ViewPort& VPoint)
     if( VPoint.pix_width && VPoint.pix_height ) {
         if(NULL == m_pBM) m_pBM = new QBitmap(VPoint.pix_width, VPoint.pix_height);
 
-        dc->drawPixmap(0, 0, *m_pBM);
+        dc.drawPixmap(0, 0, *m_pBM);
         //        dc.SetBackground(*wxBLACK_BRUSH);
         //        dc.Clear();
     }

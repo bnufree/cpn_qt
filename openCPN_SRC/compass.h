@@ -23,6 +23,9 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  **************************************************************************/
 
+#include <QWidget>
+#include "bitmap.h"
+#include "_def.h"
 
 class ocpnDC;
 class ChartCanvas;
@@ -39,14 +42,14 @@ public:
 
       void UpdateStatus( bool newColorScheme = false );
 
-      bool MouseEvent( wxMouseEvent& event );
+      bool MouseEvent( QMouseEvent& event );
       void SetColorScheme( ColorScheme cs );
       int GetXOffset(void) const { return m_xoffset; }
       int GetYOffset(void) const { return m_yoffset; }
       float GetScaleFactor(){ return m_scale; }
       void SetScaleFactor( float factor);
       
-      void Move(const wxPoint &pt) { m_rect.SetPosition(pt); }
+      void Move(const zchxPoint &pt) { m_rect.setTopLeft(pt.toPoint()); }
       QRect GetRect(void) const { return m_rect; }
 private:
       void CreateBmp( bool bnew = false );
@@ -54,7 +57,6 @@ private:
       ChartCanvas *m_parent;
       wxBitmap m_StatBmp;
       wxBitmap m_MaskBmp;
-      wxStaticBitmap *m_pStatBoxToolStaticBmp;
 
       QString m_lastgpsIconName;
       double m_rose_angle;

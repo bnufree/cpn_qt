@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -21,45 +21,23 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  ***************************************************************************
  */
-
-#include "wx/wxprec.h"
-
-#include <wx/dcclient.h>
-
 #include "ChInfoWin.h"
 #include "chart1.h"
 #include "OCPNPlatform.h"
 #include "FontMgr.h"
 
-
-#ifdef __OCPN__ANDROID__
-#include "androidUTIL.h"
-#endif
-
 extern bool g_btouch;
 extern OCPNPlatform  *g_Platform;
 
-BEGIN_EVENT_TABLE(ChInfoWin, wxPanel)
-    EVT_PAINT ( ChInfoWin::OnPaint )
-    EVT_ERASE_BACKGROUND(ChInfoWin::OnEraseBackground)
-    EVT_MOUSE_EVENTS ( ChInfoWin::MouseEvent )
-END_EVENT_TABLE()
-
 // Define a constructor
-ChInfoWin::ChInfoWin( wxWindow *parent )
+ChInfoWin::ChInfoWin( QWidget *parent ):QWidget(parent)
 {
-    
-    long style = wxSIMPLE_BORDER | wxCLIP_CHILDREN | wxFRAME_FLOAT_ON_PARENT;
-
-    wxPanel::Create( parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, style );
-
-    wxFont *dFont = FontMgr::Get().GetFont( _("Dialog") );
-    SetFont(*dFont);
-    
-    int ststyle = wxALIGN_LEFT | wxST_NO_AUTORESIZE;
-    m_pInfoTextCtl = new wxStaticText( this, -1, _T ( "" ), wxDefaultPosition, wxDefaultSize,
-                                       ststyle );
-
+    this->setStyle(Qt::SubWindow);
+    QFont *dFont = FontMgr::Get().GetFont("Dialog") ;
+    this->setFont(*dFont);
+    m_pInfoTextCtl = new QLabel(this);
+    m_pInfoTextCtl->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    m_pInfoTextCtl->move(0,0);
     dbIndex = -1;
     Hide();
 }

@@ -82,14 +82,14 @@ HEADERS += \
 #    CanvasConfig.h \
 #    CanvasOptions.h \
 #    chart1.h \
-#    chartbase.h \
+    chartbase.h \
     ChartDataInputStream.h \
     chartdb.h \
     chartdbs.h \
     chartimg.h \
     chartsymbols.h \
     chcanv.h \
-#    ChInfoWin.h \
+    ChInfoWin.h \
 #    compass.h \
 #    concanv.h \
 #    ConfigMgr.h \
@@ -130,7 +130,7 @@ HEADERS += \
 #    OCPN_AUIManager.h \
     ocpn_pixel.h \
 #    ocpn_types.h \
-#    ocpndc.h \
+    ocpndc.h \
 #    OCPNListCtrl.h \
      OCPNPlatform.h \
     OCPNRegion.h \
@@ -222,7 +222,7 @@ SOURCES += \
     chartimg.cpp \
     chartsymbols.cpp \
     chcanv.cpp \
-#    ChInfoWin.cpp \
+    ChInfoWin.cpp \
 #    compass.cpp \
 #    compasswin.cpp \
 #    concanv.cpp \
@@ -259,7 +259,7 @@ SOURCES += \
 #    ocpCursor.cpp \
 #    OCPN_AUIManager.cpp \
     ocpn_pixel.cpp \
-#    ocpndc.cpp \
+    ocpndc.cpp \
 #    OCPNListCtrl.cpp \
     OCPNPlatform.cpp \
     OCPNRegion.cpp \
