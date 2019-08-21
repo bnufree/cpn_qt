@@ -2087,7 +2087,7 @@ bool Quilt::Compose( const ViewPort &vp_in )
     //    Walk the list again, removing any entries marked as eclipsed....
     unsigned int il = 0;
     while( il < m_PatchList.count() ) {
-        PatchListNode *piqp = m_PatchList.at(il);
+        PatchListNode piqp = m_PatchList.at(il);
         if( piqp->b_eclipsed ) {
             //    Make sure that this chart appears in the eclipsed list...
             //    This can happen when....
@@ -2157,15 +2157,15 @@ bool Quilt::Compose( const ViewPort &vp_in )
     //    The index array is to be built in reverse, largest scale first
     unsigned int kl = m_PatchList.count();
     for( unsigned int k = 0; k < kl; k++ ) {
-        wxPatchListNode *cnode = m_PatchList.at( ( kl - k ) - 1 );
-        m_index_array.push_back( cnode->GetData()->dbIndex );
-        cnode = cnode->GetNext();
+        PatchListNode cnode = m_PatchList.at( ( kl - k ) - 1 );
+        m_index_array.push_back( cnode->dbIndex );
+//        cnode = cnode->GetNext();
     }
 
     //    Walk the patch list again, checking the depth units
     //    If they are all the same, then the value is usable
 
-    m_quilt_depth_unit = _T("");
+    m_quilt_depth_unit = ("");
     ChartBase *pc = ChartData->OpenChartFromDB( m_refchart_dbIndex, FULL_INIT );
     if( pc ) {
         m_quilt_depth_unit = pc->GetDepthUnits();
@@ -2174,21 +2174,20 @@ bool Quilt::Compose( const ViewPort &vp_in )
             int units = ps52plib->m_nDepthUnitDisplay;
             switch( units ) {
             case 0:
-                m_quilt_depth_unit = _T("Feet");
+                m_quilt_depth_unit = ("Feet");
                 break;
             case 1:
-                m_quilt_depth_unit = _T("Meters");
+                m_quilt_depth_unit = ("Meters");
                 break;
             case 2:
-                m_quilt_depth_unit = _T("Fathoms");
+                m_quilt_depth_unit = ("Fathoms");
                 break;
             }
         }
     }
 
     for( unsigned int k = 0; k < m_PatchList.count(); k++ ) {
-        wxPatchListNode *pnode = m_PatchList.at(k);
-        QuiltPatch *pqp = pnode->GetData();
+        PatchListNode pqp = m_PatchList.at(k);
 
         if( !pqp->b_Valid )                         // skip invalid entries
             continue;
@@ -2200,28 +2199,28 @@ bool Quilt::Compose( const ViewPort &vp_in )
                 int units = ps52plib->m_nDepthUnitDisplay;
                 switch( units ) {
                 case 0:
-                    du = _T("Feet");
+                    du = ("Feet");
                     break;
                 case 1:
-                    du = _T("Meters");
+                    du = ("Meters");
                     break;
                 case 2:
-                    du = _T("Fathoms");
+                    du = ("Fathoms");
                     break;
                 }
             }
-            QString dul = du.Lower();
-            QString ml = m_quilt_depth_unit.Lower();
+            QString dul = du.toLower();
+            QString ml = m_quilt_depth_unit.toLower();
 
             if( dul != ml ) {
                 //    Try all the odd cases
-                if( dul.StartsWith( _T("meters") ) && ml.StartsWith( _T("meters") ) ) continue;
-                else if( dul.StartsWith( _T("metres") ) && ml.StartsWith( _T("metres") ) ) continue;
-                else if( dul.StartsWith( _T("fathoms") ) && ml.StartsWith( _T("fathoms") ) ) continue;
-                else if( dul.StartsWith( _T("met") ) && ml.StartsWith( _T("met") ) ) continue;
+                if( dul.startsWith( ("meters") ) && ml.startsWith( ("meters") ) ) continue;
+                else if( dul.startsWith( ("metres") ) && ml.startsWith( ("metres") ) ) continue;
+                else if( dul.startsWith( ("fathoms") ) && ml.startsWith( ("fathoms") ) ) continue;
+                else if( dul.startsWith( ("met") ) && ml.startsWith( ("met") ) ) continue;
 
                 //    They really are different
-                m_quilt_depth_unit = _T("");
+                m_quilt_depth_unit = ("");
                 break;
             }
         }
@@ -2232,15 +2231,13 @@ bool Quilt::Compose( const ViewPort &vp_in )
     //    If still missing, remove its patch from the quilt
     //    This will probably leave a "black hole" in the quilt...
     for( unsigned int k = 0; k < m_PatchList.count(); k++ ) {
-        wxPatchListNode *pnode = m_PatchList.at(k);
-        QuiltPatch *pqp = pnode->GetData();
-
+        PatchListNode pqp = m_PatchList.at(k);
         if( pqp->b_Valid ) {
             if( !ChartData->IsChartInCache( pqp->dbIndex ) ) {
-                ZCHX_LOGMSG( _T("   Quilt Compose cache miss...") );
+                qDebug("   Quilt Compose cache miss..." );
                 ChartData->OpenChartFromDB( pqp->dbIndex, FULL_INIT );
                 if( !ChartData->IsChartInCache( pqp->dbIndex ) ) {
-                    ZCHX_LOGMSG( _T("    Oops, removing from quilt...") );
+                    qDebug("    Oops, removing from quilt..." );
                     pqp->b_Valid = false;
                 }
             }
@@ -2258,8 +2255,7 @@ bool Quilt::Compose( const ViewPort &vp_in )
     m_bquilt_has_overlays = false;
     m_max_error_factor = 0.;
     for( unsigned int k = 0; k < m_PatchList.count(); k++ ) {
-        wxPatchListNode *pnode = m_PatchList.at(k);
-        QuiltPatch *pqp = pnode->GetData();
+        PatchListNode pqp = m_PatchList.at(k);
 
         if( !pqp->b_Valid )                         // skip invalid entries
             continue;
