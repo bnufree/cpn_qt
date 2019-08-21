@@ -42,49 +42,49 @@
 
 #ifdef ocpnUSE_GL
 #include "glChartCanvas.h"
-extern ocpnGLOptions g_GLOptions;
+extern zchxGLOptions g_GLOptions;
 #endif
 
 extern float g_GLMinSymbolLineWidth;
-QArrayPtrVoid gTesselatorVertices;
+QList<void*> gTesselatorVertices;
 
 //----------------------------------------------------------------------------
 /* pass the dc to the constructor, or NULL to use opengl */
-ocpnDC::ocpnDC( QGLCanvas &canvas ) :
-        glcanvas( &canvas ), dc( NULL ), m_pen( QNullPen ), m_brush( QNullBrush )
+ocpnDC::ocpnDC( glChartCanvas *canvas ) :
+    glcanvas( canvas ), dc( NULL ), m_pen( QPen() ), m_brush( QBrush() )
 {
 #if QUSE_GRAPHICS_CONTEXT
     pgc = NULL;
 #endif
 #ifdef ocpnUSE_GL
-    m_textforegroundcolour = QColour( 0, 0, 0 );
+    m_textforegroundcolour = QColor( 0, 0, 0 );
 #endif   
-    m_buseTex = GetLocaleCanonicalName().IsSameAs(_T("en_US"));
+    m_buseTex = /*GetLocaleCanonicalName().IsSameAs(_T("en_US"))*/true;
 }
 
-ocpnDC::ocpnDC( QDC &pdc ) :
-        glcanvas( NULL ), dc( &pdc ), m_pen( QNullPen ), m_brush( QNullBrush )
-{
-#if QUSE_GRAPHICS_CONTEXT
-    pgc = NULL;
-    QMemoryDC *pmdc = QDynamicCast(dc, QMemoryDC);
-    if( pmdc ) pgc = QGraphicsContext::Create( *pmdc );
-    else {
-        QClientDC *pcdc = QDynamicCast(dc, QClientDC);
-        if( pcdc ) pgc = QGraphicsContext::Create( *pcdc );
-    }
-#endif
-    m_textforegroundcolour = QColour( 0, 0, 0 );
-    m_buseTex = GetLocaleCanonicalName().IsSameAs(_T("en_US"));
-}
+//ocpnDC::ocpnDC( QPainter* painter ) :
+//        glcanvas( NULL ), dc( painter ), m_pen( QPen() ), m_brush( QBrush( )
+//{
+//#if QUSE_GRAPHICS_CONTEXT
+//    pgc = NULL;
+//    QMemoryDC *pmdc = QDynamicCast(dc, QMemoryDC);
+//    if( pmdc ) pgc = QGraphicsContext::Create( *pmdc );
+//    else {
+//        QClientDC *pcdc = QDynamicCast(dc, QClientDC);
+//        if( pcdc ) pgc = QGraphicsContext::Create( *pcdc );
+//    }
+//#endif
+//    m_textforegroundcolour = QColour( 0, 0, 0 );
+//    m_buseTex = /*GetLocaleCanonicalName().IsSameAs(_T("en_US"))*/true;
+//}
 
 ocpnDC::ocpnDC() :
-        glcanvas( NULL ), dc( NULL ), m_pen( QNullPen ), m_brush( QNullBrush )
+    glcanvas( NULL ), dc( NULL ), m_pen( QPen() ), m_brush( QBrush() )
 {
 #if QUSE_GRAPHICS_CONTEXT
     pgc = NULL;
 #endif
-    m_buseTex = GetLocaleCanonicalName().IsSameAs(_T("en_US"));
+    m_buseTex = /*GetLocaleCanonicalName().IsSameAs(_T("en_US"))*/true;
 }
 
 ocpnDC::~ocpnDC()
@@ -96,14 +96,14 @@ ocpnDC::~ocpnDC()
 
 void ocpnDC::Clear()
 {
-    if( dc ) dc->Clear();
+    if( dc ) dc->eraseRect(0, 0, dc->device()->width(), dc->device()->height());
     else {
 #ifdef ocpnUSE_GL
         QBrush tmpBrush = m_brush;
-        int w, h;
-        SetBrush( QBrush( glcanvas->GetBackgroundColour() ) );
-        glcanvas->GetSize( &w, &h );
-        DrawRectangle( 0, 0, w, h );
+        int w = glcanvas->width(), h = glcanvas->height();
+        SetBrush( QBrush( glcanvas->palette().background() ) );
+        //        glcanvas->GetSize( &w, &h );
+        DrawRectangle( 0, 0, w, h);
         SetBrush( tmpBrush );
 #endif        
     }
@@ -111,80 +111,87 @@ void ocpnDC::Clear()
 
 void ocpnDC::SetBackground( const QBrush &brush )
 {
-    if( dc )
-        dc->SetBackground( brush );
-    else {
-#ifdef ocpnUSE_GL
-        glcanvas->SetBackgroundColour( brush.GetColour() );
-#endif
-    }
+    //    if( dc )
+    //    {
+    //        dc->SetBackground( brush );
+    //    } else {
+    //#ifdef ocpnUSE_GL
+    QPalette pal = glcanvas->palette();
+    pal.setBrush(QPalette::Window, brush);
+    glcanvas->setPalette(pal);
+    //        glcanvas->setBackgroundColor( brush.GetColour() );
+    //#endif
+    //    }
 }
 
 void ocpnDC::SetPen( const QPen &pen )
 {
     if( dc ) {
-        if( pen == QNullPen ) dc->SetPen( *QTRANSPARENT_PEN );
-        else
-            dc->SetPen( pen );
+        if( pen == QPen() )
+        {
+            dc->setPen(Qt::transparent );
+        } else
+        {
+            dc->setPen( pen );
+        }
     } else
         m_pen = pen;
 }
 
 void ocpnDC::SetBrush( const QBrush &brush )
 {
-    if( dc ) dc->SetBrush( brush );
+    if( dc ) dc->setBrush( brush );
     else
         m_brush = brush;
 }
 
-void ocpnDC::SetTextForeground( const QColour &colour )
+void ocpnDC::SetTextForeground( const QColor &color )
 {
-    if( dc ) dc->SetTextForeground( colour );
-    else
-        m_textforegroundcolour = colour;
+    m_textforegroundcolour = color;
 }
 
 void ocpnDC::SetFont( const QFont& font )
 {
-    if( dc ) dc->SetFont( font );
-    else
-        m_font = font;
+    //    if( dc ) dc->SetFont( font );
+    //    else
+    m_font = font;
 }
 
 const QPen& ocpnDC::GetPen() const
 {
-    if( dc ) return dc->GetPen();
+    //    if( dc ) return dc->GetPen();
     return m_pen;
 }
 
 const QBrush& ocpnDC::GetBrush() const
 {
-    if( dc ) return dc->GetBrush();
+    //    if( dc ) return dc->GetBrush();
     return m_brush;
 }
 
 const QFont& ocpnDC::GetFont() const
 {
-    if( dc ) return dc->GetFont();
+    //    if( dc ) return dc->GetFont();
     return m_font;
 }
 
-void ocpnDC::GetSize( QCoord *width, QCoord *height ) const
+void ocpnDC::GetSize( uint *width, uint *height ) const
 {
-    if( dc )
-        dc->GetSize( width, height );
-    else {
-#ifdef ocpnUSE_GL
-        glcanvas->GetSize( width, height );
-#endif
-    }
+    *width = glcanvas->width();
+    *height = glcanvas->height();
+    //    if( dc )
+    //        dc->GetSize( width, height );
+    //    else {
+    //#ifdef ocpnUSE_GL
+
+    //        glcanvas->GetSize( width, height );
+    //#endif
+    //    }
 }
 
 void ocpnDC::SetGLAttrs( bool highQuality )
 {
-#ifdef ocpnUSE_GL
-
- // Enable anti-aliased polys, at best quality
+    // Enable anti-aliased polys, at best quality
     if( highQuality ) {
         if( g_GLOptions.m_GLLineSmoothing )
             glEnable( GL_LINE_SMOOTH );
@@ -196,37 +203,33 @@ void ocpnDC::SetGLAttrs( bool highQuality )
         glDisable( GL_POLYGON_SMOOTH );
         glDisable( GL_BLEND );
     }
-#endif
 }
 
 void ocpnDC::SetGLStipple() const
 {
-#ifdef ocpnUSE_GL
-    
-    switch( m_pen.GetStyle() ) {
-        case QDOT: {
-            glLineStipple( 1, 0x3333 );
-            glEnable( GL_LINE_STIPPLE );
-            break;
-        }
-        case QLONG_DASH: {
-            glLineStipple( 1, 0xFFF8 );
-            glEnable( GL_LINE_STIPPLE );
-            break;
-        }
-        case QSHORT_DASH: {
-            glLineStipple( 1, 0x3F3F );
-            glEnable( GL_LINE_STIPPLE );
-            break;
-        }
-        case QDOT_DASH: {
-            glLineStipple( 1, 0x8FF1 );
-            glEnable( GL_LINE_STIPPLE );
-            break;
-        }
-        default: break;
+    switch( m_pen.style() ) {
+    case Qt::DotLine: {
+        glLineStipple( 1, 0x3333 );
+        glEnable( GL_LINE_STIPPLE );
+        break;
     }
-#endif    
+    case Qt::DashLine: {
+        glLineStipple( 1, 0xFFF8 );
+        glEnable( GL_LINE_STIPPLE );
+        break;
+    }
+    case Qt::DashDotLine: {
+        glLineStipple( 1, 0x3F3F );
+        glEnable( GL_LINE_STIPPLE );
+        break;
+    }
+    case Qt::DashDotDotLine: {
+        glLineStipple( 1, 0x8FF1 );
+        glEnable( GL_LINE_STIPPLE );
+        break;
+    }
+    default: break;
+    }
 }
 
 #ifdef ocpnUSE_GL
@@ -259,7 +262,7 @@ void DrawGLThickLine( float x1, float y1, float x2, float y2, QPen pen, bool b_h
 #ifdef ocpnUSE_GL
     
     float angle = atan2f( y2 - y1, x2 - x1 );
-    float t1 = pen.GetWidth();
+    float t1 = pen.widthF();
     float t2sina1 = t1 / 2 * sinf( angle );
     float t2cosa1 = t1 / 2 * cosf( angle );
 
@@ -267,8 +270,8 @@ void DrawGLThickLine( float x1, float y1, float x2, float y2, QPen pen, bool b_h
 
     //    n.b.  The dQDash interpretation for GL only allows for 2 elements in the dash table.
     //    The first is assumed drawn, second is assumed space
-    QDash *dashes;
-    int n_dashes = pen.GetDashes( &dashes );
+    QVector<qreal> dashes = pen.dashPattern();
+    int n_dashes = dashes.size();
     if( n_dashes ) {
         float lpix = sqrtf( powf( (float) (x1 - x2), 2) + powf( (float) (y1 - y2), 2) );
         float lrun = 0.;
@@ -324,7 +327,7 @@ void DrawGLThickLine( float x1, float y1, float x2, float y2, QPen pen, bool b_h
 
         /* Q draws a nice rounded end in dc mode, so replicate
            this for opengl mode, should this be done for the dashed mode case? */
-        if(pen.GetCap() == QCAP_ROUND) {
+        if(pen.capStyle() == Qt::RoundCap) {
             DrawEndCap( x1, y1, t1, angle);
             DrawEndCap( x2, y2, t1, angle + M_PI);
         }
@@ -335,122 +338,117 @@ void DrawGLThickLine( float x1, float y1, float x2, float y2, QPen pen, bool b_h
 #endif    
 }
 
-void ocpnDC::DrawLine( QCoord x1, QCoord y1, QCoord x2, QCoord y2, bool b_hiqual )
+void ocpnDC::DrawLine( int x1, int y1, int x2, int y2, bool b_hiqual )
 {
-    if( dc )
-        dc->DrawLine( x1, y1, x2, y2 );
-#ifdef ocpnUSE_GL
-    else if( ConfigurePen() ) {
-        bool b_draw_thick = false;
+    if(!ConfigurePen() ) return;
+    bool b_draw_thick = false;
 
-        float pen_width = QMax(g_GLMinSymbolLineWidth, m_pen.GetWidth());
+    float pen_width = fmax(g_GLMinSymbolLineWidth, m_pen.width());
 
-        //      Enable anti-aliased lines, at best quality
-        if( b_hiqual ) {
-            SetGLStipple();
+    //      Enable anti-aliased lines, at best quality
+    if( b_hiqual ) {
+        SetGLStipple();
 
 #ifndef __QQT__
-            glEnable( GL_BLEND );
-            if( g_GLOptions.m_GLLineSmoothing )
-                glEnable( GL_LINE_SMOOTH );
+        glEnable( GL_BLEND );
+        if( g_GLOptions.m_GLLineSmoothing )
+            glEnable( GL_LINE_SMOOTH );
 #endif            
 
-            if( pen_width > 1.0 ) {
-                GLint parms[2];
-                glGetIntegerv( GL_SMOOTH_LINE_WIDTH_RANGE, &parms[0] );
-                if( pen_width > parms[1] ) b_draw_thick = true;
-                else
-                    glLineWidth( pen_width );
-            } else
+        if( pen_width > 1.0 ) {
+            GLint parms[2];
+            glGetIntegerv( GL_SMOOTH_LINE_WIDTH_RANGE, &parms[0] );
+            if( pen_width > parms[1] ) b_draw_thick = true;
+            else
                 glLineWidth( pen_width );
-        } else {            
-            if( pen_width > 1 ) {
-                GLint parms[2];
-                glGetIntegerv( GL_ALIASED_LINE_WIDTH_RANGE, &parms[0] );
-                if( pen_width > parms[1] ) b_draw_thick = true;
-                    else
-                        glLineWidth( pen_width );
-            } else
+        } else
+            glLineWidth( pen_width );
+    } else {
+        if( pen_width > 1 ) {
+            GLint parms[2];
+            glGetIntegerv( GL_ALIASED_LINE_WIDTH_RANGE, &parms[0] );
+            if( pen_width > parms[1] ) b_draw_thick = true;
+            else
                 glLineWidth( pen_width );
-        }
-        
-        if( b_draw_thick ) DrawGLThickLine( x1, y1, x2, y2, m_pen, b_hiqual );
-        else {
-            QDash *dashes;
-            int n_dashes = m_pen.GetDashes( &dashes );
-            if( n_dashes ) {
-                float angle = atan2f( (float) ( y2 - y1 ), (float) ( x2 - x1 ) );
-                float cosa = cosf( angle );
-                float sina = sinf( angle );
-                float t1 = m_pen.GetWidth();
-                    
-                float lpix = sqrtf( powf(x1 - x2, 2) + powf(y1 - y2, 2) );
-                float lrun = 0.;
-                float xa = x1;
-                float ya = y1;
-                float ldraw = t1 * dashes[0];
-                float lspace = t1 * dashes[1];
+        } else
+            glLineWidth( pen_width );
+    }
 
-                ldraw = QMax(ldraw, 4.0);
-                lspace = QMax(lspace, 4.0);
-                lpix = QMin(lpix, 2000.0);
-                
-                glBegin( GL_LINES );
-                while( lrun < lpix ) {
-                    //    Dash
-                    float xb = xa + ldraw * cosa;
-                    float yb = ya + ldraw * sina;
+    if( b_draw_thick ) DrawGLThickLine( x1, y1, x2, y2, m_pen, b_hiqual );
+    else {
+        QVector<qreal> dashes = m_pen.dashPattern();
+        int n_dashes = dashes.size();
+        if( n_dashes ) {
+            float angle = atan2f( (float) ( y2 - y1 ), (float) ( x2 - x1 ) );
+            float cosa = cosf( angle );
+            float sina = sinf( angle );
+            float t1 = m_pen.widthF();
 
-                    if( ( lrun + ldraw ) >= lpix )         // last segment is partial draw
-                    {
-                        xb = x2;
-                        yb = y2;
-                        }
+            float lpix = sqrtf( powf(x1 - x2, 2) + powf(y1 - y2, 2) );
+            float lrun = 0.;
+            float xa = x1;
+            float ya = y1;
+            float ldraw = t1 * dashes[0];
+            float lspace = t1 * dashes[1];
 
-                        glVertex2f( xa, ya );
-                        glVertex2f( xb, yb );
+            ldraw = fmax(ldraw, 4.0);
+            lspace = fmax(lspace, 4.0);
+            lpix = fmin(lpix, 2000.0);
 
-                        xa = xa + ( lspace + ldraw ) * cosa;
-                        ya = ya + ( lspace + ldraw ) * sina;
-                        lrun += lspace + ldraw;
+            glBegin( GL_LINES );
+            while( lrun < lpix ) {
+                //    Dash
+                float xb = xa + ldraw * cosa;
+                float yb = ya + ldraw * sina;
 
-                    }
-                glEnd();
-            } else                    // not dashed
-            {
-                glBegin( GL_LINES );
-                glVertex2i( x1, y1 );
-                glVertex2i( x2, y2 );
-                glEnd();
+                if( ( lrun + ldraw ) >= lpix )         // last segment is partial draw
+                {
+                    xb = x2;
+                    yb = y2;
+                }
+
+                glVertex2f( xa, ya );
+                glVertex2f( xb, yb );
+
+                xa = xa + ( lspace + ldraw ) * cosa;
+                ya = ya + ( lspace + ldraw ) * sina;
+                lrun += lspace + ldraw;
+
             }
-        }
-
-        glDisable( GL_LINE_STIPPLE );
-
-        if( b_hiqual ) {
-            glDisable( GL_LINE_SMOOTH );
-            glDisable( GL_BLEND );
+            glEnd();
+        } else                    // not dashed
+        {
+            glBegin( GL_LINES );
+            glVertex2i( x1, y1 );
+            glVertex2i( x2, y2 );
+            glEnd();
         }
     }
-#endif    
+
+    glDisable( GL_LINE_STIPPLE );
+
+    if( b_hiqual ) {
+        glDisable( GL_LINE_SMOOTH );
+        glDisable( GL_BLEND );
+    }
 }
 
 // Draws thick lines from triangles
-void DrawGLThickLines( int n, QPoint points[],QCoord xoffset,
-                       QCoord yoffset, QPen pen, bool b_hiqual )
+void DrawGLThickLines( int n, QPoint points[],int xoffset,
+                       int yoffset, QPen pen, bool b_hiqual )
 {
 #ifdef ocpnUSE_GL
     if(n < 2)
         return;
 
     /* for dashed case, for now just draw thick lines */
-    QDash *dashes;
-    if( pen.GetDashes( &dashes ) )
+    QVector<qreal> dashes = pen.dashPattern();
+    if( dashes.size() > 0 )
     {
         QPoint p0 = points[0];
         for( int i = 1; i < n; i++ ) {
-            DrawGLThickLine( p0.x + xoffset, p0.y + yoffset, points[i].x + xoffset,
-                             points[i].y + yoffset, pen, b_hiqual );
+            DrawGLThickLine( p0.x() + xoffset, p0.y() + yoffset, points[i].x() + xoffset,
+                             points[i].y() + yoffset, pen, b_hiqual );
             p0 = points[i];
         }
         return;
@@ -461,7 +459,7 @@ void DrawGLThickLines( int n, QPoint points[],QCoord xoffset,
     cpoints[0] = points[0];
     int c = 1;
     for( int i = 1; i < n; i++ ) {
-        if(points[i].x != points[i-1].x || points[i].y != points[i-1].y)
+        if(points[i].x() != points[i-1].x() || points[i].y() != points[i-1].y())
             cpoints[c++] = points[i];
     }
 
@@ -469,9 +467,9 @@ void DrawGLThickLines( int n, QPoint points[],QCoord xoffset,
        line segments drawn as rectangles which have different angles have
        rectangles which overlap and also leave a gap.
        This code properly calculates vertexes for adjoining segments */
-    float t1 = pen.GetWidth();
+    float t1 = pen.widthF();
 
-    float x0 = cpoints[0].x, y0 = cpoints[0].y, x1 = cpoints[1].x, y1 = cpoints[1].y;
+    float x0 = cpoints[0].x(), y0 = cpoints[0].y(), x1 = cpoints[1].x(), y1 = cpoints[1].y();
     float a0 = atan2f( y1 - y0, x1 - x0 );
 
     // It is also possible to use triangle strip, (and triangle fan for endcap)
@@ -486,7 +484,7 @@ void DrawGLThickLines( int n, QPoint points[],QCoord xoffset,
         float a1;
 
         if(i < c - 1) {
-            x2 = cpoints[i + 1].x, y2 = cpoints[i + 1].y;
+            x2 = cpoints[i + 1].x(), y2 = cpoints[i + 1].y();
             a1 = atan2f( y2 - y1, x2 - x1 );
         } else {
             x2 = x1, y2 = y1;
@@ -497,7 +495,7 @@ void DrawGLThickLines( int n, QPoint points[],QCoord xoffset,
         float diff = fabsf(a0 - a1);
         if(diff > M_PI)
             diff -= 2 * (float)M_PI;
-        float rad = t1 / 2 / QMax(cosf(diff / 2), .4);
+        float rad = t1 / 2 / fmax(cosf(diff / 2), .4);
 
         float t2sina1 = rad * sinf( aa );
         float t2cosa1 = rad * cosf( aa );
@@ -520,27 +518,24 @@ void DrawGLThickLines( int n, QPoint points[],QCoord xoffset,
         a0 = a1;
         t2sina0 = t2sina1, t2cosa0 = t2cosa1;
     }
- 
-    if(pen.GetCap() == QCAP_ROUND) {
+
+    if(pen.capStyle() == Qt::RoundCap) {
         DrawEndCap( x0, y0, t1, a0);
         DrawEndCap( x0, y0, t1, a0 + M_PI);
-     }
+    }
 
     glEnd();
 
     delete [] cpoints;
 
- #endif    
- }
+#endif
+}
 
-void ocpnDC::DrawLines( int n, QPoint points[], QCoord xoffset, QCoord yoffset, bool b_hiqual )
+void ocpnDC::DrawLines( int n, QPoint points[], int xoffset, int yoffset, bool b_hiqual )
 {
-    if( dc )
-        dc->DrawLines( n, points, xoffset, yoffset );
-#ifdef ocpnUSE_GL
-    else if( ConfigurePen() ) {
+    if( ConfigurePen() ) {
 
-        SetGLAttrs( b_hiqual ); 
+        SetGLAttrs( b_hiqual );
         bool b_draw_thick = false;
 
         glDisable( GL_LINE_STIPPLE );
@@ -549,23 +544,23 @@ void ocpnDC::DrawLines( int n, QPoint points[], QCoord xoffset, QCoord yoffset, 
         //      Enable anti-aliased lines, at best quality
         if( b_hiqual ) {
             glEnable( GL_BLEND );
-            if( m_pen.GetWidth() > 1 ) {
+            if( m_pen.width() > 1 ) {
                 GLint parms[2];
                 glGetIntegerv( GL_SMOOTH_LINE_WIDTH_RANGE, &parms[0] );
-                if( m_pen.GetWidth() > parms[1] ) b_draw_thick = true;
+                if( m_pen.width() > parms[1] ) b_draw_thick = true;
                 else
-                    glLineWidth( QMax(g_GLMinSymbolLineWidth, m_pen.GetWidth()) );
+                    glLineWidth( fmax(g_GLMinSymbolLineWidth, m_pen.widthF()) );
             } else
-                glLineWidth( QMax(g_GLMinSymbolLineWidth, 1) );
+                glLineWidth( fmax(g_GLMinSymbolLineWidth, 1) );
         } else {
-            if( m_pen.GetWidth() > 1 ) {
+            if( m_pen.width() > 1 ) {
                 GLint parms[2];
                 glGetIntegerv( GL_ALIASED_LINE_WIDTH_RANGE, &parms[0] );
-                if( m_pen.GetWidth() > parms[1] ) b_draw_thick = true;
+                if( m_pen.width() > parms[1] ) b_draw_thick = true;
                 else
-                    glLineWidth( QMax(g_GLMinSymbolLineWidth, m_pen.GetWidth()) );
+                    glLineWidth( fmax(g_GLMinSymbolLineWidth, m_pen.width()) );
             } else
-                glLineWidth( QMax(g_GLMinSymbolLineWidth, 1) );
+                glLineWidth( fmax(g_GLMinSymbolLineWidth, 1) );
         }
 
         if( b_draw_thick) {
@@ -580,7 +575,7 @@ void ocpnDC::DrawLines( int n, QPoint points[], QCoord xoffset, QCoord yoffset, 
 
             glBegin( GL_LINE_STRIP );
             for( int i = 0; i < n; i++ )
-                glVertex2i( points[i].x + xoffset, points[i].y + yoffset );
+                glVertex2i( points[i].x() + xoffset, points[i].y() + yoffset );
             glEnd();
         }
 
@@ -590,10 +585,9 @@ void ocpnDC::DrawLines( int n, QPoint points[], QCoord xoffset, QCoord yoffset, 
             glDisable( GL_BLEND );
         }
     }
-#endif    
 }
 
-void ocpnDC::StrokeLine( QCoord x1, QCoord y1, QCoord x2, QCoord y2 )
+void ocpnDC::StrokeLine( int x1, int y1, int x2, int y2 )
 {
 #if QUSE_GRAPHICS_CONTEXT
     if( pgc ) {
@@ -626,37 +620,30 @@ void ocpnDC::StrokeLines( int n, QPoint *points) {
         DrawLines( n, points, 0, 0, true );
 }
 
-void ocpnDC::DrawRectangle( QCoord x, QCoord y, QCoord w, QCoord h )
+void ocpnDC::DrawRectangle( int x, int y, uint w, uint h )
 {
-    if( dc )
-        dc->DrawRectangle( x, y, w, h );
-#ifdef ocpnUSE_GL
-    else {
-        if( ConfigureBrush() ) {
-            glBegin( GL_QUADS );
-            glVertex2i( x, y );
-            glVertex2i( x + w, y );
-            glVertex2i( x + w, y + h );
-            glVertex2i( x, y + h );
-            glEnd();
-        }
-
-        if( ConfigurePen() ) {
-            glBegin( GL_LINE_LOOP );
-            glVertex2i( x, y );
-            glVertex2i( x + w, y );
-            glVertex2i( x + w, y + h );
-            glVertex2i( x, y + h );
-            glEnd();
-        }
+    if( ConfigureBrush() ) {
+        glBegin( GL_QUADS );
+        glVertex2i( x, y );
+        glVertex2i( x + w, y );
+        glVertex2i( x + w, y + h );
+        glVertex2i( x, y + h );
+        glEnd();
     }
-#endif    
+
+    if( ConfigurePen() ) {
+        glBegin( GL_LINE_LOOP );
+        glVertex2i( x, y );
+        glVertex2i( x + w, y );
+        glVertex2i( x + w, y + h );
+        glVertex2i( x, y + h );
+        glEnd();
+    }
 }
 
 /* draw the arc along corners */
-static void drawrrhelper( QCoord x0, QCoord y0, QCoord r, int quadrant, int steps )
+static void drawrrhelper( int x0, int y0, int r, int quadrant, int steps )
 {
-#ifdef ocpnUSE_GL
     float step = 1.0/steps, rs = 2.0*r*step, rss = rs*step, x, y, dx, dy, ddx, ddy;
     switch(quadrant) {
     case 0: x =  r, y =  0, dx =   0, dy = -rs, ddx = -rss, ddy =  rss; break;
@@ -668,24 +655,19 @@ static void drawrrhelper( QCoord x0, QCoord y0, QCoord r, int quadrant, int step
 
     for(int i=0; i<steps; i++) {
         glVertex2i( x0 + floor(x), y0 + floor(y) );
-         x += dx+ddx/2,  y += dy+ddy/2;
+        x += dx+ddx/2,  y += dy+ddy/2;
         dx += ddx,      dy += ddy;
     }
     glVertex2i( x0 + floor(x), y0 + floor(y) );
-#endif
 }
 
-void ocpnDC::DrawRoundedRectangle( QCoord x, QCoord y, QCoord w, QCoord h, QCoord r )
+void ocpnDC::DrawRoundedRectangle( int x, int y, uint w, uint h, int r )
 {
-    if( dc )
-        dc->DrawRoundedRectangle( x, y, w, h, r );
-#ifdef ocpnUSE_GL
-    else {
         r++;
         int steps = ceil(sqrt((float)r));
 
-        QCoord x1 = x + r, x2 = x + w - r;
-        QCoord y1 = y + r, y2 = y + h - r;
+        int x1 = x + r, x2 = x + w - r;
+        int y1 = y + r, y2 = y + h - r;
         if( ConfigureBrush() ) {
             glBegin( GL_TRIANGLE_FAN );
             drawrrhelper( x2, y1, r, 0, steps );
@@ -703,16 +685,14 @@ void ocpnDC::DrawRoundedRectangle( QCoord x, QCoord y, QCoord w, QCoord h, QCoor
             drawrrhelper( x2, y2, r, 3, steps );
             glEnd();
         }
-    }
-#endif    
 }
 
-void ocpnDC::DrawCircle( QCoord x, QCoord y, QCoord radius )
+void ocpnDC::DrawCircle( int x, int y, int radius )
 {
     DrawEllipse( x - radius, y - radius, 2 * radius, 2 * radius );
 }
 
-void ocpnDC::StrokeCircle( QCoord x, QCoord y, QCoord radius )
+void ocpnDC::StrokeCircle( int x, int y, int radius )
 {
 #if QUSE_GRAPHICS_CONTEXT
     if( pgc ) {
@@ -731,12 +711,8 @@ void ocpnDC::StrokeCircle( QCoord x, QCoord y, QCoord radius )
         DrawCircle( x, y, radius );
 }
 
-void ocpnDC::DrawEllipse( QCoord x, QCoord y, QCoord width, QCoord height )
+void ocpnDC::DrawEllipse( int x, int y, int width, int height )
 {
-    if( dc )
-        dc->DrawEllipse( x, y, width, height );
-#ifdef ocpnUSE_GL
-    else {
         float r1 = width / 2, r2 = height / 2;
         float cx = x + r1, cy = y + r2;
 
@@ -744,7 +720,7 @@ void ocpnDC::DrawEllipse( QCoord x, QCoord y, QCoord width, QCoord height )
         glEnable( GL_BLEND );
 
         /* formula for variable step count to produce smooth ellipse */
-        float steps = floorf(QMax(sqrtf(sqrtf((float)(width*width + height*height))), 1) * M_PI);
+        float steps = floorf(fmax(sqrtf(sqrtf((float)(width*width + height*height))), 1) * M_PI);
 
         if( ConfigureBrush() ) {
             glBegin( GL_TRIANGLE_FAN );
@@ -762,19 +738,13 @@ void ocpnDC::DrawEllipse( QCoord x, QCoord y, QCoord width, QCoord height )
         }
 
         glDisable( GL_BLEND );
-    }
-#endif    
 }
 
-void ocpnDC::DrawPolygon( int n, QPoint points[], QCoord xoffset, QCoord yoffset, float scale )
+void ocpnDC::DrawPolygon( int n, QPoint points[], int xoffset, int yoffset, float scale )
 {
-    if( dc )
-        dc->DrawPolygon( n, points, xoffset, yoffset );
-#ifdef ocpnUSE_GL
-    else {
         
 #ifdef __QQT__
-        SetGLAttrs( false );            // Some QT platforms (Android) have trouble with GL_BLEND / GL_LINE_SMOOTH 
+        SetGLAttrs( false );            // Some QT platforms (Android) have trouble with GL_BLEND / GL_LINE_SMOOTH
 #else
         SetGLAttrs( true );
 #endif        
@@ -784,7 +754,7 @@ void ocpnDC::DrawPolygon( int n, QPoint points[], QCoord xoffset, QCoord yoffset
                 glEnable( GL_POLYGON_SMOOTH );
             glBegin( GL_POLYGON );
             for( int i = 0; i < n; i++ )
-                glVertex2f( (points[i].x * scale) + xoffset, (points[i].y * scale) + yoffset );
+                glVertex2f( (points[i].x() * scale) + xoffset, (points[i].y() * scale) + yoffset );
             glEnd();
             glDisable( GL_POLYGON_SMOOTH );
         }
@@ -794,15 +764,12 @@ void ocpnDC::DrawPolygon( int n, QPoint points[], QCoord xoffset, QCoord yoffset
                 glEnable( GL_LINE_SMOOTH );
             glBegin( GL_LINE_LOOP );
             for( int i = 0; i < n; i++ )
-                glVertex2f( (points[i].x * scale) + xoffset, (points[i].y * scale) + yoffset );
+                glVertex2f( (points[i].x() * scale) + xoffset, (points[i].y() * scale) + yoffset );
             glEnd();
             glDisable( GL_LINE_SMOOTH );
         }
 
-        SetGLAttrs( false ); 
-        
-    }
-#endif    
+        SetGLAttrs( false );
 }
 
 #ifdef ocpnUSE_GL
@@ -820,12 +787,12 @@ typedef union {
 } GLvertex;
 
 void APIENTRY ocpnDCcombineCallback( GLdouble coords[3], GLdouble *vertex_data[4], GLfloat weight[4],
-        GLdouble **dataOut )
+GLdouble **dataOut )
 {
     GLvertex *vertex;
 
     vertex = new GLvertex();
-    gTesselatorVertices.Add(vertex );
+    gTesselatorVertices.append(vertex );
 
     vertex->info.x = coords[0];
     vertex->info.y = coords[1];
@@ -847,9 +814,9 @@ void APIENTRY ocpnDCvertexCallback( GLvoid* arg )
 
 void APIENTRY ocpnDCerrorCallback( GLenum errorCode )
 {
-   const GLubyte *estring;
-   estring = gluErrorString(errorCode);
-   ZCHX_LOGMSG( QString::Format(_T("OpenGL Tessellation Error: %s"), (char *)estring) );
+    const GLubyte *estring;
+    estring = gluErrorString(errorCode);
+    qDebug("OpenGL Tessellation Error: %s", (char *)estring);
 }
 
 void APIENTRY ocpnDCbeginCallback( GLenum type )
@@ -863,12 +830,8 @@ void APIENTRY ocpnDCendCallback()
 }
 #endif          //#ifdef ocpnUSE_GL
 
-void ocpnDC::DrawPolygonTessellated( int n, QPoint points[], QCoord xoffset, QCoord yoffset )
+void ocpnDC::DrawPolygonTessellated( int n, QPoint points[], int xoffset, int yoffset )
 {
-    if( dc )
-        dc->DrawPolygon( n, points, xoffset, yoffset );
-#ifdef ocpnUSE_GL
-    else {
 # ifndef ocpnUSE_GLES  // tessalator in glues is broken
         if( n < 5 )
 # endif
@@ -895,9 +858,9 @@ void ocpnDC::DrawPolygonTessellated( int n, QPoint points[], QCoord xoffset, QCo
 
             for( int i = 0; i < n; i++ ) {
                 GLvertex* vertex = new GLvertex();
-                gTesselatorVertices.Add( vertex );
-                vertex->info.x = (GLdouble) points[i].x;
-                vertex->info.y = (GLdouble) points[i].y;
+                gTesselatorVertices.append(vertex );
+                vertex->info.x = (GLdouble) points[i].x();
+                vertex->info.y = (GLdouble) points[i].y();
                 vertex->info.z = (GLdouble) 0.0;
                 vertex->info.r = (GLdouble) 0.0;
                 vertex->info.g = (GLdouble) 0.0;
@@ -908,14 +871,12 @@ void ocpnDC::DrawPolygonTessellated( int n, QPoint points[], QCoord xoffset, QCo
             gluTessEndPolygon( tobj );
         }
 
-        for( unsigned int i=0; i<gTesselatorVertices.Count(); i++ )
+        for( unsigned int i=0; i<gTesselatorVertices.count(); i++ )
             delete (GLvertex*)gTesselatorVertices[i];
-        gTesselatorVertices.Clear();
-    }
-#endif    
+        gTesselatorVertices.clear();
 }
 
-void ocpnDC::StrokePolygon( int n, QPoint points[], QCoord xoffset, QCoord yoffset, float scale )
+void ocpnDC::StrokePolygon( int n, QPoint points[], int xoffset, int yoffset, float scale )
 {
 #if QUSE_GRAPHICS_CONTEXT
     if( pgc ) {
@@ -936,9 +897,9 @@ void ocpnDC::StrokePolygon( int n, QPoint points[], QCoord xoffset, QCoord yoffs
         DrawPolygon( n, points, xoffset, yoffset, scale );
 }
 
-void ocpnDC::DrawBitmap( const QBitmap &bitmap, QCoord x, QCoord y, bool usemask )
+void ocpnDC::DrawBitmap( const wxBitmap &bitmap, int x, int y, bool usemask )
 {
-    QBitmap bmp;
+    wxBitmap bmp;
     if( x < 0 || y < 0 ) {
         int dx = ( x < 0 ? -x : 0 );
         int dy = ( y < 0 ? -y : 0 );
@@ -946,35 +907,32 @@ void ocpnDC::DrawBitmap( const QBitmap &bitmap, QCoord x, QCoord y, bool usemask
         int h = bitmap.GetHeight() - dy;
         /* picture is out of viewport */
         if( w <= 0 || h <= 0 ) return;
-        QBitmap newBitmap = bitmap.GetSubBitmap( QRect( dx, dy, w, h ) );
+        wxBitmap newBitmap = bitmap.GetSubBitmap( QRect( dx, dy, w, h ) );
         x += dx;
         y += dy;
         bmp = newBitmap;
     } else {
         bmp = bitmap;
     }
-    if( dc )
-        dc->DrawBitmap( bmp, x, y, usemask );
-#ifdef ocpnUSE_GL
-    else {
+
 #ifdef ocpnUSE_GLES  // Do not attempt to do anything with glDrawPixels if using opengles
         return; // this should not be hit anymore ever anyway
 #endif
         QImage image = bmp.ConvertToImage();
-        int w = image.GetWidth(), h = image.GetHeight();
+        int w = image.width(), h = image.height();
 
         if( usemask ) {
-            unsigned char *d = image.GetData();
-            unsigned char *a = image.GetAlpha();
+            unsigned char *d = image.bits();
+            unsigned char *a = image.alphaChannel().bits();
 
 #ifdef __QOSX__
             if(image.HasMask())
                 a=0;
 #endif
             unsigned char mr, mg, mb;
-            if( !a && !image.GetOrFindMaskColour( &mr, &mg, &mb ) ){
-                printf("trying to use mask to draw a bitmap without alpha or mask\n" );
-            }
+//            if( !a && !image.GetOrFindMaskColour( &mr, &mg, &mb ) ){
+//                printf("trying to use mask to draw a bitmap without alpha or mask\n" );
+//            }
 
             
             unsigned char *e = new unsigned char[4 * w * h];
@@ -993,7 +951,7 @@ void ocpnDC::DrawBitmap( const QBitmap &bitmap, QCoord x, QCoord y, bool usemask
 
                         e[off * 4 + 3] =
                                 a ? a[off] : ( ( r == mr ) && ( g == mg ) && ( b == mb ) ? 0 : 255 );
-//                        e[off * 4 + 3] = ( ( r == mr ) && ( g == mg ) && ( b == mb ) ? 0 : 255 );
+                        //                        e[off * 4 + 3] = ( ( r == mr ) && ( g == mg ) && ( b == mb ) ? 0 : 255 );
                     }
             }
 
@@ -1003,22 +961,17 @@ void ocpnDC::DrawBitmap( const QBitmap &bitmap, QCoord x, QCoord y, bool usemask
         } else {
             glRasterPos2i( x, y );
             glPixelZoom( 1, -1 ); /* draw data from top to bottom */
-            if(image.GetData())
-                glDrawPixels( w, h, GL_RGB, GL_UNSIGNED_BYTE, image.GetData() );
+            if(image.bits())
+                glDrawPixels( w, h, GL_RGB, GL_UNSIGNED_BYTE, image.bits() );
             glPixelZoom( 1, 1 );
         }
-    }
-#endif    
 }
 
-void ocpnDC::DrawText( const QString &text, QCoord x, QCoord y )
+void ocpnDC::DrawText( const QString &text, int x, int y )
 {
-    if( dc )
-        dc->DrawText( text, x, y );
-#ifdef ocpnUSE_GL
-    else {
-       QCoord w = 0;
-        QCoord h = 0;
+
+        int w = 0;
+        int h = 0;
 
         if(m_buseTex){
             TexFont *texfont = GetTexFont( &m_font );
@@ -1035,8 +988,8 @@ void ocpnDC::DrawText( const QString &text, QCoord x, QCoord y )
                 glPushMatrix();
                 glTranslatef(x, y, 0);
                 
-                glColor3ub( m_textforegroundcolour.Red(), m_textforegroundcolour.Green(),
-                            m_textforegroundcolour.Blue() );
+                glColor3ub( m_textforegroundcolour.red(), m_textforegroundcolour.green(),
+                            m_textforegroundcolour.blue() );
                 
 
                 texfont->RenderString(text);
@@ -1047,7 +1000,8 @@ void ocpnDC::DrawText( const QString &text, QCoord x, QCoord y )
 
             }
         }
-        else{           
+#if 0
+        else{
             QScreenDC sdc;
             sdc.SetFont(m_font);
             sdc.GetTextExtent(text, &w, &h, NULL, NULL, &m_font);
@@ -1110,7 +1064,7 @@ void ocpnDC::DrawText( const QString &text, QCoord x, QCoord y )
             glPixelZoom( 1, 1 );
             glDisable( GL_BLEND );
 #else
-            unsigned int texobj;    
+            unsigned int texobj;
             
             glGenTextures(1, &texobj);
             glBindTexture(GL_TEXTURE_2D, texobj);
@@ -1143,83 +1097,67 @@ void ocpnDC::DrawText( const QString &text, QCoord x, QCoord y )
             glDeleteTextures(1, &texobj);
 #endif            
             delete[] data;
-        }            
-    }
-#endif    
+        }
+#endif
 }
 
-void ocpnDC::GetTextExtent( const QString &string, QCoord *w, QCoord *h, QCoord *descent,
-        QCoord *externalLeading, QFont *font )
+void ocpnDC::GetTextExtent( const QString &string, int *w, int *h, int *descent,
+                            int *externalLeading, QFont *font )
 {
     //  Give at least reasonable results on failure.
     if(w) *w = 100;
     if(h) *h = 100;
-    
-    if( dc ) dc->GetTextExtent( string, w, h, descent, externalLeading, font );
-    else {
+
         QFont f = m_font;
         if( font ) f = *font;
 
         if(m_buseTex){
-  #ifdef ocpnUSE_GL       
-        TexFont *texfont = GetTexFont(&f);
+            TexFont *texfont = GetTexFont(&f);
 
-        texfont->GetTextExtent(string, w, h);
-  #else        
-        QMemoryDC temp_dc;
-        temp_dc.GetTextExtent( string, w, h, descent, externalLeading, &f );
-  #endif      
-        }
-        else{
-            QMemoryDC temp_dc;
-            temp_dc.GetTextExtent( string, w, h, descent, externalLeading, &f );
+            texfont->GetTextExtent(string, w, h);
         }
 
-     }
-     
-     //  Sometimes GetTextExtent returns really wrong, uninitialized results.
-     //  Dunno why....
-     if( w && (*w > 500) ) *w = 500;
-     if( h && (*h > 500) ) *h = 500;
+    //  Sometimes GetTextExtent returns really wrong, uninitialized results.
+    //  Dunno why....
+    if( w && (*w > 500) ) *w = 500;
+    if( h && (*h > 500) ) *h = 500;
 }
 
 void ocpnDC::ResetBoundingBox()
 {
-    if( dc ) dc->ResetBoundingBox();
+//    if( dc ) dc->ResetBoundingBox();
 }
 
-void ocpnDC::CalcBoundingBox( QCoord x, QCoord y )
+void ocpnDC::CalcBoundingBox( int x, int y )
 {
-    if( dc ) dc->CalcBoundingBox( x, y );
+//    if( dc ) dc->CalcBoundingBox( x, y );
 }
 
 bool ocpnDC::ConfigurePen()
 {
-    if( !m_pen.IsOk() ) return false;
-    if( m_pen == *QTRANSPARENT_PEN ) return false;
+    if( m_pen.color() == Qt::transparent) return false;
 
-    QColour c = m_pen.GetColour();
-    int width = m_pen.GetWidth();
+    QColor c = m_pen.color();
+    int width = m_pen.width();
 #ifdef ocpnUSE_GL
-    glColor4ub( c.Red(), c.Green(), c.Blue(), c.Alpha() );
-    glLineWidth( QMax(g_GLMinSymbolLineWidth, width) );
+    glColor4ub( c.red(), c.green(), c.blue(), c.alpha() );
+    glLineWidth( fmax(g_GLMinSymbolLineWidth, width) );
 #endif    
     return true;
 }
 
 bool ocpnDC::ConfigureBrush()
 {
-    if( m_brush == QNullBrush || m_brush.GetStyle() == QBRUSHSTYLE_TRANSPARENT )
-        return false;
+    if(m_brush.color() == Qt::transparent ) return false;
 #ifdef ocpnUSE_GL
-    QColour c = m_brush.GetColour();
-    glColor4ub( c.Red(), c.Green(), c.Blue(), c.Alpha() );
+    QColor c = m_brush.color();
+    glColor4ub( c.red(), c.green(), c.blue(), c.alpha() );
 #endif    
     return true;
 }
 
-void ocpnDC::GLDrawBlendData( QCoord x, QCoord y, QCoord w, QCoord h, int format,
-        const unsigned char *data )
+void ocpnDC::GLDrawBlendData( int x, int y, int w, int h, int format,
+                              const unsigned char *data )
 {
 #ifdef ocpnUSE_GL
     glEnable( GL_BLEND );

@@ -85,7 +85,7 @@ int SetScreenBrightness(int brightness);
       class PixelCache;
       class ChInfoWin;
       class glChartCanvas;
-      class CanvasMenuHandler;
+//      class CanvasMenuHandler;
       class ChartStack;
       class Piano;
       class canvasConfig;
@@ -148,6 +148,7 @@ protected:
       void paintEvent(QPaintEvent* event);
       void focusInEvent(QFocusEvent *);
       void focusOutEvent(QFocusEvent *);
+      void resizeEvent(QResizeEvent * event );
 public slots:
       void OnToolLeftClick();
       bool MouseEventOverlayWindows( QMouseEvent* event );
@@ -208,16 +209,12 @@ public slots:
       void JumpToPosition( double lat, double lon, double scale );
       void SetFirstAuto( bool b_auto ){m_bFirstAuto = b_auto; }
       
-      void GetDoubleCanvasPointPix(double rlat, double rlon, QPointF *r);
-      void GetDoubleCanvasPointPixVP( ViewPort &vp, double rlat, double rlon, QPointF *r );
-      bool GetCanvasPointPix( double rlat, double rlon, QPoint *r );
-      bool GetCanvasPointPixVP( ViewPort &vp, double rlat, double rlon, QPoint *r );
+      void GetDoubleCanvasPointPix(double rlat, double rlon, zchxPointF& r);
+      void GetDoubleCanvasPointPixVP( ViewPort &vp, double rlat, double rlon, zchxPointF& r );
+      bool GetCanvasPointPix( double rlat, double rlon, zchxPoint& r );
+      bool GetCanvasPointPixVP( ViewPort &vp, double rlat, double rlon, zchxPoint &r );
       
       void GetCanvasPixPoint(double x, double y, double &lat, double &lon);
-      void WarpPointerDeferred(int x, int y);
-      void UpdateShips();
-      void UpdateAIS();
-      void UpdateAlerts();                          // pjotrc 2010.02.22
 
       bool IsMeasureActive(){ return m_bMeasure_Active; }
 //      wxBitmap &GetTideBitmap(){ return m_cTideBitmap; }
@@ -232,7 +229,7 @@ public slots:
       double GetBestStartScale(int dbi_hint, const ViewPort &vp);
       void ConfigureChartBar();
       
-      int GetNextContextMenuId();
+//      int GetNextContextMenuId();
       bool StartTimedMovement( bool stoptimer=true );
       void DoTimedMovement( );
       void DoMovement( long dt );
@@ -276,8 +273,6 @@ public slots:
       void RotateCanvas( double dir );
       void DoRotateCanvas( double rotation );
       void DoTiltCanvas( double tilt );
-
-      void ShowAISTargetList(void);
 
       void ShowGoToPosition(void);
       void HideGlobalToolbar();
@@ -364,8 +359,7 @@ public:
       bool        m_bCourseUp;
       bool        m_bLookAhead;
       double      m_VPRotate;
-      
-      void DrawBlinkObjects( void );
+
       
       void InvalidateGL();
       
@@ -383,8 +377,7 @@ public:
       bool        m_bAppendingRoute;
       int         m_nMeasureState;
       zchxMapMainWindow     *parent_frame;
-      QString    FindValidUploadPort();
-      CanvasMenuHandler  *m_canvasMenu;
+//      CanvasMenuHandler  *m_canvasMenu;
       int GetMinAvailableGshhgQuality() { return pWorldBackgroundChart->GetMinAvailableQuality(); }
       int GetMaxAvailableGshhgQuality() { return pWorldBackgroundChart->GetMaxAvailableQuality(); }
 
@@ -461,15 +454,15 @@ private:
       QColor PredColor();
       QColor ShipColor();
 
-      void ComputeShipScaleFactor(float icon_hdt,
-                                  int ownShipWidth, int ownShipLength, 
-                                  QPoint &lShipMidPoint,
-                                  QPoint &GpsOffsetPixels, QPoint lGPSPoint,
-                                  float &scale_factor_x, float &scale_factor_y);
+//      void ComputeShipScaleFactor(float icon_hdt,
+//                                  int ownShipWidth, int ownShipLength,
+//                                  QPoint &lShipMidPoint,
+//                                  QPoint &GpsOffsetPixels, QPoint lGPSPoint,
+//                                  float &scale_factor_x, float &scale_factor_y);
 
-      void ShipDrawLargeScale( ocpnDC& dc, QPoint lShipMidPoint );
-      void ShipIndicatorsDraw( ocpnDC& dc, int img_height,
-                               QPoint GPSOffsetPixels, QPoint lGPSPoint);
+//      void ShipDrawLargeScale( ocpnDC& dc, QPoint lShipMidPoint );
+//      void ShipIndicatorsDraw( ocpnDC& dc, int img_height,
+//                               QPoint GPSOffsetPixels, QPoint lGPSPoint);
                                
       ChInfoWin   *m_pCIWin;
 
@@ -531,39 +524,22 @@ private:
       void OnSize(QResizeEvent& event);
       void MouseTimedEvent(QTimerEvent& event);
       void MouseEvent(QMouseEvent& event);
-      void ShipDraw(ocpnDC& dc);
+//      void ShipDraw(ocpnDC& dc);
       void DrawArrow(ocpnDC& dc, int x, int y, double rot_angle, double scale);
-      void FindRoutePointsAtCursor( float selectRadius, bool setBeingEdited );
-
       void RotateTimerEvent(QTimerEvent& event);
       void PanTimerEvent(QTimerEvent& event);
       void MovementTimerEvent(QTimerEvent& );
       void MovementStopTimerEvent( QTimerEvent& );
       void OnCursorTrackTimerEvent(QTimerEvent& event);
 
-      void DrawAllTracksInBBox( ocpnDC& dc, LLBBox& BltBBox );
-      void DrawActiveTrackInBBox( ocpnDC& dc, LLBBox& BltBBox );
-      void DrawAllRoutesInBBox(ocpnDC& dc, LLBBox& BltBBox );
-      void DrawActiveRouteInBBox(ocpnDC& dc, LLBBox& BltBBox );
-      void DrawAllWaypointsInBBox(ocpnDC& dc, LLBBox& BltBBox );
-      void DrawAnchorWatchPoints( ocpnDC& dc );
 
-      void DrawAllTidesInBBox(ocpnDC& dc, LLBBox& BBox);
-      void DrawAllCurrentsInBBox(ocpnDC& dc, LLBBox& BBox);
-      void RebuildTideSelectList( LLBBox& BBox );
-      void RebuildCurrentSelectList( LLBBox& BBox );
-      
 
       void RenderAllChartOutlines(ocpnDC &dc, ViewPort& vp);
       void RenderChartOutline(ocpnDC &dc, int dbIndex, ViewPort& vp);
-      void RenderRouteLegs ( ocpnDC &dc );
-
-      void AlertDraw(ocpnDC& dc);                // pjotrc 2010.02.22
 
       void GridDraw(ocpnDC& dc); // Display lat/lon Grid in chart display
       void ScaleBarDraw( ocpnDC& dc );
 
-      void DrawOverlayObjects ( ocpnDC &dc, const QRegion& ru );
 
       emboss_data *EmbossDepthScale();
       emboss_data *CreateEmbossMapData(QFont &font, int width, int height, const QString &str, ColorScheme cs);
@@ -594,9 +570,6 @@ private:
       QPoint     last_drag;
 
       QPainter  *pmemdc;
-
-      int         warp_x, warp_y;
-      bool        warp_flag;
 
 
 //      QTimer     *pPanTimer;       // This timer used for auto panning on route creation and edit

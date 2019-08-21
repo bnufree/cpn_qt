@@ -45,6 +45,7 @@ public:
     bool DoChartUpdate( void );
     void UpdateRotationState( double rotation );
     void SetChartUpdatePeriod();
+    ChartCanvas *GetPrimaryCanvas();
 
 
 public slots:

@@ -28,9 +28,12 @@
 #include <QWidget>
 #include "_def.h"
 #include <QLabel>
+#include <QMouseEvent>
+#include <QPaintEvent>
 
 class ChInfoWin: public QWidget
 {
+    Q_OBJECT
 public:
     ChInfoWin( QWidget *parent = 0 );
     ~ChInfoWin();

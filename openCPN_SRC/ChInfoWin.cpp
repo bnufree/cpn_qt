@@ -25,6 +25,9 @@
 #include "chart1.h"
 #include "OCPNPlatform.h"
 #include "FontMgr.h"
+#include <QPainter>
+#include <QVBoxLayout>
+
 
 extern bool g_btouch;
 extern OCPNPlatform  *g_Platform;
@@ -32,14 +35,15 @@ extern OCPNPlatform  *g_Platform;
 // Define a constructor
 ChInfoWin::ChInfoWin( QWidget *parent ):QWidget(parent)
 {
-    this->setStyle(Qt::SubWindow);
+    this->setWindowFlags(Qt::SubWindow);
     QFont *dFont = FontMgr::Get().GetFont("Dialog") ;
     this->setFont(*dFont);
+    this->setLayout(new QVBoxLayout);
     m_pInfoTextCtl = new QLabel(this);
     m_pInfoTextCtl->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    m_pInfoTextCtl->move(0,0);
+    this->layout()->addWidget(m_pInfoTextCtl);
     dbIndex = -1;
-    Hide();
+    hide();
 }
 
 ChInfoWin::~ChInfoWin()
@@ -47,67 +51,53 @@ ChInfoWin::~ChInfoWin()
     delete m_pInfoTextCtl;
 }
 
-void ChInfoWin::OnEraseBackground( wxEraseEvent& event )
-{
-}
 
-void ChInfoWin::MouseEvent( wxMouseEvent& event )
+
+void ChInfoWin::mousePressEvent(QMouseEvent *event)
 {
     if(g_btouch){
-        if( event.LeftDown() ) {
-            Hide();
-            
-            #ifdef __OCPN__ANDROID__        
-            androidForceFullRepaint();
-            #endif
+        if( event->button() == Qt::LeftButton) {
+            hide();
         }
     }
 }
 
     
-void ChInfoWin::OnPaint( wxPaintEvent& event )
+void ChInfoWin::paintEvent(QPaintEvent* event)
 {
     int width, height;
-    GetClientSize( &width, &height );
-    wxPaintDC dc( this );
+    QPainter dc( this );
 
-    dc.SetBrush( wxBrush( GetGlobalColor( _T ( "UIBCK" ) ) ) );
-    dc.SetPen( wxPen( GetGlobalColor( _T ( "UITX1" ) ) ) );
-    dc.DrawRectangle( 0, 0, width, height );
+    dc.setBrush(QBrush( GetGlobalColor( ( "UIBCK" ) ) ) );
+    dc.setPen(QPen( GetGlobalColor( ( "UITX1" ) ) ) );
+    dc.drawRect(this->rect() );
 }
 
 void ChInfoWin::SetBitmap()
 {
-    SetBackgroundColour( GetGlobalColor( _T ( "UIBCK" ) ) );
+    QPalette pal = this->palette();
+    pal.setBrush(QPalette::Window, QBrush(GetGlobalColor( "UIBCK" )));
+    this->setPalette(pal);
+    m_pInfoTextCtl->setStyleSheet(QString("background-color:transparent;color:%1").arg(GetGlobalColor(  "UITX1" ).name()));
+    m_pInfoTextCtl->setText(m_string );
 
-    m_pInfoTextCtl->SetBackgroundColour( GetGlobalColor( _T ( "UIBCK" ) ) );
-    m_pInfoTextCtl->SetForegroundColour( GetGlobalColor( _T ( "UITX1" ) ) );
-
-    m_pInfoTextCtl->SetSize( 1, 1, m_size.x - 2, m_size.y - 2 );
-    m_pInfoTextCtl->SetLabel( m_string );
-
-    wxPoint top_position = m_position; //GetParent()->ClientToScreen( m_position);
-    SetSize( top_position.x, top_position.y, m_size.x, m_size.y );
-    SetClientSize( m_size.x, m_size.y );
+    zchxPoint top_position = m_position; //GetParent()->ClientToScreen( m_position);
+    setGeometry(top_position.x, top_position.y, m_size.width(), m_size.height() );
 }
 
+// width 字符最大长度. height 行数
 void ChInfoWin::FitToChars( int char_width, int char_height )
 {
-    wxSize size;
+    QStringList list;
+    for(int i=0; i<char_width; i++) list.append("A");
+    QSize size;
 
     int adjust = 1;
-
-#ifdef __WXOSX__
-    adjust = 2;
-#endif
-
-#ifdef __OCPN__ANDROID__
-    adjust = 4;
-#endif
-    
-    size.x = GetCharWidth() * char_width;
-    size.y = GetCharHeight() * ( char_height + adjust );
-    size.x = wxMin(size.x, g_Platform->getDisplaySize().x-10);
-    SetWinSize( size );
+    QFontMetrics mcs(this->font());
+    size.setWidth(mcs.width(list.join("")));
+    size.setHeight(mcs.height() * ( char_height + adjust ));
+    size.setWidth(fmin(size.width(), g_Platform->getDisplaySize().width()-10));
+    resize(size );
+    SetWinSize(size);
 }
 

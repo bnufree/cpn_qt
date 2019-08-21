@@ -98,6 +98,7 @@ struct zchxPoint{
     int y;
     zchxPoint() {}
     zchxPoint(int px, int py) {x = px; y=py;}
+    zchxPoint(const QPoint& pos) {x = pos.x(); y=pos.y();}
 
     void operator+=(const zchxPoint &p) {x+=p.x; y+=p.y;}
     void operator-=(const zchxPoint &p) {x-=p.x; y-=p.y;}

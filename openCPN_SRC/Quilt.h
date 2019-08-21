@@ -142,9 +142,9 @@ public:
     bool RenderQuiltRegionViewOnDCTextOnly( QPainter &dc, ViewPort &vp, OCPNRegion &chart_region );
     
     bool IsVPBlittable( ViewPort &VPoint, int dx, int dy, bool b_allow_vector = false );
-    ChartBase *GetChartAtPix( ViewPort &VPoint, const QPoint& p );
-    ChartBase *GetOverlayChartAtPix( ViewPort &VPoint, const QPoint& p );
-    int GetChartdbIndexAtPix( ViewPort &VPoint, QPoint p );
+    ChartBase *GetChartAtPix( ViewPort &VPoint, const zchxPoint& p );
+    ChartBase *GetOverlayChartAtPix( ViewPort &VPoint, const zchxPoint& p );
+    int GetChartdbIndexAtPix( ViewPort &VPoint, zchxPoint p );
     void InvalidateAllQuiltPatchs( void );
     void Invalidate( void )
     {
@@ -252,6 +252,7 @@ private:
 
     bool m_bcomposed;
     PatchListNode cnode;
+    int           cnode_index;
     bool m_bbusy;
     int m_quilt_proj;
 

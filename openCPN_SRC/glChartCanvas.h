@@ -113,7 +113,7 @@ public:
 
     ~glChartCanvas();
 
-    void SetContext(QOpenGLContext *pcontext) { m_pcontext = pcontext; }
+    void SetContext(QGLContext *pcontext) { m_pcontext = pcontext; }
     void Render();    
     void FastPan(int dx, int dy);
     void FastZoom(float factor);
@@ -141,6 +141,7 @@ public:
     void SetupCompression();
     bool CanAcceleratePanning() { return m_b_BuiltFBO; }
     bool UsingFBO() { return m_b_BuiltFBO; }
+    QColor GetBackGroundColor() const;
 
     time_t m_last_render_time;
 
@@ -149,7 +150,7 @@ public:
 public slots:
     void OnActivate ();
 //    void OnSize (QSize size);
-    void MouseEvent(QMouseEvent& event);
+    void MouseEvent(QMouseEvent* event);
 
 protected:
     void paintGL();
@@ -161,7 +162,6 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event);
 
 protected:
-    void RenderGLAlertMessage();
 
     void RenderQuiltViewGL( ViewPort &vp, const OCPNRegion &rect_region );
     void RenderQuiltViewGLText( ViewPort &vp, const OCPNRegion &rect_region );
@@ -181,11 +181,8 @@ protected:
     void DrawChartBar( ocpnDC &dc );
     void DrawQuiting();
     void DrawCloseMessage(QString msg);
-
-    void DrawGLTidesInBBox(ocpnDC& dc, LLBBox& BBox);
-    void DrawGLCurrentsInBBox(ocpnDC& dc, LLBBox& BBox);
     
-    QOpenGLContext       *m_pcontext;
+    QGLContext       *m_pcontext;
 
     int max_texture_dimension;
 
@@ -213,9 +210,9 @@ protected:
     int          m_cache_tex_x;
     int          m_cache_tex_y;
 
-    GLuint      ownship_tex;
-    int         ownship_color;
-    QSize      ownship_size, ownship_tex_size;
+//    GLuint      ownship_tex;
+//    int         ownship_color;
+//    QSize      ownship_size, ownship_tex_size;
 
     GLuint      m_piano_tex;
     
@@ -236,12 +233,12 @@ protected:
 
     int		m_LRUtime;
 
-    GLuint       m_tideTex;
-    GLuint       m_currentTex;
-    int          m_tideTexWidth;
-    int          m_tideTexHeight;
-    int          m_currentTexWidth;
-    int          m_currentTexHeight;
+//    GLuint       m_tideTex;
+//    GLuint       m_currentTex;
+//    int          m_tideTexWidth;
+//    int          m_tideTexHeight;
+//    int          m_currentTexWidth;
+//    int          m_currentTexHeight;
     
     ChartCanvas *m_pParentCanvas;
 };

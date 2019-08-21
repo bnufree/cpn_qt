@@ -35,6 +35,7 @@
 
 #include "TexFont.h"
 #include <QPen>
+#include "bitmap.h"
 
 
 void DrawGLThickLine( float x1, float y1, float x2, float y2, QPen pen, bool b_hiqual );
@@ -43,13 +44,12 @@ void DrawGLThickLine( float x1, float y1, float x2, float y2, QPen pen, bool b_h
 // ocpnDC
 //----------------------------------------------------------------------------
 
-class QGLCanvas;
+class glChartCanvas;
 
 class ocpnDC
 {
 public:
-     ocpnDC(QGLCanvas* canvas);
-     ocpnDC(QPainter* pdc);
+     ocpnDC(glChartCanvas* canvas);
      ocpnDC();
 
      ~ocpnDC();
@@ -87,7 +87,7 @@ public:
      void DrawPolygonTessellated(int n, QPoint points[], int xoffset = 0, int yoffset = 0);
      void StrokePolygon(int n, QPoint points[], int xoffset = 0, int yoffset = 0, float scale = 1.0);
 
-     void DrawBitmap(const QBitmap &bitmap, int x, int y, bool usemask);
+     void DrawBitmap(const wxBitmap &bitmap, int x, int y, bool usemask);
 
      void DrawText(const QString &text, int x, int y);
      void GetTextExtent(const QString &string, int *w, int *h, int *descent = NULL,
@@ -98,7 +98,7 @@ public:
 
      void DestroyClippingRegion() {}
 
-     QPainter *GetDC() const { return dc; }
+//     QPainter *GetDC() const { return dc; }
 
 protected:
      bool ConfigurePen();
@@ -107,7 +107,7 @@ protected:
      void GLDrawBlendData(int x, int y, int w, int h,
                           int format, const unsigned char *data);
 
-     QGLCanvas *glcanvas;
+     glChartCanvas *glcanvas;
      QPainter *dc;
      QPen m_pen;
      QBrush m_brush;

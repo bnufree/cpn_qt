@@ -1101,6 +1101,13 @@ void zchxMapMainWindow::UpdateRotationState( double rotation )
     DoChartUpdate();
 }
 
+ChartCanvas *zchxMapMainWindow::GetPrimaryCanvas()
+{
+    if(g_canvasArray.GetCount() > 0)
+        return g_canvasArray.Item(0);
+    else
+        return NULL;
+}
 
 void zchxMapMainWindow::SetChartUpdatePeriod( )
 {
