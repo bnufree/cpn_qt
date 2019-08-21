@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  ChartBase, ChartBaseBSB and Friends
@@ -43,7 +43,7 @@
 #include "chartimg.h"
 #include "ocpn_pixel.h"
 #include "ChartDataInputStream.h"
-#include <QBitmap>
+#include "bitmap.h"
 #include <QTextCodec>
 #include <QDebug>
 
@@ -278,9 +278,9 @@ bool ChartDummy::RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, cons
 
 bool ChartDummy::RenderViewOnDC(QPainter& dc, const ViewPort& VPoint)
 {
-    if( m_pBM  && !m_pBM->isNull())
+    if( m_pBM  && m_pBM->isOK())
     {
-        if((m_pBM->width() != VPoint.pix_width) || (m_pBM->height() != VPoint.pix_height))
+        if((m_pBM->GetWidth() != VPoint.pix_width) || (m_pBM->GetHeight() != VPoint.pix_height))
         {
             delete m_pBM;
             m_pBM = NULL;
@@ -292,9 +292,9 @@ bool ChartDummy::RenderViewOnDC(QPainter& dc, const ViewPort& VPoint)
     }
 
     if( VPoint.pix_width && VPoint.pix_height ) {
-        if(NULL == m_pBM) m_pBM = new QBitmap(VPoint.pix_width, VPoint.pix_height);
+        if(NULL == m_pBM) m_pBM = new wxBitmap(VPoint.pix_width, VPoint.pix_height);
 
-        dc.drawPixmap(0, 0, *m_pBM);
+        dc.drawPixmap(0, 0, *(m_pBM->GetHandle()));
         //        dc.SetBackground(*wxBLACK_BRUSH);
         //        dc.Clear();
     }
@@ -2306,7 +2306,7 @@ void ChartBaseBSB::SetColorScheme(ColorScheme cs, bool bApplyImmediate)
 }
 
 
-QBitmap *ChartBaseBSB::CreateThumbnail(int tnx, int tny, ColorScheme cs)
+wxBitmap *ChartBaseBSB::CreateThumbnail(int tnx, int tny, ColorScheme cs)
 {
 
     //    Calculate the size and divisors
@@ -2380,7 +2380,7 @@ QBitmap *ChartBaseBSB::CreateThumbnail(int tnx, int tny, ColorScheme cs)
 
 
 
-    QBitmap *retBMP;
+    wxBitmap *retBMP;
 
 #ifdef ocpnUSE_ocpnBitmap
     wxBitmap* bmx2 = new ocpnBitmap(pPixTN, des_width, des_height, -1);
@@ -2391,7 +2391,7 @@ QBitmap *ChartBaseBSB::CreateThumbnail(int tnx, int tny, ColorScheme cs)
 #else
     QImage thumb_image(pPixTN, des_width, des_height, QImage::Format_RGB32);
     thumb_image.scaled(des_width/4, des_height/4, Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
-    retBMP = new QBitmap(QBitmap::fromImage(thumb_image));
+    retBMP = new wxBitmap(thumb_image);
 #endif
 
 

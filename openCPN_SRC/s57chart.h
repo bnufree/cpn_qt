@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -130,8 +130,8 @@ public:
       virtual void GetValidCanvasRegion(const ViewPort& VPoint, OCPNRegion *pValidRegion);
       virtual LLRegion GetValidRegion();
 
-      virtual void GetPointPix(ObjRazRules *rzRules, float rlat, float rlon, QPoint *r);
-      virtual void GetPointPix(ObjRazRules *rzRules, QPointF *en, QPoint *r, int nPoints);
+      virtual void GetPointPix(ObjRazRules *rzRules, float rlat, float rlon, zchxPoint *r);
+      virtual void GetPointPix(ObjRazRules *rzRules, zchxPointF *en, zchxPoint *r, int nPoints);
       virtual void GetPixPoint(int pixx, int pixy, double *plat, double *plon, ViewPort *vpt);
 
       virtual void SetVPParms(const ViewPort &vpt);
@@ -214,7 +214,7 @@ public:
 
       virtual void ClearDepthContourArray(void);
       virtual void BuildDepthContourArray(void);
-      int ValidateAndCountUpdates( const QString& file000, const QString CopyDir,
+      int ValidateAndCountUpdates( const QFileInfo& file000, const QString CopyDir,
                                    QString &LastUpdateDate, bool b_copyfiles);
       static int GetUpdateFileArray(const QFileInfo& file000, QStringList *UpFiles,
                                     QDateTime date000, QString edtn000 );
@@ -294,13 +294,13 @@ private:
       QStringList *m_tmpup_array;
       std::unique_ptr<PixelCache> pDIB;
 
-      std::unique_ptr<QBitmap> m_pCloneBM;
+      std::unique_ptr<wxBitmap> m_pCloneBM;
 
       bool         bGLUWarningSent;
 
-      QBitmap    *m_pDIBThumbDay;
-      QBitmap    *m_pDIBThumbDim;
-      QBitmap    *m_pDIBThumbOrphan;
+      wxBitmap    *m_pDIBThumbDay;
+      wxBitmap    *m_pDIBThumbDim;
+      wxBitmap    *m_pDIBThumbOrphan;
       bool        m_bneed_new_thumbnail;
 
       bool        m_bbase_file_attr_known;

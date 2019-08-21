@@ -1,4 +1,4 @@
-﻿#ifndef _DEF_H
+#ifndef _DEF_H
 #define _DEF_H
 
 #include <QApplication>
@@ -134,7 +134,16 @@ struct zchxPointF{
     zchxPointF() {}
     zchxPointF(double px, double py) {x = px; y=py;}
     zchxPointF(const zchxPoint& p) {x = p.x; y = p.y;}
-    QPointF toPointF() {return QPointF(x, y);}
+    QPointF toPointF() const {return QPointF(x, y);}
+    bool operator ==(const zchxPointF& other) const
+    {
+        return other.toPointF() == this->toPointF();
+    }
+
+    bool operator !=(const zchxPointF& other) const
+    {
+        return !(*this == other);
+    }
 };
 
 struct zchxSize{
@@ -407,9 +416,46 @@ public:
         return false;
     }
 
+    static QString getNewFileNameWithExt(const QString& oldName, const QString& newExt)
+    {
+        int last_index = oldName.lastIndexOf(".");
+        if(last_index >= 0)
+        {
+            QString ext = oldName.mid(last_index+1);
+            QString newname = oldName;
+            newname.replace(last_index+1, ext.size(), newExt);
+            return newname;
+        }
+        QString temp = oldName;
+        return temp.append(".").append(newExt);
+    }
+
+
+    static QString getFileName(const QString& fullName)
+    {
+        int index = fullName.lastIndexOf(".");
+        return fullName.left(index);
+    }
+
+    static QString getFileExt(const QString& fullname)
+    {
+        int index = fullname.lastIndexOf(".");
+        return fullname.mid(index+1);
+    }
+
+    static QString getTempDir()
+    {
+        QString path = QApplication::applicationDirPath();
+        if(path.right(1) != QDir::separator()) path.append(QDir::separator());
+        QString temp_path = QString("%1__temp").arg(path);
+        QDir dir(temp_path);
+        if(!dir.exists()) dir.mkpath(temp_path);
+        return temp_path;
+    }
+
 };
 
 
-
+typedef QList<float *> MyFloatPtrArray;
 
 #endif // _DEF_H

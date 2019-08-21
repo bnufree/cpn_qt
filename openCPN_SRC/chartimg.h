@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  ChartBaseBSB and Friends
@@ -213,7 +213,7 @@ protected:
       virtual bool CreateLineIndex(void);
 
 
-      virtual QBitmap *CreateThumbnail(int tnx, int tny, ColorScheme cs);
+      virtual wxBitmap *CreateThumbnail(int tnx, int tny, ColorScheme cs);
       virtual int BSBGetScanline( unsigned char *pLineBuf, int y, int xs, int xl, int sub_samp);
 
 
@@ -452,7 +452,7 @@ class ChartPlugInWrapper : public ChartBaseBSB
             QMutex              m_critSect;
             bool                m_overlayENC;
 //            wxMask              *m_pMask;  //wxmask 将黑白单色位图进行封装  mask的区域为黑色,没有mask的区域为白色.绘制时,白色区域绘制,黑色区域不绘制
-            QBitmap             *m_pMask;
+            wxBitmap             *m_pMask;
 };
 
 #endif

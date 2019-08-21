@@ -1,4 +1,4 @@
-﻿/////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Name:        wx/qt/bitmap.h
 // Author:      Peter Most, Javier Torres, Mariano Reingart
 // Copyright:   (c) 2010 wxWidgets dev team
@@ -41,6 +41,8 @@ public:
     virtual int GetHeight() const;
     virtual int GetWidth() const;
     virtual int GetDepth() const;
+    int         width() const {return GetWidth();}
+    int         height() const {return GetHeight();}
     virtual QImage ConvertToImage() const;
 
     virtual wxMask *GetMask() const;

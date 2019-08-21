@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 SENC File Object
@@ -36,7 +36,7 @@
 #include <mutex>
 
 typedef QList<float *> SENCFloatPtrArray;
-typedef QList<float *> MyFloatPtrArray;
+
 
 //      Various error return enums
 #define         SENC_NO_ERROR                           0

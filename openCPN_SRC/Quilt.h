@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -138,8 +138,6 @@ public:
     
 
     void ComputeRenderRegion( ViewPort &vp, OCPNRegion &chart_region );
-    bool RenderQuiltRegionViewOnDCNoText( QPainter &dc, ViewPort &vp, OCPNRegion &chart_region );
-    bool RenderQuiltRegionViewOnDCTextOnly( QPainter &dc, ViewPort &vp, OCPNRegion &chart_region );
     
     bool IsVPBlittable( ViewPort &VPoint, int dx, int dy, bool b_allow_vector = false );
     ChartBase *GetChartAtPix( ViewPort &VPoint, const zchxPoint& p );
@@ -233,9 +231,6 @@ public:
 private:
     bool BuildExtendedChartStackAndCandidateArray(int ref_db_index, ViewPort &vp_in);
     int AdjustRefOnZoom( bool b_zin, ChartFamilyEnum family, ChartTypeEnum type, double proposed_scale_onscreen );
-
-    bool DoRenderQuiltRegionViewOnDC( QPainter &dc, ViewPort &vp, OCPNRegion &chart_region );
-    bool DoRenderQuiltRegionViewOnDCTextOnly( QPainter& dc, ViewPort &vp, OCPNRegion &chart_region );
     
     void EmptyCandidateArray( void );
     void SubstituteClearDC( QPainter &dc, ViewPort &vp );

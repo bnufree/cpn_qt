@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCP
  * Purpose:  S52 PLIB and S57 Chart data types
@@ -599,7 +599,7 @@ public:
        return memcmp(this->k, e2.k, sizeof e2.k) == 0;
     }
 
-    unsigned long  qHash();
+    unsigned long  hash() const;
 
     unsigned char k[sizeof(int) + sizeof(int) + sizeof(char)];
 };

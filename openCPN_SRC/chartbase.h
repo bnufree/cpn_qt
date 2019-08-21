@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  ChartBase Definition
@@ -32,6 +32,7 @@
 #include "LLRegion.h"
 #include "_def.h"
 #include <QDateTime>
+#include "bitmap.h"
 
 //----------------------------------------------------------------------------
 //  Forward Declarations
@@ -76,7 +77,7 @@ public:
     ThumbData();
     virtual ~ThumbData();
 
-      QBitmap    *pDIBThumb;
+      wxBitmap    *pDIBThumb;
       int         ShipX;
       int         ShipY;
       int         Thumb_Size_X;
@@ -299,7 +300,7 @@ public:
 private:
       bool RenderViewOnDC(QPainter& dc, const ViewPort& VPoint);
 
-      QBitmap    *m_pBM;
+      wxBitmap    *m_pBM;
 };
 
 

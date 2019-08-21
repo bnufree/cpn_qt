@@ -209,7 +209,8 @@ HEADERS += \
     cm93.h \
     mbtiles.h \
     zchxpainter.h \
-    bitmap.h
+    bitmap.h \
+    ocpn_plugin.h
 
 SOURCES += \
 #    bbox.cpp \

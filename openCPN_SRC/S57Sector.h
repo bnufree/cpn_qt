@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -26,11 +26,11 @@
 #ifndef __S57SECTOR_H__
 #define __S57SECTOR_H__
 
-#include <QPointF>
+#include "_def.h"
 #include <QColor>
 
 typedef struct {
-    QPointF pos;
+    zchxPointF pos;
     double sector1, sector2;
     double range;
     QColor color;
