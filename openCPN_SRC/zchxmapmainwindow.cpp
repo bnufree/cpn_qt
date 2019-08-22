@@ -20,15 +20,17 @@
 //ChartBase                 *Current_Vector_Ch;
 ChartDB                   *ChartData = NULL;
 arrayofCanvasPtr            g_canvasArray;
+ColorScheme               global_color_scheme = GLOBAL_COLOR_SCHEME_DAY;
 
 zchxMapMainWindow::zchxMapMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::zchxMapMainWindow),
-    ChartData(new ChartDB()),
+    mChartDB(new ChartDB()),
     mOptionDlg(0),
     mConfigObj(new zchxConfig),
     FrameTimer1(0)
 {
+    ChartData = mChartDB;
     ui->setupUi(this);
     //工具
     QMenu* tools = this->menuBar()->addMenu(tr("Tools"));
@@ -160,7 +162,7 @@ int zchxMapMainWindow::GetApplicationMemoryUse( void )
     return memsize;
 }
 
-void  zchxMapMainWindow::getMemoryStatus()
+void  zchxMapMainWindow::getMemoryStatus(int* total, int* used)
 {
     mMemUsed = GetApplicationMemoryUse();
     if(mMemTotal == 0)
@@ -170,6 +172,8 @@ void  zchxMapMainWindow::getMemoryStatus()
         GlobalMemoryStatusEx( &statex );
         mMemTotal = statex.ullTotalPhys / 1024;
     }
+    if(total) *total = mMemTotal;
+    if(used) *used = mMemUsed;
     qDebug()<<"memory total:"<<mMemTotal<<"  app used:"<<mMemUsed;
 }
 
@@ -337,6 +341,7 @@ void zchxMapMainWindow::setActionEnableSts(const QString &action, bool check)
 
 bool zchxMapMainWindow::ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray )
 {
+#if 0
     bool b_need_refresh = false;                // Do we need a full reload?
 
     if( ( rr & VISIT_CHARTS )
@@ -499,6 +504,7 @@ bool zchxMapMainWindow::ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray )
 
 
     return b_need_refresh;
+#endif
 }
 
 void zchxMapMainWindow::startFrameTimer1()
@@ -508,6 +514,7 @@ void zchxMapMainWindow::startFrameTimer1()
 
 void zchxMapMainWindow::slotOnFrameTimer1Out()
 {
+#if 0
     CheckToolbarPosition();
 
         if( ! g_bPauseTest && (g_unit_test_1 || g_unit_test_2) ) {
@@ -952,11 +959,13 @@ void zchxMapMainWindow::slotOnFrameTimer1Out()
             FrameTimer1.Start( TIMER_GFRAME_1*3, wxTIMER_CONTINUOUS );
         else
             FrameTimer1.Start( TIMER_GFRAME_1, wxTIMER_CONTINUOUS );
+#endif
 }
 
 
 bool zchxMapMainWindow::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName )
 {
+#if 0
     bool b_run = false;
     if(FrameTimer1)
     {
@@ -1029,6 +1038,7 @@ bool zchxMapMainWindow::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b
     pConfig->UpdateChartDirs( DirArray );
 
     if( b_run ) FrameTimer1.Start( TIMER_GFRAME_1, wxTIMER_CONTINUOUS );
+#endif
 
     return true;
 }
@@ -1103,8 +1113,8 @@ void zchxMapMainWindow::UpdateRotationState( double rotation )
 
 ChartCanvas *zchxMapMainWindow::GetPrimaryCanvas()
 {
-    if(g_canvasArray.GetCount() > 0)
-        return g_canvasArray.Item(0);
+    if(g_canvasArray.count() > 0)
+        return g_canvasArray.at(0);
     else
         return NULL;
 }
@@ -1137,3 +1147,24 @@ void zchxMapMainWindow::SetChartUpdatePeriod( )
 //    m_ChartUpdatePeriod = g_ChartUpdatePeriod;
 }
 
+double zchxMapMainWindow::GetBestVPScale( ChartBase *pchart )
+{
+    return GetPrimaryCanvas()->GetBestVPScale( pchart );
+}
+
+void zchxMapMainWindow::RefreshAllCanvas( bool bErase)
+{
+    // For each canvas
+    for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
+        ChartCanvas *cc = g_canvasArray.at(i);
+        if(cc){
+            cc->Refresh( bErase );
+        }
+    }
+}
+
+
+ColorScheme GetColorScheme()
+{
+    return global_color_scheme;
+}

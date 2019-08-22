@@ -23,17 +23,18 @@ INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}
 #INCLUDEPATH += $${PWD}/sound
 INCLUDEPATH += ../include
 
-LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lgdal
-LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lnmea0183
-LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltinyxml
-LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lsound
-LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -liso8211
-LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lSQLiteCPP
-LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lssl_sha1
-LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltexcmp
-LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -llz4
-LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltess2
-LIBS += -L $${OPENCPN_3RD_STATIC_LIB_PATH}\ -lmipmap
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -lgdal
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -lnmea0183
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltinyxml
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -lsound
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -liso8211
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -lSQLiteCPP
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -lssl_sha1
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltexcmp
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -llz4
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltess2
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -lmipmap
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -llzma
 LIBS += -lpsapi
 
 QT       += core gui network positioning core_private opengl svg xml webkitwidgets multimedia
@@ -142,7 +143,7 @@ HEADERS += \
 #    PositionParser.h \
 #    printtable.h \
 #    pugiconfig.hpp \
-#    pugixml.hpp \
+    pugixml.hpp \
     Quilt.h \
 #    RolloverWin.h \
 #    Route.h \
@@ -155,9 +156,9 @@ HEADERS += \
     s57chart.h \
     S57ClassRegistrar.h \
     S57Light.h \
-    s57mgr.h \
+#    s57mgr.h \
     S57ObjectDesc.h \
-    S57QueryDialog.h \
+#    S57QueryDialog.h \
     s57RegistrarMgr.h \
     S57Sector.h \
 #    scrollingdialog.h \
@@ -174,7 +175,7 @@ HEADERS += \
 #    TCDS_Binary_Harmonic.h \
 #    tcmgr.h \
 #    TCWin.h \
-#    TexFont.h \
+    TexFont.h \
     thumbwin.h \
 #    tide_time.h \
 #    time_textbox.h \
@@ -208,7 +209,6 @@ HEADERS += \
     zchxs57listctrlbox.h \
     cm93.h \
     mbtiles.h \
-    zchxpainter.h \
     bitmap.h \
     ocpn_plugin.h
 
@@ -272,7 +272,7 @@ SOURCES += \
 #    pluginmanager.cpp \
 #    PositionParser.cpp \
 #    printtable.cpp \
-#    pugixml.cpp \
+    pugixml.cpp \
     Quilt.cpp \
 #    RolloverWin.cpp \
 #    Route.cpp \
@@ -285,9 +285,9 @@ SOURCES += \
     s57chart.cpp \
     s57classregistrar.cpp \
     s57featuredefns.cpp \
-    s57mgr.cpp \
+#    s57mgr.cpp \
     s57obj.cpp \
-    S57QueryDialog.cpp \
+#    S57QueryDialog.cpp \
     s57reader.cpp \
     s57RegistrarMgr.cpp \
 #    scrollingdialog.cpp \
@@ -303,7 +303,7 @@ SOURCES += \
 #    TCDS_Binary_Harmonic.cpp \
 #    tcmgr.cpp \
 #    TCWin.cpp \
-#    TexFont.cpp \
+    TexFont.cpp \
     thumbwin.cpp \
 #    toolbar.cpp \
 #    Track.cpp \
@@ -326,7 +326,6 @@ SOURCES += \
     zchxs57listctrlbox.cpp \
     cm93.cpp \
     mbtiles.cpp \
-    zchxpainter.cpp \
     bitmap.cpp
 
 OBJECTIVE_SOURCES += \

@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  ChartBaseBSB and Friends
@@ -159,7 +159,7 @@ class  ChartBaseBSB     :public ChartBase
       virtual int latlong_to_pix_vp(double lat, double lon, double &pixx, double &pixy, ViewPort& vp);
       virtual int vp_pix_to_latlong(ViewPort& vp, double pixx, double pixy, double *lat, double *lon);
 
-      bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region);
+      bool RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint, const OCPNRegion &Region);
 
       virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
                                         const OCPNRegion &RectRegion, const LLRegion &Region);
@@ -197,7 +197,7 @@ protected:
       virtual bool GetAndScaleData(unsigned char *ppn, size_t data_size,
                                    QRect& source, int source_stride, QRect& dest, int dest_stride,
                                    double scale_factor, ScaleTypeEnum scale_type);
-      bool RenderViewOnDC(QPainter& dc, const ViewPort& VPoint);
+      bool RenderViewOnDC(QPainter* dc, const ViewPort& VPoint);
 
       bool IsCacheValid(){ return cached_image_ok; }
       void InvalidateCache(){cached_image_ok = 0;}
@@ -394,7 +394,7 @@ class ChartPlugInWrapper : public ChartBaseBSB
 
             virtual bool GetChartExtent(Extent *pext);
 
-            virtual bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint,
+            virtual bool RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint,
                                               const OCPNRegion &Region);
 
             virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
@@ -432,10 +432,10 @@ class ChartPlugInWrapper : public ChartBaseBSB
             
             
             //  Added for API V 1.14, with PlugInChartBaseExtended
-            virtual bool RenderRegionViewOnDCNoText(QPainter &dc, const ViewPort& VPoint,
+            virtual bool RenderRegionViewOnDCNoText(QPainter* dc, const ViewPort& VPoint,
                                                                 const OCPNRegion &Region);
             
-            virtual bool RenderRegionViewOnDCTextOnly(QPainter &dc, const ViewPort& VPoint,
+            virtual bool RenderRegionViewOnDCTextOnly(QPainter* dc, const ViewPort& VPoint,
                                                     const OCPNRegion &Region);
             
             virtual bool RenderRegionViewOnGLNoText( const QGLContext &glc, const ViewPort& VPoint,

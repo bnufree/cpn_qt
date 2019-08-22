@@ -26,7 +26,7 @@
 #include "config.h"
 #include "chartdb.h"
 #include "chartimg.h"
-#include "chart1.h"
+//#include "chart1.h"
 #include "thumbwin.h"
 #include "mbtiles.h"
 
@@ -45,6 +45,7 @@
 #include <QFile>
 #include <QDir>
 #include <QRegularExpression>
+#include "zchxmapmainwindow.h"
 
 extern ColorScheme GetColorScheme();
 
@@ -56,10 +57,10 @@ extern int          g_memCacheLimit;
 extern bool         g_bopengl;
 extern s52plib      *ps52plib;
 extern ChartDB      *ChartData;
+extern zchxMapMainWindow          *gFrame;
 
 
 bool G_FloatPtInPolygon(MyFlPoint *rgpts, int wnumpts, float x, float y) ;
-bool GetMemoryStatus(int *mem_total, int *mem_used);
 
 // ============================================================================
 // ChartStack implementation
@@ -339,7 +340,7 @@ void ChartDB::PurgeCacheUnusedCharts( double factor)
     {
         //    Check memory status to see if above limit
         int mem_used;
-        GetMemoryStatus(0, &mem_used);
+        if(gFrame) gFrame->getMemoryStatus(0, &mem_used);
         int mem_limit = g_memCacheLimit * factor;
 
         int nl = pChartCache->count();       // max loop count, by definition
@@ -363,7 +364,7 @@ void ChartDB::PurgeCacheUnusedCharts( double factor)
                 break;
             }
 
-            GetMemoryStatus(0, &mem_used);
+            if(gFrame) gFrame->getMemoryStatus(0, &mem_used);
             nl--;
         }
     }
@@ -1196,7 +1197,7 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
                 {
                     //    Check memory status to see if enough room to open another chart
                     int mem_used;
-                    GetMemoryStatus(0, &mem_used);
+                    if(gFrame) gFrame->getMemoryStatus(0, &mem_used);
 
                     qDebug("OpenChartUsingCache, NOT in cache:   cache size: %d",  (int)pChartCache->count());
                     qDebug("   OpenChartUsingCache:  type %d  %s ", chart_type, ChartFullPath.toUtf8().data());
@@ -1212,7 +1213,7 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
                             // purge texture cache, really need memory here
                             DeleteCacheEntry(pce, true, msg);
 
-                            GetMemoryStatus(0, &mem_used);
+                            if(gFrame) gFrame->getMemoryStatus(0, &mem_used);
                             if((mem_used < g_memCacheLimit * 8 / 10) || (pChartCache->count() <= 2))
                                 break;
 
@@ -1276,6 +1277,7 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
 
         else if(chart_type == CHART_TYPE_CM93)
         {
+#if 0
             LoadS57();
             Ch = new cm93chart();
             cm93chart *Chcm93 = static_cast<cm93chart*>(Ch);
@@ -1290,10 +1292,12 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
             ext.WLON = cte.GetLonMin();
             ext.ELON = cte.GetLonMax();
             Chcm93->SetFullExtent(ext);
+#endif
         }
 
         else if(chart_type == CHART_TYPE_CM93COMP)
         {
+#if 0
             LoadS57();
             Ch = new cm93compchart();
 
@@ -1309,6 +1313,7 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
             ext.WLON = cte.GetLonMin();
             ext.ELON = cte.GetLonMax();
             Chcm93->SetFullExtent(ext);
+#endif
         }
 
         else if(chart_type == CHART_TYPE_PLUGIN)
@@ -1559,6 +1564,23 @@ void ChartDB::createDomTagAndNode(QDomElement *root, QDomDocument& doc, const QS
     QDomText tnode = doc.createTextNode(text);
     node.appendChild(tnode );
     root->appendChild(node);
+}
+
+extern arrayofCanvasPtr  g_canvasArray;
+
+bool ChartDB::isSingleChart(ChartBase *chart)
+{
+   if (chart == nullptr)
+       return false;
+
+   // ..For each canvas...
+   for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
+      ChartCanvas *cc = g_canvasArray.at(i);
+      if(cc && cc->m_singleChart == chart){
+         return true;
+      }
+   }
+   return false;
 }
 
 QDomDocument ChartDB::GetXMLDescription(int dbIndex, bool b_getGeom)

@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCP
  * Purpose:  S57 Chart Manager
@@ -32,10 +32,10 @@
 
 #include "s57chart.h"
 
-#include "cpl_port.h"
-#include "cpl_csv.h"
+#include "gdal/cpl_port.h"
+#include "gdal/cpl_csv.h"
 
-#include "gdal.h"
+#include "gdal/gdal.h"
 
 
 static wxString *pval;

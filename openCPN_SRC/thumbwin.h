@@ -32,7 +32,7 @@
 #define __thumbwin_H__
 
 #include <QWidget>
-#include <QBitmap>
+#include "bitmap.h"
 
 
 // Include wxWindows' headers
@@ -61,10 +61,10 @@ public:
 
     void Resize(void);
     void SetMaxSize(QSize const &max_size);
-    const QBitmap &GetBitmap(void);
+    const wxBitmap &GetBitmap(void);
 
 
-    QBitmap     m_bitmap;
+    wxBitmap     m_bitmap;
     ChartBase    *pThumbChart;
 
 protected:

@@ -42,7 +42,6 @@
 #include "gdal/cpl_csv.h"
 #include <QFile>
 #include "zchxconfig.h"
-#include "zchxpainter.h"
 #include "bitmap.h"
 
 

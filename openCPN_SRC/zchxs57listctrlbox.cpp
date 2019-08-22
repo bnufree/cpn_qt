@@ -5,13 +5,13 @@ zchxS57ListCtrlBox::zchxS57ListCtrlBox(QWidget *parent) : QListWidget(parent)
     mIDs.clear();
 }
 
-int zchxS57ListCtrlBox::append(const QString &lable, bool checked)
+int zchxS57ListCtrlBox::append(const QString &label, bool checked)
 {
     QListWidgetItem* item = new QListWidgetItem(this);
     item->setCheckState(checked == true ? Qt::Checked : Qt::Unchecked);
     addItem(item);
     int index = count() - 1;
-    mIDs[item] = index;
+    mIDs[label] = index;
     return index;
 }
 

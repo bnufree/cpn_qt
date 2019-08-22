@@ -1,4 +1,4 @@
-#ifndef _DEF_H
+﻿#ifndef _DEF_H
 #define _DEF_H
 
 #include <QApplication>
@@ -457,5 +457,10 @@ public:
 
 
 typedef QList<float *> MyFloatPtrArray;
+
+#define         Q_INDEX_NOT_FOUND       -1
+
+#define MAX_COG_AVERAGE_SECONDS        60
+#define MAX_COGSOG_FILTER_SECONDS      60
 
 #endif // _DEF_H

@@ -3,10 +3,10 @@
 #include "GL/gl.h"
 
 //全局定义,方便使用
-zchxGLOptions                       g_GLOptions;
+extern zchxGLOptions                       g_GLOptions;
 bool                                g_bGlExpert;
 bool                                g_bOpenGL;
-GLuint                              g_raster_format;
+extern GLuint                              g_raster_format;
 bool                                g_bShowFPS;
 
 zchxConfig::zchxConfig( const QString &LocalFileName ) : QSettings(LocalFileName)

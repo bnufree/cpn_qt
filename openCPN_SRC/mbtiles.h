@@ -92,7 +92,7 @@ class ZCHX_OPENCPN_EXPORT ChartMBTiles     :public ChartBase
       virtual InitReturn Init( const QString& name, ChartInitFlag init_flags );
 
 
-      bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region);
+      bool RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint, const OCPNRegion &Region);
 
       virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
                                         const OCPNRegion &RectRegion, const LLRegion &Region);
@@ -111,7 +111,7 @@ class ZCHX_OPENCPN_EXPORT ChartMBTiles     :public ChartBase
       
 protected:
 //    Methods
-      bool RenderViewOnDC(QPainter& dc, const ViewPort& VPoint);
+      bool RenderViewOnDC(QPainter* dc, const ViewPort& VPoint);
       InitReturn PreInit( const QString& name, ChartInitFlag init_flags, ColorScheme cs );
       InitReturn PostInit(void);
 
@@ -160,7 +160,7 @@ protected:
       
 private:
       void InitFromTiles( const QString& name );
-      QPointF GetDoublePixFromLL( ViewPort& vp, double lat, double lon );
+      zchxPointF GetDoublePixFromLL( ViewPort& vp, double lat, double lon );
 
 };
 

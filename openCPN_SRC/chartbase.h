@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  ChartBase Definition
@@ -181,7 +181,7 @@ public:
       virtual ChartDepthUnitType GetDepthUnitType(void) { return m_depth_unit_id;}
 
       virtual bool IsReadyToRender(){ return bReadyToRender;}
-      virtual bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint,
                                         const OCPNRegion &Region) = 0;
 
       virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
@@ -282,7 +282,7 @@ public:
 
       virtual bool GetChartExtent(Extent *pext);
 
-      virtual bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint,
                                         const OCPNRegion &Region);
 
       virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
@@ -298,7 +298,7 @@ public:
       virtual double GetNearestPreferredScalePPM(double target_scale_ppm){ return target_scale_ppm; }
 
 private:
-      bool RenderViewOnDC(QPainter& dc, const ViewPort& VPoint);
+      bool RenderViewOnDC(QPainter* dc, const ViewPort& VPoint);
 
       wxBitmap    *m_pBM;
 };

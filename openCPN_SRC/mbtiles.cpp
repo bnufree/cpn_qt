@@ -46,6 +46,7 @@
 #include "chart1.h"
 #include "chcanv.h"
 #include "glChartCanvas.h"
+#include <QDebug>
 
 //  Missing from MSW include files
 #ifdef _MSC_VER
@@ -259,7 +260,7 @@ ChartMBTiles::ChartMBTiles()
 
       m_Chart_Skew = 0.0;
 
-      m_datum_str = _T("WGS84");                // assume until proven otherwise
+      m_datum_str = ("WGS84");                // assume until proven otherwise
       m_projection = PROJECTION_WEB_MERCATOR;
       m_imageType = "";
 
@@ -353,11 +354,7 @@ void ChartMBTiles::InitFromTiles( const QString& name )
     try
     {
         // Open the MBTiles database file
-        const char *name_UTF8 = "";
-        wxCharBuffer utf8CB = name.ToUTF8();        // the UTF-8 buffer
-        if ( utf8CB.data() )
-            name_UTF8 = utf8CB.data();
-
+        const char *name_UTF8 = name.toUtf8().data();
         SQLite::Database  db(name_UTF8);
        
         // Check if tiles with advertised min and max zoom level really exist, or correct the defaults
@@ -370,9 +367,9 @@ void ChartMBTiles::InitFromTiles( const QString& name )
             
             int min_zoom, max_zoom;
             sscanf( colMinZoom, "%i", &min_zoom );
-            m_minZoom = wxMax(m_minZoom, min_zoom);
+            m_minZoom = fmax(m_minZoom, min_zoom);
             sscanf( colMaxZoom, "%i", &max_zoom );
-            m_maxZoom = wxMin(m_maxZoom, max_zoom);
+            m_maxZoom = fmin(m_maxZoom, max_zoom);
             if(m_minZoom > m_maxZoom) {
                 //We are looking at total nonsense with wrong metatadata and actual tile coverage out of it, better use what's really in the data to be able to show at least something
                 m_minZoom = min_zoom;
@@ -392,7 +389,7 @@ void ChartMBTiles::InitFromTiles( const QString& name )
         //the finest resolution likely does not cover the whole area, while the lowest resolution tiles probably contain a lot of theoretical space
         //which actually is not covered. And some resolutions may be actually missing... What do we use?
         // If we have the metadata and it is not completely off, we should probably prefer it.
-        SQLite::Statement query1(db, wxString::Format("SELECT min(tile_row) AS min_row, max(tile_row) as max_row, min(tile_column) as min_column, max(tile_column) as max_column, count(*) as cnt, zoom_level FROM tiles  WHERE zoom_level >= %d AND zoom_level <= %d GROUP BY zoom_level ORDER BY zoom_level ASC", m_minZoom, m_maxZoom).c_str());
+        SQLite::Statement query1(db, QString("").sprintf("SELECT min(tile_row) AS min_row, max(tile_row) as max_row, min(tile_column) as min_column, max(tile_column) as max_column, count(*) as cnt, zoom_level FROM tiles  WHERE zoom_level >= %d AND zoom_level <= %d GROUP BY zoom_level ORDER BY zoom_level ASC", m_minZoom, m_maxZoom).toStdString().data());
         float minLat = 999., maxLat = -999.0, minLon = 999., maxLon = -999.0;
         while (query1.executeStep())
         {
@@ -414,10 +411,10 @@ void ChartMBTiles::InitFromTiles( const QString& name )
             sscanf( colZoom, "%i", &zoom );
             
             // Let's try to use the simplest possible algo and just look for the zoom level with largest extent (Which probably be the one with lowest resolution?)...
-            minLat = wxMin(minLat, tiley2lat(minRow, zoom));
-            maxLat = wxMax(maxLat, tiley2lat(maxRow - 1, zoom));
-            minLon = wxMin(minLon, tilex2long(minCol, zoom));
-            maxLon = wxMax(maxLon, tilex2long(maxCol + 1, zoom));
+            minLat = fmin(minLat, tiley2lat(minRow, zoom));
+            maxLat = fmax(maxLat, tiley2lat(maxRow - 1, zoom));
+            minLon = fmin(minLon, tilex2long(minCol, zoom));
+            maxLon = fmax(maxLon, tilex2long(maxCol + 1, zoom));
             //std::cout << "Zoom: " << zoom << " minlat: " << tiley2lat(minRow, zoom) << " maxlat: " << tiley2lat(maxRow - 1, zoom) << " minlon: " << tilex2long(minCol, zoom) << " maxlon: " << tilex2long(maxCol + 1, zoom) << std::endl;
         }
 
@@ -434,11 +431,11 @@ void ChartMBTiles::InitFromTiles( const QString& name )
     catch (std::exception& e)
     {
         const char *t = e.what();
-        ZCHX_LOGMSG(wxString::Format("mbtiles exception: %s", e.what()));
+        qDebug("mbtiles exception: %s", e.what());
     }
 }
 
-InitReturn ChartMBTiles::Init( const wxString& name, ChartInitFlag init_flags )
+InitReturn ChartMBTiles::Init( const QString& name, ChartInitFlag init_flags )
 {
       m_global_color_scheme = GLOBAL_COLOR_SCHEME_RGB;
 
@@ -448,11 +445,7 @@ InitReturn ChartMBTiles::Init( const wxString& name, ChartInitFlag init_flags )
       try
       {
             // Open the MBTiles database file
-        const char *name_UTF8 = "";
-        wxCharBuffer utf8CB = name.ToUTF8();        // the UTF-8 buffer
-        if ( utf8CB.data() )
-            name_UTF8 = utf8CB.data();
-
+        const char *name_UTF8 = name.toUtf8().data();
         SQLite::Database  db(name_UTF8);
         
         // Compile a SQL query, getting everything from the "metadata" table
@@ -470,10 +463,10 @@ InitReturn ChartMBTiles::Init( const wxString& name, ChartInitFlag init_flags )
                 sscanf( colValue, "%g,%g,%g,%g", &lon1, &lat1, &lon2, &lat2 );
                 
                 // There is some confusion over the layout of this field...
-                m_LatMax = wxMax(lat1, lat2);
-                m_LatMin = wxMin(lat1, lat2);
-                m_LonMax = wxMax(lon1, lon2);
-                m_LonMin = wxMin(lon1, lon2);
+                m_LatMax = fmax(lat1, lat2);
+                m_LatMin = fmin(lat1, lat2);
+                m_LonMax = fmax(lon1, lon2);
+                m_LonMin = fmin(lon1, lon2);
                 
             }
             
@@ -491,23 +484,23 @@ InitReturn ChartMBTiles::Init( const wxString& name, ChartInitFlag init_flags )
             }
             
             else if(!strncmp(colName, "description", 11)){
-                m_Description = wxString(colValue,  wxConvUTF8);
+                m_Description = QString::fromUtf8(colValue);
             }
             else if(!strncmp(colName, "name", 11)){
-                m_Name = wxString(colValue,  wxConvUTF8);
+                m_Name = QString::fromUtf8(colValue);
             }
             else if(!strncmp(colName, "type", 11)){
-                m_Type = wxString(colValue,  wxConvUTF8).Upper().IsSameAs("OVERLAY") ? MBTilesType::OVERLAY : MBTilesType::BASE;
+                m_Type = QString::fromUtf8(colValue).toUpper() == "OVERLAY" ? MBTilesType::OVERLAY : MBTilesType::BASE;
             }
             else if(!strncmp(colName, "scheme", 11)){
-                m_Scheme = wxString(colValue,  wxConvUTF8).Upper().IsSameAs("XYZ") ? MBTilesScheme::XYZ : MBTilesScheme::TMS;
+                m_Scheme = QString::fromUtf8(colValue).toUpper() == "XYZ" ? MBTilesScheme::XYZ : MBTilesScheme::TMS;
             }
         }
       }
       catch (std::exception& e)
       {
           const char *t = e.what();
-          ZCHX_LOGMSG(wxString::Format("mbtiles exception: %s", e.what()));
+          qDebug("mbtiles exception: %s", e.what());
           return INIT_FAIL_REMOVE;
       }     
     
@@ -528,10 +521,7 @@ InitReturn ChartMBTiles::Init( const wxString& name, ChartInitFlag init_flags )
       LLBBox extentBox;
       extentBox.Set(m_LatMin, m_LonMin, m_LatMax, m_LonMax);
       
-      const char *name_UTF8 = "";
-      wxCharBuffer utf8CB = name.ToUTF8();        // the UTF-8 buffer
-      if ( utf8CB.data() )
-            name_UTF8 = utf8CB.data();
+      const char *name_UTF8 = name.toUtf8().data();        // the UTF-8 buffer
 
       SQLite::Database  db(name_UTF8);
 
@@ -543,7 +533,7 @@ InitReturn ChartMBTiles::Init( const wxString& name, ChartInitFlag init_flags )
       while( (zoomFactor <= m_maxZoom) && (minRegionZoom < 0) )
       {
         LLRegion covrRegionZoom;
-        wxRegion regionZoom;
+        QRegion regionZoom;
         char qrs[100];
         
         // Protect against trying to create the exact coverage for the brutal large scale layers contianing tens of thousand tiles.
@@ -581,20 +571,20 @@ InitReturn ChartMBTiles::Init( const wxString& name, ChartInitFlag init_flags )
                 int tile_x_found = atoi(colValue);      // tile_x
                 int tile_y_found = atoi(c2);    // tile_y
 
-                regionZoom.Union(tile_x_found, tile_y_found-1, 1, 1);
+                regionZoom = regionZoom.united(QRect(tile_x_found, tile_y_found-1, 1, 1));
  
          }     // inner while
-      
-         wxRegionIterator upd( regionZoom ); // get the  rect list
-         double eps_factor = eps * 100;         // roughly 1 m
-         
-         while( upd ) {
-            wxRect rect = upd.GetRect();
 
-            double lonmin = round(tilex2long(rect.x, zoomFactor)/eps_factor)*eps_factor;
-            double lonmax = round(tilex2long(rect.x + rect.width, zoomFactor)/eps_factor)*eps_factor;
-            double latmin = round(tiley2lat(rect.y, zoomFactor)/eps_factor)*eps_factor;
-            double latmax = round(tiley2lat(rect.y + rect.height, zoomFactor)/eps_factor)*eps_factor;
+         double eps_factor = eps * 100;         // roughly 1 m
+         QVector<QRect> list = regionZoom.rects();
+         for(int i=0; i<list.size(); i++)
+         {
+            QRect rect = list[i];
+
+            double lonmin = round(tilex2long(rect.x(), zoomFactor)/eps_factor)*eps_factor;
+            double lonmax = round(tilex2long(rect.x() + rect.width(), zoomFactor)/eps_factor)*eps_factor;
+            double latmin = round(tiley2lat(rect.y(), zoomFactor)/eps_factor)*eps_factor;
+            double latmax = round(tiley2lat(rect.y() + rect.height(), zoomFactor)/eps_factor)*eps_factor;
 
             LLBBox box;
             box.Set(latmin, lonmin, latmax, lonmax);
@@ -602,8 +592,6 @@ InitReturn ChartMBTiles::Init( const wxString& name, ChartInitFlag init_flags )
             LLRegion tileRegion(box);
             //if(i <= 1)
             covrRegionZoom.Union(tileRegion);
-
-            upd++;
             minRegionZoom = zoomFactor;         // We take the first populated (lowest) zoom level
                                                         // region as the final chart region
           }
@@ -650,7 +638,7 @@ InitReturn ChartMBTiles::Init( const wxString& name, ChartInitFlag init_flags )
       
 }
 
-InitReturn ChartMBTiles::PreInit( const wxString& name, ChartInitFlag init_flags, ColorScheme cs )
+InitReturn ChartMBTiles::PreInit( const QString& name, ChartInitFlag init_flags, ColorScheme cs )
 {
       m_global_color_scheme = cs;
       return INIT_OK;
@@ -661,9 +649,7 @@ InitReturn ChartMBTiles::PostInit(void)
 {
       // Create the persistent MBTiles database file
       const char *name_UTF8 = "";
-      wxCharBuffer utf8CB = m_FullPath.ToUTF8();        // the UTF-8 buffer
-      if ( utf8CB.data() )
-          name_UTF8 = utf8CB.data();
+      QByteArray utf8CB = m_FullPath.toUtf8().data();        // the UTF-8 buffer
 
       m_pDB = new SQLite::Database(name_UTF8);
       m_pDB->exec("PRAGMA locking_mode=EXCLUSIVE");
@@ -783,7 +769,7 @@ LLRegion ChartMBTiles::GetValidRegion()
 }
 
 
-bool ChartMBTiles::RenderViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint)
+bool ChartMBTiles::RenderViewOnDC(QPainter* dc, const ViewPort& VPoint)
 {
     return true;
 }
@@ -822,15 +808,11 @@ bool ChartMBTiles::getTileTexture( mbTileDescriptor *tile)
                 const void* blob = blobColumn.getBlob();
                 
                 int length = query.getColumn(1);         // Get the length
-                
-                wxMemoryInputStream blobStream(blob, length);
-                wxImage blobImage;
-
-                blobImage = wxImage(blobStream, m_imageType);
-                
-                int blobWidth = blobImage.GetWidth();
-                int blobHeight = blobImage.GetHeight();
-                unsigned char *imgdata = blobImage.GetData();
+                QImage blobImage;
+                blobImage.loadFromData((uchar*)blob, length, m_imageType.toStdString().data());
+                int blobWidth = blobImage.width();
+                int blobHeight = blobImage.height();
+                unsigned char *imgdata = blobImage.bits();
                 
                 if( (m_global_color_scheme != GLOBAL_COLOR_SCHEME_RGB) && (m_global_color_scheme != GLOBAL_COLOR_SCHEME_DAY) ){
                     double dimLevel;
@@ -851,21 +833,21 @@ bool ChartMBTiles::getTileTexture( mbTileDescriptor *tile)
 
 //                      for( int iy = 0; iy < blobHeight; iy++ ) {
 //                           for( int ix = 0; ix < blobWidth; ix++ ) {
-//                                  wxImage::RGBValue rgb( blobImage.GetRed( ix, iy ), blobImage.GetGreen( ix, iy ), blobImage.GetBlue( ix, iy ) );
-//                                  wxImage::HSVValue hsv = wxImage::RGBtoHSV( rgb );
+//                                  QImage::RGBValue rgb( blobImage.GetRed( ix, iy ), blobImage.GetGreen( ix, iy ), blobImage.GetBlue( ix, iy ) );
+//                                  QImage::HSVValue hsv = QImage::RGBtoHSV( rgb );
 //                                  hsv.value = hsv.value * dimLevel;
-//                                  wxImage::RGBValue nrgb = wxImage::HSVtoRGB( hsv );
+//                                  QImage::RGBValue nrgb = QImage::HSVtoRGB( hsv );
 //                                  blobImage.SetRGB( ix, iy, nrgb.red, nrgb.green, nrgb.blue );
 //                           }
 //                      }
                      
                      for( int j = 0; j < blobHeight*blobWidth; j++ ){
                          unsigned char *d = &imgdata[3*j];
-                         wxImage::RGBValue rgb( *d, *(d+1), *(d+2) );
-                         wxImage::HSVValue hsv = wxImage::RGBtoHSV( rgb );
-                         hsv.value = hsv.value * dimLevel;
-                         wxImage::RGBValue nrgb = wxImage::HSVtoRGB( hsv );
-                         *d = nrgb.red; *(d+1) = nrgb.green; *(d+2) = nrgb.blue; 
+                         QColor rgb( *d, *(d+1), *(d+2) );
+                         QColor hsv = rgb.toHsv();
+                         hsv.setHsv(hsv.hsvHue(), hsv.hsvSaturation(), hsv.value() * dimLevel);
+                         rgb = hsv.toRgb();
+                         *d = rgb.red(); *(d+1) = rgb.green(); *(d+2) = rgb.blue();
                      }
  
                 }
@@ -876,10 +858,11 @@ bool ChartMBTiles::getTileTexture( mbTileDescriptor *tile)
                 int tex_h = 256;
                 if( !imgdata )
                     return false;
-                m_imageType = blobImage.GetType();
+
+//                m_imageType = blobImage.t;确定图片类型
 
                 unsigned char *teximage = (unsigned char *) malloc( stride * tex_w * tex_h );
-                bool transparent = blobImage.HasAlpha();
+                bool transparent = blobImage.hasAlphaChannel();
                 
                 for( int j = 0; j < tex_w*tex_h; j++ ){
                     for( int k = 0; k < 3; k++ )
@@ -891,7 +874,7 @@ bool ChartMBTiles::getTileTexture( mbTileDescriptor *tile)
                         teximage[j * stride + 3] = 0;
                     } else {
                         if( transparent ) {
-                            teximage[j * stride + 3] = blobImage.GetAlpha(j % tex_w, j / tex_w);
+                            teximage[j * stride + 3] = blobImage.alphaChannel().bits()[j % tex_w, j / tex_w];
                         } else {
                             teximage[j * stride + 3] = 255;
                         }
@@ -918,7 +901,7 @@ bool ChartMBTiles::getTileTexture( mbTileDescriptor *tile)
         catch (std::exception& e)
         {
             const char *t = e.what();
-            ZCHX_LOGMSG(wxString::Format("mbtiles exception: %s", e.what()));
+            qDebug("mbtiles exception: %s", e.what());
         }     
     }
         
@@ -927,9 +910,9 @@ bool ChartMBTiles::getTileTexture( mbTileDescriptor *tile)
     return false;
 }
 
-class wxPoint2DDouble;
+class zchxPointF;
 
-wxPoint2DDouble ChartMBTiles::GetDoublePixFromLL( ViewPort& vp, double lat, double lon )
+zchxPointF ChartMBTiles::GetDoublePixFromLL( ViewPort& vp, double lat, double lon )
 {
     double easting = 0;
     double northing = 0;
@@ -969,7 +952,7 @@ wxPoint2DDouble ChartMBTiles::GetDoublePixFromLL( ViewPort& vp, double lat, doub
 
     //printf("  gdpll:  %g  %g  %g\n", vp.clon, (vp.pix_width / 2.0 ) + dxr, ( vp.pix_height / 2.0 ) - dyr);
     
-    return wxPoint2DDouble(( vp.pix_width / 2.0 ) + dxr, ( vp.pix_height / 2.0 ) - dyr);
+    return zchxPointF(( vp.pix_width / 2.0 ) + dxr, ( vp.pix_height / 2.0 ) - dyr);
 }
 
 bool ChartMBTiles::RenderTile( mbTileDescriptor *tile, int zoomLevel, const ViewPort& VPoint)
@@ -994,12 +977,12 @@ bool ChartMBTiles::RenderTile( mbTileDescriptor *tile, int zoomLevel, const View
 
     ViewPort mvp = vp;
     
-    wxPoint2DDouble p;
+    zchxPointF p;
     
-    p = GetDoublePixFromLL(mvp, tile->latmin, tile->lonmin); coords[0] = p.m_x;  coords[1] = p.m_y;
-    p = GetDoublePixFromLL(mvp, tile->latmax, tile->lonmin); coords[2] = p.m_x;  coords[3] = p.m_y;
-    p = GetDoublePixFromLL(mvp, tile->latmax, tile->lonmax); coords[4] = p.m_x;  coords[5] = p.m_y;
-    p = GetDoublePixFromLL(mvp, tile->latmin, tile->lonmax); coords[6] = p.m_x;  coords[7] = p.m_y;
+    p = GetDoublePixFromLL(mvp, tile->latmin, tile->lonmin); coords[0] = p.x;  coords[1] = p.y;
+    p = GetDoublePixFromLL(mvp, tile->latmax, tile->lonmin); coords[2] = p.x;  coords[3] = p.y;
+    p = GetDoublePixFromLL(mvp, tile->latmax, tile->lonmax); coords[4] = p.x;  coords[5] = p.y;
+    p = GetDoublePixFromLL(mvp, tile->latmin, tile->lonmax); coords[6] = p.x;  coords[7] = p.y;
       
     glTexCoordPointer(2, GL_FLOAT, 2*sizeof(GLfloat), texcoords);
     glVertexPointer(2, GL_FLOAT, 2*sizeof(GLfloat), coords);
@@ -1011,7 +994,7 @@ bool ChartMBTiles::RenderTile( mbTileDescriptor *tile, int zoomLevel, const View
 }
 
 
-bool ChartMBTiles::RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& VPoint, const OCPNRegion &RectRegion, const LLRegion &Region)
+bool ChartMBTiles::RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint, const OCPNRegion &RectRegion, const LLRegion &Region)
 {
     // Do not render if significantly underzoomed
     if( VPoint.chart_scale > (20 * OSM_zoomScale[m_minZoom])){
@@ -1022,7 +1005,7 @@ bool ChartMBTiles::RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& 
 
     ViewPort vp = VPoint;
 
-    OCPNRegion screen_region(wxRect(0, 0, vp.pix_width, vp.pix_height));
+    OCPNRegion screen_region(QRect(0, 0, vp.pix_width, vp.pix_height));
     LLRegion screenLLRegion = vp.GetLLRegion( screen_region );
     LLBBox screenBox = screenLLRegion.GetBox();
 
@@ -1055,7 +1038,7 @@ bool ChartMBTiles::RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& 
         }
     }
     
-    viewZoom = wxMin(viewZoom, m_maxZoom);
+    viewZoom = fmin(viewZoom, m_maxZoom);
     //printf("viewZoomCalc: %d  %g   %g\n",  viewZoom, VPoint.view_scale_ppm,  1. / VPoint.view_scale_ppm);
 
     int zoomFactor = m_minZoom;
@@ -1087,8 +1070,8 @@ bool ChartMBTiles::RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& 
 
         
         // Get the tile numbers of the box corners of this render region, at this zoom level
-        int topTile =   wxMin(tzd->tile_y_max, lat2tiley(box.GetMaxLat(), zoomFactor));
-        int botTile =   wxMax(tzd->tile_y_min, lat2tiley(box.GetMinLat(), zoomFactor));
+        int topTile =   fmin(tzd->tile_y_max, lat2tiley(box.GetMaxLat(), zoomFactor));
+        int botTile =   fmax(tzd->tile_y_min, lat2tiley(box.GetMinLat(), zoomFactor));
         int leftTile =  long2tilex(box.GetMinLon(), zoomFactor);
         int rightTile = long2tilex(box.GetMaxLon(), zoomFactor);
 
@@ -1158,8 +1141,8 @@ bool ChartMBTiles::RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& 
                 vp.clon += 360;
             
             // Get the tile numbers of the box corners of this render region, at this zoom level
-            int topTile =   wxMin(tzd->tile_y_max, lat2tiley(box.GetMaxLat(), zoomFactor));
-            int botTile =   wxMax(tzd->tile_y_min, lat2tiley(box.GetMinLat(), zoomFactor));
+            int topTile =   fmin(tzd->tile_y_max, lat2tiley(box.GetMaxLat(), zoomFactor));
+            int botTile =   fmax(tzd->tile_y_min, lat2tiley(box.GetMinLat(), zoomFactor));
             int leftTile =  long2tilex(box.GetMinLon(), zoomFactor);
             int rightTile = long2tilex(-180-eps/*box.GetMaxLon()*/, zoomFactor);
 
@@ -1222,9 +1205,9 @@ bool ChartMBTiles::RenderRegionViewOnGL(const wxGLContext &glc, const ViewPort& 
 }
 
 
-bool ChartMBTiles::RenderRegionViewOnDC(wxMemoryDC& dc, const ViewPort& VPoint, const OCPNRegion &Region)
+bool ChartMBTiles::RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint, const OCPNRegion &Region)
 {
-    gFrame->GetPrimaryCanvas()->SetAlertString( _("MBTile requires OpenGL to be enabled"));
+    QMessageBox::warning(0, "MBTile", "MBTile requires OpenGL to be enabled");
 
     return true;
 }

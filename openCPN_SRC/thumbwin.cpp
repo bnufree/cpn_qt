@@ -80,17 +80,17 @@ void ThumbWin::paintEvent(QPaintEvent *event)
     if(!(pThumbChart->GetThumbData()) ) return;
     if( pThumbChart->GetThumbData()->pDIBThumb )
     {
-        dc.drawPixmap(QPoint(0, 0), *( pThumbChart->GetThumbData()->pDIBThumb ));
+        dc.drawPixmap(QPoint(0, 0), *( pThumbChart->GetThumbData()->pDIBThumb->GetHandle() ));
     }
 
     QPen ppPen( GetGlobalColor("CHBLK"), 1, Qt::SolidLine );
-    dc.SetPen( ppPen );
+    dc.setPen( ppPen );
     QBrush yBrush( GetGlobalColor("CHYLW" ), Qt::SolidPattern );
-    dc.SetBrush( yBrush );
+    dc.setBrush( yBrush );
     dc.drawEllipse(pThumbChart->GetThumbData()->ShipX, pThumbChart->GetThumbData()->ShipY, 6, 6 );
 }
 
-const QBitmap &ThumbWin::GetBitmap(void)
+const wxBitmap &ThumbWin::GetBitmap(void)
 {
     if( pThumbChart ) {
         if( pThumbChart->GetThumbData() ) {

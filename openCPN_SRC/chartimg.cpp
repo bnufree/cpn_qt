@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  ChartBase, ChartBaseBSB and Friends
@@ -271,12 +271,12 @@ bool ChartDummy::RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPo
 
 
 
-bool ChartDummy::RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region)
+bool ChartDummy::RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint, const OCPNRegion &Region)
 {
     return RenderViewOnDC(dc, VPoint);
 }
 
-bool ChartDummy::RenderViewOnDC(QPainter& dc, const ViewPort& VPoint)
+bool ChartDummy::RenderViewOnDC(QPainter* dc, const ViewPort& VPoint)
 {
     if( m_pBM  && m_pBM->isOK())
     {
@@ -294,7 +294,7 @@ bool ChartDummy::RenderViewOnDC(QPainter& dc, const ViewPort& VPoint)
     if( VPoint.pix_width && VPoint.pix_height ) {
         if(NULL == m_pBM) m_pBM = new wxBitmap(VPoint.pix_width, VPoint.pix_height);
 
-        dc.drawPixmap(0, 0, *(m_pBM->GetHandle()));
+        dc->drawPixmap(0, 0, *(m_pBM->GetHandle()));
         //        dc.SetBackground(*wxBLACK_BRUSH);
         //        dc.Clear();
     }
@@ -3366,7 +3366,7 @@ bool ChartBaseBSB::GetViewUsingCache( QRect& source, QRect& dest, const OCPNRegi
 
 int s_dc;
 
-bool ChartBaseBSB::RenderViewOnDC(QPainter& dc, const ViewPort& VPoint)
+bool ChartBaseBSB::RenderViewOnDC(QPainter* dc, const ViewPort& VPoint)
 {
     SetVPRasterParms(VPoint);
 
@@ -3392,7 +3392,7 @@ bool ChartBaseBSB::RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& V
 }
 
 
-bool ChartBaseBSB::RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region)
+bool ChartBaseBSB::RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint, const OCPNRegion &Region)
 {
     SetVPRasterParms(VPoint);
 

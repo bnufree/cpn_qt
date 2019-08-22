@@ -28,7 +28,7 @@
 #include "config.h"
 
 #ifdef OCPN_USE_LZMA
-#include <lzma.h>
+#include "lzma.h"
 #include "_def.h"
 #include <QTemporaryFile>
 

@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -233,7 +233,7 @@ private:
     int AdjustRefOnZoom( bool b_zin, ChartFamilyEnum family, ChartTypeEnum type, double proposed_scale_onscreen );
     
     void EmptyCandidateArray( void );
-    void SubstituteClearDC( QPainter &dc, ViewPort &vp );
+    void SubstituteClearDC( QPainter *dc, ViewPort &vp );
     int GetNewRefChart( void );
 
     

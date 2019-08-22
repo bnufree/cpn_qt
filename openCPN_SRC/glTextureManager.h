@@ -32,6 +32,7 @@
 #include <QThread>
 #include <QHash>
 #include <QTimer>
+#include <QRect>
 
 class QProgressDialog;
 class ProgressInfoItem

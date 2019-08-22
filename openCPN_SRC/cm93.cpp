@@ -45,6 +45,7 @@
 
 #include <stdio.h>
 
+#if 0
 #ifdef ocpnUSE_GL
 #include "glChartCanvas.h"
 extern zchxGLOptions g_GLOptions;
@@ -3205,12 +3206,12 @@ QString ParseSLGTA ( QString& val )
       }
 
 
-      if ( val.Find ( _T ( "Spar" ) ) !=  wxNOT_FOUND )
+      if ( val.Find ( _T ( "Spar" ) ) !=  Q_INDEX_NOT_FOUND )
       {
             type = 5;
             st = _T ( "5" );
       }
-      if ( val.Find ( _T ( "SPAR" ) ) !=  wxNOT_FOUND )
+      if ( val.Find ( _T ( "SPAR" ) ) !=  Q_INDEX_NOT_FOUND )
       {
             type = 5;
             st = _T ( "5" );
@@ -4528,7 +4529,7 @@ int cm93chart::loadsubcell ( int cellindex, QChar sub_char )
       bool bfound = false;
       QString compfile;
       if(b_useNoFind){
-        if(m_noFindArray.Index(key) == wxNOT_FOUND){
+        if(m_noFindArray.Index(key) == Q_INDEX_NOT_FOUND){
             if ( ::wxFileExists ( file ) ) 
                 bfound = true;
             else
@@ -4542,7 +4543,7 @@ int cm93chart::loadsubcell ( int cellindex, QChar sub_char )
       
       if(!bfound){                     // try compressed version
         if(b_useNoFind){
-            if(m_noFindArray.Index(key + _T(".xz")) == wxNOT_FOUND){
+            if(m_noFindArray.Index(key + _T(".xz")) == Q_INDEX_NOT_FOUND){
                 if(::wxFileExists ( file+_T(".xz"))){
                     compfile = file + _T(".xz");
                 }
@@ -4579,7 +4580,7 @@ int cm93chart::loadsubcell ( int cellindex, QChar sub_char )
             file1.Prepend ( fileroot );
          
             if(b_useNoFind){
-                if(m_noFindArray.Index(key) == wxNOT_FOUND){
+                if(m_noFindArray.Index(key) == Q_INDEX_NOT_FOUND){
                     if ( ::wxFileExists ( file1 ) ) {
                         bfound = true;
                         file = file1;                       // found the file as lowercase, substitute the name
@@ -4598,7 +4599,7 @@ int cm93chart::loadsubcell ( int cellindex, QChar sub_char )
             
             if(!bfound){                     // try compressed version
                 if(b_useNoFind){
-                    if(m_noFindArray.Index(key + _T(".xz")) == wxNOT_FOUND){
+                    if(m_noFindArray.Index(key + _T(".xz")) == Q_INDEX_NOT_FOUND){
                         if(::wxFileExists ( file1+_T(".xz")))
                             compfile = file1 + _T(".xz");
                         else
@@ -5642,7 +5643,7 @@ bool cm93compchart::DoRenderRegionViewOnGL (const wxGLContext &glc, const ViewPo
 
 
 
-bool cm93compchart::RenderRegionViewOnDC ( QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region )
+bool cm93compchart::RenderRegionViewOnDC ( QPainter* dc, const ViewPort& VPoint, const OCPNRegion &Region )
 {
       SetVPParms ( VPoint );
 
@@ -5652,7 +5653,7 @@ bool cm93compchart::RenderRegionViewOnDC ( QPainter& dc, const ViewPort& VPoint,
       return DoRenderRegionViewOnDC ( dc, VPoint, Region );
 }
 
-bool cm93compchart::RenderViewOnDC ( QPainter& dc, const ViewPort& VPoint )
+bool cm93compchart::RenderViewOnDC ( QPainter* dc, const ViewPort& VPoint )
 {
       const OCPNRegion vpr ( 0,0,VPoint.pix_width, VPoint.pix_height );
 
@@ -5662,7 +5663,7 @@ bool cm93compchart::RenderViewOnDC ( QPainter& dc, const ViewPort& VPoint )
 
 }
 
-bool cm93compchart::DoRenderRegionViewOnDC ( QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region )
+bool cm93compchart::DoRenderRegionViewOnDC ( QPainter* dc, const ViewPort& VPoint, const OCPNRegion &Region )
 {
 //      g_bDebugCM93 = true;
 
@@ -6639,7 +6640,7 @@ cm93_dictionary *cm93compchart::FindAndLoadDictFromDir ( const QString &dir )
             }
 
             //    Abort the search loop if the directory tree does not contain some indication of CM93
-            if ( ( wxNOT_FOUND == path.Lower().Find ( _T ( "cm93" ) ) ) )
+            if ( ( Q_INDEX_NOT_FOUND == path.Lower().Find ( _T ( "cm93" ) ) ) )
             {
                   bdone = true;
                   ZCHX_LOGMSG ( _T ( "Early break2" ) );
@@ -7074,6 +7075,7 @@ void CM93OffsetDialog::UpdateMCOVRList ( const ViewPort &vpt )
     }
 
 }
+#endif
 
 
 

@@ -1,7 +1,7 @@
 ﻿/***************************************************************************
  *
  * Project:  OpenCPN
- * Purpose:  texture OpenGL text rendering built from wxFont
+ * Purpose:  texture OpenGL text rendering built from QFont
  * Author:   Sean D'Epagnier
  *
  ***************************************************************************
@@ -29,16 +29,19 @@
 #include <GL/glu.h>
 
 #include "TexFont.h"
+#include <QFontMetrics>
+#include "bitmap.h"
+#include <QPainter>
 
 typedef struct {
-    wxFont  *key;
+    QFont  *key;
     TexFont cache;
 } TexFontCache;
 
 #define TXF_CACHE 8
 static TexFontCache s_txf[TXF_CACHE];
 
-TexFont *GetTexFont(wxFont *pFont)
+TexFont *GetTexFont(QFont *pFont)
 {
     // rebuild font if needed
     TexFont *f_cache;
@@ -71,7 +74,7 @@ TexFont::~TexFont( )
 }
 
 
-void TexFont::Build( wxFont &font, bool blur )
+void TexFont::Build( QFont &font, bool blur )
 {
     /* avoid rebuilding if the parameters are the same */
     if(m_built && (font == m_font) && (blur == m_blur))
@@ -82,20 +85,17 @@ void TexFont::Build( wxFont &font, bool blur )
 
     m_maxglyphw = 0;
     m_maxglyphh = 0;
-    
-    wxScreenDC sdc;
 
-    sdc.SetFont( font );
-
+    QFontMetrics mcs(m_font);
     for( int i = MIN_GLYPH; i < MAX_GLYPH; i++ ) {
-        wxCoord gw, gh;
-        wxString text;
+        int gw, gh;
+        QString text;
         if(i == DEGREE_GLYPH)
-            text = wxString::Format(_T("%c"), 0x00B0); //_T("°");
+            text.sprintf("%c", 0x00B0); //_T("°");
         else
-            text = wxString::Format(_T("%c"), i);
-        wxCoord descent, exlead;
-        sdc.GetTextExtent( text, &gw, &gh, &descent, &exlead, &font ); // measure the text
+            text.sprintf("%c", i);
+        gw = mcs.width(text);
+        gh = mcs.height();
 
         tgi[i].width = gw;
         tgi[i].height = gh;
@@ -103,8 +103,8 @@ void TexFont::Build( wxFont &font, bool blur )
         tgi[i].advance = gw;
         
         
-        m_maxglyphw = wxMax(tgi[i].width,  m_maxglyphw);
-        m_maxglyphh = wxMax(tgi[i].height, m_maxglyphh);
+        m_maxglyphw = qMax(tgi[i].width,  m_maxglyphw);
+        m_maxglyphh = qMax(tgi[i].height, m_maxglyphh);
     }
 
     /* add extra pixel to give a border between rows of characters
@@ -115,31 +115,26 @@ void TexFont::Build( wxFont &font, bool blur )
     int w = COLS_GLYPHS * m_maxglyphw;
     int h = ROWS_GLYPHS * m_maxglyphh;
 
-    wxASSERT(w < 2048 && h < 2048);
+    Q_ASSERT(w < 2048 && h < 2048);
 
     /* make power of 2 */
     for(tex_w = 1; tex_w < w; tex_w *= 2);
     for(tex_h = 1; tex_h < h; tex_h *= 2);
 
     wxBitmap tbmp(tex_w, tex_h);
-    wxMemoryDC dc;
-    dc.SelectObject(tbmp);
-    dc.SetFont( font );
-    
-    /* fill bitmap with black */
-    dc.SetBackground( wxBrush( wxColour( 0, 0, 0 ) ) );
-    dc.Clear();
+    QPainter dc;
+    if(!dc.begin(tbmp.GetHandle())) return;
+    dc.setFont( font );
+    dc.setBackground( QBrush( QColor( 0, 0, 0 ) ) );
+    dc.eraseRect(0, 0, dc.device()->width(), dc.device()->height());
         
     /* draw the text white */
-    dc.SetTextForeground( wxColour( 255, 255, 255 ) );
-
- /*    wxPen pen(wxColour( 255, 255, 255 ));
-     wxBrush brush(wxColour( 255, 255, 255 ), wxTRANSPARENT);
-     dc.SetPen(pen);
-     dc.SetBrush(brush);
-  */  
+    QPen pen = dc.pen();
+    pen.setColor(QColor( 255, 255, 255 ) );
+    dc.setPen(pen);
     int row = 0, col = 0;
-    for( int i = MIN_GLYPH; i < MAX_GLYPH; i++ ) {
+    for( int i = MIN_GLYPH; i < MAX_GLYPH; i++ )
+    {
         if(col == COLS_GLYPHS) {
             col = 0;
             row++;
@@ -148,22 +143,18 @@ void TexFont::Build( wxFont &font, bool blur )
         tgi[i].x = col * m_maxglyphw;
         tgi[i].y = row * m_maxglyphh;
 
-        wxString text;
+        QString text;
         if(i == DEGREE_GLYPH)
-            text = wxString::Format(_T("%c"), 0x00B0); //_T("°");
+            text.sprintf("%c", 0x00B0); //_T("°");
         else
-            text = wxString::Format(_T("%c"), i);
+            text.sprintf("%c", i);
 
-        dc.DrawText(text, tgi[i].x, tgi[i].y );
-        
-//        dc.DrawRectangle(tgi[i].x, tgi[i].y, tgi[i].advance, tgi[i].height);
+        dc.drawText(tgi[i].x, tgi[i].y, text );
         col++;
     }
-
-    dc.SelectObject(wxNullBitmap);
+    dc.end();
     
-    wxImage image = tbmp.ConvertToImage();
-
+    QImage image = tbmp.ConvertToImage();
     GLuint format, internalformat;
     int stride;
 
@@ -171,10 +162,9 @@ void TexFont::Build( wxFont &font, bool blur )
     internalformat = format;
     stride = 1;
 
-    if( m_blur )
-        image = image.Blur(1);
+    if( m_blur ) image = image.Blur(1);
 
-    unsigned char *imgdata = image.GetData();
+    unsigned char *imgdata = image.bits();
     
     if(imgdata){
         unsigned char *teximage = (unsigned char *) malloc( stride * tex_w * tex_h );
@@ -237,9 +227,9 @@ void TexFont::GetTextExtent(const char *string, int *width, int *height)
     if(height) *height = h;
 }
 
-void TexFont::GetTextExtent(const wxString &string, int *width, int *height)
+void TexFont::GetTextExtent(const QString &string, int *width, int *height)
 {
-    GetTextExtent((const char*)string.ToUTF8(), width, height);
+    GetTextExtent((const char*)string.toUtf8().data(), width, height);
 }
 
 void TexFont::RenderGlyph( int c )
@@ -296,9 +286,9 @@ void TexFont::RenderString( const char *string, int x, int y )
     glPopMatrix();
 }
 
-void TexFont::RenderString( const wxString &string, int x, int y )
+void TexFont::RenderString( const QString &string, int x, int y )
 {
-    RenderString((const char*)string.ToUTF8(), x, y);
+    RenderString((const char*)string.toUtf8().data(), x, y);
 }
 
 #endif     //#ifdef ocpnUSE_GL

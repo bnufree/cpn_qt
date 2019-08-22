@@ -26,7 +26,7 @@
 #ifndef __CM93CHART_H__
 #define __CM93CHART_H__
 
-
+#if 0
 #include    "s57chart.h"
 #include    "cutil.h"               // for types
 
@@ -439,7 +439,7 @@ class cm93compchart : public s57chart
 
             bool AdjustVP(ViewPort &vp_last, ViewPort &vp_proposed);
 
-            bool RenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region);
+            bool RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint, const OCPNRegion &Region);
 
             virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
                                               const OCPNRegion &RectRegion, const LLRegion &Region);
@@ -477,14 +477,14 @@ class cm93compchart : public s57chart
             void UpdateRenderRegions ( const ViewPort& VPoint );
             OCPNRegion GetValidScreenCanvasRegion(const ViewPort& VPoint, const OCPNRegion &ScreenRegion);
 
-            bool RenderViewOnDC(QPainter& dc, const ViewPort& VPoint);
+            bool RenderViewOnDC(QPainter* dc, const ViewPort& VPoint);
 
             InitReturn CreateHeaderData();
             cm93_dictionary *FindAndLoadDictFromDir(const QString &dir);
             void FillScaleArray(double lat, double lon);
             int PrepareChartScale(const ViewPort &vpt, int cmscale, bool bOZ_protect = true);
             int GetCMScaleFromVP(const ViewPort &vpt);
-            bool DoRenderRegionViewOnDC(QPainter& dc, const ViewPort& VPoint, const OCPNRegion &Region);
+            bool DoRenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint, const OCPNRegion &Region);
 
             bool DoRenderRegionViewOnGL (const QGLContext &glc, const ViewPort& VPoint,
                                          const OCPNRegion &RectRegion, const LLRegion &Region );
@@ -570,6 +570,7 @@ private:
     double            m_centerlat_cos;
 
 };
+#endif
 
 
 

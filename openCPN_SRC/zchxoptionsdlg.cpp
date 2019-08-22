@@ -185,7 +185,7 @@ void zchxOptionsDlg::processApply(bool apply)
         }
 
         if(ui->pDispCat) {
-            enum _DisCat nset = ui->pDispCat->currentData().toInt();
+            enum _DisCat nset = (_DisCat)(ui->pDispCat->currentData().toInt());
             ps52plib->SetDisplayCategory(nset);
         }
 
@@ -200,8 +200,8 @@ void zchxOptionsDlg::processApply(bool apply)
         ps52plib->m_bShowS57ImportantTextOnly = ui->pCheck_SHOWIMPTEXT->isChecked();
         ps52plib->m_bUseSCAMIN = ui->pCheck_SCAMIN->isChecked();
 
-        ps52plib->m_nSymbolStyle = ui->pPointStyle->currentData().toInt();
-        ps52plib->m_nBoundaryStyle = ui->pBoundStyle->currentData().toInt();
+        ps52plib->m_nSymbolStyle = (LUPname)(ui->pPointStyle->currentData().toInt());
+        ps52plib->m_nBoundaryStyle = (LUPname)(ui->pBoundStyle->currentData().toInt());
         S52_setMarinerParam(S52_MAR_TWO_SHADES, (ui->p24Color->currentIndex() == 0) ? 1.0 : 0.0);
 
         // Depths
@@ -249,7 +249,7 @@ void zchxOptionsDlg::processApply(bool apply)
         m_returnChanges &= ~( CHANGE_CHARTS | FORCE_UPDATE | SCAN_UPDATE );
         k_charts = 0;
 
-        gFrame->RefreshAllCanvas();
+        mMainWindow->RefreshAllCanvas();
     }
     setCursor(QCursor(cursor_type));
 }
@@ -290,7 +290,7 @@ void zchxOptionsDlg::resetMarStdList(bool bsetConfig, bool bsetStd)
 
     for (unsigned int iPtr = 0; iPtr < ps52plib->pOBJLArray->count(); iPtr++)
     {
-        OBJLElement* pOLE = (OBJLElement*)(ps52plib->pOBJLArray[iPtr]);
+        OBJLElement* pOLE = (OBJLElement*)(ps52plib->pOBJLArray->at(iPtr));
         if(!pOLE) continue;
         if( !strncmp(pOLE->OBJLName, "CBLARE", 6))
             int yyp = 3;

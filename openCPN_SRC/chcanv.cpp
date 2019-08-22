@@ -65,7 +65,7 @@
 #include "CanvasOptions.h"
 #include "mbtiles.h"
 #include "glChartCanvas.h"
-#include "S57QueryDialog.h"
+//#include "S57QueryDialog.h"
 #include "zchxmapmainwindow.h"
 
 #include "cm93.h"                   // for chart outline draw
@@ -135,7 +135,7 @@ extern bool             g_bsimplifiedScalebar;
 extern bool             bDrawCurrentValues;
 
 extern s52plib          *ps52plib;
-extern CM93OffsetDialog  *g_pCM93OffsetDialog;
+//extern CM93OffsetDialog  *g_pCM93OffsetDialog;
 
 extern bool             bGPSValid;
 //extern bool             g_bShowOutlines;
@@ -204,7 +204,7 @@ bool                    g_bDebugOGL;
 extern bool             g_b_assume_azerty;
 
 extern ChartGroupArray  *g_pGroupArray;
-extern S57QueryDialog   *g_pObjectQueryDialog;
+//extern S57QueryDialog   *g_pObjectQueryDialog;
 extern ocpnStyle::StyleManager* g_StyleManager;
 
 extern bool              g_bShowTrue, g_bShowMag;
@@ -7519,7 +7519,7 @@ void ChartCanvas::RenderAllChartOutlines( ocpnDC &dc, ViewPort& vp )
 
         if( b_group_draw ) RenderChartOutline( dc, i, vp );
     }
-
+#if 0
     //        On CM93 Composite Charts, draw the outlines of the next smaller scale cell
     cm93compchart *pcm93 = NULL;
     if( VPoint.b_quilt ) {
@@ -7546,6 +7546,7 @@ void ChartCanvas::RenderAllChartOutlines( ocpnDC &dc, ViewPort& vp )
         
         pcm93->RenderNextSmallerCellOutlines( dc, vp, this );
     }
+#endif
 }
 
 void ChartCanvas::RenderChartOutline( ocpnDC &dc, int dbIndex, ViewPort& vp )

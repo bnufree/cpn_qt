@@ -191,7 +191,7 @@ class PixelCache
         PixelCache(int width, int height, int depth);
         ~PixelCache();
 
-        void SelectIntoDC(QPainter &dc);
+        void SelectIntoDC(QPainter* dc);
         void Update(void);
         RGBO GetRGBO(){return m_rgbo;}
         unsigned char *GetpData() const;

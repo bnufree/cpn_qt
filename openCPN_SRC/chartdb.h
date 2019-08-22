@@ -169,6 +169,7 @@ private:
       void DeleteCacheEntry(int i, bool bDelTexture = false, const QString &msg = QString());
       void DeleteCacheEntry(CacheEntry *pce, bool bDelTexture = false, const QString &msg = QString());
       void createDomTagAndNode(QDomElement* root, QDomDocument& doc, const QString& tag, const QString& text);
+      bool isSingleChart(ChartBase* p);
       
       
       wxArrayPtrVoid    *pChartCache;

@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -22,19 +22,16 @@
  ***************************************************************************
  */
 
-#include <wx/zchxlog.h>
-#include <wx/tokenzr.h>
-#include <wx/textfile.h>
-#include <wx/filename.h>
-
 #include "config.h"
 
 #include "s57RegistrarMgr.h"
 #include "S57ClassRegistrar.h"
+#include <QDir>
+#include <QDebug>
 
 extern S57ClassRegistrar *g_poRegistrar;
 
-static void s57_initialize( const wxString& csv_dir )
+static void s57_initialize( const QString& csv_dir )
 {
     //      Get one instance of the s57classregistrar,
     //      And be prepared to give it to any module that needs it
@@ -42,8 +39,8 @@ static void s57_initialize( const wxString& csv_dir )
     if( g_poRegistrar == NULL ) {
         g_poRegistrar = new S57ClassRegistrar();
 
-        if( !g_poRegistrar->LoadInfo( csv_dir.mb_str(), false ) ) {
-            ZCHX_LOGMSG( wxString::Format(_T("   Error: Could not load S57 ClassInfo from %s"), csv_dir.mb_str() ));
+        if( !g_poRegistrar->LoadInfo( csv_dir.toUtf8().data(), false ) ) {
+            qDebug("   Error: Could not load S57 ClassInfo from %s", csv_dir.toUtf8().data() );
 
             delete g_poRegistrar;
             g_poRegistrar = NULL;
@@ -51,7 +48,7 @@ static void s57_initialize( const wxString& csv_dir )
     }
 }
 
-s57RegistrarMgr::s57RegistrarMgr( const wxString& csv_dir )
+s57RegistrarMgr::s57RegistrarMgr( const QString& csv_dir )
 {
     s57_initialize( csv_dir );
     
@@ -67,22 +64,20 @@ s57RegistrarMgr::~s57RegistrarMgr()
     g_poRegistrar = NULL;
 }
 
-bool s57RegistrarMgr::s57_attr_init( const wxString& csv_dir ){
+bool s57RegistrarMgr::s57_attr_init( const QString& csv_dir ){
     
     //  Find, open, and read the file {csv_dir}/s57attributes.csv
-    wxString csv_t = csv_dir;
-    wxChar sep = wxFileName::GetPathSeparator();
-    if( csv_t.Last() != sep ) csv_t.Append( sep );
+    QString csv_t = csv_dir;
+    QChar sep = QDir::separator();
+    if( csv_t.right(1) != sep ) csv_t.append( sep );
+
+    QString targetFile = csv_t + ("s57attributes.csv");
+    QFile tFile(targetFile);
     
-    
-    wxTextFile tFile;
-    wxString targetFile = csv_t + _T("s57attributes.csv");
-    
-    if(!tFile.Open( targetFile ) ){
-        wxString msg( _T("   Error: Could not load S57 Attribute Info from ") );
-        msg.Append( csv_dir );
-        ZCHX_LOGMSG( msg );
-        
+    if(!tFile.open(QIODevice::ReadOnly ) ){
+        QString msg(("   Error: Could not load S57 Attribute Info from ") );
+        msg.append( csv_dir );
+        qDebug()<< msg;
         return false;
     }
 
@@ -91,18 +86,19 @@ bool s57RegistrarMgr::s57_attr_init( const wxString& csv_dir ){
     //First map: Key is char[] attribute acronym, value is standard ID
     //Second map: Key is standard ID, value is char[] attribute acronym
     
-    wxString str;
-    for ( str = tFile.GetFirstLine(); !tFile.Eof(); str = tFile.GetNextLine() ){
-        wxStringTokenizer tk(str, _T(","));
-        
-        wxString ident = tk.GetNextToken();
-        long nID = -1;
-        if( ident.ToLong( &nID )){
-            wxString description = tk.GetNextToken();
-            wxString acronym = tk.GetNextToken();
-            
+    while(tFile.atEnd())
+    {
+        QString str = QString::fromUtf8(tFile.readLine());
+        QStringList tk = str.split(",");
+        int i = 0;
+        QString ident = tk[i++];
+        bool ok = false;
+        long nID = ident.toLong(&ok);
+        if( ok){
+            QString description = tk[i++];
+            QString acronym = tk[i++];
             m_attrHash1[acronym] = nID;
-            m_attrHash2[nID] = acronym.c_str();
+            m_attrHash2[nID] = acronym.toStdString();
             
         }
     }
@@ -111,22 +107,19 @@ bool s57RegistrarMgr::s57_attr_init( const wxString& csv_dir ){
     
 }
 
-bool s57RegistrarMgr::s57_feature_init( const wxString& csv_dir ){
+bool s57RegistrarMgr::s57_feature_init( const QString& csv_dir ){
     
     //  Find, open, and read the file {csv_dir}/s57objectclasses.csv
-    wxString csv_t = csv_dir;
-    wxChar sep = wxFileName::GetPathSeparator();
-    if( csv_t.Last() != sep ) csv_t.Append( sep );
-    
-    
-    wxTextFile tFile;
-    wxString targetFile = csv_t + _T("s57objectclasses.csv");
-    
-    if(!tFile.Open( targetFile ) ){
-        wxString msg( _T("   Error: Could not load S57 Feature Info from ") );
-        msg.Append( csv_dir );
-        ZCHX_LOGMSG( msg );
-        
+    QString csv_t = csv_dir;
+    QChar sep = QDir::separator();
+    if( csv_t.right(1) != sep ) csv_t.append( sep );
+
+    QString targetFile = csv_t + ("s57objectclasses.csv");
+    QFile file(targetFile);
+    if(!file.open( QIODevice::ReadOnly ) ){
+        QString msg(("   Error: Could not load S57 Feature Info from ") );
+        msg.append( csv_dir );
+        qDebug()<<msg;
         return false;
     }
     
@@ -135,30 +128,24 @@ bool s57RegistrarMgr::s57_feature_init( const wxString& csv_dir ){
     //First map: Key is char[] feature acronym, value is standard ID
     //Second map: Key is standard ID, value is char[] feature acronym
     
-    wxString str;
-    for ( str = tFile.GetFirstLine(); !tFile.Eof(); str = tFile.GetNextLine() ){
-        wxStringTokenizer tk(str, _T(","));
-        
-        wxString ident = tk.GetNextToken();
-        long nID = -1;
-//         if( ident.ToLong( &nID )){
-//             wxString description = tk.GetNextToken();
-//             wxString acronym = tk.GetNextToken();
-//             
-//             m_featureHash1[acronym] = nID;
-//             m_featureHash2[nID] = acronym.c_str();
-//             
-//         }
-        if( ident.ToLong( &nID )){
-            wxString description = tk.GetNextToken();
-//            wxString d2;
-            while(!description.EndsWith("\""))
-                description += tk.GetNextToken();
+    while(file.atEnd())
+    {
+        QString str = QString::fromUtf8(file.readLine());
+        QStringList tk = str.split(",");
+        int i = 0;
+        QString ident = tk[i++];
+        bool ok = false;
+        long nID = ident.toLong(&ok);
+        if( ok){
+            QString description = tk[i++];
+//            QString d2;
+            while(!description.endsWith("\""))
+                description += tk[i++];
             
-            wxString acronym = tk.GetNextToken();
+            QString acronym = tk[i++];
             
             m_featureHash1[acronym] = nID;
-            m_featureHash2[nID] = acronym.c_str();
+            m_featureHash2[nID] = acronym.toStdString();
             
         }
     }
@@ -168,7 +155,7 @@ bool s57RegistrarMgr::s57_feature_init( const wxString& csv_dir ){
 }
 
 int s57RegistrarMgr::getAttributeID(const char *pAttrName){
-    wxString key(pAttrName);
+    QString key(pAttrName);
     
     if( m_attrHash1.find( key ) == m_attrHash1.end())
         return -1;

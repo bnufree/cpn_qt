@@ -14,6 +14,8 @@ class QTimer;
 class zchxOptionsDlg;
 class zchxConfig;
 class ChartCanvas;
+class ChartBase;
+class ChartDB;
 
 class zchxMapMainWindow : public QMainWindow
 {
@@ -30,7 +32,7 @@ public:
     void    setProcessID(quint64 id) {mProcessedID = id;}
     quint64 getProcessIDFromSystem();
     int     GetApplicationMemoryUse(void);
-    void    getMemoryStatus();
+    void    getMemoryStatus(int* total = 0, int* used = 0);
     void    setActionCheckSts(const QString& action, bool check);
     void    setActionEnableSts(const QString& action, bool check);
     zchxConfig*     getConfigObj() {return mConfigObj;}
@@ -46,6 +48,7 @@ public:
     void UpdateRotationState( double rotation );
     void SetChartUpdatePeriod();
     ChartCanvas *GetPrimaryCanvas();
+    double GetBestVPScale( ChartBase *pchart );
 
 
 public slots:
@@ -78,6 +81,7 @@ public slots:
     void    slotShowBuoyLightLabel(bool sts);
     void    slotShowLightDiscriptions(bool sts);
     void    slotShowDisplayCategory();
+    void    RefreshAllCanvas( bool bErase = true);
 
 private:
     QAction* addCustomAction(QMenu* menu, const QString &text, const QObject *receiver, const char* slot, bool check = false, const QVariant& data = QVariant());
@@ -103,6 +107,8 @@ private:
     zchxConfig*                 mConfigObj;
     //定时事件
     QTimer                     *FrameTimer1;
+    //地图数据库
+    ChartDB                     *mChartDB;
 };
 
 #endif // ZCHXMAPMAINWINDOW_H

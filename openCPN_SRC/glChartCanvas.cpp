@@ -810,7 +810,7 @@ void glChartCanvas::SetupOpenGL()
 
     //XP  Generic Needs stencil buffer
     //W7 Generic Needs stencil buffer    
-//      if( GetRendererString().Find( _T("Generic") ) != wxNOT_FOUND ) {
+//      if( GetRendererString().Find( _T("Generic") ) != Q_INDEX_NOT_FOUND ) {
 //          qDebug("OpenGL-> Detected Generic renderer, disabling stencil buffer") );
 //          bad_stencil_code = true;
 //      }
@@ -917,8 +917,8 @@ void glChartCanvas::SetupOpenGL()
     //  But we cannot even run this test on some platforms
     //  So we simply have to declare FBO unavailable
 #ifdef __WXMSW__
-    if( GetRendererString().Upper().Find( _T("INTEL") ) != wxNOT_FOUND ) {
-        if(GetRendererString().Upper().Find( _T("MOBILE") ) != wxNOT_FOUND ){
+    if( GetRendererString().Upper().Find( _T("INTEL") ) != Q_INDEX_NOT_FOUND ) {
+        if(GetRendererString().Upper().Find( _T("MOBILE") ) != Q_INDEX_NOT_FOUND ){
             qDebug("OpenGL-> Detected Windows Intel Mobile renderer, disabling Frame Buffer Objects") );
             m_b_DisableFBO = true;
             BuildFBO();
@@ -2645,7 +2645,9 @@ void glChartCanvas::RenderCharts(ocpnDC &dc, const OCPNRegion &rect_region)
     // and nodta regions correctly.  I would prefer to just perform this here (or in SetViewPoint)
     // for all vector charts instead of in their render routine, but how to handle quilted cases?
     if(!vp.b_quilt && m_pParentCanvas->m_singleChart->GetChartType() == CHART_TYPE_CM93COMP)
-        static_cast<cm93compchart*>( m_pParentCanvas->m_singleChart )->SetVPParms( vp );
+    {
+//        static_cast<cm93compchart*>( m_pParentCanvas->m_singleChart )->SetVPParms( vp );
+    }
         
     LLRegion chart_region;
     if( !vp.b_quilt && (m_pParentCanvas->m_singleChart->GetChartType() == CHART_TYPE_PLUGIN) ){

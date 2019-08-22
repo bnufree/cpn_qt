@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -24,15 +24,6 @@
  **************************************************************************/
 
 // For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-  #include "wx/wx.h"
-#endif //precompiled headers
-
-#include "wx/image.h"                           // for some reason, needed for msvc???
-#include "wx/tokenzr.h"
-#include <wx/textfile.h>
 
 #include "dychart.h"
 #include "OCPNPlatform.h"
@@ -56,7 +47,7 @@
 
 #include "ogr_s57.h"
 
-#include "pluginmanager.h"                      // for S57 lights overlay
+//#include "pluginmanager.h"                      // for S57 lights overlay
 
 #include "Osenc.h"
 
@@ -107,8 +98,8 @@ S57Obj::~S57Obj()
     //  Don't delete any allocated records of simple copy clones
     if( !bIsClone ) {
         if( attVal ) {
-            for( unsigned int iv = 0; iv < attVal->GetCount(); iv++ ) {
-                S57attVal *vv = attVal->Item( iv );
+            for( unsigned int iv = 0; iv < attVal->count(); iv++ ) {
+                S57attVal *vv = attVal->at( iv );
                 void *v2 = vv->value;
                 free( v2 );
                 delete vv;
@@ -224,7 +215,7 @@ bool S57Obj::AddIntegerAttribute( const char *acronym, int val ){
     strncpy(att_array + (6 * sizeof(char) * n_attr), acronym, 6);
     n_attr++;
 
-    attVal->Add( pattValTmp );
+    attVal->append( pattValTmp );
 
     if(!strncmp(acronym, "SCAMIN", 6))
         Scamin = val;
@@ -251,7 +242,7 @@ bool S57Obj::AddDoubleAttribute( const char *acronym, double val ){
     strncpy(att_array + (6 * sizeof(char) * n_attr), acronym, 6);
     n_attr++;
 
-    attVal->Add( pattValTmp );
+    attVal->append( pattValTmp );
 
     return true;
 }
@@ -275,7 +266,7 @@ bool S57Obj::AddStringAttribute( const char *acronym, char *val ){
     strncpy(att_array + (6 * sizeof(char) * n_attr), acronym, 6);
     n_attr++;
 
-    attVal->Add( pattValTmp );
+    attVal->append( pattValTmp );
 
     return true;
 }
@@ -418,9 +409,9 @@ int S57Obj::GetAttributeIndex( const char *AttrSeek ) {
 }
 
 
-wxString S57Obj::GetAttrValueAsString( const char *AttrName )
+QString S57Obj::GetAttrValueAsString( const char *AttrName )
 {
-    wxString str;
+    QString str;
 
     int idx = GetAttributeIndex(AttrName);
 
@@ -428,26 +419,26 @@ wxString S57Obj::GetAttrValueAsString( const char *AttrName )
 
 //      using idx to get the attribute value
 
-        S57attVal *v = attVal->Item( idx );
+        S57attVal *v = attVal->at( idx );
 
         switch( v->valType ){
             case OGR_STR: {
                 char *val = (char *) ( v->value );
-                str.Append( wxString( val, wxConvUTF8 ) );
+                str.append( QString::fromUtf8( val ) );
                 break;
             }
             case OGR_REAL: {
                 double dval = *(double*) ( v->value );
-                str.Printf( _T("%g"), dval );
+                str.sprintf( "%g", dval );
                 break;
             }
             case OGR_INT: {
                 int ival = *( (int *) v->value );
-                str.Printf( _T("%d"), ival );
+                str.sprintf( "%d", ival );
                 break;
             }
             default: {
-                str.Printf( _T("Unknown attribute type") );
+                str.sprintf( "Unknown attribute type" );
                 break;
             }
         }

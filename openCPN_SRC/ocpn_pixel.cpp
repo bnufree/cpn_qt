@@ -391,7 +391,7 @@ void PixelCache::Update(void)
 }
 
 
-void PixelCache::SelectIntoDC(QPainter &dc)
+void PixelCache::SelectIntoDC(QPainter* dc)
 {
 
 #ifdef __PIX_CACHE_DIBSECTION__

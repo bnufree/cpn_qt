@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -142,12 +142,12 @@ static uint64_t hash_fast64(const void *buf, size_t len, uint64_t seed)
     pc = (const unsigned char*)pos;
     v = 0;
     switch (len & 7) {
-    case 7: v ^= (uint64_t)pc[6] << 48;    // FALL THROUGH
-    case 6: v ^= (uint64_t)pc[5] << 40;    // FALL THROUGH
-    case 5: v ^= (uint64_t)pc[4] << 32;    // FALL THROUGH
-    case 4: v ^= (uint64_t)pc[3] << 24;    // FALL THROUGH
-    case 3: v ^= (uint64_t)pc[2] << 16;    // FALL THROUGH
-    case 2: v ^= (uint64_t)pc[1] << 8;     // FALL THROUGH
+    case 7: v ^= (uint64_t)pc[6]<<48;    // FALL THROUGH
+    case 6: v ^= (uint64_t)pc[5]<<40;    // FALL THROUGH
+    case 5: v ^= (uint64_t)pc[4]<<32;    // FALL THROUGH
+    case 4: v ^= (uint64_t)pc[3]<<24;    // FALL THROUGH
+    case 3: v ^= (uint64_t)pc[2]<<16;    // FALL THROUGH
+    case 2: v ^= (uint64_t)pc[1]<<8;     // FALL THROUGH
     case 1: v ^= (uint64_t)pc[0];
         v ^= v >> 23;
         v *= 0x2127599bf4325c37ULL;
@@ -1063,7 +1063,7 @@ void s57chart::AssembleLineGeometry( void )
 
                                 //      The initial node exists and connects to the start of an edge
 
-                                long long key = ((unsigned long long)inode << 32) + venode;
+                                long long key = ((unsigned long long)inode<<32) + venode;
                                 
                                 connector_segment *pcs = NULL;
                                 csit = ce_connector_hash.find( key );
@@ -1138,7 +1138,7 @@ void s57chart::AssembleLineGeometry( void )
                             if(ipnode){
                                 if(pedge && pedge->nCount){
 
-                                    long long key = ((unsigned long long)venode << 32) + enode;
+                                    long long key = ((unsigned long long)venode<<32) + enode;
                                     
                                     connector_segment *pcs = NULL;
                                     csit = ec_connector_hash.find( key );
@@ -1191,7 +1191,7 @@ void s57chart::AssembleLineGeometry( void )
 
                                 }
                                 else {
-                                    long long key = ((unsigned long long)inode << 32) + enode;
+                                    long long key = ((unsigned long long)inode<<32) + enode;
                                     
                                     connector_segment *pcs = NULL;
                                     csit = cc_connector_hash.find( key );
@@ -1704,7 +1704,7 @@ bool s57chart::DoRenderOnGLText( const QGLContext &glc, const ViewPort& VPoint )
 }
 
 
-bool s57chart::RenderRegionViewOnDCNoText( QPainter& dc, const ViewPort& VPoint,
+bool s57chart::RenderRegionViewOnDCNoText( QPainter* dc, const ViewPort& VPoint,
                                            const OCPNRegion &Region )
 {
     if(!m_RAZBuilt)
@@ -1718,7 +1718,7 @@ bool s57chart::RenderRegionViewOnDCNoText( QPainter& dc, const ViewPort& VPoint,
     return true;
 }
 
-bool s57chart::RenderRegionViewOnDCTextOnly( QPainter& dc, const ViewPort& VPoint,
+bool s57chart::RenderRegionViewOnDCTextOnly( QPainter* dc, const ViewPort& VPoint,
                                              const OCPNRegion &Region )
 {
 #if 0
@@ -1767,7 +1767,7 @@ bool s57chart::RenderRegionViewOnDCTextOnly( QPainter& dc, const ViewPort& VPoin
     return true;
 }
 
-bool s57chart::RenderRegionViewOnDC( QPainter& dc, const ViewPort& VPoint,
+bool s57chart::RenderRegionViewOnDC( QPainter* dc, const ViewPort& VPoint,
                                      const OCPNRegion &Region )
 {
     if(!m_RAZBuilt)
@@ -1776,7 +1776,7 @@ bool s57chart::RenderRegionViewOnDC( QPainter& dc, const ViewPort& VPoint,
     return DoRenderRegionViewOnDC( dc, VPoint, Region, false );
 }
 
-bool s57chart::RenderOverlayRegionViewOnDC( QPainter& dc, const ViewPort& VPoint,
+bool s57chart::RenderOverlayRegionViewOnDC( QPainter* dc, const ViewPort& VPoint,
                                             const OCPNRegion &Region )
 {
     if(!m_RAZBuilt)
@@ -1784,7 +1784,7 @@ bool s57chart::RenderOverlayRegionViewOnDC( QPainter& dc, const ViewPort& VPoint
     return DoRenderRegionViewOnDC( dc, VPoint, Region, true );
 }
 
-bool s57chart::DoRenderRegionViewOnDC( QPainter& dc, const ViewPort& VPoint,
+bool s57chart::DoRenderRegionViewOnDC( QPainter* dc, const ViewPort& VPoint,
                                        const OCPNRegion &Region, bool b_overlay )
 {
 #if 0
@@ -1869,7 +1869,7 @@ bool s57chart::DoRenderRegionViewOnDC( QPainter& dc, const ViewPort& VPoint,
 
 }
 
-bool s57chart::RenderViewOnDC( QPainter& dc, const ViewPort& VPoint )
+bool s57chart::RenderViewOnDC( QPainter* dc, const ViewPort& VPoint )
 {
     //    CALLGRIND_START_INSTRUMENTATION
 
@@ -1896,7 +1896,7 @@ bool s57chart::RenderViewOnDC( QPainter& dc, const ViewPort& VPoint )
 
 }
 
-bool s57chart::DoRenderViewOnDC( QPainter& dc, const ViewPort& VPoint, RenderTypeEnum option,
+bool s57chart::DoRenderViewOnDC( QPainter* dc, const ViewPort& VPoint, RenderTypeEnum option,
                                  bool force_new_view )
 {
     return true;
@@ -2110,7 +2110,7 @@ bool s57chart::DoRenderViewOnDC( QPainter& dc, const ViewPort& VPoint, RenderTyp
 
 }
 
-int s57chart::DCRenderRect( QPainter& dcinput, const ViewPort& vp, QRect* rect )
+int s57chart::DCRenderRect( QPainter* dcinput, const ViewPort& vp, QRect* rect )
 {
 #if 0
     int i;
@@ -2161,7 +2161,7 @@ int s57chart::DCRenderRect( QPainter& dcinput, const ViewPort& vp, QRect* rect )
             }
         }
     } else {
-        int color_int = ( ( r ) << 16 ) + ( ( g ) << 8 ) + ( b );
+        int color_int = ( ( r ).append(16 ) + ( ( g ).append(8 ) + ( b );
 
         for( int i = 0; i < pb_spec.height; i++ ) {
             int *p = (int *) ( pb_spec.pix_buff + ( i * pb_spec.pb_pitch ) );
@@ -2283,7 +2283,7 @@ bool s57chart::DCRenderLPB( wxMemoryDC& dcinput, const ViewPort& vp, wxRect* rec
     return true;
 }
 
-bool s57chart::DCRenderText( QPainter& dcinput, const ViewPort& vp )
+bool s57chart::DCRenderText( QPainter* dcinput, const ViewPort& vp )
 {
 #if 0
     int i;
@@ -2902,7 +2902,7 @@ bool s57chart::BuildThumbnail( const QString &bmpname )
     S52_setMarinerParam(S52_MAR_SAFETY_DEPTH, -100);
     double safety_contour = S52_getMarinerParam(S52_MAR_SAFETY_CONTOUR);
     S52_setMarinerParam(S52_MAR_SAFETY_CONTOUR, -100);
-
+#if 0
 
 #ifdef ocpnUSE_DIBSECTION
     ocpnMemDC memdc, dc_org;
@@ -2959,6 +2959,8 @@ bool s57chart::BuildThumbnail( const QString &bmpname )
 
     //   Save the file
     return bmp.SaveFile( ThumbFileName.absoluteFilePath(), "BMP" );
+#endif
+    return true;
 }
 
 //    Read the .000 ENC file and create required Chartbase data structures
@@ -3226,8 +3228,8 @@ bool s57chart::CreateHeaderDataFromoSENC( void )
     QString str = senc.getSENCFileCreateDate();
     QDateTime SENCCreateDate = QDateTime::fromString(str, ("%Y%m%d"));
 
-//    if( SENCCreateDate.IsValid() )
-//        SENCCreateDate.ResetTime();                   // to midnight
+    //    if( SENCCreateDate.IsValid() )
+    //        SENCCreateDate.ResetTime();                   // to midnight
 
     QString senc_base_edtn = senc.getSENCReadBaseEdition();
 
@@ -3371,7 +3373,7 @@ void s57chart::GetChartNameFromTXT( const QString& FullPath, QString &Name )
             QFile text_file( file.absoluteFilePath() );
             //  Suppress log messages on bad file reads
             if( !text_file.open(QIODevice::ReadOnly) ) {
-//                if( !text_file.Open(wxConvISO8859_1) )
+                //                if( !text_file.Open(wxConvISO8859_1) )
                 qDebug("   Error Reading ENC .TXT file: %s", file.absoluteFilePath().toUtf8().data() );
                 continue;
             }
@@ -3459,7 +3461,7 @@ int s57chart::GetUpdateFileArray( const QFileInfo& file000, QStringList *UpFiles
     bool ok = false;
     tmps = sname.toLong(&ok);
     if(ok){
-//        dir.Open(sdir);
+        //        dir.Open(sdir);
         DirName000 = sdir;
         flags |= QDir::Dirs;
         dir.setPath(DirName000);
@@ -3597,38 +3599,27 @@ int s57chart::ValidateAndCountUpdates( const QFileInfo& file000, const QString C
             m_tmpup_array = new QStringList;       // save a list of created files for later erase
 
             for( int iff = 0; iff < retval + 1; iff++ ) {
-                wxFileName ufile( m_TempFilePath );
-                QString sext;
-                sext.sprintf( ("%03d"), iff );
-                ufile.SetExt( sext );
+                QString newFile = zchxFuncUtil::getNewFileNameWithExt(m_TempFilePath, QString("").sprintf("%03d", iff ));
+                QFileInfo ufile( newFile );
 
                 //      Create the target update file name
                 QString cp_ufile = CopyDir;
-                if( cp_ufile.Last() != ufile.GetPathSeparator() ) cp_ufile.append(
-                            ufile.GetPathSeparator() );
-
-                cp_ufile.append( ufile.GetFullName() );
+                if( cp_ufile.right(1) != QDir::separator() ) cp_ufile.append(QDir::separator());
+                cp_ufile.append( ufile.fileName() );
 
                 //      Explicit check for a short update file, possibly left over from a crash...
                 int flen = 0;
-                if( ufile.FileExists() ) {
-                    wxFile uf( ufile.GetFullPath() );
-                    if( uf.IsOpened() ) {
-                        flen = uf.Length();
-                        uf.Close();
-                    }
-                }
-
-                if( ufile.FileExists() && ( flen > 25 ) )        // a valid update file or base file
+                if( ufile.exists() ) flen = ufile.size();
+                if( flen > 25  )        // a valid update file or base file
                 {
                     //      Copy the valid file to the SENC directory
-                    bool cpok = wxCopyFile( ufile.GetFullPath(), cp_ufile );
-                    if( !cpok ) {
+                    if(!QFile::copy(ufile.absoluteFilePath(), cp_ufile))
+                    {
                         QString msg( ("   Cannot copy temporary working ENC file ") );
-                        msg.append( ufile.GetFullPath() );
+                        msg.append( ufile.absoluteFilePath() );
                         msg.append( (" to ") );
                         msg.append( cp_ufile );
-                        ZCHX_LOGMSG( msg );
+                        qDebug()<<msg;
                     }
                 }
 
@@ -3637,17 +3628,17 @@ int s57chart::ValidateAndCountUpdates( const QFileInfo& file000, const QString C
                     // Correct this.  We should break the walk, and notify the user  See FS#1406
 
                     if( !chain_broken_mssage_shown ){
-                        OCPNMessageBox(NULL,
-                                       _("S57 Cell Update chain incomplete.\nENC features may be incomplete or inaccurate.\nCheck the logfile for details."),
-                                       _("OpenCPN Create SENC Warning"), wxOK | wxICON_EXCLAMATION, 30 );
+                        QMessageBox::warning(0,
+                                             "OpenCPN Create SENC Warning",
+                                             "S57 Cell Update chain incomplete.\nENC features may be incomplete or inaccurate.\nCheck the logfile for details.");
                         chain_broken_mssage_shown = true;
                     }
 
                     QString msg( ("WARNING---ENC Update chain incomplete. Substituting NULL update file: "));
-                    msg += ufile.GetFullName();
-                    ZCHX_LOGMSG(msg);
-                    ZCHX_LOGMSG(("   Subsequent ENC updates may produce errors.") );
-                    ZCHX_LOGMSG(("   This ENC exchange set should be updated and SENCs rebuilt.") );
+                    msg += ufile.absoluteFilePath();
+                    qDebug()<<msg;
+                    qDebug("   Subsequent ENC updates may produce errors.") ;
+                    qDebug("   This ENC exchange set should be updated and SENCs rebuilt.") ;
 
                     bool bstat;
                     DDFModule *dupdate = new DDFModule;
@@ -3658,7 +3649,7 @@ int s57chart::ValidateAndCountUpdates( const QFileInfo& file000, const QString C
                     if( !bstat ) {
                         QString msg( ("   Error creating dummy update file: ") );
                         msg.append( cp_ufile );
-                        ZCHX_LOGMSG( msg );
+                        qDebug()<< msg;
                     }
                 }
 
@@ -3668,17 +3659,11 @@ int s57chart::ValidateAndCountUpdates( const QFileInfo& file000, const QString C
 
         //      Extract the date field from the last of the update files
         //      which is by definition a valid, present update file....
-
-        wxFileName lastfile( m_TempFilePath );
-        QString last_sext;
-        last_sext.sprintf( ("%03d"), retval );
-        lastfile.SetExt( last_sext );
-
+        QString  lastFileName = zchxFuncUtil::getNewFileNameWithExt(m_TempFilePath, QString("").sprintf("%03d", retval));
+        QFileInfo lastfile( lastFileName );
         bool bSuccess;
         DDFModule oUpdateModule;
-
-        //            bSuccess = !(oUpdateModule.Open( m_tmpup_array->Last().toUtf8().data(), true ) == 0);
-        bSuccess = !( oUpdateModule.Open( lastfile.GetFullPath().toUtf8().data(), true ) == 0 );
+        bSuccess = !( oUpdateModule.Open( lastfile.absoluteFilePath().toUtf8().data(), true ) == 0 );
 
         if( bSuccess ) {
             //      Get publish/update date
@@ -3757,7 +3742,7 @@ bool s57chart::GetBaseFileAttr( const QString& file000 )
     m_date000 = QDateTime::fromString( date000, ("%Y%m%d") );
     if( !m_date000.isValid() ) m_date000 = QDateTime::fromString(("20000101"), ("%Y%m%d") );
 
-//    m_date000.ResetTime();
+    //    m_date000.ResetTime();
 
     //    Fetch the EDTN(Edition) field
     u = (char *) ( pr->GetStringSubfield( "DSID", 0, "EDTN", 0 ) );
@@ -3941,13 +3926,13 @@ int s57chart::BuildRAZFromSENCFile( const QString& FullPath )
         const QString objnam  = obj->GetAttrValueAsString("OBJNAM");
         if (objnam.length() > 0) {
             const QString fe_name = QString(obj->FeatureName);
-            g_pi_manager->SendVectorChartObjectInfo( FullPath, fe_name, objnam, obj->m_lat, obj->m_lon, scale, nativescale );
+//            g_pi_manager->SendVectorChartObjectInfo( FullPath, fe_name, objnam, obj->m_lat, obj->m_lon, scale, nativescale );
         }
         //If there is a localized object name and it actually is different from the object name, send it as well...
         const QString nobjnam  = obj->GetAttrValueAsString("NOBJNM");
         if (nobjnam.length() > 0 && nobjnam != objnam) {
             const QString fe_name = QString(obj->FeatureName);
-            g_pi_manager->SendVectorChartObjectInfo( FullPath, fe_name, nobjnam, obj->m_lat, obj->m_lon, scale, nativescale );
+//            g_pi_manager->SendVectorChartObjectInfo( FullPath, fe_name, nobjnam, obj->m_lat, obj->m_lon, scale, nativescale );
         }
 
         switch( obj->Primitive_type ){
@@ -4060,7 +4045,7 @@ int s57chart::BuildRAZFromSENCFile( const QString& FullPath )
     if( !upd.isValid() )
         upd = QDateTime::fromString( "20000101", ("%Y%m%d") );
 
-//    upd.ResetTime();
+    //    upd.ResetTime();
     m_EdDate = upd;
 
     m_SE = sencfile.getSENCReadBaseEdition();
@@ -4394,7 +4379,7 @@ ListOfObjRazRules *s57chart::GetObjRuleListAtLatLon( float lat, float lon, float
                 {
                     if( ps52plib->ObjectRenderCheck( top, VPoint ) ) {
                         if( DoesLatLonSelectObject( lat, lon, select_radius, top->obj ) )
-                            ret_ptr->append( top );
+                            ret_ptr->append( *top );
                     }
                 }
 
@@ -4405,7 +4390,7 @@ ListOfObjRazRules *s57chart::GetObjRuleListAtLatLon( float lat, float lon, float
                     while( child_item != NULL ) {
                         if( ps52plib->ObjectRenderCheck( child_item, VPoint ) ) {
                             if( DoesLatLonSelectObject( lat, lon, select_radius, child_item->obj ) )
-                                ret_ptr->append( child_item );
+                                ret_ptr->append( *child_item );
                         }
 
                         child_item = child_item->next;
@@ -4423,8 +4408,7 @@ ListOfObjRazRules *s57chart::GetObjRuleListAtLatLon( float lat, float lon, float
             top = razRules[i][area_boundary_type];           // Area nnn Boundaries
             while( top != NULL ) {
                 if( ps52plib->ObjectRenderCheck( top, VPoint ) ) {
-                    if( DoesLatLonSelectObject( lat, lon, select_radius, top->obj ) ) ret_ptr->append(
-                                top );
+                    if( DoesLatLonSelectObject( lat, lon, select_radius, top->obj ) ) ret_ptr->append(*top );
                 }
 
                 top = top->next;
@@ -4437,8 +4421,7 @@ ListOfObjRazRules *s57chart::GetObjRuleListAtLatLon( float lat, float lon, float
 
             while( top != NULL ) {
                 if( ps52plib->ObjectRenderCheck( top, VPoint ) ) {
-                    if( DoesLatLonSelectObject( lat, lon, select_radius, top->obj ) ) ret_ptr->append(
-                                top );
+                    if( DoesLatLonSelectObject( lat, lon, select_radius, top->obj ) ) ret_ptr->append(*top );
                 }
 
                 top = top->next;
@@ -4625,7 +4608,7 @@ QString s57chart::GetAttributeDecode( QString& att, int ival )
     if( !QFile::exists( file ) ) {
         QString msg( ("   Could not open ") );
         msg.append( file );
-        ZCHX_LOGMSG( msg );
+        qDebug()<< msg ;
 
         return ret_val;
     }
@@ -4665,7 +4648,7 @@ QString s57chart::GetAttributeDecode( QString& att, int ival )
 
         if( !strcmp( papszFields[0], att_code ) ) {
             if( atoi( papszFields[1] ) == ival ) {
-                ret_val = QString::fromUtf8( papszFields[2 );
+                ret_val = QString::fromUtf8( papszFields[2] );
                 bSelected = true;
             }
         }
@@ -4998,44 +4981,49 @@ QString s57chart::GetAttributeValueAsString( S57attVal *pAttrVal, QString AttrNa
     if(NULL == pAttrVal)
         return ("");
 
-    QString value;
-    switch( pAttrVal->valType ){
-    case OGR_STR: {
+    QStringList value;
+    switch( pAttrVal->valType )
+    {
+    case OGR_STR:
+    {
         if( pAttrVal->value ) {
-            QString val_str( (char *) ( pAttrVal->value ) );
-            long ival;
-            if( val_str.ToLong( &ival ) ) {
+            QString val_str = QString::fromUtf8((char *) ( pAttrVal->value ) );
+            bool ok = false;
+            long ival = val_str.toLong(&ok);
+            if( ok ) {
                 if( 0 == ival )
-                    value = ("Unknown");
+                    value.append("Unknown");
                 else {
                     QString decode_val = GetAttributeDecode( AttrName, ival );
                     if( !decode_val.isEmpty() ) {
-                        value = decode_val;
+                        value.append(decode_val);
                         QString iv;
-                        iv.sprintf( ("(%d)"), (int) ival );
+                        iv.sprintf("(%d)", (int) ival );
                         value.append( iv );
                     } else
-                        value.sprintf( ("%d"), (int) ival );
+                        value.append(QString("").sprintf("%d", (int) ival ));
                 }
             }
 
-            else if( val_str.isEmpty() ) value = ("Unknown");
+            else if( val_str.isEmpty() ) value.append("Unknown");
 
             else {
-                value.Clear();
+                value.clear();
                 QString value_increment;
-                QStringTokenizer tk( val_str, wxT(",") );
+                QStringList tk = val_str.split(",");
                 int iv = 0;
-                while( tk.HasMoreTokens() ) {
-                    QString token = tk.GetNextToken();
-                    long ival;
-                    if( token.ToLong( &ival ) ) {
+                int i = 0;
+                while( i<tk.size() ) {
+                    QString token = tk[i++];
+                    bool ok = false;
+                    long ival = token.toLong(&ok);
+                    if( ok ) {
                         QString decode_val = GetAttributeDecode( AttrName, ival );
                         if( !decode_val.isEmpty() ) value_increment = decode_val;
                         else
                             value_increment.sprintf( (" %d"), (int) ival );
 
-                        if( iv ) value_increment.Prepend( wxT(", ") );
+                        if( iv ) value_increment.insert(0 ,", ");
                     }
                     value.append( value_increment );
 
@@ -5044,22 +5032,23 @@ QString s57chart::GetAttributeValueAsString( S57attVal *pAttrVal, QString AttrNa
                 value.append( val_str );
             }
         } else
-            value = ("[NULL VALUE]");
+            value.append("[NULL VALUE]");
 
         break;
     }
 
-    case OGR_INT: {
+    case OGR_INT:
+    {
         int ival = *( (int *) pAttrVal->value );
         QString decode_val = GetAttributeDecode( AttrName, ival );
 
         if( !decode_val.isEmpty() ) {
-            value = decode_val;
+            value.append(decode_val);
             QString iv;
             iv.sprintf( ("(%d)"), ival );
             value.append( iv );
         } else
-            value.sprintf( ("(%d)"), ival );
+            value.append(QString("").sprintf( ("(%d)"), ival ));
 
         break;
     }
@@ -5110,11 +5099,11 @@ QString s57chart::GetAttributeValueAsString( S57attVal *pAttrVal, QString AttrNa
         else if( AttrName == ("VALMAG") ) val_suffix = ("&deg;");
         else if( AttrName == ("CURVEL") ) val_suffix = (" kt");
 
-        if( dval - floor( dval ) < 0.01 ) value.sprintf( ("%2.0f"), dval );
+        if( dval - floor( dval ) < 0.01 ) value.append(QString("").sprintf( ("%2.0f"), dval ));
         else
-            value.sprintf( ("%4.1f"), dval );
+            value.append(QString("").sprintf("%4.1f", dval ));
 
-        value << val_suffix;
+        value.append(val_suffix);
 
         break;
     }
@@ -5123,7 +5112,7 @@ QString s57chart::GetAttributeValueAsString( S57attVal *pAttrVal, QString AttrNa
         break;
     }
     }
-    return value;
+    return value.join("");
 }
 
 bool s57chart::CompareLights( const S57Light* l1, const S57Light* l2 )
@@ -5183,44 +5172,48 @@ QString s57chart::CreateObjDescriptions( ListOfObjRazRules* rule_list )
     QString positionString;
     std::vector<S57Light*> lights;
     S57Light* curLight = nullptr;
-    wxFileName file ;
+    QFileInfo file ;
 
-    for( ListOfObjRazRules::Node *node = rule_list->GetLast(); node; node = node->GetPrevious() ) {
-        ObjRazRules *current = node->GetData();
-        positionString.Clear();
-        objText.Clear();
+    int list_size = rule_list->size();
+    for(int i  = list_size - 1; i >= 0; i --)
+    {
+        ObjRazRules &current = (*rule_list)[i];
+        positionString.clear();
+        objText.clear();
 
         // Soundings have no information, so don't show them
-        if( 0 == strncmp( current->LUP->OBCL, "SOUND", 5 ) ) continue;
+        if( 0 == strncmp( current.LUP->OBCL, "SOUND", 5 ) ) continue;
 
-        if( current->obj->Primitive_type == GEO_META ) continue;
-        if( current->obj->Primitive_type == GEO_PRIM ) continue;
+        if( current.obj->Primitive_type == GEO_META ) continue;
+        if( current.obj->Primitive_type == GEO_PRIM ) continue;
 
-        className = QString( current->obj->FeatureName );
+        className = QString::fromUtf8(current.obj->FeatureName );
 
         // Lights get grouped together to make display look nicer.
-        isLight = !strcmp( current->obj->FeatureName, "LIGHTS" );
+        isLight = !strcmp( current.obj->FeatureName, "LIGHTS" );
 
         //    Get the object's nice description from s57objectclasses.csv
         //    using cpl_csv from the gdal library
 
         const char *name_desc;
-        if( g_csv_locn.length() ) {
+        if( g_csv_locn.length() )
+        {
             QString oc_file( g_csv_locn );
             oc_file.append( ("/s57objectclasses.csv") );
             name_desc = MyCSVGetField( oc_file.toUtf8().data(), "Acronym",                  // match field
-                                       current->obj->FeatureName,            // match value
+                                       current.obj->FeatureName,            // match value
                                        CC_ExactString, "ObjectClass" );             // return field
         } else
             name_desc = "";
 
         // In case there is no nice description for this object class, use the 6 char class name
         if( 0 == strlen( name_desc ) ) {
-            name_desc = current->obj->FeatureName;
-            classDesc = QString( name_desc, 1 );
-            classDesc << QString( name_desc + 1 ).MakeLower();
+            name_desc = current.obj->FeatureName;
+            QLatin1Char lchar(name_desc[0]);
+            classDesc = QString(lchar);
+            classDesc.append(QString::fromUtf8(name_desc + 1 ).toLower());
         } else {
-            classDesc = QString( name_desc );
+            classDesc = QString::fromUtf8( name_desc );
         }
 
         //    Show LUP
@@ -5228,45 +5221,45 @@ QString s57chart::CreateObjDescriptions( ListOfObjRazRules* rule_list )
             QString index;
 
             classAttributes = ("");
-            index.sprintf( ("Feature Index: %d<br>"), current->obj->Index );
-            classAttributes << index;
+            index.sprintf( ("Feature Index: %d<br>"), current.obj->Index );
+            classAttributes .append(index);
 
             QString LUPstring;
-            LUPstring.sprintf( ("LUP RCID:  %d<br>"), current->LUP->RCID );
-            classAttributes << LUPstring;
+            LUPstring.sprintf( ("LUP RCID:  %d<br>"), current.LUP->RCID );
+            classAttributes.append( LUPstring );
 
             QString Bbox;
-            LLBBox bbox = current->obj->BBObj;
+            LLBBox bbox = current.obj->BBObj;
             Bbox.sprintf( ("Lat/Lon box:  %g %g %g %g<br>"), bbox.GetMinLat(), bbox.GetMaxLat() , bbox.GetMinLon(), bbox.GetMaxLon() );
-            classAttributes << Bbox;
+            classAttributes.append(Bbox);
 
             QString Type;
-            Type.sprintf( (" Type:  %s<br>"), type2str(current->obj->Primitive_type));
-            classAttributes << Type;
+            Type.sprintf( (" Type:  %s<br>"), type2str(current.obj->Primitive_type));
+            classAttributes.append(Type);
 
             LUPstring = ("    LUP ATTC: ");
-            if( current->LUP->ATTArray.size() ) LUPstring += QString(current->LUP->ATTArray[0]);
+            if( current.LUP->ATTArray.size() ) LUPstring += QString(current.LUP->ATTArray[0]);
             LUPstring += ("<br>");
-            classAttributes << LUPstring;
+            classAttributes.append(LUPstring);
 
             LUPstring = ("    LUP INST: ");
-            if( current->LUP->INST ) LUPstring += *( current->LUP->INST );
+            if( current.LUP->INST ) LUPstring += *( current.LUP->INST );
             LUPstring += ("<br><br>");
-            classAttributes << LUPstring;
+            classAttributes.append(LUPstring);
 
         }
 
-        if( GEO_POINT == current->obj->Primitive_type ) {
+        if( GEO_POINT == current.obj->Primitive_type ) {
             double lon, lat;
-            fromSM( ( current->obj->x * current->obj->x_rate ) + current->obj->x_origin,
-                    ( current->obj->y * current->obj->y_rate ) + current->obj->y_origin, ref_lat,
+            fromSM( ( current.obj->x * current.obj->x_rate ) + current.obj->x_origin,
+                    ( current.obj->y * current.obj->y_rate ) + current.obj->y_origin, ref_lat,
                     ref_lon, &lat, &lon );
 
             if( lon > 180.0 ) lon -= 360.;
 
-            positionString.Clear();
+            positionString.clear();
             positionString += toSDMM( 1, lat );
-            positionString << (" ");
+            positionString += (" ");
             positionString += toSDMM( 2, lon );
 
             if( isLight ) {
@@ -5278,51 +5271,51 @@ QString s57chart::CreateObjDescriptions( ListOfObjRazRules* rule_list )
         }
 
         //    Get the Attributes and values, making sure they can be converted from UTF8
-        if(current->obj->att_array) {
-            char *curr_att = current->obj->att_array;
+        if(current.obj->att_array) {
+            char *curr_att = current.obj->att_array;
 
             attrCounter = 0;
 
             QString attribStr;
             int noAttr = 0;
-            attribStr << ("<table border=0 cellspacing=0 cellpadding=0>");
+            attribStr += ("<table border=0 cellspacing=0 cellpadding=0>");
 
             if( g_bDebugS57 ) {
-                ret_val << ("<p>") << classAttributes;
+                ret_val .append("<p>") .append( classAttributes);
             }
 
             bool inDepthRange = false;
 
-            while( attrCounter < current->obj->n_attr ) {
+            while( attrCounter < current.obj->n_attr ) {
                 //    Attribute name
-                curAttrName = QString(curr_att, 6);
+                curAttrName = QString::fromUtf8(QByteArray(curr_att, 6));
                 noAttr++;
 
                 // Sort out how some kinds of attibutes are displayed to get a more readable look.
                 // DEPARE gets just its range. Lights are grouped.
 
                 if( isLight ) {
-                    assert( curLight != nullptr);
+                    Q_ASSERT( curLight != nullptr);
                     curLight->attributeNames.append( curAttrName );
-                    if( curAttrName.StartsWith( ("SECTR") ) ) curLight->hasSectors = true;
+                    if( curAttrName.startsWith( ("SECTR") ) ) curLight->hasSectors = true;
                 } else {
                     if( curAttrName == ("DRVAL1") ) {
-                        attribStr << ("<tr><td><font size=-1>");
+                        attribStr.append("<tr><td><font size=-1>");
                         inDepthRange = true;
                     } else if( curAttrName == ("DRVAL2") ) {
-                        attribStr << (" - ");
+                        attribStr .append(" - ");
                         inDepthRange = false;
                     } else {
                         if( inDepthRange ) {
-                            attribStr << ("</font></td></tr>\n");
+                            attribStr .append ("</font></td></tr>\n");
                             inDepthRange = false;
                         }
-                        attribStr << ("<tr><td valign=top><font size=-2>");
+                        attribStr.append("<tr><td valign=top><font size=-2>");
                         if(curAttrName == ("catgeo"))
-                            attribStr << ("CATGEO");
+                            attribStr .append ("CATGEO");
                         else
-                            attribStr << curAttrName;
-                        attribStr << ("</font></td><td>&nbsp;&nbsp;</td><td valign=top><font size=-1>");
+                            attribStr .append( curAttrName);
+                        attribStr .append ("</font></td><td>&nbsp;&nbsp;</td><td valign=top><font size=-1>");
                     }
                 }
 
@@ -5332,83 +5325,89 @@ QString s57chart::CreateObjDescriptions( ListOfObjRazRules* rule_list )
                 //  will affect lots of other stuff.  look for S57attVal.valType
                 // need to do this in creatsencrecord above, and update the senc format.
 
-                value = GetObjectAttributeValueAsString( current->obj, attrCounter, curAttrName );
+                value = GetObjectAttributeValueAsString( current.obj, attrCounter, curAttrName );
                 
                 // If the atribute value is a filename, change the value into a link to that file
                 QString AttrNamesFiles = ("PICREP,TXTDSC,NTXTDS"); //AttrNames that might have a filename as value
-                if ( AttrNamesFiles.Find( curAttrName) != wxNOT_FOUND )
-                    if ( value.Find((".XML")) == wxNOT_FOUND ){ // Don't show xml files
-                        file.Assign( GetFullPath() );
-                        file.Assign( file.GetPath(), value );
-                        file.Normalize();
-                        if( file.IsOk() ){
-                            if( file.Exists() )
-                                value = QString::Format( ("<a href=\"%s\">%s</a>"), file.GetFullPath(), file.GetFullName() );
-                            else
-                                value = value + ("&nbsp;&nbsp;<font color=\"red\">[ ") + _("this file is not available") + (" ]</font>");
-                        }
+                if ( AttrNamesFiles.indexOf(curAttrName) != Q_INDEX_NOT_FOUND )
+                {
+                    if ( value.indexOf(".XML") == Q_INDEX_NOT_FOUND )
+                    { // Don't show xml files
+                        file.setFile(GetFullPath());
+                        file.setFile( file.absolutePath(), value );
+                        if( file.exists() )
+                            value.sprintf("<a href=\"%s\">%s</a>", file.absoluteFilePath().toUtf8().data(), zchxFuncUtil::getFileName(file.fileName()).toUtf8().data() );
+                        else
+                            value = value + ("&nbsp;&nbsp;<font color=\"red\">[ ") + ("this file is not available") + (" ]</font>");
                     }
+                }
 
                 if( isLight ) {
                     assert( curLight != nullptr);
                     curLight->attributeValues.append( value );
                 } else {
                     if( curAttrName == ("INFORM") || curAttrName == ("NINFOM") )
-                        value.Replace(("|"), ("<br>") );
+                        value.replace(("|"), ("<br>") );
                     
                     if(curAttrName == ("catgeo"))
-                        attribStr << type2str(current->obj->Primitive_type);
+                        attribStr.append(type2str(current.obj->Primitive_type));
                     else
-                        attribStr << value;
+                        attribStr .append( value);
 
                     if( !( curAttrName == ("DRVAL1") ) ) {
-                        attribStr << ("</font></td></tr>\n");
+                        attribStr.append ("</font></td></tr>\n");
                     }
                 }
 
                 attrCounter++;
                 curr_att += 6;
 
-            }             //while attrCounter < current->obj->n_attr
+            }             //while attrCounter < current.obj->n_attr
 
             if( !isLight ) {
-                attribStr << ("</table>\n");
+                attribStr .append ("</table>\n");
 
                 objText += ("<b>") + classDesc + ("</b> <font size=-2>(") + className
                         + (")</font>") + ("<br>");
 
-                if( positionString.Length() ) objText << ("<font size=-2>") << positionString
-                                                      << ("</font><br>\n");
+                if( positionString.length() ) objText .append("<font size=-2>").append(positionString)
+                        .append("</font><br>\n");
 
-                if( noAttr > 0 ) objText << attribStr;
+                if( noAttr > 0 ) objText.append(attribStr);
 
-                if( node != rule_list->GetFirst() ) objText += ("<hr noshade>");
+                if( i != 0 ) objText += ("<hr noshade>");
                 objText += ("<br>");
-                ret_val << objText;
+                ret_val.append( objText);
             }
 
         }
     } // Object for loop
     
     // Add the additional info files
-    wxArrayString files;
-    file.Assign( GetFullPath() );
-    QString AddFiles = QString::Format(("<hr noshade><br><b>Additional info files attached to: </b> <font size=-2>%s</font><br><table border=0 cellspacing=0 cellpadding=3>"), file.GetFullName() );
-    file.Normalize();
-    file.Assign( file.GetPath(), wxT("") );
-    wxDir::GetAllFiles( file.GetFullPath(), &files,  wxT("*.TXT"), wxDIR_FILES  );
-    wxDir::GetAllFiles( file.GetFullPath(), &files,  wxT("*.txt"), wxDIR_FILES  );
-    if ( files.Count() > 0 )
+    file.setFile(GetFullPath() );
+    QString AddFiles = QString("").sprintf("<hr noshade><br><b>Additional info files attached to: </b> <font size=-2>%s</font><br><table border=0 cellspacing=0 cellpadding=3>", file.fileName().toUtf8().data() );
+    QDir dir(file.absolutePath());
+    QStringList file_filter_list;
+    file_filter_list.append("*.TXT");
+    file_filter_list.append("*.txt");
+    QFileInfoList files = dir.entryInfoList(file_filter_list, QDir::Filter::Files);
+    if ( files.count() > 0 )
     {
-        for ( size_t i=0; i < files.Count(); i++){
-            file.Assign( files.at(i) );
-            AddFiles << QString::Format( ("<tr><td valign=top><font size=-2><a href=\"%s\">%s</a></font></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp</td>"), file.GetFullPath(), file.GetFullName() );
-            if ( files.Count() > ++i){
-                file.Assign( files.at(i) );
-                AddFiles << QString::Format( ("<td valign=top><font size=-2><a href=\"%s\">%s</a></font></td>"), file.GetFullPath(), file.GetFullName() );
+        for ( size_t i=0; i < files.count(); i++){
+            file = files[i];
+            AddFiles.append(QString("").sprintf("<tr><td valign=top><font size=-2><a href=\"%s\">%s</a></font></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp</td>",
+                                                file.absoluteFilePath().toUtf8().data(),
+                                                zchxFuncUtil::getFileName(file.fileName())))  ;
+            if ( files.count() > ++i){
+                file = files[i];
+                AddFiles.append(QString("").sprintf("<td valign=top><font size=-2><a href=\"%s\">%s</a></font></td>",
+                                                    file.absoluteFilePath().toUtf8().data(),
+                                                    zchxFuncUtil::getFileName(file.fileName())));
             }
         }
-        ret_val << AddFiles <<("</table>");
+
+        AddFiles.append("</table>");
+        ret_val.append(AddFiles);
     }
     
     if( !lights.empty() ) {
@@ -5421,7 +5420,7 @@ QString s57chart::CreateObjDescriptions( ListOfObjRazRules* rule_list )
 
         QString lastPos;
 
-        for(auto const& thisLight: lights) {
+        for(S57Light* thisLight: lights) {
             int attrIndex;
 
             if( thisLight->position != lastPos ) {
@@ -5429,23 +5428,25 @@ QString s57chart::CreateObjDescriptions( ListOfObjRazRules* rule_list )
                 lastPos = thisLight->position;
 
                 if( thisLight != *lights.begin() )
-                    lightsHtml << ("</table>\n<hr noshade>\n");
+                    lightsHtml.append("</table>\n<hr noshade>\n");
 
-                lightsHtml << ("<b>Light</b> <font size=-2>(LIGHTS)</font><br>");
-                lightsHtml << ("<font size=-2>") << thisLight->position << ("</font><br>\n");
+                lightsHtml.append("<b>Light</b> <font size=-2>(LIGHTS)</font><br>");
+                lightsHtml.append("<font size=-2>");
+                lightsHtml.append(thisLight->position);
+                lightsHtml.append("</font><br>\n");
 
                 if( curLight->hasSectors )
-                    lightsHtml <<_("<font size=-2>(Sector angles are True Bearings from Seaward)</font><br>");
+                    lightsHtml.append("<font size=-2>(Sector angles are True Bearings from Seaward)</font><br>");
 
-                lightsHtml << ("<table>");
+                lightsHtml.append("<table>");
             }
 
-            lightsHtml << ("<tr>");
-            lightsHtml << ("<td><font size=-1>");
+            lightsHtml.append("<tr>");
+            lightsHtml.append("<td><font size=-1>");
 
             QString colorStr;
-            attrIndex = thisLight->attributeNames.Index( ("COLOUR") );
-            if( attrIndex != wxNOT_FOUND ) {
+            attrIndex = thisLight->attributeNames.indexOf( ("COLOUR") );
+            if( attrIndex != Q_INDEX_NOT_FOUND ) {
                 QString color = thisLight->attributeValues.at( attrIndex );
                 if( color == ("red (3)") )
                     colorStr = ("<table border=0><tr><td bgcolor=red>&nbsp;&nbsp;&nbsp;</td></tr></table> ");
@@ -5461,11 +5462,11 @@ QString s57chart::CreateObjDescriptions( ListOfObjRazRules* rule_list )
                     colorStr = ("<table border=0><tr><td bgcolor=grey>&nbsp;?&nbsp;</td></tr></table> ");
             }
 
-            int visIndex = thisLight->attributeNames.Index( ("LITVIS") );
-            if(visIndex != wxNOT_FOUND){
+            int visIndex = thisLight->attributeNames.indexOf("LITVIS" );
+            if(visIndex != Q_INDEX_NOT_FOUND){
                 QString vis = thisLight->attributeValues.at( visIndex );
-                if(vis.Contains( ("8"))){
-                    if( attrIndex != wxNOT_FOUND ) {
+                if(vis.contains( ("8"))){
+                    if( attrIndex != Q_INDEX_NOT_FOUND ) {
                         QString color = thisLight->attributeValues.at( attrIndex );
                         if( color == ("red (3)") )
                             colorStr = ("<table border=0><tr><td bgcolor=DarkRed>&nbsp;&nbsp;&nbsp;</td></tr></table> ");
@@ -5477,89 +5478,91 @@ QString s57chart::CreateObjDescriptions( ListOfObjRazRules* rule_list )
                 }
             }
             
-            lightsHtml << colorStr;
+            lightsHtml.append(colorStr);
             
-            lightsHtml << ("</font></td><td><font size=-1><nobr><b>");
+            lightsHtml.append("</font></td><td><font size=-1><nobr><b>");
 
-            attrIndex = thisLight->attributeNames.Index( ("LITCHR") );
-            if( attrIndex != wxNOT_FOUND ) {
+            attrIndex = thisLight->attributeNames.indexOf("LITCHR");
+            if( attrIndex != Q_INDEX_NOT_FOUND ) {
                 QString character = thisLight->attributeValues[attrIndex];
-                lightsHtml << character.BeforeFirst( wxChar( '(' ) ) << (" ");
+                lightsHtml.append(character.left(character.indexOf('(')));
+                lightsHtml.append(" ");
             }
 
-            attrIndex = thisLight->attributeNames.Index( ("SIGGRP") );
-            if( attrIndex != wxNOT_FOUND ) {
-                lightsHtml << thisLight->attributeValues[attrIndex];
-                lightsHtml << (" ");
+            attrIndex = thisLight->attributeNames.indexOf("SIGGRP" );
+            if( attrIndex != Q_INDEX_NOT_FOUND ) {
+                lightsHtml.append(thisLight->attributeValues[attrIndex]);
+                lightsHtml.append(" ");
             }
 
-            attrIndex = thisLight->attributeNames.Index( ("SIGPER") );
-            if( attrIndex != wxNOT_FOUND ) {
-                lightsHtml << thisLight->attributeValues[attrIndex];
-                lightsHtml << (" ");
+            attrIndex = thisLight->attributeNames.indexOf("SIGPER") ;
+            if( attrIndex != Q_INDEX_NOT_FOUND ) {
+                lightsHtml.append(thisLight->attributeValues[attrIndex]);
+                lightsHtml.append(" ");
             }
 
-            attrIndex = thisLight->attributeNames.Index( ("HEIGHT") );
-            if( attrIndex != wxNOT_FOUND ) {
-                lightsHtml << thisLight->attributeValues[attrIndex];
-                lightsHtml << (" ");
+            attrIndex = thisLight->attributeNames.indexOf( ("HEIGHT") );
+            if( attrIndex != Q_INDEX_NOT_FOUND ) {
+                lightsHtml.append(thisLight->attributeValues[attrIndex]);
+                lightsHtml.append(" ");
             }
 
-            attrIndex = thisLight->attributeNames.Index( ("VALNMR") );
-            if( attrIndex != wxNOT_FOUND ) {
-                lightsHtml << thisLight->attributeValues[attrIndex];
-                lightsHtml << (" ");
+            attrIndex = thisLight->attributeNames.indexOf( ("VALNMR") );
+            if( attrIndex != Q_INDEX_NOT_FOUND ) {
+                lightsHtml.append(thisLight->attributeValues[attrIndex]);
+                lightsHtml.append(" ");
             }
 
-            lightsHtml << ("</b>");
+            lightsHtml.append("</b>");
 
-            attrIndex = thisLight->attributeNames.Index( ("SECTR1") );
-            if( attrIndex != wxNOT_FOUND ) {
-                lightsHtml << ("(") <<thisLight->attributeValues[attrIndex];
-                lightsHtml << (" - ");
-                attrIndex = thisLight->attributeNames.Index( ("SECTR2") );
-                lightsHtml << thisLight->attributeValues[attrIndex] << (") ");
+            attrIndex = thisLight->attributeNames.indexOf( ("SECTR1") );
+            if( attrIndex != Q_INDEX_NOT_FOUND ) {
+                lightsHtml.append("(");
+                lightsHtml.append(thisLight->attributeValues[attrIndex]);
+                lightsHtml.append(" - ");
+                attrIndex = thisLight->attributeNames.indexOf( ("SECTR2") );
+                lightsHtml.append(thisLight->attributeValues[attrIndex]);
+                lightsHtml.append(") ");
             }
 
-            lightsHtml << ("</nobr>");
+            lightsHtml.append("</nobr>");
 
-            attrIndex = thisLight->attributeNames.Index( ("CATLIT") );
-            if( attrIndex != wxNOT_FOUND ) {
-                lightsHtml << ("<nobr>");
-                lightsHtml
-                        << thisLight->attributeValues[attrIndex].BeforeFirst(
-                               wxChar( '(' ) );
-                lightsHtml << ("</nobr> ");
+            attrIndex = thisLight->attributeNames.indexOf(("CATLIT") );
+            if( attrIndex != Q_INDEX_NOT_FOUND ) {
+                lightsHtml.append("<nobr>");
+                QString temp = thisLight->attributeValues[attrIndex];
+                lightsHtml.append(temp.left(temp.indexOf('(')));
+                lightsHtml.append("</nobr> ");
             }
 
-            attrIndex = thisLight->attributeNames.Index( ("EXCLIT") );
-            if( attrIndex != wxNOT_FOUND ) {
-                lightsHtml << ("<nobr>");
-                lightsHtml
-                        << thisLight->attributeValues[attrIndex].BeforeFirst(
-                               wxChar( '(' ) );
-                lightsHtml << ("</nobr> ");
+            attrIndex = thisLight->attributeNames.indexOf( ("EXCLIT") );
+            if( attrIndex != Q_INDEX_NOT_FOUND ) {
+                lightsHtml.append("<nobr>");
+                QString temp = thisLight->attributeValues[attrIndex];
+                lightsHtml.append(temp.left(temp.indexOf('(')));
+                lightsHtml.append("</nobr> ");
             }
 
-            attrIndex = thisLight->attributeNames.Index( ("OBJNAM") );
-            if( attrIndex != wxNOT_FOUND ) {
-                lightsHtml << ("<br><nobr>");
-                lightsHtml << thisLight->attributeValues[attrIndex].Left( 1 ).Upper();
-                lightsHtml << thisLight->attributeValues[attrIndex].Mid( 1 );
-                lightsHtml << ("</nobr> ");
+            attrIndex = thisLight->attributeNames.indexOf( ("OBJNAM") );
+            if( attrIndex != Q_INDEX_NOT_FOUND ) {
+                lightsHtml.append("<br><nobr>");
+                lightsHtml.append(thisLight->attributeValues[attrIndex].left( 1 ).toUpper());
+                lightsHtml.append(thisLight->attributeValues[attrIndex].mid( 1 ));
+                lightsHtml.append("</nobr> ");
             }
 
-            lightsHtml << ("</font></td>");
-            lightsHtml << ("</tr>");
+            lightsHtml.append("</font></td>");
+            lightsHtml.append("</tr>");
 
-            thisLight->attributeNames.Clear();
-            thisLight->attributeValues.Clear();
+            thisLight->attributeNames.clear();
+            thisLight->attributeValues.clear();
             delete thisLight;
         }
-        lightsHtml << ("</table><hr noshade>\n");
-        ret_val = lightsHtml << ret_val;
+        lightsHtml.append("</table><hr noshade>\n");
+        lightsHtml.append(ret_val);
 
         lights.clear();
+        ret_val = lightsHtml;
     }
 
     return ret_val;
@@ -5574,7 +5577,7 @@ QString s57chart::CreateObjDescriptions( ListOfObjRazRules* rule_list )
 bool s57chart::InitENCMinimal( const QString &FullPath )
 {
     if( NULL == g_poRegistrar ) {
-        ZCHX_LOGMSG( ("   Error: No ClassRegistrar in InitENCMinimal.") );
+        qDebug("   Error: No ClassRegistrar in InitENCMinimal.");
         return false;
     }
 
@@ -5687,7 +5690,7 @@ void OpenCPN_OGRErrorHandler( CPLErr eErrClass, int nError, const char * pszErro
 
     if( g_bGDAL_Debug  || ( CE_Debug != eErrClass) ) {          // log every warning or error
         QString msg( buf );
-        ZCHX_LOGMSG( msg );
+        qDebug()<< msg ;
     }
 
     //      Do not simply return on CE_Fatal errors, as we don't want to abort()
@@ -5803,9 +5806,9 @@ void s57_DrawExtendedLightSectors( ocpnDC& dc, ViewPort& viewport, std::vector<s
             rangePx = rangePx * rangeScale;
 
             int legOpacity;
-            wxPen *arcpen = wxThePenList->FindOrCreatePen( sectorlegs[i].color, 12, wxPENSTYLE_SOLID );
-            arcpen->SetCap( wxCAP_BUTT );
-            dc.SetPen( *arcpen );
+            QPen arcpen(sectorlegs[i].color, 12, Qt::SolidLine );
+            arcpen.setCapStyle(Qt::RoundCap );
+            dc.SetPen(arcpen );
 
             float angle1, angle2;
             angle1 = -(sectorlegs[i].sector2 + 90.0) - viewport.rotation * 180.0 / PI;
@@ -5816,7 +5819,7 @@ void s57_DrawExtendedLightSectors( ocpnDC& dc, ViewPort& viewport, std::vector<s
             int lpx = lightPos.x;
             int lpy = lightPos.y;
             int npoints = 0;
-            zchxPoint arcpoints[150]; // Size relates to "step" below.
+            QPoint arcpoints[150]; // Size relates to "step" below.
 
             float step = 3.0;
             while( (step < 15) && ((rangePx * sin(step * PI / 180.)) < 10) ) step += 2.0; // less points on small arcs
@@ -5827,31 +5830,30 @@ void s57_DrawExtendedLightSectors( ocpnDC& dc, ViewPort& viewport, std::vector<s
             step = ( angle2 - angle1 ) / (float)narc;
 
             if( sectorlegs[i].isleading && (angle2 - angle1 < 60)  ) {
-                zchxPoint yellowCone[3];
-                yellowCone[0] = lightPos;
-                yellowCone[1] = end1;
-                yellowCone[2] = end2;
-                arcpen = wxThePenList->FindOrCreatePen( QColor( 0,0,0,0 ), 1, wxPENSTYLE_SOLID );
-                dc.SetPen( *arcpen );
+                QPoint yellowCone[3];
+                yellowCone[0] = lightPos.toPoint();
+                yellowCone[1] = end1.toPoint();
+                yellowCone[2] = end2.toPoint();
+                arcpen = QPen( QColor( 0,0,0,0 ), 1, Qt::SolidLine );
+                dc.SetPen( arcpen );
                 QColor c = sectorlegs[i].color;
-                c.Set( c.Red(), c.Green(), c.Blue(), 0.6*c.Alpha() );
-                dc.SetBrush( wxBrush( c ) );
+                c.setRgb(c.red(), c.green(), c.blue(), 0.6*c.alpha() );
+                dc.SetBrush( QBrush( c ) );
                 dc.StrokePolygon( 3, yellowCone, 0, 0 );
                 legOpacity = 50;
             } else {
                 for( float a = angle1; a <= angle2 + 0.1; a += step ) {
                     int x = lpx + (int) ( rangePx * cos( a * PI / 180. ) );
                     int y = lpy - (int) ( rangePx * sin( a * PI / 180. ) );
-                    arcpoints[npoints].x = x;
-                    arcpoints[npoints].y = y;
+                    arcpoints[npoints] = QPoint(x, y);
                     npoints++;
                 }
                 dc.StrokeLines( npoints, arcpoints );
                 legOpacity = 128;
             }
 
-            arcpen = wxThePenList->FindOrCreatePen( QColor( 0,0,0,legOpacity ), 1, wxPENSTYLE_SOLID );
-            dc.SetPen( *arcpen );
+            arcpen = QPen( QColor( 0,0,0,legOpacity ), 1, Qt::SolidLine );
+            dc.SetPen(arcpen );
 
             // Only draw each leg line once.
 
@@ -5872,12 +5874,12 @@ void s57_DrawExtendedLightSectors( ocpnDC& dc, ViewPort& viewport, std::vector<s
             }
 
             if( ! haveAngle1 ) {
-                dc.StrokeLine( lightPos, end1 );
+                dc.StrokeLine( lightPos.toPoint(), end1.toPoint() );
                 sectorangles.push_back( sec1 );
             }
 
             if( ! haveAngle2 ) {
-                dc.StrokeLine( lightPos, end2 );
+                dc.StrokeLine( lightPos.toPoint(), end2.toPoint() );
                 sectorangles.push_back( sec2 );
             }
         }
@@ -5928,17 +5930,18 @@ bool s57_CheckExtendedLightSectors( ChartCanvas *cc, int mx, int my, ViewPort& v
 
     int yOpacity = (float)opacity*1.3; // Matched perception of white/yellow with red/green
 
-    if( /*target_plugin_chart || */Chs57  ) {
+    if( /*target_plugin_chart || */Chs57  )
+    {
         // Go get the array of all objects at the cursor lat/lon
         float selectRadius = 16 / ( viewport.view_scale_ppm * 1852 * 60 );
 
         ListOfObjRazRules* rule_list = NULL;
-        ListOfPI_S57Obj* pi_rule_list = NULL;
+        //        ListOfPI_S57Obj* pi_rule_list = NULL;
         if( Chs57 )
             rule_list = Chs57->GetObjRuleListAtLatLon( cursor_lat, cursor_lon, selectRadius, &viewport, MASK_POINT );
-        else if( target_plugin_chart )
-            pi_rule_list = g_pi_manager->GetPlugInObjRuleListAtLatLon( target_plugin_chart,
-                                                                       cursor_lat, cursor_lon, selectRadius, viewport );
+        //        else if( target_plugin_chart )
+        //            pi_rule_list = g_pi_manager->GetPlugInObjRuleListAtLatLon( target_plugin_chart,
+        //                                                                       cursor_lat, cursor_lon, selectRadius, viewport );
 
 
         sectorlegs.clear();
@@ -5950,24 +5953,24 @@ bool s57_CheckExtendedLightSectors( ChartCanvas *cc, int mx, int my, ViewPort& v
         int n_attr = 0;
         wxArrayOfS57attVal *attValArray = NULL;
 
-        ListOfObjRazRules::Node *snode = NULL;
-        ListOfPI_S57Obj::Node *pnode = NULL;
+        //        ObjRazRules *snode = NULL;
+        //        ListOfPI_S57Obj::Node *pnode = NULL;
+
+        //        if(Chs57 && rule_list)
+        //        {
+        //            snode = rule_list->last();
+        //        }
+        //        else if( target_plugin_chart && pi_rule_list)
+        //            pnode = pi_rule_list->GetLast();
 
         if(Chs57 && rule_list)
-            snode = rule_list->GetLast();
-        else if( target_plugin_chart && pi_rule_list)
-            pnode = pi_rule_list->GetLast();
-
-
-        while(1) {
-
+        {
             bool is_light = false;
-            if(Chs57) {
-                if(!snode)
-                    break;
-
-                ObjRazRules *current = snode->GetData();
-                S57Obj* light = current->obj;
+            int size = rule_list->size();
+            for(int i=size-1; i>=0; i++)
+            {
+                ObjRazRules current = rule_list->at(i);
+                S57Obj* light = current.obj;
                 if( !strcmp( light->FeatureName, "LIGHTS" ) ) {
                     objPos = zchxPointF( light->m_lat, light->m_lon );
                     curr_att = light->att_array;
@@ -5975,160 +5978,133 @@ bool s57_CheckExtendedLightSectors( ChartCanvas *cc, int mx, int my, ViewPort& v
                     attValArray = light->attVal;
                     is_light = true;
                 }
-            }
-            else if( target_plugin_chart ) {
-                if(!pnode)
-                    break;
-                PI_S57Obj* light = pnode->GetData();
-                if( !strcmp( light->FeatureName, "LIGHTS" ) ) {
-                    objPos = zchxPointF( light->m_lat, light->m_lon );
-                    curr_att = light->att_array;
-                    n_attr = light->n_attr;
-                    attValArray = light->attVal;
-                    is_light = true;
-                }
-            }
 
 
-            //  Ready to go
-            int attrCounter;
-            double sectr1 = -1;
-            double sectr2 = -1;
-            double valnmr = -1;
-            QString curAttrName;
-            QColor color;
+                //  Ready to go
+                int attrCounter;
+                double sectr1 = -1;
+                double sectr2 = -1;
+                double valnmr = -1;
+                QString curAttrName;
+                QColor color;
 
-            if( lightPosD.x == 0 && lightPosD.y == 0.0 )
-                lightPosD = objPos;
+                if( lightPosD.x == 0 && lightPosD.y == 0.0 )
+                    lightPosD = objPos;
 
-            if( is_light && (lightPosD == objPos) ) {
+                if( is_light && (lightPosD == objPos) ) {
 
-                if( curr_att ) {
-                    bool bviz = true;
+                    if( curr_att ) {
+                        bool bviz = true;
 
-                    attrCounter = 0;
-                    int noAttr = 0;
-                    bool inDepthRange = false;
-                    s57Sector_t sector;
+                        attrCounter = 0;
+                        int noAttr = 0;
+                        bool inDepthRange = false;
+                        s57Sector_t sector;
 
-                    bleading_attribute = false;
+                        bleading_attribute = false;
 
-                    while( attrCounter < n_attr ) {
-                        curAttrName = QString(curr_att, 6 );
-                        noAttr++;
+                        while( attrCounter < n_attr ) {
+                            curAttrName = QString::fromUtf8(QByteArray(curr_att, 6) );
+                            noAttr++;
+                            S57attVal *pAttrVal = NULL;
+                            if( attValArray )  pAttrVal = attValArray->at(attrCounter);
 
-                        S57attVal *pAttrVal = NULL;
-                        if( attValArray ){
-                            if(Chs57)
-                                pAttrVal = attValArray->at(attrCounter);
-                            else if( target_plugin_chart )
-                                pAttrVal = attValArray->at(attrCounter);
-                        }
+                            QString value = s57chart::GetAttributeValueAsString( pAttrVal, curAttrName );
 
-                        QString value = s57chart::GetAttributeValueAsString( pAttrVal, curAttrName );
+                            if( curAttrName == ("LITVIS") ){
+                                if(value.startsWith(("obsc")) )
+                                    bviz = false;
+                            }
+                            if( curAttrName == ("SECTR1") ) sectr1 = value.toDouble();
+                            if( curAttrName == ("SECTR2") ) sectr2 = value.toDouble();
+                            if( curAttrName == ("VALNMR") ) valnmr = value.toDouble();
+                            if( curAttrName == ("COLOUR") ) {
+                                if( value == ("red(3)") ) {
+                                    color = QColor( 255, 0, 0, opacity );
+                                    sector.iswhite = false;
+                                    bhas_red_green = true;
+                                }
 
-                        if( curAttrName == ("LITVIS") ){
-                            if(value.StartsWith(("obsc")) )
-                                bviz = false;
-                        }
-                        if( curAttrName == ("SECTR1") ) sectr1 = value.toDouble();
-                        if( curAttrName == ("SECTR2") ) value.ToDouble( &sectr2 );
-                        if( curAttrName == ("VALNMR") ) value.ToDouble( &valnmr );
-                        if( curAttrName == ("COLOUR") ) {
-                            if( value == ("red(3)") ) {
-                                color = QColor( 255, 0, 0, opacity );
-                                sector.iswhite = false;
-                                bhas_red_green = true;
+                                if( value == ("green(4)") ) {
+                                    color = QColor( 0, 255, 0, opacity );
+                                    sector.iswhite = false;
+                                    bhas_red_green = true;
+                                }
                             }
 
-                            if( value == ("green(4)") ) {
-                                color = QColor( 0, 255, 0, opacity );
-                                sector.iswhite = false;
-                                bhas_red_green = true;
+                            if( curAttrName == ("EXCLIT") ) {
+                                if( value.contains("(3)") ) valnmr = 1.0;  // Fog lights.
                             }
+
+                            if( curAttrName == ("CATLIT") ){
+                                if( value.toUpper().startsWith( ("DIRECT")) || value.toUpper().startsWith(("LEAD")) )
+                                    bleading_attribute = true;
+                            }
+
+                            attrCounter++;
+                            curr_att += 6;
                         }
 
-                        if( curAttrName == ("EXCLIT") ) {
-                            if( value.Find( ("(3)") ) ) valnmr = 1.0;  // Fog lights.
-                        }
+                        if( ( sectr1 >= 0 ) && ( sectr2 >= 0 ) ) {
+                            if( sectr1 > sectr2 ) {             // normalize
+                                sectr2 += 360.0;
+                            }
 
-                        if( curAttrName == ("CATLIT") ){
-                            if( value.Upper().StartsWith( ("DIRECT")) || value.Upper().StartsWith(("LEAD")) )
-                                bleading_attribute = true;
-                        }
+                            sector.pos.x = objPos.y;              // lon
+                            sector.pos.y = objPos.x;
 
-                        attrCounter++;
-                        curr_att += 6;
-                    }
+                            sector.range = (valnmr > 0.0) ? valnmr : 2.5; // Short default range.
+                            sector.sector1 = sectr1;
+                            sector.sector2 = sectr2;
 
-                    if( ( sectr1 >= 0 ) && ( sectr2 >= 0 ) ) {
-                        if( sectr1 > sectr2 ) {             // normalize
-                            sectr2 += 360.0;
-                        }
+                            if(!color.isValid()){
+                                color = QColor( 255, 255, 0, yOpacity );
+                                sector.iswhite = true;
+                            }
+                            sector.color = color;
+                            sector.isleading = false;           // tentative judgment, check below
 
-                        sector.pos.x = objPos.y;              // lon
-                        sector.pos.y = objPos.x;
+                            if( bleading_attribute )
+                                sector.isleading = true;
 
-                        sector.range = (valnmr > 0.0) ? valnmr : 2.5; // Short default range.
-                        sector.sector1 = sectr1;
-                        sector.sector2 = sectr2;
+                            bool newsector = true;
+                            for( unsigned int i=0; i<sectorlegs.size(); i++ ) {
+                                if( sectorlegs[i].pos == sector.pos &&
+                                        sectorlegs[i].sector1 == sector.sector1 &&
+                                        sectorlegs[i].sector2 == sector.sector2 ) {
+                                    newsector = false;
+                                    //  In the case of duplicate sectors, choose the instance with largest range.
+                                    //  This applies to the case where day and night VALNMR are different, and so
+                                    //  makes the vector result independent of the order of day/night light features.
+                                    sectorlegs[i].range = fmax(sectorlegs[i].range, sector.range);
+                                }
+                            }
 
-                        if(!color.isValid()){
-                            color = QColor( 255, 255, 0, yOpacity );
-                            sector.iswhite = true;
-                        }
-                        sector.color = color;
-                        sector.isleading = false;           // tentative judgment, check below
-
-                        if( bleading_attribute )
-                            sector.isleading = true;
-
-                        bool newsector = true;
-                        for( unsigned int i=0; i<sectorlegs.size(); i++ ) {
-                            if( sectorlegs[i].pos == sector.pos &&
-                                    sectorlegs[i].sector1 == sector.sector1 &&
-                                    sectorlegs[i].sector2 == sector.sector2 ) {
+                            if(!bviz)
                                 newsector = false;
-                                //  In the case of duplicate sectors, choose the instance with largest range.
-                                //  This applies to the case where day and night VALNMR are different, and so
-                                //  makes the vector result independent of the order of day/night light features.
-                                sectorlegs[i].range = fmax(sectorlegs[i].range, sector.range);
+
+                            if((sector.sector2 == 360) && ( sector.sector1 == 0))  //FS#1437
+                                newsector = false;
+
+                            if( newsector ) {
+                                sectorlegs.push_back( sector );
+                                newSectorsNeedDrawing = true;
                             }
-                        }
-
-                        if(!bviz)
-                            newsector = false;
-
-                        if((sector.sector2 == 360) && ( sector.sector1 == 0))  //FS#1437
-                            newsector = false;
-
-                        if( newsector ) {
-                            sectorlegs.push_back( sector );
-                            newSectorsNeedDrawing = true;
                         }
                     }
                 }
-            }
-
-
-
-
-            if(Chs57)
-                snode = snode->GetPrevious();
-            else if( target_plugin_chart )
-                pnode = pnode->GetPrevious();
-
-        }               // end of while
+            }               // end of while
+        }
 
         if(rule_list) {
             rule_list->clear();
             delete rule_list;
         }
 
-        if(pi_rule_list) {
-            pi_rule_list->clear();
-            delete pi_rule_list;
-        }
+        //        if(pi_rule_list) {
+        //            pi_rule_list->clear();
+        //            delete pi_rule_list;
+        //        }
     }
 
 #if 0
