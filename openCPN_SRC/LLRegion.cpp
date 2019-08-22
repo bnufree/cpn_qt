@@ -28,9 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "wx/zchxLog.h"
 
 #include "LLRegion.h"
+#include <QDebug>
 
 static inline double cross(const contour_pt &v1, const contour_pt &v2)
 {
@@ -139,12 +139,12 @@ LLBBox LLRegion::GetBox() const
             resolved[2] = -360;
 
         for(poly_contour::const_iterator j = i->begin(); j != i->end(); j++) {
-            minlat = wxMin(minlat, j->y);
-            maxlat = wxMax(maxlat, j->y);
+            minlat = fmin(minlat, j->y);
+            maxlat = fmax(maxlat, j->y);
                 
             for(int k = 0; k<3; k++) {
-                minlon[k] = wxMin(minlon[k], j->x + resolved[k]);
-                maxlon[k] = wxMax(maxlon[k], j->x + resolved[k]);
+                minlon[k] = fmin(minlon[k], j->x + resolved[k]);
+                maxlon[k] = fmax(maxlon[k], j->x + resolved[k]);
             }
         }
     }
@@ -309,7 +309,7 @@ static void /*APIENTRY*/ LLerrorCallback(GLenum errorCode)
     const GLubyte *estring;
     estring = gluErrorString(errorCode);
     fprintf (stderr, "Tessellation Error: %s\n", estring);
-    ZCHX_LOGMSG(wxString::Format( _T("Tessellation Error: %s"), (char *)estring) );
+    qDebug("Tessellation Error: %s", (char *)estring);
     //exit (0);
 }
 

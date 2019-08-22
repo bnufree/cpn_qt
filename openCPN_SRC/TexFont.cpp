@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  texture OpenGL text rendering built from QFont
@@ -162,7 +162,7 @@ void TexFont::Build( QFont &font, bool blur )
     internalformat = format;
     stride = 1;
 
-    if( m_blur ) image = image.Blur(1);
+//    if( m_blur ) image = image.Blur(1);
 
     unsigned char *imgdata = image.bits();
     

@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Symbols
@@ -22,32 +22,39 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  **************************************************************************/
-#include "config.h"
+#include "zchxconfig.h"
 #include <stdlib.h>
 #include "OCPNPlatform.h"
 
 #include "styles.h"
-#include "chart1.h"
-#include "wx28compat.h"
+//#include "chart1.h"
+//#include "wx28compat.h"
+#include <QtSvg>
+#include <QPainter>
 
 extern OCPNPlatform     *g_Platform;
 
 using namespace ocpnStyle;
 
-void bmdump(wxBitmap bm, wxString name)
+void bmdump(wxBitmap bm, QString name)
 {
-    wxImage img = bm.ConvertToImage();
-    img.SaveFile( name << _T(".png"), wxBITMAP_TYPE_PNG );
+    QImage img = bm.ConvertToImage();
+    img.save(name, "PNG" );
 }
 
-static wxBitmap LoadSVG( const wxString filename, unsigned int width, unsigned int height )
+static wxBitmap LoadSVG( const QString filename, unsigned int width, unsigned int height )
 {
 #ifdef ocpnUSE_SVG
-    wxSVGDocument svgDoc;
-    if( svgDoc.Load(filename) )
-        return wxBitmap( svgDoc.Render( width, height, NULL, true, true ) );
-    else
-        return wxBitmap(width, height);
+    wxBitmap bitmap(width, height);
+    QPainter painter;
+    painter.begin(bitmap.GetHandle());
+    QSvgRenderer renderObj(filename);
+    if(renderObj.isValid())
+    {
+        renderObj.render(&painter);
+    }
+    painter.end();
+    return bitmap;
 #else
     return wxBitmap(width, height);
 #endif // ocpnUSE_SVG
@@ -56,13 +63,13 @@ static wxBitmap LoadSVG( const wxString filename, unsigned int width, unsigned i
 // This function can be used to create custom bitmap blending for all platforms
 // where 32 bit bitmap ops are broken. Can hopefully be removed for wxWidgets 3.0...
 
-wxBitmap MergeBitmaps( wxBitmap back, wxBitmap front, wxSize offset )
+wxBitmap MergeBitmaps( wxBitmap back, wxBitmap front, QSize offset )
 {
     //  If the front bitmap has no alpha channel, then merging will accomplish nothing
     //  So, simply return the bitmap intact
     //  However, if the bitmaps are different sizes, do the render anyway.
-    wxImage im_front = front.ConvertToImage();
-    if(!im_front.HasAlpha() && (front.GetWidth() == back.GetWidth()) )
+    QImage im_front = front.ConvertToImage();
+    if(!im_front.hasAlphaChannel() && (front.width() == back.width()) )
         return front;
 
 #ifdef __WXMSW__
@@ -72,7 +79,7 @@ wxBitmap MergeBitmaps( wxBitmap back, wxBitmap front, wxSize offset )
     //  we obviously mean for the front to be drawn over the back, with 100% opacity.
     //  To do this, we need to convert the back bitmap to simple no-alpha model.    
     if(!im_front.HasAlpha()){
-        wxImage im_back = back.ConvertToImage();
+        QImage im_back = back.ConvertToImage();
         back = wxBitmap(im_back);
     }
 #endif    
@@ -89,8 +96,8 @@ wxBitmap MergeBitmaps( wxBitmap back, wxBitmap front, wxSize offset )
     front.UseAlpha();
 #endif    
     
-    wxImage im_back = back.ConvertToImage();
-    wxImage im_result = back.ConvertToImage();// Only way to make result have alpha channel in wxW 2.8.
+    QImage im_back = back.ConvertToImage();
+    QImage im_result = back.ConvertToImage();// Only way to make result have alpha channel in wxW 2.8.
 
     unsigned char *presult = im_result.GetData();
     unsigned char *pback = im_back.GetData();
@@ -162,14 +169,14 @@ wxBitmap MergeBitmaps( wxBitmap back, wxBitmap front, wxSize offset )
 // channel and put it in a 24 bit deep bitmap with no alpha, that can be safely
 // drawn in the crappy wxWindows implementations.
 
-wxBitmap ConvertTo24Bit( wxColor bgColor, wxBitmap front ) {
+wxBitmap ConvertTo24Bit( QColor bgColor, wxBitmap front ) {
     if( front.GetDepth() == 24 ) return front;
 
 #if !wxCHECK_VERSION(2,9,4)
     front.UseAlpha();
 #endif
 
-    wxImage im_front = front.ConvertToImage();
+    QImage im_front = front.ConvertToImage();
     unsigned char *pfront = im_front.GetData();
     if(!pfront)
         return wxNullBitmap;
@@ -200,14 +207,14 @@ wxBitmap ConvertTo24Bit( wxColor bgColor, wxBitmap front ) {
         }
     }
 
-    wxImage im_result(front.GetWidth(), front.GetHeight(), po_result);
+    QImage im_result(front.GetWidth(), front.GetHeight(), po_result);
     
     wxBitmap result = wxBitmap( im_result );
     return result;
 }
 
 
-bool Style::NativeToolIconExists(const wxString & name)
+bool Style::NativeToolIconExists(const QString & name)
 {
     if( toolIndex.find( name ) == toolIndex.end() )
         return false;
@@ -219,10 +226,10 @@ bool Style::NativeToolIconExists(const wxString & name)
 // Tools and Icons perform on-demand loading and dimming of bitmaps.
 // Changing color scheme invalidatres all loaded bitmaps.
 
-wxBitmap Style::GetIcon(const wxString & name, int width, int height, bool bforceReload)
+wxBitmap Style::GetIcon(const QString & name, int width, int height, bool bforceReload)
 {
     if( iconIndex.find( name ) == iconIndex.end() ) {
-        wxString msg( _T("The requested icon was not found in the style: ") );
+        QString msg( _T("The requested icon was not found in the style: ") );
         msg += name;
         ZCHX_LOGMSG( msg );
         return wxBitmap( GetToolSize().x, GetToolSize().y ); // Prevents crashing.
@@ -237,24 +244,24 @@ wxBitmap Style::GetIcon(const wxString & name, int width, int height, bool bforc
     if( icon->size.x == 0 )
         icon->size = toolSize[currentOrientation];
     
-    wxSize retSize = icon->size;
+    QSize retSize = icon->size;
     if((width > 0) && (height > 0))
-        retSize = wxSize(width, height);
+        retSize = QSize(width, height);
     
     wxBitmap bm;
 #ifdef ocpnUSE_SVG
-    wxString fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + name + _T(".svg");
+    QString fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + name + _T(".svg");
     if( wxFileExists( fullFilePath ) )
         bm = LoadSVG( fullFilePath, retSize.x, retSize.y);
     else
     {
 ///        ZCHX_LOGMSG( _T("Can't find SVG icon: ") + fullFilePath );
 #endif // ocpnUSE_SVG
-        wxRect location( icon->iconLoc, icon->size );
+        QRect location( icon->iconLoc, icon->size );
         bm = graphics->GetSubBitmap( location );
         if(retSize != icon->size){
-            wxImage scaled_image = bm.ConvertToImage();
-            bm = wxBitmap(scaled_image.Scale(retSize.x, retSize.y, wxIMAGE_QUALITY_HIGH));
+            QImage scaled_image = bm.ConvertToImage();
+            bm = wxBitmap(scaled_image.Scale(retSize.x, retSize.y, QImage_QUALITY_HIGH));
         }
         
 #ifdef ocpnUSE_SVG
@@ -265,12 +272,12 @@ wxBitmap Style::GetIcon(const wxString & name, int width, int height, bool bforc
     return icon->icon;
 }
 
-wxBitmap Style::GetToolIcon(const wxString & toolname, int iconType, bool rollover, int width, int height )
+wxBitmap Style::GetToolIcon(const QString & toolname, int iconType, bool rollover, int width, int height )
 {
 
     if( toolIndex.find( toolname ) == toolIndex.end() ) {
 //  This will produce a flood of log messages for some PlugIns, notably WMM_PI, and GRADAR_PI
-//        wxString msg( _T("The requested tool was not found in the style: ") );
+//        QString msg( _T("The requested tool was not found in the style: ") );
 //        msg += toolname;
 //        ZCHX_LOGMSG( msg );
         return wxBitmap( GetToolSize().x, GetToolSize().y, 1 );
@@ -280,25 +287,25 @@ wxBitmap Style::GetToolIcon(const wxString & toolname, int iconType, bool rollov
 
     Tool* tool = (Tool*) tools[index];
  
-    wxSize size = tool->customSize;
+    QSize size = tool->customSize;
     if( size.x == 0 )
         size = toolSize[currentOrientation];
     
-    wxSize retSize = size;
+    QSize retSize = size;
     if((width > 0) && (height > 0))
-        retSize = wxSize(width, height);
+        retSize = QSize(width, height);
     
     switch( iconType ){
         case TOOLICON_NORMAL: {
             if( tool->iconLoaded && !rollover ) return tool->icon;
             if( tool->rolloverLoaded && rollover ) return tool->rollover;
 
-            wxRect location( tool->iconLoc, size );
+            QRect location( tool->iconLoc, size );
 
             //  If rollover icon does not exist, use the defult icon
             if( rollover ) {
                 if( (tool->rolloverLoc.x != 0) || (tool->rolloverLoc.y != 0) )
-                    location = wxRect( tool->rolloverLoc, size );
+                    location = QRect( tool->rolloverLoc, size );
             }
 
             if( currentOrientation ) {
@@ -308,7 +315,7 @@ wxBitmap Style::GetToolIcon(const wxString & toolname, int iconType, bool rollov
 
             wxBitmap bm;
 #ifdef ocpnUSE_SVG
-            wxString fullFilePath;
+            QString fullFilePath;
             if( rollover ){
                 fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + toolname + _T("_rollover.svg");
                 if( !wxFileExists( fullFilePath ) )
@@ -325,19 +332,19 @@ wxBitmap Style::GetToolIcon(const wxString & toolname, int iconType, bool rollov
                 bm = graphics->GetSubBitmap( location );
                 
                 if( hasBackground ) {
-                    bm = MergeBitmaps( GetNormalBG(), bm, wxSize( 0, 0 ) );
+                    bm = MergeBitmaps( GetNormalBG(), bm, QSize( 0, 0 ) );
                 } else {
                     wxBitmap bg( GetToolSize().x, GetToolSize().y );
                     wxMemoryDC mdc( bg );
                     mdc.SetBackground( wxBrush( GetGlobalColor( _T("GREY2") ), wxBRUSHSTYLE_SOLID ) );
                     mdc.Clear();
                     mdc.SelectObject( wxNullBitmap );
-                    bm = MergeBitmaps( bg, bm, wxSize( 0, 0 ) );
+                    bm = MergeBitmaps( bg, bm, QSize( 0, 0 ) );
                 }
                 
                 if(retSize != size){
-                    wxImage scaled_image = bm.ConvertToImage();
-                    bm = wxBitmap(scaled_image.Scale(retSize.x, retSize.y, wxIMAGE_QUALITY_HIGH));
+                    QImage scaled_image = bm.ConvertToImage();
+                    bm = wxBitmap(scaled_image.Scale(retSize.x, retSize.y, QImage_QUALITY_HIGH));
                 }
                 
 #ifdef ocpnUSE_SVG
@@ -369,9 +376,9 @@ wxBitmap Style::GetToolIcon(const wxString & toolname, int iconType, bool rollov
             if( tool->toggledLoaded && !rollover ) return tool->toggled;
             if( tool->rolloverToggledLoaded && rollover ) return tool->rolloverToggled;
 
-            wxRect location( tool->iconLoc, size );
-            if( rollover ) location = wxRect( tool->rolloverLoc, size );
-            wxSize offset( 0, 0 );
+            QRect location( tool->iconLoc, size );
+            if( rollover ) location = QRect( tool->rolloverLoc, size );
+            QSize offset( 0, 0 );
             if( GetToolSize() != GetToggledToolSize() ) {
                 offset = GetToggledToolSize() - GetToolSize();
                 offset /= 2;
@@ -382,7 +389,7 @@ wxBitmap Style::GetToolIcon(const wxString & toolname, int iconType, bool rollov
             }
             wxBitmap bm;
 #ifdef ocpnUSE_SVG
-            wxString fullFilePath;
+            QString fullFilePath;
             if( rollover )
                 fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + toolname + _T("_rollover_toggled.svg");
             else
@@ -402,10 +409,10 @@ wxBitmap Style::GetToolIcon(const wxString & toolname, int iconType, bool rollov
                     
                     wxBitmap bmBack = GetToggledBG();
                     if( (bmBack.GetWidth() != retSize.x) || (bmBack.GetHeight() != retSize.y) ){
-                        wxImage scaled_back = bmBack.ConvertToImage();
-                        bmBack = wxBitmap(scaled_back.Scale(retSize.x, retSize.y, wxIMAGE_QUALITY_HIGH));
+                        QImage scaled_back = bmBack.ConvertToImage();
+                        bmBack = wxBitmap(scaled_back.Scale(retSize.x, retSize.y, QImage_QUALITY_HIGH));
                     }
-                    bm = MergeBitmaps( bmBack, bm, wxSize(0,0) );
+                    bm = MergeBitmaps( bmBack, bm, QSize(0,0) );
                 }
             }
                 
@@ -415,8 +422,8 @@ wxBitmap Style::GetToolIcon(const wxString & toolname, int iconType, bool rollov
                 bm = MergeBitmaps( GetToggledBG(), bm, offset );
                 
                 if(retSize != size){
-                    wxImage scaled_image = bm.ConvertToImage();
-                    bm = wxBitmap(scaled_image.Scale(retSize.x, retSize.y, wxIMAGE_QUALITY_HIGH));
+                    QImage scaled_image = bm.ConvertToImage();
+                    bm = wxBitmap(scaled_image.Scale(retSize.x, retSize.y, QImage_QUALITY_HIGH));
                 }
             }
                 
@@ -432,11 +439,11 @@ wxBitmap Style::GetToolIcon(const wxString & toolname, int iconType, bool rollov
         }
         case TOOLICON_DISABLED: {
             if( tool->disabledLoaded ) return tool->disabled;
-            wxRect location( tool->disabledLoc, size );
+            QRect location( tool->disabledLoc, size );
 
             wxBitmap bm;
 #ifdef ocpnUSE_SVG
-            wxString fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + toolname + _T("_disabled.svg");
+            QString fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + toolname + _T("_disabled.svg");
             if( wxFileExists( fullFilePath ) )
                 bm = LoadSVG( fullFilePath, retSize.x, retSize.y );
             else
@@ -446,12 +453,12 @@ wxBitmap Style::GetToolIcon(const wxString & toolname, int iconType, bool rollov
                 bm = graphics->GetSubBitmap( location );
                 
                 if( hasBackground ) {
-                    bm = MergeBitmaps( GetNormalBG(), bm, wxSize( 0, 0 ) );
+                    bm = MergeBitmaps( GetNormalBG(), bm, QSize( 0, 0 ) );
                 }
                 
                 if(retSize != size){
-                    wxImage scaled_image = bm.ConvertToImage();
-                    bm = wxBitmap(scaled_image.Scale(retSize.x, retSize.y, wxIMAGE_QUALITY_HIGH));
+                    QImage scaled_image = bm.ConvertToImage();
+                    bm = wxBitmap(scaled_image.Scale(retSize.x, retSize.y, QImage_QUALITY_HIGH));
                 }
 #ifdef ocpnUSE_SVG
             }
@@ -465,7 +472,7 @@ wxBitmap Style::GetToolIcon(const wxString & toolname, int iconType, bool rollov
             return tool->disabled;
         }
     }
-    wxString msg( _T("A requested icon type for this tool was not found in the style: ") );
+    QString msg( _T("A requested icon type for this tool was not found in the style: ") );
     msg += toolname;
     ZCHX_LOGMSG( msg );
     return wxBitmap( GetToolSize().x, GetToolSize().y ); // Prevents crashing.
@@ -491,10 +498,10 @@ wxBitmap Style::BuildPluginIcon( wxBitmap &bm, int iconType, double factor )
                 if((bg.GetWidth() >= bm.GetWidth()) && (bg.GetHeight() >= bm.GetHeight())){
                     int w = bg.GetWidth() * factor;
                     int h = bg.GetHeight() * factor;
-                    wxImage scaled_image = bg.ConvertToImage();
-                    bg = wxBitmap(scaled_image.Scale(w, h, wxIMAGE_QUALITY_HIGH));
+                    QImage scaled_image = bg.ConvertToImage();
+                    bg = wxBitmap(scaled_image.Scale(w, h, QImage_QUALITY_HIGH));
                     
-                    wxSize offset = wxSize( bg.GetWidth() - bm.GetWidth(), bg.GetHeight() - bm.GetHeight() );
+                    QSize offset = QSize( bg.GetWidth() - bm.GetWidth(), bg.GetHeight() - bm.GetHeight() );
                     offset /= 2;
                     iconbm = MergeBitmaps( bg, bm, offset );
                 }
@@ -505,10 +512,10 @@ wxBitmap Style::BuildPluginIcon( wxBitmap &bm, int iconType, double factor )
                     int nh = bm.GetHeight();
                     if(bg.GetWidth() == bg.GetHeight())
                         nw = nh;
-                    wxImage scaled_image = bg.ConvertToImage();
-                    bg = wxBitmap(scaled_image.Scale(nw, nh, wxIMAGE_QUALITY_HIGH));
+                    QImage scaled_image = bg.ConvertToImage();
+                    bg = wxBitmap(scaled_image.Scale(nw, nh, QImage_QUALITY_HIGH));
                     
-                    wxSize offset = wxSize( bg.GetWidth() - bm.GetWidth(), bg.GetHeight() - bm.GetHeight() );
+                    QSize offset = QSize( bg.GetWidth() - bm.GetWidth(), bg.GetHeight() - bm.GetHeight() );
                     offset /= 2;
                     iconbm = MergeBitmaps( bg, bm, offset );
                 }
@@ -516,7 +523,7 @@ wxBitmap Style::BuildPluginIcon( wxBitmap &bm, int iconType, double factor )
             } else {
                 wxBitmap bg( GetToolSize().x, GetToolSize().y );
                 wxMemoryDC mdc( bg );
-                wxSize offset = GetToolSize() - wxSize( bm.GetWidth(), bm.GetHeight() );
+                QSize offset = GetToolSize() - QSize( bm.GetWidth(), bm.GetHeight() );
                 offset /= 2;
                 mdc.SetBackground( wxBrush( GetGlobalColor( _T("GREY2") ), wxBRUSHSTYLE_SOLID ) );
                 mdc.Clear();
@@ -554,7 +561,7 @@ wxBitmap Style::SetBitmapBrightness( wxBitmap& bitmap, ColorScheme cs )
 
 wxBitmap Style::SetBitmapBrightnessAbs( wxBitmap& bitmap, double level )
 {
-    wxImage image = bitmap.ConvertToImage();
+    QImage image = bitmap.ConvertToImage();
 
     int gimg_width = image.GetWidth();
     int gimg_height = image.GetHeight();
@@ -562,11 +569,11 @@ wxBitmap Style::SetBitmapBrightnessAbs( wxBitmap& bitmap, double level )
     for( int iy = 0; iy < gimg_height; iy++ ) {
         for( int ix = 0; ix < gimg_width; ix++ ) {
             if( !image.IsTransparent( ix, iy, 30 ) ) {
-                wxImage::RGBValue rgb( image.GetRed( ix, iy ), image.GetGreen( ix, iy ),
+                QImage::RGBValue rgb( image.GetRed( ix, iy ), image.GetGreen( ix, iy ),
                         image.GetBlue( ix, iy ) );
-                wxImage::HSVValue hsv = wxImage::RGBtoHSV( rgb );
+                QImage::HSVValue hsv = QImage::RGBtoHSV( rgb );
                 hsv.value = hsv.value * level;
-                wxImage::RGBValue nrgb = wxImage::HSVtoRGB( hsv );
+                QImage::RGBValue nrgb = QImage::HSVtoRGB( hsv );
                 image.SetRGB( ix, iy, nrgb.red, nrgb.green, nrgb.blue );
             }
         }
@@ -576,44 +583,44 @@ wxBitmap Style::SetBitmapBrightnessAbs( wxBitmap& bitmap, double level )
 
 wxBitmap Style::GetNormalBG()
 {
-    wxSize size = toolSize[currentOrientation];
+    QSize size = toolSize[currentOrientation];
     return graphics->GetSubBitmap(
-            wxRect( normalBGlocation[currentOrientation].x, normalBGlocation[currentOrientation].y,
+            QRect( normalBGlocation[currentOrientation].x, normalBGlocation[currentOrientation].y,
                     size.x, size.y ) );
 }
 
 wxBitmap Style::GetActiveBG()
 {
     return graphics->GetSubBitmap(
-            wxRect( activeBGlocation[currentOrientation].x, activeBGlocation[currentOrientation].y,
+            QRect( activeBGlocation[currentOrientation].x, activeBGlocation[currentOrientation].y,
                     toolSize[currentOrientation].x, toolSize[currentOrientation].y ) );
 }
 
 wxBitmap Style::GetToggledBG()
 {
-    wxSize size = toolSize[currentOrientation];
+    QSize size = toolSize[currentOrientation];
     if( toggledBGSize[currentOrientation].x ) {
         size = toggledBGSize[currentOrientation];
     }
-    return graphics->GetSubBitmap( wxRect( toggledBGlocation[currentOrientation], size ) );
+    return graphics->GetSubBitmap( QRect( toggledBGlocation[currentOrientation], size ) );
 }
 
 wxBitmap Style::GetToolbarStart()
 {
-    wxSize size = toolbarStartSize[currentOrientation];
+    QSize size = toolbarStartSize[currentOrientation];
     if( toolbarStartSize[currentOrientation].x == 0 ) {
         size = toolbarStartSize[currentOrientation];
     }
-    return graphics->GetSubBitmap( wxRect( toolbarStartLoc[currentOrientation], size ) );
+    return graphics->GetSubBitmap( QRect( toolbarStartLoc[currentOrientation], size ) );
 }
 
 wxBitmap Style::GetToolbarEnd()
 {
-    wxSize size = toolbarEndSize[currentOrientation];
+    QSize size = toolbarEndSize[currentOrientation];
     if( toolbarEndSize[currentOrientation].x == 0 ) {
         size = toolbarEndSize[currentOrientation];
     }
-    return graphics->GetSubBitmap( wxRect( toolbarEndLoc[currentOrientation], size ) );
+    return graphics->GetSubBitmap( QRect( toolbarEndLoc[currentOrientation], size ) );
 }
 
 int Style::GetToolbarCornerRadius()
@@ -630,8 +637,8 @@ void Style::DrawToolbarLineStart( wxBitmap& bmp, double scale )
         int h = sbmp.GetHeight() * scale;
         int w = sbmp.GetWidth() * scale;
         if( (h > 0) && (w > 0)){
-            wxImage scaled_image = sbmp.ConvertToImage();
-            sbmp = wxBitmap(scaled_image.Scale(w, h, wxIMAGE_QUALITY_HIGH));
+            QImage scaled_image = sbmp.ConvertToImage();
+            sbmp = wxBitmap(scaled_image.Scale(w, h, QImage_QUALITY_HIGH));
         }
     }
     dc.DrawBitmap( sbmp, 0, 0, true );
@@ -647,8 +654,8 @@ void Style::DrawToolbarLineEnd( wxBitmap& bmp, double scale )
         int h = sbmp.GetHeight() * scale;
         int w = sbmp.GetWidth() * scale;
         if( (h > 0) && (w > 0)){
-            wxImage scaled_image = sbmp.ConvertToImage();
-            sbmp = wxBitmap(scaled_image.Scale(w, h, wxIMAGE_QUALITY_HIGH));
+            QImage scaled_image = sbmp.ConvertToImage();
+            sbmp = wxBitmap(scaled_image.Scale(w, h, QImage_QUALITY_HIGH));
         }
     }
     
@@ -681,11 +688,11 @@ void Style::SetColorScheme( ColorScheme cs )
     
     if( (consoleTextBackgroundSize.x) && (consoleTextBackgroundSize.y)) {
         wxBitmap bm = graphics->GetSubBitmap(
-            wxRect( consoleTextBackgroundLoc, consoleTextBackgroundSize ) );
+            QRect( consoleTextBackgroundLoc, consoleTextBackgroundSize ) );
 
     // The background bitmap in the icons file may be too small, so will grow it arbitrailly
-        wxImage image = bm.ConvertToImage();
-        image.Rescale( consoleTextBackgroundSize.GetX() * 2, consoleTextBackgroundSize.GetY() * 2 , wxIMAGE_QUALITY_NORMAL );
+        QImage image = bm.ConvertToImage();
+        image.Rescale( consoleTextBackgroundSize.GetX() * 2, consoleTextBackgroundSize.GetY() * 2 , QImage_QUALITY_NORMAL );
         wxBitmap bn( image );
         consoleTextBackground = SetBitmapBrightness( bn, cs );
     }
@@ -765,7 +772,7 @@ StyleManager::StyleManager(void)
 #endif    
 }
 
-StyleManager::StyleManager(const wxString & configDir)
+StyleManager::StyleManager(const QString & configDir)
 {
     isOK = false;
     currentStyle = NULL;
@@ -781,12 +788,12 @@ StyleManager::~StyleManager(void)
     styles.Clear();
 }
 
-void StyleManager::Init(const wxString & fromPath)
+void StyleManager::Init(const QString & fromPath)
 {
     TiXmlDocument doc;
 
     if( !wxDir::Exists( fromPath ) ) {
-        wxString msg = _T("No styles found at: ");
+        QString msg = _T("No styles found at: ");
         msg << fromPath;
         ZCHX_LOGMSG( msg );
         return;
@@ -795,14 +802,14 @@ void StyleManager::Init(const wxString & fromPath)
     wxDir dir( fromPath );
     if( !dir.IsOpened() ) return;
 
-    wxString filename;
+    QString filename;
 
     // We allow any number of styles to load from files called style<something>.xml
 
     bool more = dir.GetFirst( &filename, _T("style*.xml"), wxDIR_FILES );
 
     if( !more ) {
-        wxString msg = _T("No styles found at: ");
+        QString msg = _T("No styles found at: ");
         msg << fromPath;
         ZCHX_LOGMSG( msg );
         return;
@@ -810,28 +817,28 @@ void StyleManager::Init(const wxString & fromPath)
 
     bool firstFile = true;
     while( more ) {
-        wxString name, extension;
+        QString name, extension;
 
         if( !firstFile ) more = dir.GetNext( &filename );
         if( !more ) break;
         firstFile = false;
 
-        wxString fullFilePath = fromPath + filename;
+        QString fullFilePath = fromPath + filename;
 
         if( !doc.LoadFile( (const char*) fullFilePath.mb_str() ) ) {
-            wxString msg( _T("Attempt to load styles from this file failed: ") );
+            QString msg( _T("Attempt to load styles from this file failed: ") );
             msg += fullFilePath;
             ZCHX_LOGMSG( msg );
             continue;
         }
 
-        wxString msg( _T("Styles loading from ") );
+        QString msg( _T("Styles loading from ") );
         msg += fullFilePath;
         ZCHX_LOGMSG( msg );
 
         TiXmlHandle hRoot( doc.RootElement() );
 
-        wxString root = wxString( doc.RootElement()->Value(), wxConvUTF8 );
+        QString root = QString( doc.RootElement()->Value(), wxConvUTF8 );
         if( root != _T("styles" ) ) {
             ZCHX_LOGMSG( _T("    StyleManager: Expected XML Root <styles> not found.") );
             continue;
@@ -841,22 +848,22 @@ void StyleManager::Init(const wxString & fromPath)
 
         for( ; styleElem; styleElem = styleElem->NextSiblingElement() ) {
 
-            if( wxString( styleElem->Value(), wxConvUTF8 ) == _T("style") ) {
+            if( QString( styleElem->Value(), wxConvUTF8 ) == _T("style") ) {
 
                 Style* style = new Style();
                 styles.Add( style );
 
-                style->name = wxString( styleElem->Attribute( "name" ), wxConvUTF8 );
-                style->sysname = wxString( styleElem->Attribute( "sysname" ), wxConvUTF8 );
+                style->name = QString( styleElem->Attribute( "name" ), wxConvUTF8 );
+                style->sysname = QString( styleElem->Attribute( "sysname" ), wxConvUTF8 );
                 style->myConfigFileDir = fromPath;
 
                 TiXmlElement* subNode = styleElem->FirstChild()->ToElement();
 
                 for( ; subNode; subNode = subNode->NextSiblingElement() ) {
-                    wxString nodeType( subNode->Value(), wxConvUTF8 );
+                    QString nodeType( subNode->Value(), wxConvUTF8 );
 
                     if( nodeType == _T("description") ) {
-                        style->description = wxString( subNode->GetText(), wxConvUTF8 );
+                        style->description = QString( subNode->GetText(), wxConvUTF8 );
                         continue;
                     }
                     if( nodeType == _T("chart-status-icon") ) {
@@ -866,18 +873,18 @@ void StyleManager::Init(const wxString & fromPath)
                         continue;
                     }
                     if( nodeType == _T("chart-status-window") ) {
-                        style->chartStatusWindowTransparent = wxString(
+                        style->chartStatusWindowTransparent = QString(
                                 subNode->Attribute( "transparent" ), wxConvUTF8 ).Lower().IsSameAs(
                                 _T("true") );
                         continue;
                     }
                     if( nodeType == _T("embossed-indicators") ) {
-                        style->embossFont = wxString( subNode->Attribute( "font" ), wxConvUTF8 );
+                        style->embossFont = QString( subNode->Attribute( "font" ), wxConvUTF8 );
                         subNode->QueryIntAttribute( "size", &(style->embossHeight) );
                         continue;
                     }
                     if( nodeType == _T("graphics-file") ) {
-                        style->graphicsFile = wxString( subNode->Attribute( "name" ), wxConvUTF8 );
+                        style->graphicsFile = QString( subNode->Attribute( "name" ), wxConvUTF8 );
                         isOK = true; // If we got this far we are at least partially OK...
                         continue;
                     }
@@ -899,7 +906,7 @@ void StyleManager::Init(const wxString & fromPath)
                             tag->QueryIntAttribute( "width", &w );
                             tag->QueryIntAttribute( "height", &h );
                             style->consoleTextBackgroundLoc = wxPoint( x, y );
-                            style->consoleTextBackgroundSize = wxSize( w, h );
+                            style->consoleTextBackgroundSize = QSize( w, h );
                         }
                         continue;
                     }
@@ -907,11 +914,11 @@ void StyleManager::Init(const wxString & fromPath)
                         TiXmlElement* iconNode = subNode->FirstChild()->ToElement();
 
                         for( ; iconNode; iconNode = iconNode->NextSiblingElement() ) {
-                            wxString nodeType( iconNode->Value(), wxConvUTF8 );
+                            QString nodeType( iconNode->Value(), wxConvUTF8 );
                             if( nodeType == _T("icon") ) {
                                 Icon* icon = new Icon();
                                 style->icons.Add( icon );
-                                icon->name = wxString( iconNode->Attribute( "name" ), wxConvUTF8 );
+                                icon->name = QString( iconNode->Attribute( "name" ), wxConvUTF8 );
                                 style->iconIndex[icon->name] = style->icons.Count() - 1;
                                 TiXmlHandle handle( iconNode );
                                 TiXmlElement* tag = handle.Child( "icon-location", 0 ).ToElement();
@@ -926,7 +933,7 @@ void StyleManager::Init(const wxString & fromPath)
                                     int x, y;
                                     tag->QueryIntAttribute( "x", &x );
                                     tag->QueryIntAttribute( "y", &y );
-                                    icon->size = wxSize( x, y );
+                                    icon->size = QSize( x, y );
                                 }
                             }
                         }
@@ -935,7 +942,7 @@ void StyleManager::Init(const wxString & fromPath)
                         TiXmlElement* toolNode = subNode->FirstChild()->ToElement();
 
                         for( ; toolNode; toolNode = toolNode->NextSiblingElement() ) {
-                            wxString nodeType( toolNode->Value(), wxConvUTF8 );
+                            QString nodeType( toolNode->Value(), wxConvUTF8 );
 
                             if( nodeType == _T("horizontal") || nodeType == _T("vertical") ) {
                                 int orientation = 0;
@@ -943,7 +950,7 @@ void StyleManager::Init(const wxString & fromPath)
 
                                 TiXmlElement* attrNode = toolNode->FirstChild()->ToElement();
                                 for( ; attrNode; attrNode = attrNode->NextSiblingElement() ) {
-                                    wxString nodeType( attrNode->Value(), wxConvUTF8 );
+                                    QString nodeType( attrNode->Value(), wxConvUTF8 );
                                     if( nodeType == _T("separation") ) {
                                         attrNode->QueryIntAttribute( "distance",
                                                 &style->toolSeparation[orientation] );
@@ -958,7 +965,7 @@ void StyleManager::Init(const wxString & fromPath)
                                                 &style->toolMarginBottom[orientation] );
                                         attrNode->QueryIntAttribute( "left",
                                                 &style->toolMarginLeft[orientation] );
-                                        wxString invis = wxString(
+                                        QString invis = QString(
                                                 attrNode->Attribute( "invisible" ), wxConvUTF8 );
                                         style->marginsInvisible = ( invis.Lower() == _T("true") );
                                         continue;;
@@ -972,7 +979,7 @@ void StyleManager::Init(const wxString & fromPath)
                                         y = 0;
                                         attrNode->QueryIntAttribute( "width", &x );
                                         attrNode->QueryIntAttribute( "height", &y );
-                                        style->toggledBGSize[orientation] = wxSize( x, y );
+                                        style->toggledBGSize[orientation] = QSize( x, y );
                                         continue;
                                     }
                                     if( nodeType == _T("toolbar-start") ) {
@@ -984,7 +991,7 @@ void StyleManager::Init(const wxString & fromPath)
                                         y = 0;
                                         attrNode->QueryIntAttribute( "width", &x );
                                         attrNode->QueryIntAttribute( "height", &y );
-                                        style->toolbarStartSize[orientation] = wxSize( x, y );
+                                        style->toolbarStartSize[orientation] = QSize( x, y );
                                         continue;
                                     }
                                     if( nodeType == _T("toolbar-end") ) {
@@ -996,7 +1003,7 @@ void StyleManager::Init(const wxString & fromPath)
                                         y = 0;
                                         attrNode->QueryIntAttribute( "width", &x );
                                         attrNode->QueryIntAttribute( "height", &y );
-                                        style->toolbarEndSize[orientation] = wxSize( x, y );
+                                        style->toolbarEndSize[orientation] = QSize( x, y );
                                         continue;
                                     }
                                     if( nodeType == _T("toolbar-corners") ) {
@@ -1024,14 +1031,14 @@ void StyleManager::Init(const wxString & fromPath)
                                         int x, y;
                                         attrNode->QueryIntAttribute( "x", &x );
                                         attrNode->QueryIntAttribute( "y", &y );
-                                        style->toolSize[orientation] = wxSize( x, y );
+                                        style->toolSize[orientation] = QSize( x, y );
                                         continue;
                                     }
                                     if( nodeType == _T("icon-offset") ) {
                                         int x, y;
                                         attrNode->QueryIntAttribute( "x", &x );
                                         attrNode->QueryIntAttribute( "y", &y );
-                                        style->verticalIconOffset = wxSize( x, y );
+                                        style->verticalIconOffset = QSize( x, y );
                                         continue;
                                     }
                                 }
@@ -1041,7 +1048,7 @@ void StyleManager::Init(const wxString & fromPath)
 
                                 TiXmlElement* attrNode = toolNode->FirstChild()->ToElement();
                                 for( ; attrNode; attrNode = attrNode->NextSiblingElement() ) {
-                                    wxString nodeType( attrNode->Value(), wxConvUTF8 );
+                                    QString nodeType( attrNode->Value(), wxConvUTF8 );
                                     if( nodeType == _T("margin") ) {
                                         attrNode->QueryIntAttribute( "top",
                                                                      &style->compassMarginTop );
@@ -1072,7 +1079,7 @@ void StyleManager::Init(const wxString & fromPath)
                              if( nodeType == _T("tool") ) {
                                 Tool* tool = new Tool();
                                 style->tools.Add( tool );
-                                tool->name = wxString( toolNode->Attribute( "name" ), wxConvUTF8 );
+                                tool->name = QString( toolNode->Attribute( "name" ), wxConvUTF8 );
                                 style->toolIndex[tool->name] = style->tools.Count() - 1;
                                 TiXmlHandle toolHandle( toolNode );
                                 TiXmlElement* toolTag =
@@ -1102,7 +1109,7 @@ void StyleManager::Init(const wxString & fromPath)
                                     int x, y;
                                     toolTag->QueryIntAttribute( "x", &x );
                                     toolTag->QueryIntAttribute( "y", &y );
-                                    tool->customSize = wxSize( x, y );
+                                    tool->customSize = QSize( x, y );
                                 }
                                 continue;
                             }
@@ -1115,7 +1122,7 @@ void StyleManager::Init(const wxString & fromPath)
     }
 }
 
-void StyleManager::SetStyle(wxString name)
+void StyleManager::SetStyle(QString name)
 {
     Style* style = NULL;
     bool ok = true;
@@ -1128,8 +1135,8 @@ void StyleManager::SetStyle(wxString name)
     //  If not, just use the "first" style
     bool bstyleFound = false;
 
-    for( unsigned int i = 0; i < styles.Count(); i++ ) {
-        style = (Style*) ( styles.Item( i ) );
+    for( unsigned int i = 0; i < styles.count(); i++ ) {
+        style = (Style*) ( styles.at( i ) );
         if( style->name == name ) {
             bstyleFound = true;
             break;
@@ -1148,11 +1155,11 @@ void StyleManager::SetStyle(wxString name)
                 break;
             }
 
-            wxString fullFilePath = style->myConfigFileDir + wxFileName::GetPathSeparator()
+            QString fullFilePath = style->myConfigFileDir + wxFileName::GetPathSeparator()
                     + style->graphicsFile;
 
             if( !wxFileName::FileExists( fullFilePath ) ) {
-                wxString msg( _T("Styles Graphics File not found: ") );
+                QString msg( _T("Styles Graphics File not found: ") );
                 msg += fullFilePath;
                 ZCHX_LOGMSG( msg );
                 ok = false;
@@ -1160,10 +1167,10 @@ void StyleManager::SetStyle(wxString name)
                 break;
             }
 
-            wxImage img; // Only image does PNG LoadFile properly on GTK.
+            QImage img; // Only image does PNG LoadFile properly on GTK.
 
             if( !img.LoadFile( fullFilePath, wxBITMAP_TYPE_PNG ) ) {
-                wxString msg( _T("Styles Graphics File failed to load: ") );
+                QString msg( _T("Styles Graphics File failed to load: ") );
                 msg += fullFilePath;
                 ZCHX_LOGMSG( msg );
                 ok = false;
@@ -1177,16 +1184,16 @@ void StyleManager::SetStyle(wxString name)
     }
 
     if( !ok || !currentStyle->graphics ) {
-        wxString msg( _T("The requested style was not found: ") );
+        QString msg("The requested style was not found: ");
         msg += name;
-        ZCHX_LOGMSG( msg );
+        qDebug()<<msg;
         return;
     }
 
     if(currentStyle) {
-        if( (currentStyle->consoleTextBackgroundSize.x) && (currentStyle->consoleTextBackgroundSize.y)) {
+        if( (currentStyle->consoleTextBackgroundSize.width()) && (currentStyle->consoleTextBackgroundSize.height())) {
             currentStyle->consoleTextBackground = currentStyle->graphics->GetSubBitmap(
-                wxRect( currentStyle->consoleTextBackgroundLoc, currentStyle->consoleTextBackgroundSize ) );
+                QRect( currentStyle->consoleTextBackgroundLoc, currentStyle->consoleTextBackgroundSize ) );
         }
     }
 

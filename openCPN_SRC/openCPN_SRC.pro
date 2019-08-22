@@ -39,7 +39,7 @@ LIBS += -lpsapi
 
 QT       += core gui network positioning core_private opengl svg xml webkitwidgets multimedia
 
-DEFINES += ocpnUSE_GL TIXML_USE_STL __WXQT__
+DEFINES += ocpnUSE_GL TIXML_USE_STL __WXQT__ ocpnUSE_SVG
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -119,7 +119,7 @@ HEADERS += \
 #    kml.h \
 #    Layer.h \
 #    LinkPropDlg.h \
-#    LLRegion.h \
+    LLRegion.h \
 #    macutils.h \
 #    MarkIcon.h \
 #    MUIBar.h \
@@ -167,7 +167,7 @@ HEADERS += \
 #    SencManager.h \
 #    SendToGpsDlg.h \
 #    Station_Data.h \
-#    styles.h \
+    styles.h \
 #    TC_Error_Code.h \
 #    TCDataFactory.h \
 #    TCDataSource.h \
@@ -249,7 +249,7 @@ SOURCES += \
 #    kml.cpp \
 #    Layer.cpp \
 #    LinkPropDlg.cpp \
-#    LLRegion.cpp \
+    LLRegion.cpp \
 #    MarkInfo.cpp \
 #    MUIBar.cpp \
 #    multiplexer.cpp \
@@ -296,7 +296,7 @@ SOURCES += \
 #    SencManager.cpp \
 #    SendToGpsDlg.cpp \
 #    Station_Data.cpp \
-#    styles.cpp \
+    styles.cpp \
 #    TCDataFactory.cpp \
 #    TCDataSource.cpp \
 #    TCDS_Ascii_Harmonic.cpp \
