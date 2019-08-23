@@ -25,18 +25,17 @@
 #include "FontDesc.h"
 
 
-MyFontDesc::MyFontDesc( QString DialogString, QString ConfigString, QFont *pFont, QColor color)
+MyFontDesc::MyFontDesc( QString DialogString, QString ConfigString, const QFont& pFont, QColor color)
 {
     m_dialogstring = DialogString;
     m_configstring = ConfigString;
 
-    m_nativeInfo = pFont->toString();
+    m_nativeInfo = pFont.toString();
     m_font = pFont;
     m_color = color;
 }
 
 MyFontDesc::~MyFontDesc()
 {
-    delete m_font;
 }
 

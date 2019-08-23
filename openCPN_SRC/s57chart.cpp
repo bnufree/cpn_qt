@@ -5819,7 +5819,7 @@ void s57_DrawExtendedLightSectors( ocpnDC& dc, ViewPort& viewport, std::vector<s
             int lpx = lightPos.x;
             int lpy = lightPos.y;
             int npoints = 0;
-            QPoint arcpoints[150]; // Size relates to "step" below.
+            zchxPoint arcpoints[150]; // Size relates to "step" below.
 
             float step = 3.0;
             while( (step < 15) && ((rangePx * sin(step * PI / 180.)) < 10) ) step += 2.0; // less points on small arcs
@@ -5830,10 +5830,10 @@ void s57_DrawExtendedLightSectors( ocpnDC& dc, ViewPort& viewport, std::vector<s
             step = ( angle2 - angle1 ) / (float)narc;
 
             if( sectorlegs[i].isleading && (angle2 - angle1 < 60)  ) {
-                QPoint yellowCone[3];
-                yellowCone[0] = lightPos.toPoint();
-                yellowCone[1] = end1.toPoint();
-                yellowCone[2] = end2.toPoint();
+                zchxPoint yellowCone[3];
+                yellowCone[0] = lightPos;
+                yellowCone[1] = end1;
+                yellowCone[2] = end2;
                 arcpen = QPen( QColor( 0,0,0,0 ), 1, Qt::SolidLine );
                 dc.SetPen( arcpen );
                 QColor c = sectorlegs[i].color;
@@ -5845,7 +5845,7 @@ void s57_DrawExtendedLightSectors( ocpnDC& dc, ViewPort& viewport, std::vector<s
                 for( float a = angle1; a <= angle2 + 0.1; a += step ) {
                     int x = lpx + (int) ( rangePx * cos( a * PI / 180. ) );
                     int y = lpy - (int) ( rangePx * sin( a * PI / 180. ) );
-                    arcpoints[npoints] = QPoint(x, y);
+                    arcpoints[npoints] = zchxPoint(x, y);
                     npoints++;
                 }
                 dc.StrokeLines( npoints, arcpoints );

@@ -9,6 +9,11 @@
 #include "zchxconfig.h"
 #include "chartdb.h"
 #include "chcanv.h"
+#include "s52plib.h"
+#include "OCPNPlatform.h"
+#include "S57ClassRegistrar.h"
+#include "s57RegistrarMgr.h"
+#include "glChartCanvas.h"
 
 
 //MyFrame                   *gFrame;
@@ -21,6 +26,23 @@
 ChartDB                   *ChartData = NULL;
 arrayofCanvasPtr            g_canvasArray;
 ColorScheme               global_color_scheme = GLOBAL_COLOR_SCHEME_DAY;
+static int                Usercolortable_index;
+static wxArrayPtrVoid     *UserColorTableArray;
+static wxArrayPtrVoid     *UserColourHashTableArray;
+static QColorHashMap     *pcurrent_user_color_hash;
+SENCThreadManager *g_SencThreadManager;
+s52plib                   *ps52plib;
+QString                  g_csv_locn;
+OCPNPlatform                *g_Platform;
+QString                  g_SENCPrefix;
+QString                  g_UserPresLibData;
+S57ClassRegistrar         *g_poRegistrar;
+s57RegistrarMgr           *m_pRegistrarMan;
+zchxConfig                *pConfig;
+extern zchxMapMainWindow*  gFrame;
+int                       g_nDepthUnitDisplay;
+
+
 
 zchxMapMainWindow::zchxMapMainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -1168,3 +1190,164 @@ ColorScheme GetColorScheme()
 {
     return global_color_scheme;
 }
+
+/*************************************************************************
+ * Global color management routines
+ *
+ *************************************************************************/
+
+QColor GetGlobalColor(QString colorName)
+{
+    QColor ret_color;
+
+    //    Use the S52 Presentation library if present
+    if( ps52plib ) ret_color = ps52plib->getQColor( colorName );
+    if( !ret_color.isValid() && pcurrent_user_color_hash )
+        ret_color = ( *pcurrent_user_color_hash )[colorName];
+
+    //    Default
+    if( !ret_color.isValid() ) {
+        ret_color.setRgb(128, 128, 128 );  // Simple Grey
+        qDebug("Warning: Color not found %s ", colorName.toUtf8().data());
+        // Avoid duplicate warnings:
+        if (pcurrent_user_color_hash)
+            ( *pcurrent_user_color_hash )[colorName] = ret_color;
+    }
+
+    return ret_color;
+}
+
+
+void LoadS57()
+{
+    if(ps52plib) // already loaded?
+        return;
+
+    //  Start a SENC Thread manager
+    g_SencThreadManager = new SENCThreadManager();
+
+//      Set up a useable CPL library error handler for S57 stuff
+    CPLSetErrorHandler( MyCPLErrorHandler );
+
+//      Init the s57 chart object, specifying the location of the required csv files
+    g_csv_locn = g_Platform->GetDataDir();
+    g_csv_locn.append(QDir::separator()).append("s57data");
+//      If the config file contains an entry for SENC file prefix, use it.
+//      Otherwise, default to PrivateDataDir
+    if( g_SENCPrefix.isEmpty() ) {
+        g_SENCPrefix = g_Platform->GetDataDir();
+        g_SENCPrefix.append(QDir::separator());
+        g_SENCPrefix.append("SENC");
+    }
+
+//      If the config file contains an entry for PresentationLibraryData, use it.
+//      Otherwise, default to conditionally set spot under g_pcsv_locn
+    QString plib_data;
+    bool b_force_legacy = false;
+
+    if( g_UserPresLibData.isEmpty() ) {
+        plib_data = g_csv_locn;
+        plib_data.append(QDir::separator());
+        plib_data.append("S52RAZDS.RLE");
+    } else {
+        plib_data = g_UserPresLibData;
+        b_force_legacy = true;
+    }
+
+    ps52plib = new s52plib( plib_data, b_force_legacy );
+
+    //  If the library load failed, try looking for the s57 data elsewhere
+
+    //  First, look in UserDataDir
+    /*    From wxWidgets documentation
+
+     wxStandardPaths::GetUserDataDir
+     wxString GetUserDataDir() const
+     Return the directory for the user-dependent application data files:
+     * Unix: ~/.appname
+     * Windows: C:\Documents and Settings\username\Application Data\appname
+     * Mac: ~/Library/Application Support/appname
+     */
+
+    if( !ps52plib->m_bOK ) {
+        delete ps52plib;
+        QString look_data_dir;
+        look_data_dir.append( g_Platform->GetAppDir());
+        look_data_dir.append(QDir::separator());
+        QString tentative_SData_Locn = look_data_dir;
+        look_data_dir.append("s57data");
+
+        plib_data = look_data_dir;
+        plib_data.append(QDir::separator());
+        plib_data.append("S52RAZDS.RLE");
+
+        qDebug("Looking for s57data in %s", look_data_dir.toUtf8().data() );
+        ps52plib = new s52plib( plib_data );
+
+        if( ps52plib->m_bOK ) {
+            g_csv_locn = look_data_dir;
+        }
+    }
+
+    //  And if that doesn't work, look again in the original SData Location
+    //  This will cover the case in which the .ini file entry is corrupted or moved
+
+    if( !ps52plib->m_bOK ) {
+        delete ps52plib;
+
+        QString look_data_dir;
+        look_data_dir = g_Platform->GetDataDir();
+        look_data_dir.append(QDir::separator());
+        look_data_dir.append("s57data" );
+
+        plib_data = look_data_dir;
+        plib_data.append(QDir::separator());
+        plib_data.append( ("S52RAZDS.RLE") );
+
+        qDebug("Looking for s57data in %s", look_data_dir.toUtf8().data() );
+        ps52plib = new s52plib( plib_data );
+
+        if( ps52plib->m_bOK ) g_csv_locn = look_data_dir;
+    }
+
+    if( ps52plib->m_bOK ) {
+        qDebug("Using s57data in %s",  g_csv_locn.toUtf8().data() );
+        m_pRegistrarMan = new s57RegistrarMgr( g_csv_locn );
+
+
+            //    Preset some object class visibilites for "User Standard" disply category
+            //  They may be overridden in LoadS57Config
+        for( unsigned int iPtr = 0; iPtr < ps52plib->pOBJLArray->count(); iPtr++ ) {
+            OBJLElement *pOLE = (OBJLElement *) ( ps52plib->pOBJLArray->at( iPtr ) );
+            if( !strncmp( pOLE->OBJLName, "DEPARE", 6 ) ) pOLE->nViz = 1;
+            if( !strncmp( pOLE->OBJLName, "LNDARE", 6 ) ) pOLE->nViz = 1;
+            if( !strncmp( pOLE->OBJLName, "COALNE", 6 ) ) pOLE->nViz = 1;
+        }
+
+        pConfig->LoadS57Config();
+        ps52plib->SetPLIBColorScheme( global_color_scheme );
+
+        if(gFrame->GetPrimaryCanvas() )
+            ps52plib->SetPPMM( gFrame->GetPrimaryCanvas()->GetPixPerMM() );
+
+#ifdef ocpnUSE_GL
+
+        // Setup PLIB OpenGL options, if enabled
+        extern bool g_b_EnableVBO;
+        extern GLenum  g_texture_rectangle_format;\
+        ps52plib->SetGLOptions(glChartCanvas::s_b_useStencil,
+                               glChartCanvas::s_b_useStencilAP,
+                               glChartCanvas::s_b_useScissorTest,
+                               glChartCanvas::s_b_useFBO,
+                               g_b_EnableVBO,
+                               g_texture_rectangle_format);
+#endif
+
+
+    } else {
+        qDebug("   S52PLIB Initialization failed, disabling Vector charts." );
+        delete ps52plib;
+        ps52plib = NULL;
+    }
+}
+

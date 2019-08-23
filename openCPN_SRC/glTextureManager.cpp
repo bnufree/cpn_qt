@@ -1390,17 +1390,17 @@ void glTextureManager::BuildCompressedCache()
 
     QFont *qFont = GetOCPNScaledFont("Dialog");
     int fontSize = qFont->pointSize();
-    QFont *sFont;
+    QFont sFont;
     QSize csz = gFrame->rect().size();
     if(csz.width() < 500 || csz.height() < 500)
         sFont = FontMgr::Get().FindOrCreateFont( 10, "Microsoft YH", QFont::StyleNormal, QFont::Normal);
     else
         sFont = FontMgr::Get().FindOrCreateFont( fontSize, "Microsoft YH", QFont::StyleNormal, QFont::Normal);
     
-    m_progDialog->setFont(*sFont );
+    m_progDialog->setFont(sFont );
     
     //  Should we use "compact" screen layout?
-    QFontMetrics fm(*sFont);
+    QFontMetrics fm(sFont);
     int height = fm.height();
     int width = fm.width("[WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW]");
     if(width > (csz.width() / 2)) m_bcompact = true;

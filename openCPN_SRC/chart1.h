@@ -47,6 +47,7 @@ QFont GetOCPNGUIScaledFont( QString item );
 
 QStringList *EnumerateSerialPorts(void);
 QColor GetGlobalColor(QString colorName);
+void LoadS57();
 
 int GetApplicationMemoryUse(void);
 

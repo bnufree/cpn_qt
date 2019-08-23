@@ -442,10 +442,11 @@ public:
     QVariant getCustomValue(const QString& prefix,const QString &keys, const QVariant &defaultValue = QVariant());
     int  getChildCount(const QString& prefix);
     QStringList getChildKeys(const QString& prefix);
+    void LoadS57Config();
 
 
     //    int LoadMyConfig();
-    //    void LoadS57Config();
+    //
     //    void LoadNavObjects();
     //    virtual void LoadCanvasConfigs( bool bApplyAsTemplate = false );
     //    virtual void LoadConfigCanvas( canvasConfig *cConfig, bool bApplyAsTemplate );

@@ -24,6 +24,8 @@ message("output:" + $$DESTDIR)
 INCLUDEPATH += $${OPENCPN_3RD_INCLUDE_PATH}
 INCLUDEPATH += $${PWD}/include
 
+LIBS += -lsqlite3
+
 Lib_install.path = $${OPENCPN_3RD_STATIC_LIB_PATH}/
 Lib_install.files += $${DESTDIR}/$${TARGET}
 INSTALLS += Lib_install;
@@ -39,6 +41,8 @@ SOURCES += \
     src/Exception.cpp \
     src/Statement.cpp \
     src/Transaction.cpp
+
+
 
 
 

@@ -1,6 +1,8 @@
 ﻿#include "zchxconfig.h"
 #include <QTextCodec>
 #include "GL/gl.h"
+#include "s52plib.h"
+#include "s52utils.h"
 
 //全局定义,方便使用
 extern zchxGLOptions                       g_GLOptions;
@@ -8,6 +10,9 @@ bool                                g_bGlExpert;
 bool                                g_bOpenGL;
 extern GLuint                              g_raster_format;
 bool                                g_bShowFPS;
+extern s52plib                   *ps52plib;
+extern int                       g_nDepthUnitDisplay;
+
 
 zchxConfig::zchxConfig( const QString &LocalFileName ) : QSettings(LocalFileName)
 {
@@ -998,122 +1003,80 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     return ( 0 );
 }
 
+#endif
+
 void zchxConfig::LoadS57Config()
 {
-    if( !ps52plib )
-        return;
+    if( !ps52plib )  return;
+    ps52plib->SetShowS57Text( !(getCustomValue("Settings/GlobalStat", "bShowS57Text", 0).toInt() == 0 ) );
+    ps52plib->SetShowS57ImportantTextOnly( !(getCustomValue("Settings/GlobalStat", "bShowS57ImportantTextOnly", 0).toInt() == 0 ) );
+    ps52plib->SetShowLdisText( !(getCustomValue("Settings/GlobalStat", "bShowLightDescription", 0).toInt() == 0 ) );
+    ps52plib->SetExtendLightSectors( !(getCustomValue("Settings/GlobalStat", "bExtendLightSectors", 0).toInt() == 0 ));
+    ps52plib->SetDisplayCategory((enum _DisCat) getCustomValue("Settings/GlobalStat", "nDisplayCategory", (enum _DisCat) STANDARD).toInt() );
+    ps52plib->m_nSymbolStyle = (LUPname) getCustomValue("Settings/GlobalStat", "nSymbolStyle", (enum _LUPname) PAPER_CHART).toInt();
+    ps52plib->m_nBoundaryStyle = (LUPname) getCustomValue("Settings/GlobalStat", "nBoundaryStyle", PLAIN_BOUNDARIES).toInt();
+    ps52plib->m_bShowSoundg = !( getCustomValue("Settings/GlobalStat", "bShowSoundg", 1).toInt() == 0 );
+    ps52plib->m_bShowMeta = !( getCustomValue("Settings/GlobalStat", "bShowMeta", 0).toInt() == 0 );
+    ps52plib->m_bUseSCAMIN = !( getCustomValue("Settings/GlobalStat", "bUseSCAMIN", 1).toInt() == 0 );
+    ps52plib->m_bShowAtonText = !( getCustomValue("Settings/GlobalStat", "bShowAtonText", 1).toInt() == 0 );
+    ps52plib->m_bDeClutterText = !( getCustomValue("Settings/GlobalStat", "bDeClutterText", 0).toInt() == 0 );
+    ps52plib->m_bShowNationalTexts = !( getCustomValue("Settings/GlobalStat", "bShowNationalText", 0).toInt() == 0 );
 
-    int read_int;
-    double dval;
-    SetPath( _T ( "/Settings/GlobalState" ) );
+    double dval = getCustomValue("Settings/GlobalStat", "S52_MAR_SAFETY_CONTOUR", 5.0).toDouble();
+    S52_setMarinerParam( S52_MAR_SAFETY_CONTOUR, dval );
+    S52_setMarinerParam( S52_MAR_SAFETY_DEPTH, dval ); // Set safety_contour and safety_depth the same
 
-    Read( _T ( "bShowS57Text" ), &read_int, 0 );
-    ps52plib->SetShowS57Text( !( read_int == 0 ) );
+    dval = getCustomValue("Settings/GlobalStat", "S52_MAR_SHALLOW_CONTOUR", 3.0).toDouble();
+    S52_setMarinerParam( S52_MAR_SHALLOW_CONTOUR, dval );
 
-    Read( _T ( "bShowS57ImportantTextOnly" ), &read_int, 0 );
-    ps52plib->SetShowS57ImportantTextOnly( !( read_int == 0 ) );
+    dval = getCustomValue("Settings/GlobalStat", "S52_MAR_DEEP_CONTOUR", 10.0).toDouble();
+    S52_setMarinerParam(S52_MAR_DEEP_CONTOUR, dval );
 
-    Read( _T ( "bShowLightDescription" ), &read_int, 0 );
-    ps52plib->SetShowLdisText( !( read_int == 0 ) );
-
-    Read( _T ( "bExtendLightSectors" ), &read_int, 0 );
-    ps52plib->SetExtendLightSectors( !( read_int == 0 ) );
-
-    Read( _T ( "nDisplayCategory" ), &read_int, (enum _DisCat) STANDARD );
-    ps52plib->SetDisplayCategory((enum _DisCat) read_int );
-
-    Read( _T ( "nSymbolStyle" ), &read_int, (enum _LUPname) PAPER_CHART );
-    ps52plib->m_nSymbolStyle = (LUPname) read_int;
-
-    Read( _T ( "nBoundaryStyle" ), &read_int, PLAIN_BOUNDARIES );
-    ps52plib->m_nBoundaryStyle = (LUPname) read_int;
-
-    Read( _T ( "bShowSoundg" ), &read_int, 1 );
-    ps52plib->m_bShowSoundg = !( read_int == 0 );
-
-    Read( _T ( "bShowMeta" ), &read_int, 0 );
-    ps52plib->m_bShowMeta = !( read_int == 0 );
-
-    Read( _T ( "bUseSCAMIN" ), &read_int, 1 );
-    ps52plib->m_bUseSCAMIN = !( read_int == 0 );
-
-    Read( _T ( "bShowAtonText" ), &read_int, 1 );
-    ps52plib->m_bShowAtonText = !( read_int == 0 );
-
-    Read( _T ( "bDeClutterText" ), &read_int, 0 );
-    ps52plib->m_bDeClutterText = !( read_int == 0 );
-
-    Read( _T ( "bShowNationalText" ), &read_int, 0 );
-    ps52plib->m_bShowNationalTexts = !( read_int == 0 );
-
-    if( Read( _T ( "S52_MAR_SAFETY_CONTOUR" ), &dval, 5.0 ) ) {
-        S52_setMarinerParam( S52_MAR_SAFETY_CONTOUR, dval );
-        S52_setMarinerParam( S52_MAR_SAFETY_DEPTH, dval ); // Set safety_contour and safety_depth the same
-    }
-
-    if( Read( _T ( "S52_MAR_SHALLOW_CONTOUR" ), &dval, 3.0 ) ) S52_setMarinerParam(
-        S52_MAR_SHALLOW_CONTOUR, dval );
-
-    if( Read( _T ( "S52_MAR_DEEP_CONTOUR" ), &dval, 10.0 ) ) S52_setMarinerParam(
-        S52_MAR_DEEP_CONTOUR, dval );
-
-    if( Read( _T ( "S52_MAR_TWO_SHADES" ), &dval, 0.0 ) ) S52_setMarinerParam(
-        S52_MAR_TWO_SHADES, dval );
+    dval = getCustomValue("Settings/GlobalStat", "S52_MAR_TWO_SHADES", 0.0).toDouble();
+    S52_setMarinerParam(S52_MAR_TWO_SHADES, dval );
 
     ps52plib->UpdateMarinerParams();
 
-    SetPath( _T ( "/Settings/GlobalState" ) );
-    Read( _T ( "S52_DEPTH_UNIT_SHOW" ), &read_int, 1 );   // default is metres
-    read_int = wxMax(read_int, 0);                      // qualify value
-    read_int = wxMin(read_int, 2);
+    int read_int = getCustomValue("Settings/GlobalState", "S52_DEPTH_UNIT_SHOW", 1).toInt();
+    read_int = qMax(read_int, 0);                      // qualify value
+    read_int = qMin(read_int, 2);
     ps52plib->m_nDepthUnitDisplay = read_int;
     g_nDepthUnitDisplay = read_int;
 
 //    S57 Object Class Visibility
 
     OBJLElement *pOLE;
-
-    SetPath( _T ( "/Settings/ObjectFilter" ) );
-
-    int iOBJMax = GetNumberOfEntries();
+    QString section = "Settings/ObjectFilter";
+    int iOBJMax = getChildCount(section);
     if( iOBJMax ) {
-
-        wxString str;
-        long val;
-        long dummy;
-
-        wxString sObj;
-
-        bool bCont = pConfig->GetFirstEntry( str, dummy );
-        while( bCont ) {
-            pConfig->Read( str, &val );              // Get an Object Viz
-
-            bool bNeedNew = true;
-
-            if( str.StartsWith( _T ( "viz" ), &sObj ) ) {
-                for( unsigned int iPtr = 0; iPtr < ps52plib->pOBJLArray->GetCount(); iPtr++ ) {
-                    pOLE = (OBJLElement *) ( ps52plib->pOBJLArray->Item( iPtr ) );
-                    if( !strncmp( pOLE->OBJLName, sObj.mb_str(), 6 ) ) {
+        QStringList keys = getChildKeys(section);
+        foreach (QString key, keys) {
+            long val = getCustomValue(section, key).toLongLong();
+            bool bNeedNew = false;
+            QString sObj;
+            if(key.startsWith("viz"))
+            {
+                sObj = key.mid(3);
+                for( unsigned int iPtr = 0; iPtr < ps52plib->pOBJLArray->count(); iPtr++ ) {
+                    pOLE = (OBJLElement *) ( ps52plib->pOBJLArray->at( iPtr ) );
+                    if( !strncmp( pOLE->OBJLName, sObj.toUtf8().data(), 6 ) ) {
                         pOLE->nViz = val;
                         bNeedNew = false;
                         break;
                     }
                 }
-
                 if( bNeedNew ) {
                     pOLE = (OBJLElement *) calloc( sizeof(OBJLElement), 1 );
-                    memcpy( pOLE->OBJLName, sObj.mb_str(), OBJL_NAME_LEN );
+                    memcpy( pOLE->OBJLName, sObj.toUtf8().data(), OBJL_NAME_LEN );
                     pOLE->nViz = 1;
-
-                    ps52plib->pOBJLArray->Add( (void *) pOLE );
+                    ps52plib->pOBJLArray->append((void *) pOLE );
                 }
             }
-            bCont = pConfig->GetNextEntry( str, dummy );
         }
     }
 }
 
-
+#if 0
 bool zchxConfig::LoadLayers(wxString &path)
 {
     wxArrayString file_array;

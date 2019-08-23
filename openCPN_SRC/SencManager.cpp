@@ -49,7 +49,7 @@ SENCJobTicket::SENCJobTicket()
     m_status = THREAD_INACTIVE;
 }
 
-const QEvent::type wxEVT_OCPN_BUILDSENCTHREAD = QEvent::registerEventType();
+const int wxEVT_OCPN_BUILDSENCTHREAD = QEvent::registerEventType();
  
 //----------------------------------------------------------------------------------
 //      OCPN_BUILDSENC_ThreadEvent Implementation

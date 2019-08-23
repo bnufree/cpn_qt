@@ -6,6 +6,7 @@
 #include <QTextCodec>
 #include <QPolygon>
 #include <QPolygonF>
+#include <QImage>
 
 /*  menu and toolbar item kinds */
 enum wxItemKind
@@ -104,6 +105,7 @@ struct zchxPoint{
     void operator-=(const zchxPoint &p) {x-=p.x; y-=p.y;}
     void operator*=(qreal c) {x/=c; y/=c;}
     void operator/=(qreal c) {x*=c; y*=c;}
+
 
     QPoint toPoint() const {return QPoint(x, y);}
 
@@ -451,6 +453,24 @@ public:
         QDir dir(temp_path);
         if(!dir.exists()) dir.mkpath(temp_path);
         return temp_path;
+    }
+
+    static bool isImageTransparent(const QImage& img, int x, int y, int alpha)
+    {
+        QColor color = img.pixelColor(x, y);
+        if(color.alpha() <= alpha) return true;
+        return false;
+    }
+
+    static QColor getNewRGBColor(const QColor& rgb, double level)
+    {
+        QColor hsv = rgb.toHsv();
+        int h = hsv.hsvHue();
+        int s = hsv.hsvSaturation();
+        int v = hsv.value();
+        int new_v = (int)( v * level);
+        hsv.setHsv(h, s, new_v);
+        return hsv.toRgb();
     }
 
 };

@@ -64,12 +64,12 @@
 class wxLineF {
 public:
     wxLineF( double x1, double y1, double x2, double y2 ) {
-        m_p1 = QPointF( x1, y1 );
-        m_p2 = QPointF( x2, y2 );
+        m_p1 = zchxPointF( x1, y1 );
+        m_p2 = zchxPointF( x2, y2 );
     }
-    QPointF& p1() { return m_p1; }
-    QPointF& p2() { return m_p2; }
-    QPointF m_p1, m_p2;
+    zchxPointF& p1() { return m_p1; }
+    zchxPointF& p2() { return m_p2; }
+    zchxPointF m_p1, m_p2;
 };
 
 struct PolygonFileHeader {
@@ -87,7 +87,7 @@ struct PolygonFileHeader {
     int p5;
 };
 
-typedef std::vector<QPointF> contour;
+typedef std::vector<zchxPointF> contour;
 typedef std::vector<contour> contour_list;
 #define GSSH_SUBM 16 // divide each cell to 16x16 sub cells
 
@@ -272,7 +272,7 @@ private:
     std::vector<GshhsPolygon*> & getList_rivers();
     //-----------------------------------------------------
 
-    int GSHHS_scaledPoints( GshhsPolygon *pol, QPoint *pts, double decx, ViewPort &vp );
+    int GSHHS_scaledPoints( GshhsPolygon *pol, zchxPoint *pts, double decx, ViewPort &vp );
 
     void GsshDrawLines( ocpnDC &pnt, std::vector<GshhsPolygon*> &lst, ViewPort &vp,
             bool isClosed );

@@ -62,7 +62,7 @@ typedef enum{
     SENC_BUILD_DONE_ERROR,
 } EVENTSENCResult;
 
-extern  const QEvent::Type wxEVT_OCPN_BUILDSENCTHREAD;
+extern  const int wxEVT_OCPN_BUILDSENCTHREAD;
 
 //----------------------------------------------------------------------------
 // s57 Chart Thread based SENC job ticket

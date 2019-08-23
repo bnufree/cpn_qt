@@ -26,7 +26,17 @@
 
 #include "FontDesc.h"
 
-class OCPNQFontList;
+class  OCPNQFontList
+{
+public:
+    QFont   FindOrCreateFont(int pointSize, const QString& family, QFont::Style style, int weight, bool underline = false);
+    void    FreeAll( void );
+
+private:
+    bool isSame(const QFont& font, int pointSize, const QString& family, QFont::Style style, int weight, bool underline);
+
+    QList<QFont>        list;
+};
 
 /**
  * Manages the font list.
@@ -39,9 +49,9 @@ class FontMgr
         static FontMgr & Get();
     
         void SetLocale( QString &newLocale );
-        QFont *GetFont(const QString &TextElement, int default_size = 0);
+        QFont GetFont(const QString &TextElement, int default_size = 0);
         QColor GetFontColor( const QString &TextElement ) const;
-        bool SetFontColor( const QString &TextElement, const QColor color ) const;
+        bool SetFontColor( const QString &TextElement, const QColor color );
     
         int GetNumFonts(void) const;
         const QString & GetConfigString(int i) const;
@@ -53,17 +63,15 @@ class FontMgr
         QStringList &GetAuxKeyArray(){ return m_AuxKeyArray; }
         bool AddAuxKey( QString key );
         
-        void LoadFontNative(QString *pConfigString, QString *pNativeDesc);
-        bool SetFont(const QString &TextElement, QFont *pFont, QColor color);
+        void LoadFontNative(const QString& pConfigString, const QString &pNativeDesc);
+        bool SetFont(const QString &TextElement, QFont pFont, QColor color);
         void ScrubList( );
-        MyFontDesc *FindFontByConfigString( QString pConfigString );
+        MyFontDesc* FindFontByConfigString( QString pConfigString );
         
-        QFont* FindOrCreateFont( int point_size, QString family,
-                    QFont::Style style, int weight, bool underline = false);
+        QFont FindOrCreateFont( int point_size, QString family, QFont::Style style, int weight, bool underline = false);
         // For wxWidgets 2.8 compatability
-        QFont *FindOrCreateFont(int pointSize, QString family, int style, int weight,   bool underline = false)
-            { return FindOrCreateFont(pointSize, family, (QFont::Style)style,
-                weight, underline); }
+        QFont FindOrCreateFont(int pointSize, QString family, int style, int weight,   bool underline = false)
+        { return FindOrCreateFont(pointSize, family, (QFont::Style)style, weight, underline); }
         
         static void Shutdown();
         
@@ -74,13 +82,13 @@ class FontMgr
         FontMgr & operator=(const FontMgr &) { return *this; }
         
     private:
-        QString GetSimpleNativeFont(int size, QString face);
+        QFont GetSimpleNativeFont(int size, QString face);
     
         static FontMgr * instance;
 
-        OCPNQFontList  *m_QFontCache;
-        FontList *m_fontlist;
-        QFont   *pDefFont;
+        OCPNQFontList  m_QFontCache;
+        FontList m_fontlist;
+        QFont   pDefFont;
         QStringList m_AuxKeyArray;
 };
 

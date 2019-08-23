@@ -17,6 +17,8 @@ class ChartCanvas;
 class ChartBase;
 class ChartDB;
 
+QColor GetGlobalColor(QString colorName);
+
 class zchxMapMainWindow : public QMainWindow
 {
     Q_OBJECT

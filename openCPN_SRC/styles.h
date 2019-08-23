@@ -101,6 +101,10 @@ public:
 class Style {
 
 public:
+    enum Direction{
+        Hortizontal = 0,
+        Vertical,
+    };
       Style( void );
       ~Style( void );
 
@@ -144,7 +148,7 @@ public:
       static wxBitmap SetBitmapBrightness( wxBitmap& bitmap, ColorScheme cs );
       static wxBitmap SetBitmapBrightnessAbs( wxBitmap& bitmap, double level );
       
-      void SetOrientation( long orient );
+      void SetOrientation( Direction orient );
       int GetOrientation();
       void SetColorScheme( ColorScheme cs );
       void Unload();

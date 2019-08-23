@@ -43,6 +43,8 @@ SOURCES += \
 HEADERS += \
     include/mipmap/mipmap.h
 
+QMAKE_CFLAGS += -mavx2
+
 
 
 

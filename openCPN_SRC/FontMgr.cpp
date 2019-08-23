@@ -23,38 +23,18 @@
 
 #include <locale>
 
-#include <wx/gdicmn.h>
-#include <wx/tokenzr.h>
+//#include <wx/gdicmn.h>
+//#include <wx/tokenzr.h>
 
 #include "FontMgr.h"
 #include "OCPNPlatform.h"
-
-class  OCPNwxFontList: public wxGDIObjListBase
-{
-public:
-    wxFont *FindOrCreateFont(int pointSize,
-                             wxFontFamily family,
-                             wxFontStyle style,
-                             wxFontWeight weight,
-                             bool underline = false,
-                             const wxString& face = wxEmptyString,
-                             wxFontEncoding encoding = wxFONTENCODING_DEFAULT);
-    void FreeAll( void );
-    
-private:
-    bool isSame(wxFont *font, int pointSize, wxFontFamily family,
-                wxFontStyle style,
-                wxFontWeight weight,
-                bool underline,
-                const wxString& facename,
-                wxFontEncoding encoding);
-};
+#include <QGuiApplication>
 
 
-extern wxString g_locale;
+extern QString g_locale;
 extern OCPNPlatform     *g_Platform;
 
-wxString s_locale;
+QString s_locale;
 int g_default_font_size;
 
 FontMgr * FontMgr::instance = NULL;
@@ -76,80 +56,71 @@ void FontMgr::Shutdown()
 }
 
 FontMgr::FontMgr()
-    : m_wxFontCache(NULL)
-    ,m_fontlist(NULL)
-    , pDefFont(NULL)
 {
     //    Create the list of fonts
-    m_fontlist = new FontList;
-    m_fontlist->DeleteContents( true );
-
     s_locale = g_locale;
     
     //    Get a nice generic font as default
-    pDefFont = FindOrCreateFont( 12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, FALSE,
-            wxString( _T ( "" ) ), wxFONTENCODING_SYSTEM );
+    pDefFont = FindOrCreateFont( 12, "Micorosoft Yahei", QFont::StyleNormal, QFont::Weight::Normal, false);
 
 }
 
 FontMgr::~FontMgr()
 {
-    m_fontlist->Clear();
-    delete m_fontlist;
-    
-    delete m_wxFontCache;
+    m_fontlist.clear();
 }
 
-void FontMgr::SetLocale( wxString& newLocale)
+void FontMgr::SetLocale( QString& newLocale)
 {
     s_locale = newLocale;
 }
 
-wxColour FontMgr::GetFontColor( const wxString &TextElement ) const
+QColor  FontMgr::GetFontColor( const QString &TextElement ) const
 {
     //    Look thru the font list for a match
-    MyFontDesc *pmfd;
-    auto node = m_fontlist->GetFirst();
-    while( node ) {
-        pmfd = node->GetData();
-        if( pmfd->m_dialogstring == TextElement ) {
-            if(pmfd->m_configstring.BeforeFirst('-') == s_locale)
-                return pmfd->m_color;
+    for(int i=0; i<m_fontlist.size(); i++)
+    {
+        MyFontDesc pmfd = m_fontlist[i];
+        if( pmfd.m_dialogstring == TextElement )
+        {
+            if(pmfd.m_configstring.left(pmfd.m_configstring.indexOf('-')) == s_locale)
+            {
+                return pmfd.m_color;
+            }
         }
-        node = node->GetNext();
     }
 
-    return wxColour( 0, 0, 0 );
+    return QColor ( 0, 0, 0 );
 }
 
-bool FontMgr::SetFontColor( const wxString &TextElement, const wxColour color ) const
+bool FontMgr::SetFontColor( const QString &TextElement, const QColor  color )
 {
-  //    Look thru the font list for a match
-  MyFontDesc *pmfd;
-  auto node = m_fontlist->GetFirst();
-  while( node ) {
-    pmfd = node->GetData();
-    if( pmfd->m_dialogstring == TextElement ) {
-      if(pmfd->m_configstring.BeforeFirst('-') == s_locale) {
-        pmfd->m_color = color;
-        return true;
-      }
+    //    Look thru the font list for a match
+    for(int i=0; i<m_fontlist.size(); i++)
+    {
+        MyFontDesc &pmfd = m_fontlist[i];
+        if( pmfd.m_dialogstring == TextElement )
+        {
+            if(pmfd.m_configstring.left(pmfd.m_configstring.indexOf('-')) == s_locale)
+            {
+                pmfd.m_color = color;
+                return true;
+            }
+        }
     }
-    node = node->GetNext();
-  }
 
-  return false;
+
+    return false;
 }
 
-wxString FontMgr::GetFontConfigKey( const wxString &description )
+QString FontMgr::GetFontConfigKey( const QString &description )
 {
     // Create the configstring by combining the locale with
     // a hash of the font description. Hash is used because the i18n
     // description can contain characters that mess up the config file.
 
-    wxString configkey;
-    configkey = s_locale;
-    configkey.Append( _T("-") );
+    QString configkey = s_locale;
+    configkey.append("-");
 
     using namespace std;
     locale loc;
@@ -158,46 +129,39 @@ wxString FontMgr::GetFontConfigKey( const wxString &description )
 //    wcstombs( cFontDesc, description.c_str(), 100 );
 //    cFontDesc[100] = 0;
 
-    wxCharBuffer abuf = description.ToUTF8();
+    QByteArray abuf = description.toUtf8();
     
-    int fdLen = strlen( abuf );
+    int fdLen = strlen( abuf.data() );
 
-    configkey.Append(
-            wxString::Format( _T("%08lx"),
-                              coll.hash( abuf.data(), abuf.data() + fdLen ) ) );
+    configkey.append(QString("").sprintf("%08lx",coll.hash( abuf.data(), abuf.data() + fdLen ) ) );
     return configkey;
 }
 
-wxFont *FontMgr::GetFont( const wxString &TextElement, int user_default_size )
+QFont FontMgr::GetFont( const QString &TextElement, int user_default_size )
 {
     //    Look thru the font list for a match
-    MyFontDesc *pmfd;
-    auto node = m_fontlist->GetFirst();
-    while( node ) {
-        pmfd = node->GetData();
-        if( pmfd->m_dialogstring == TextElement ) {
-            if(pmfd->m_configstring.BeforeFirst('-') == s_locale)
-                return pmfd->m_font;
+    for(int i=0; i<m_fontlist.size(); i++)
+    {
+        MyFontDesc pmfd = m_fontlist[i];
+        if( pmfd.m_dialogstring == TextElement )
+        {
+            if(pmfd.m_configstring.left(pmfd.m_configstring.indexOf('-')) == s_locale)
+            {
+                return pmfd.m_font;
+            }
         }
-        node = node->GetNext();
     }
 
     // Found no font, so create a nice one and add to the list
-    wxString configkey = GetFontConfigKey( TextElement );
+    QString configkey = GetFontConfigKey( TextElement );
 
     //    Now create a benign, always present native font
     //    with optional user requested default size
     
     //    Get the system default font.
-    wxFont sys_font = *wxNORMAL_FONT;
-    int sys_font_size = sys_font.GetPointSize();
-    wxString FaceName = sys_font.GetFaceName();
-    
-#ifdef __OCPN__ANDROID__
-    sys_font_size = 18;
-    FaceName = _T("Roboto");
-#endif    
-    
+    QFont sys_font = QGuiApplication::font();
+    int sys_font_size = sys_font.pointSize();
+    QString family = sys_font.family();
 
     int new_size;
     if( 0 == user_default_size )
@@ -205,56 +169,38 @@ wxFont *FontMgr::GetFont( const wxString &TextElement, int user_default_size )
     else
         new_size = user_default_size;
 
-    wxString nativefont = GetSimpleNativeFont( new_size, FaceName );
-    wxFont *nf = wxFont::New( nativefont );
-    
-    wxColor color = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+    QFont nf = GetSimpleNativeFont(new_size, family);
+    QColor color = Qt::black;
+    m_fontlist.append( MyFontDesc( TextElement, configkey, nf, color ) );
 
-    MyFontDesc *pnewfd = new MyFontDesc( TextElement, configkey, nf, color );
-    m_fontlist->Append( pnewfd );
-
-    return pnewfd->m_font;
-
+    return nf;
 }
 
-wxString FontMgr::GetSimpleNativeFont( int size, wxString face )
+QFont FontMgr::GetSimpleNativeFont( int size, QString family )
 {
-    //    Now create a benign, always present native string
-    wxString nativefont;
-
-    // this should work for all platforms
-    nativefont = wxFont(size, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, face)
-    .GetNativeFontInfoDesc();
-    
-    return nativefont;
+    QFont font(family, size, QFont::Weight::Normal);
+    font.setStyle(QFont::StyleNormal);
+    font.setUnderline(false);
+    return font;
 }
 
-bool FontMgr::SetFont(const wxString &TextElement, wxFont *pFont, wxColour color)
+bool FontMgr::SetFont(const QString &TextElement, QFont pFont, QColor  color)
 {
     //    Look thru the font list for a match
-    MyFontDesc *pmfd;
-    auto node = m_fontlist->GetFirst();
-    while( node ) {
-        pmfd = node->GetData();
-        if( pmfd->m_dialogstring == TextElement ) {
-            if(pmfd->m_configstring.BeforeFirst('-') == s_locale) {
-                
-            // Todo Think about this
-            //
-
-//      Cannot delete the present font, since it may be in use elsewhere
-//      This WILL leak....but only on font changes
-
-//              delete pmfd->m_font;                            // purge any old value
-
-                pmfd->m_font = pFont;
-                pmfd->m_nativeInfo = pFont->GetNativeFontInfoDesc();
-                pmfd->m_color = color;
+    for(int i=0; i<m_fontlist.size(); i++)
+    {
+        MyFontDesc &pmfd = m_fontlist[i];
+        if( pmfd.m_dialogstring == TextElement )
+        {
+            if(pmfd.m_configstring.left(pmfd.m_configstring.indexOf('-')) == s_locale)
+            {
+                pmfd.m_font = pFont;
+                pmfd.m_nativeInfo = pFont.toString();
+                pmfd.m_color = color;
 
                 return true;
             }
         }
-        node = node->GetNext();
     }
 
     return false;
@@ -262,278 +208,182 @@ bool FontMgr::SetFont(const wxString &TextElement, wxFont *pFont, wxColour color
 
 int FontMgr::GetNumFonts( void ) const
 {
-    return m_fontlist->GetCount();
+    return m_fontlist.size();
 }
 
-const wxString & FontMgr::GetConfigString( int i ) const
+const QString & FontMgr::GetConfigString( int i ) const
 {
-    MyFontDesc * pfd = m_fontlist->Item( i )->GetData();
-    return pfd->m_configstring;
+    m_fontlist[i].m_configstring;
 }
 
-const wxString & FontMgr::GetDialogString( int i ) const
+const QString & FontMgr::GetDialogString( int i ) const
 {
-    MyFontDesc *pfd = m_fontlist->Item( i )->GetData();
-    return pfd->m_dialogstring;
+    m_fontlist[i].m_dialogstring;
 }
 
-const wxString & FontMgr::GetNativeDesc( int i ) const
+const QString & FontMgr::GetNativeDesc( int i ) const
 {
-    MyFontDesc *pfd = m_fontlist->Item( i )->GetData();
-    return pfd->m_nativeInfo;
+    m_fontlist[i].m_nativeInfo;
 }
 
-wxString FontMgr::GetFullConfigDesc( int i ) const
+QString FontMgr::GetFullConfigDesc( int i ) const
 {
-    MyFontDesc *pfd = m_fontlist->Item( i )->GetData();
-    wxString ret = pfd->m_dialogstring;
-    ret.Append( _T ( ":" ) );
-    ret.Append( pfd->m_nativeInfo );
-    ret.Append( _T ( ":" ) );
+    MyFontDesc pfd = m_fontlist[i];
+    QString ret = pfd.m_dialogstring;
+    ret.append( ( ":" ) );
+    ret.append( pfd.m_nativeInfo );
+    ret.append( ( ":" ) );
 
-    wxString cols( _T("rgb(0,0,0)") );
-    if( pfd->m_color.IsOk() ) cols = pfd->m_color.GetAsString( wxC2S_CSS_SYNTAX );
+    QString cols( ("#000000") );
+    if( pfd.m_color.isValid() ) cols = pfd.m_color.name();
 
-    ret.Append( cols );
+    ret.append( cols );
     return ret;
 }
 
-MyFontDesc *FontMgr::FindFontByConfigString( wxString pConfigString )
+MyFontDesc* FontMgr::FindFontByConfigString( QString pConfigString )
 {
     //    Search for a match in the list
-    MyFontDesc *pmfd;
-    auto node = m_fontlist->GetFirst();
-    
-    while( node ) {
-        pmfd = node->GetData();
-        if( pmfd->m_configstring == pConfigString ) {
-            return pmfd;
+    for(int i=0; i<m_fontlist.size(); i++)
+    {
+        MyFontDesc pmfd = m_fontlist[i];
+        if( pmfd.m_configstring == pConfigString ) {
+            return &(m_fontlist[i]);
         }
-        node = node->GetNext();
     }
     
     return NULL;
 }
     
 
-void FontMgr::LoadFontNative( wxString *pConfigString, wxString *pNativeDesc )
+void FontMgr::LoadFontNative(const QString& pConfigString, const QString &pNativeDesc )
 {
     //    Parse the descriptor string
 
-    wxStringTokenizer tk( *pNativeDesc, _T ( ":" ) );
-    wxString dialogstring = tk.GetNextToken();
-    wxString nativefont = tk.GetNextToken();
+    QStringList tk = pNativeDesc.split( ":"  );
+    int i = 0;
+    QString dialogstring = tk[i++];
+    QString nativefont = tk[i++];
 
-    wxString c = tk.GetNextToken();
-    wxColour color( c );            // from string description
+    QString c = tk[i++];
+    QColor  color;
+    color.setNamedColor(c);// from string description
 
     //    Search for a match in the list
-    MyFontDesc *pmfd;
-    auto node = m_fontlist->GetFirst();
+    bool found = false;
 
-    while( node ) {
-        pmfd = node->GetData();
-        if( pmfd->m_configstring == *pConfigString ) {
-            if(pmfd->m_configstring.BeforeFirst('-') == g_locale) {
-                pmfd->m_nativeInfo = nativefont;
-                wxFont *nf = pmfd->m_font->New( pmfd->m_nativeInfo );
-                pmfd->m_font = nf;
+    for(int i=0; i<m_fontlist.size(); i++)
+    {
+        MyFontDesc &pmfd = m_fontlist[i];
+        if( pmfd.m_configstring == pConfigString )
+        {
+            if(pmfd.m_configstring.left(pmfd.m_configstring.indexOf('-')) == s_locale)
+            {
+                pmfd.m_font.fromString(nativefont);
+                pmfd.m_nativeInfo = nativefont;
+                pmfd.m_color = color;
+                found = true;
                 break;
             }
         }
-        node = node->GetNext();
     }
+
 
     //    Create and add the font to the list
-    if( !node ) {
-
-        wxFont *nf0 = new wxFont();
-        
-#ifdef __OCPN__ANDROID__
-        wxFont *nf = new wxFont( nativefont );
-#else
-        wxFont *nf = nf0->New( nativefont );
-#endif
-        
-        double font_size = nf->GetPointSize();
-        wxString s = nf->GetNativeFontInfoDesc();
-
-        //    Scrub the native font string for bad unicode conversion
-#ifdef __WXMSW__
-        wxString face = nf->GetFaceName();
-        const wxChar *t = face.c_str();
-        if( *t > 255 ) {
-            delete nf;
-            wxString substitute_native = GetSimpleNativeFont( 12, _T("") );
-            nf = nf0->New( substitute_native );
-        }
-#endif
-        delete nf0;
-
-        MyFontDesc *pnewfd = new MyFontDesc( dialogstring, *pConfigString, nf, color );
-        m_fontlist->Append( pnewfd );
+    if( !found ) {
+        QFont f;
+        f.fromString(nativefont);
+        m_fontlist.append(MyFontDesc( dialogstring, pConfigString, f, color ) );
 
     }
 }
 
-wxFont* FontMgr::FindOrCreateFont( int point_size, wxFontFamily family, 
-                    wxFontStyle style, wxFontWeight weight, bool underline,
-                    const wxString &facename,
-                    wxFontEncoding encoding)
+QFont FontMgr::FindOrCreateFont( int point_size,  QString family, QFont::Style style, int weight, bool underline)
 {
-    if (m_wxFontCache == 0)
-        m_wxFontCache = new OCPNwxFontList;
-    return m_wxFontCache->FindOrCreateFont( point_size, family, style, weight,
-        underline, facename, encoding);
+    return m_QFontCache.FindOrCreateFont( point_size, family, style, weight, underline);
 }        
 
-bool OCPNwxFontList::isSame(wxFont *font, int pointSize, wxFontFamily family,
-                             wxFontStyle style,
-                             wxFontWeight weight,
-                             bool underline,
-                             const wxString& facename,
-                             wxFontEncoding encoding)
+bool OCPNQFontList::isSame(const QFont& font, int pointSize, const QString& family, QFont::Style style, int weight, bool underline)
 {
-    if (
-         font->GetPointSize () == pointSize &&
-         font->GetStyle () == style &&
-         font->GetWeight () == weight &&
-         font->GetUnderlined () == underline )
-    {
-        bool same;
-
-        // empty facename matches anything at all: this is bad because
-        // depending on which fonts are already created, we might get back
-        // a different font if we create it with empty facename, but it is
-        // still better than never matching anything in the cache at all
-        // in this case
-        if ( !facename.empty() )
-        {
-            const wxString& fontFace = font->GetFaceName();
-
-            // empty facename matches everything
-            same = !fontFace || fontFace == facename;
-        }
-        else 
-        {
-            same = font->GetFamily() == family;
-        }
-        if ( same && (encoding != wxFONTENCODING_DEFAULT) )
-        {
-            // have to match the encoding too
-            same = font->GetEncoding() == encoding;
-        }
-        return same;
-    }
-    return false;
+    return font.pointSize() == pointSize && font.family() == family && font.style() == style && font.weight() == weight && font.underline() == underline;
 }
 
-wxFont *OCPNwxFontList::FindOrCreateFont(int pointSize,
-                                     wxFontFamily family,
-                                     wxFontStyle style,
-                                     wxFontWeight weight,
-                                     bool underline,
-                                     const wxString& facename,
-                                     wxFontEncoding encoding)
+QFont OCPNQFontList::FindOrCreateFont(int point_size,  const QString& family, QFont::Style style, int weight, bool underline)
 {
-    // from wx source code
-    // In all ports but wxOSX, the effective family of a font created using
-    // wxFONTFAMILY_DEFAULT is wxFONTFAMILY_SWISS so this is what we need to
-    // use for comparison.
-    //
-    // In wxOSX the original wxFONTFAMILY_DEFAULT seems to be kept and it uses
-    // a different font than wxFONTFAMILY_SWISS anyhow so we just preserve it.
-#ifndef __WXOSX__
-    if ( family == wxFONTFAMILY_DEFAULT )
-        family = wxFONTFAMILY_SWISS;
-#endif // !__WXOSX__
-
-    wxFont *font;
-    wxList::compatibility_iterator node;
-    for (node = list.GetFirst(); node; node = node->GetNext())
+    QFont font(family, point_size, weight);
+    font.setStyle(style);
+    font.setUnderline(underline);
+#if 0
+    bool found = false;
+    for(int i=0; i<list.size(); i++)
     {
-        font = (wxFont *)node->GetData();
-        if (isSame(font, pointSize, family, style, weight, underline, facename, encoding))
-            return font;
+        QFont f = list[i];
+        if(isSame(f, point_size, family, style, weight, underline))
+        {
+            found = true;
+            break;
+        }
     }
-
-    // font not found, create the new one
-    font = NULL;
-    wxFont fontTmp(pointSize, family, style, weight, underline, facename, encoding);
-    if (fontTmp.IsOk())
-    {
-        font = new wxFont(fontTmp);
-        list.Append(font);
-        
-        // double check the font really roundtrip
-        //  Removed after verification.
-        //wxASSERT(isSame(font, pointSize, family, style, weight, underline, facename, encoding));
-    }
-
+    if(!found) list.append(font);
+#endif
     return font;
 }
 
-void OCPNwxFontList::FreeAll( void )
+void OCPNQFontList::FreeAll( void )
 {
-    wxFont *font;
-    wxList::compatibility_iterator node;
-    for (node = list.GetFirst(); node; node = node->GetNext())
-    {
-        font = (wxFont *)node->GetData();
-        delete font;
-    }
+    list.clear();
 }
 
-static wxString FontCandidates[] = {
-    _T("AISTargetAlert"), 
-    _T("AISTargetQuery"),
-    _T("StatusBar"),
-    _T("AIS Target Name" ),
-    _T("ObjectQuery"),
-    _T("RouteLegInfoRollover"),
-    _T("ExtendedTideIcon"),
-    _T("CurrentValue"),
-    _T("Console Legend"),
-    _T("Console Value"),
-    _T("AISRollover"),
-    _T("TideCurrentGraphRollover"),
-    _T("Marks"),
-    _T("ChartTexts"),
-    _T("ToolTips"),
-    _T("Dialog"),
-    _T("Menu"),
-    _T("END_OF_LIST")
+static QString FontCandidates[] = {
+    ("AISTargetAlert"),
+    ("AISTargetQuery"),
+    ("StatusBar"),
+    ("AIS Target Name" ),
+    ("ObjectQuery"),
+    ("RouteLegInfoRollover"),
+    ("ExtendedTideIcon"),
+    ("CurrentValue"),
+    ("Console Legend"),
+    ("Console Value"),
+    ("AISRollover"),
+    ("TideCurrentGraphRollover"),
+    ("Marks"),
+    ("ChartTexts"),
+    ("ToolTips"),
+    ("Dialog"),
+    ("Menu"),
+    ("END_OF_LIST")
 };
 
 
 void FontMgr::ScrubList( )
 {
-    wxString now_locale = g_locale;
-    wxArrayString string_array;
+    QString now_locale = g_locale;
+    QStringList string_array;
     
     //  Build the composite candidate array
-    wxArrayString candidateArray;
+    QStringList candidateArray;
     unsigned int i = 0;
     
     // The fixed, static list
     while( true ){
-        wxString candidate = FontCandidates[i];
-        if(candidate == _T("END_OF_LIST") ) {
+        QString candidate = FontCandidates[i];
+        if(candidate == ("END_OF_LIST") ) {
             break;
         }
         
-        candidateArray.Add(candidate);
+        candidateArray.append(candidate);
         i++;
     }
         
     //  The Aux Key array    
-    for(unsigned int i=0 ; i <  m_AuxKeyArray.GetCount() ; i++){
-        candidateArray.Add(m_AuxKeyArray[i]);
+    for(unsigned int i=0 ; i <  m_AuxKeyArray.size() ; i++){
+        candidateArray.append(m_AuxKeyArray[i]);
     }
     
     
-    for(unsigned int i = 0; i < candidateArray.GetCount() ; i++ ){
-        wxString candidate = candidateArray[i];
+    for(unsigned int i = 0; i < candidateArray.size() ; i++ ){
+        QString candidate = candidateArray[i];
         
         //  For each font identifier string in the FontCandidate array...
         
@@ -541,20 +391,17 @@ void FontMgr::ScrubList( )
         //  that is correct, according to the currently load .mo file.
         //  If found, add to a temporary array
         
-        wxString trans = wxGetTranslation(candidate);
+        QString trans = /*wxGetTranslation(candidate)*/candidate;
         
-        MyFontDesc *pmfd;
-        auto node = m_fontlist->GetFirst();
-        while( node ) {
-            pmfd = node->GetData();
-            wxString tlocale = pmfd->m_configstring.BeforeFirst('-');
+        for(int i=0; i<m_fontlist.size(); i++)
+        {
+            MyFontDesc pmfd = m_fontlist[i];
+            QString tlocale = pmfd.m_configstring.left(pmfd.m_configstring.indexOf('-'));
             if( tlocale == now_locale) {
-                if(trans == pmfd->m_dialogstring){
-                    string_array.Add(pmfd->m_dialogstring);
+                if(trans == pmfd.m_dialogstring){
+                    string_array.append(pmfd.m_dialogstring);
                 }
             }
- 
-            node = node->GetNext();
         }
     }        
 
@@ -562,51 +409,44 @@ void FontMgr::ScrubList( )
     // Walk the loaded list again.
     // If a list item's translation is not in the "good" array, mark it for removal
     
-    MyFontDesc *pmfd;
-    auto node = m_fontlist->GetFirst();
-    while( node ) {
-        pmfd = node->GetData();
-        wxString tlocale = pmfd->m_configstring.BeforeFirst('-');
+    for(int i=0; i<m_fontlist.size(); i++)
+    {
+        MyFontDesc &pmfd = m_fontlist[i];
+        QString tlocale = pmfd.m_configstring.left(pmfd.m_configstring.indexOf('-'));
         if( tlocale == now_locale) {
             bool bfound = false;
-            for(unsigned int i=0 ; i < string_array.GetCount() ; i++){
-                if( string_array[i] == pmfd->m_dialogstring){
+            for(unsigned int i=0 ; i < string_array.count() ; i++){
+                if( string_array[i] == pmfd.m_dialogstring){
                     bfound = true;
                     break;
                 }
             }
             if(!bfound){        // mark for removal
-                pmfd->m_dialogstring = _T("");
-                pmfd->m_configstring = _T("");
+                pmfd.m_dialogstring = ("");
+                pmfd.m_configstring = ("");
             }
         }
-        
-        node = node->GetNext();
     }
     
     //  Remove the marked list items
-    node = m_fontlist->GetFirst();
-    while( node ) {
-        pmfd = node->GetData();
-        if( pmfd->m_dialogstring == _T("") ) {
-            bool bd = m_fontlist->DeleteObject(pmfd);
-            if(bd)
-                node = m_fontlist->GetFirst();
+    for(int i=0; i<m_fontlist.size(); i++)
+    {
+        MyFontDesc pmfd = m_fontlist[i];
+        if( pmfd.m_dialogstring == ("") ) {
+            m_fontlist.removeAt(i);
+            i--;
         }
-        else
-            node = node->GetNext();
-        
     }
  
     //  And finally, for good measure, make sure that everything in the candidate array has a valid entry in the list
     i = 0;
     while( true ){
-        wxString candidate = FontCandidates[i];
-        if(candidate == _T("END_OF_LIST") ) {
+        QString candidate = FontCandidates[i];
+        if(candidate == ("END_OF_LIST") ) {
             break;
         }
 
-        GetFont( wxGetTranslation(candidate), g_default_font_size );
+        GetFont( /*wxGetTranslation*/(candidate), g_default_font_size );
      
         i++;
     }
@@ -614,13 +454,13 @@ void FontMgr::ScrubList( )
      
 }
 
-bool FontMgr::AddAuxKey( wxString key )
+bool FontMgr::AddAuxKey( QString key )
 {
-    for(unsigned int i=0 ; i <  m_AuxKeyArray.GetCount() ; i++){
+    for(unsigned int i=0 ; i <  m_AuxKeyArray.count() ; i++){
         if(m_AuxKeyArray[i] == key)
             return false;
     }
-    m_AuxKeyArray.Add(key);
+    m_AuxKeyArray.append(key);
     return true;
 }
 

@@ -1545,8 +1545,8 @@ void glChartCanvas::GridDraw( )
     QColor GridColor = GetGlobalColor( "SNDG1"  );
 
     if(!m_gridfont.IsBuilt()){
-        QFont *dFont = FontMgr::Get().GetFont( ("ChartTexts"), 0 );
-        QFont font = *dFont;
+        QFont dFont = FontMgr::Get().GetFont( ("ChartTexts"), 0 );
+        QFont font = dFont;
         font.setPointSize(8);
         font.setWeight(QFont::Weight::Normal);
         
@@ -1904,11 +1904,11 @@ void glChartCanvas::DrawCloseMessage(QString msg)
 {
     if(1){
         
-        QFont *pfont = FontMgr::Get().FindOrCreateFont(12, "Microsoft YH", QFont::StyleNormal, QFont::Weight::Normal);
+        QFont pfont = FontMgr::Get().FindOrCreateFont(12, "Microsoft YH", QFont::StyleNormal, QFont::Weight::Normal);
         
         TexFont texfont;
         
-        texfont.Build(*pfont);
+        texfont.Build(pfont);
         int w, h;
         texfont.GetTextExtent( msg, &w, &h);
         h += 2;

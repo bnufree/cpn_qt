@@ -146,11 +146,11 @@ protected:
       void keyPressEvent(QKeyEvent *event);
       void keyReleaseEvent(QKeyEvent *event);
       void paintEvent(QPaintEvent* event);
-      void focusInEvent(QFocusEvent *);
-      void focusOutEvent(QFocusEvent *);
+      void focusInEvent(QFocusEvent *){}
+      void focusOutEvent(QFocusEvent *){}
       void resizeEvent(QResizeEvent * event );
 public slots:
-      void OnToolLeftClick();
+//      void OnToolLeftClick();
       bool MouseEventOverlayWindows( QMouseEvent* event );
       bool MouseEventChartBar( QMouseEvent* event );
       bool MouseEventSetup( QMouseEvent* event, bool b_handle_dclick = true );
@@ -265,7 +265,7 @@ public slots:
       void GetCursorLatLon(double *lat, double *lon);
 
       bool PanCanvas(double dx, double dy);
-      void StopAutoPan(void);
+//      void StopAutoPan(void);
 
       void ZoomCanvas(double factor, bool can_zoom_to_cursor=true, bool stoptimer=true );
       void DoZoomCanvas(double factor,  bool can_zoom_to_cursor = true);
@@ -274,7 +274,7 @@ public slots:
       void DoRotateCanvas( double rotation );
       void DoTiltCanvas( double tilt );
 
-      void ShowGoToPosition(void);
+//      void ShowGoToPosition(void);
       void HideGlobalToolbar();
       void ShowGlobalToolbar();
 
@@ -664,7 +664,7 @@ private:
       
       QColor    m_fog_color;
       bool        m_disable_edge_pan;
-      QFont      *m_pgridFont;
+      QFont      m_pgridFont;
       
       bool        m_dragoffsetSet;
       

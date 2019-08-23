@@ -165,6 +165,8 @@ ChartBase::ChartBase()
     m_pNoCOVRTablePoints = NULL;
 
     m_EdDate.setDate(QDate(2000,1,1));
+    m_ModifyDateTime.setDate(QDate(2000,1,1));
+    mFileSize = 0;
 
     m_lon_datum_adjust = 0.;
     m_lat_datum_adjust = 0.;

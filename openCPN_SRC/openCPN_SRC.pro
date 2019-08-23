@@ -35,6 +35,7 @@ LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -llz4
 LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -ltess2
 LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -lmipmap
 LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -llzma
+LIBS += -L$${OPENCPN_3RD_STATIC_LIB_PATH}\ -lsqlite3
 LIBS += -lpsapi
 
 QT       += core gui network positioning core_private opengl svg xml webkitwidgets multimedia
@@ -79,7 +80,7 @@ DEFINES *= ZCHX_OPENCPN_PLUGIN ocpnUSE_GL
 
 
 HEADERS += \
-#    bbox.h \
+    bbox.h \
 #    CanvasConfig.h \
 #    CanvasOptions.h \
 #    chart1.h \
@@ -102,17 +103,17 @@ HEADERS += \
 #    dychart.h \
 #    emboss_data.h \
 #    FlexHash.h \
-#    FontDesc.h \
-#    FontMgr.h \
+    FontDesc.h \
+    FontMgr.h \
 #    garmin_wrapper.h \
 #    geodesic.h \
-#    georef.h \
+    georef.h \
     glChartCanvas.h \
     glTexCache.h \
     glTextureDescriptor.h \
     glTextureManager.h \
 #    GoToPositionDialog.h \
-#    gshhs.h \
+    gshhs.h \
 #    Hyperlink.h \
 #    IDX_entry.h \
 #    iENCToolbar.h \
@@ -188,7 +189,7 @@ HEADERS += \
 #    tzdata.h \
 #    undo.h \
 #    vector2D.h \
-#    viewport.h \
+    viewport.h \
 #    wificlient.h \
 #    WindowDestroyListener.h \
 #    wx28compat.h \
@@ -213,7 +214,7 @@ HEADERS += \
     ocpn_plugin.h
 
 SOURCES += \
-#    bbox.cpp \
+    bbox.cpp \
 #    CanvasConfig.cpp \
 #    CanvasOptions.cpp \
 #    chart1.cpp \
@@ -232,17 +233,17 @@ SOURCES += \
 #    cutil.cpp \
 #    DetailSlider.cpp \
 #    FlexHash.cpp \
-#    FontDesc.cpp \
-#    FontMgr.cpp \
+    FontDesc.cpp \
+    FontMgr.cpp \
 #    garmin_wrapper.cpp \
 #    geodesic.cpp \
-#    georef.cpp \
+    georef.cpp \
     glChartCanvas.cpp \
     glTexCache.cpp \
     glTextureDescriptor.cpp \
     glTextureManager.cpp \
 #    GoToPositionDialog.cpp \
-#    gshhs.cpp \
+    gshhs.cpp \
 #    Hyperlink.cpp \
 #    IDX_entry.cpp \
 #    iENCToolbar.cpp \
@@ -293,7 +294,7 @@ SOURCES += \
 #    scrollingdialog.cpp \
 #    Select.cpp \
 #    SelectItem.cpp \
-#    SencManager.cpp \
+    SencManager.cpp \
 #    SendToGpsDlg.cpp \
 #    Station_Data.cpp \
     styles.cpp \
@@ -312,7 +313,7 @@ SOURCES += \
 #    TTYScroll.cpp \
 #    TTYWindow.cpp \
 #    undo.cpp \
-#    viewport.cpp \
+    viewport.cpp \
 #    wificlient.cpp \
 #    macutils.c \
 #    ocpnhelper.c \

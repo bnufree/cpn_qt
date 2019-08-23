@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  GSHHS Chart Object (Global Self-consistent, Hierarchical, High-resolution Shoreline)
@@ -31,14 +31,6 @@
  *
  */
 
-#include "wx/wxprec.h"
-#include "wx/zchxLog.h"
-
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif
-
-#include <wx/file.h>
 
 #include "dychart.h"
 
@@ -48,7 +40,9 @@
 
 #include "gshhs.h"
 #include "chartbase.h" // for projections
-#include "wx28compat.h"
+//#include "wx28compat.h"
+
+#include <QDebug>
 
 
 
@@ -60,14 +54,14 @@
 
 //typedef void (APIENTRY * PFNGLBINDBUFFERPROC) (GLenum target, GLuint buffer);
 
-extern wxString gWorldMapLocation;
+extern QString gWorldMapLocation;
 
 //-------------------------------------------------------------------------
 
 GSHHSChart::GSHHSChart() {
     reader = NULL;
-    land = wxColor( 250, 250, 250 );
-    water = wxColor( 0, 0, 0 );
+    land = QColor ( 250, 250, 250 );
+    water = QColor ( 0, 0, 0 );
     
 }
 
@@ -77,8 +71,8 @@ GSHHSChart::~GSHHSChart() {
 
 void GSHHSChart::SetColorScheme( ColorScheme scheme ) {
 
-    land = wxColor( 170, 175, 80 );
-    water = wxColor( 170, 195, 240 );
+    land = QColor ( 170, 175, 80 );
+    water = QColor ( 170, 195, 240 );
 
     float dim = 1.0;
 
@@ -93,11 +87,11 @@ void GSHHSChart::SetColorScheme( ColorScheme scheme ) {
             return;
     }
 
-    land.Set( land.Red()*dim, land.Green()*dim, land.Blue()*dim );
-    water.Set( water.Red()*dim, water.Green()*dim, water.Blue()*dim );
+    land.setRgbF(land.red()*dim, land.green()*dim, land.blue()*dim );
+    water.setRgbF(water.red()*dim, water.green()*dim, water.blue()*dim );
 }
 
-void GSHHSChart::SetColorsDirect( wxColour newLand, wxColour newWater ) {
+void GSHHSChart::SetColorsDirect( QColor  newLand, QColor  newWater ) {
     land =  newLand;
     water = newWater;
 }
@@ -127,12 +121,9 @@ void GSHHSChart::RenderViewOnDC( ocpnDC& dc, ViewPort& vp )
     if( ! reader ) {
         reader = new GshhsReader( );
         if( reader->GetPolyVersion() < 210 || reader->GetPolyVersion() > 240 ) {
-            ZCHX_LOGMSG(wxString::Format(_T("GSHHS World chart files have wrong version. Found %d, expected 210-220."),
-                    reader->GetPolyVersion() ));
+            qDebug("GSHHS World chart files have wrong version. Found %d, expected 210-220.", reader->GetPolyVersion() );
         } else {
-            ZCHX_LOGMSG(
-				wxString::Format(_T("Background world map loaded from GSHHS datafiles found in: ") +
-                    gWorldMapLocation ));
+            qDebug("Background world map loaded from GSHHS datafiles found in:%S ", gWorldMapLocation.toUtf8().data());
         }
     }
 
@@ -201,14 +192,14 @@ void GshhsPolyCell::ReadPoly(contour_list &poly)
                fread(&Y, sizeof Y, 1, fpoly) != 1)
                 goto fail;
 
-            tmp_contour.push_back(wxRealPoint(X*GSHHS_SCL,Y*GSHHS_SCL));
+            tmp_contour.push_back(zchxPointF(X*GSHHS_SCL,Y*GSHHS_SCL));
         }
         poly.push_back(tmp_contour);
     }
     return;
 
 fail:
-    ZCHX_LOGMSG( _T("gshhs ReadPoly failed") );
+    qDebug("gshhs ReadPoly failed") ;
 }
 
 void GshhsPolyCell::ReadPolygonFile()
@@ -235,17 +226,17 @@ void GshhsPolyCell::ReadPolygonFile()
     return;
 
 fail:
-    ZCHX_LOGMSG( _T("gshhs ReadPolygon failed") );
+    qDebug("gshhs ReadPolygon failed");
 }
 
-wxPoint2DDouble GetDoublePixFromLL(ViewPort &vp, double lat, double lon)
+zchxPointF GetDoublePixFromLL(ViewPort &vp, double lat, double lon)
 {
-    wxPoint2DDouble p = vp.GetDoublePixFromLL(lat, lon);
-    p.m_x -= vp.rv_rect.x, p.m_y -= vp.rv_rect.y;
+    zchxPointF p = vp.GetDoublePixFromLL(lat, lon);
+    p.x -= vp.rv_rect.x(), p.y -= vp.rv_rect.y();
     return p;
 }
 
-void GshhsPolyCell::DrawPolygonFilled( ocpnDC &pnt, contour_list * p, double dx, ViewPort &vp,  wxColor const &color )
+void GshhsPolyCell::DrawPolygonFilled( ocpnDC &pnt, contour_list * p, double dx, ViewPort &vp,  QColor  const &color )
 {
     if( !p->size() ) /* size of 0 is very common, and setting the brush is
                         actually quite slow, so exit early */
@@ -263,20 +254,20 @@ void GshhsPolyCell::DrawPolygonFilled( ocpnDC &pnt, contour_list * p, double dx,
     for( c = 0; c < p->size(); c++ ) {
         if( !p->at( c ).size() ) continue;
 
-        wxPoint* poly_pt = new wxPoint[ p->at(c).size() ];
+        zchxPoint* poly_pt = new zchxPoint[ p->at(c).size() ];
 
         contour &cp = p->at( c );
         pointCount = 0;
 
         for( v = 0; v < p->at( c ).size(); v++ ) {
-            wxRealPoint &ccp = cp.at( v );
-            wxPoint2DDouble q = GetDoublePixFromLL(vp, ccp.y, ccp.x + dx );
-            if(std::isnan(q.m_x)) {
+            zchxPointF &ccp = cp.at( v );
+            zchxPointF q = GetDoublePixFromLL(vp, ccp.y, ccp.x + dx );
+            if(std::isnan(q.x)) {
                 pointCount = 0;
                 break;
             }
 
-            x = q.m_x, y = q.m_y;
+            x = q.x, y = q.y;
 
             if( v == 0 || x != x_old || y != y_old ) {
                 poly_pt[pointCount].x = x;
@@ -359,7 +350,7 @@ void __CALL_CONVENTION gshhserrorCallback( GLenum errorCode )
 {
    const GLubyte *estring;
    estring = gluErrorString(errorCode);
-   ZCHX_LOGMSG(wxString::Format(_T("OpenGL Tessellation Error: %s"), estring) );
+   qDebug("OpenGL Tessellation Error: %s", estring);
 }
 
 void __CALL_CONVENTION gshhsbeginCallback( GLenum type )
@@ -381,7 +372,7 @@ void __CALL_CONVENTION gshhsendCallback()
 {
 }
 
-void GshhsPolyCell::DrawPolygonFilledGL( contour_list * p, float_2Dpt **pv, int *pvc, ViewPort &vp,  wxColor const &color, bool idl )
+void GshhsPolyCell::DrawPolygonFilledGL( contour_list * p, float_2Dpt **pv, int *pvc, ViewPort &vp,  QColor  const &color, bool idl )
 {
     if( !p->size() ) // size of 0 is very common, exit early
         return;
@@ -408,17 +399,17 @@ void GshhsPolyCell::DrawPolygonFilledGL( contour_list * p, float_2Dpt **pv, int 
             gluTessBeginContour( tobj );
 
             for(unsigned int v = 0; v < p->at( c ).size(); v++ ) {
-                wxRealPoint &ccp = cp.at( v );
+                zchxPointF &ccp = cp.at( v );
 
                 if( v == 0 || ccp != cp.at(v-1) ) {
                     GLvertex* vertex = new GLvertex();
                     g_vertexes.push_back(vertex);
 
-                    wxPoint2DDouble q;
+                    zchxPointF q;
                     if(glChartCanvas::HasNormalizedViewPort(vp))
                         q = GetDoublePixFromLL(vp, ccp.y, ccp.x );
                     else // tesselation directly from lat/lon
-                        q.m_x = ccp.y, q.m_y = ccp.x;
+                        q.x = ccp.y, q.y = ccp.x;
 
                     if(vp.m_projection_type != PROJECTION_POLAR) {
                         // need to correctly pick +180 or -180 longitude for projections
@@ -427,14 +418,14 @@ void GshhsPolyCell::DrawPolygonFilledGL( contour_list * p, float_2Dpt **pv, int 
                         if(idl && ccp.x == 180) {
                             if(vp.m_projection_type == PROJECTION_MERCATOR ||
                                vp.m_projection_type == PROJECTION_EQUIRECTANGULAR)
-                                q.m_x -= 40058986*4096.0; // 360 degrees in normalized viewport
+                                q.x -= 40058986*4096.0; // 360 degrees in normalized viewport
                             else
-                                q.m_x -= 360; // lat/lon coordinates
+                                q.x -= 360; // lat/lon coordinates
                         }
                     }
 
-                    vertex->info.x = q.m_x;
-                    vertex->info.y = q.m_y;
+                    vertex->info.x = q.x;
+                    vertex->info.y = q.y;
 
                     gluTessVertex( tobj, (GLdouble*)vertex, (GLdouble*)vertex);
                 }
@@ -458,7 +449,7 @@ void GshhsPolyCell::DrawPolygonFilledGL( contour_list * p, float_2Dpt **pv, int 
         g_pv.clear();
     }
 
-    glColor3ub(color.Red(), color.Green(), color.Blue());
+    glColor3ub(color.red(), color.green(), color.blue());
 
     if(glChartCanvas::HasNormalizedViewPort(vp)) {
         glVertexPointer(2, GL_FLOAT, 2*sizeof(float), *pv);
@@ -467,9 +458,9 @@ void GshhsPolyCell::DrawPolygonFilledGL( contour_list * p, float_2Dpt **pv, int 
         float_2Dpt *pvt = new float_2Dpt[*pvc];
         for(int i=0; i<*pvc; i++) {
             float_2Dpt *pc = *pv + i;
-            wxPoint2DDouble q = vp.GetDoublePixFromLL(pc->y, pc->x);
-            pvt[i].x = q.m_y;
-            pvt[i].y = q.m_x;
+            zchxPointF q = vp.GetDoublePixFromLL(pc->y, pc->x);
+            pvt[i].x = q.y;
+            pvt[i].y = q.x;
         }
 
         glVertexPointer(2, GL_FLOAT, 2*sizeof(float), pvt);
@@ -483,11 +474,10 @@ void GshhsPolyCell::DrawPolygonFilledGL( contour_list * p, float_2Dpt **pv, int 
 #define DRAW_POLY_FILLED(POLY,COL) if(POLY) DrawPolygonFilled(pnt,POLY,dx,vp,COL);
 #define DRAW_POLY_FILLED_GL(NUM,COL) DrawPolygonFilledGL(&poly##NUM,&polyv[NUM],&polyc[NUM],vp,COL, idl);
 
-void GshhsPolyCell::drawMapPlain( ocpnDC &pnt, double dx, ViewPort &vp, wxColor seaColor,
-                                  wxColor landColor, bool idl )
+void GshhsPolyCell::drawMapPlain( ocpnDC &pnt, double dx, ViewPort &vp, QColor  seaColor,
+                                  QColor  landColor, bool idl )
 {
-#ifdef ocpnUSE_GL        
-    if(!pnt.GetDC()) { // opengl
+#ifdef ocpnUSE_GL
 #define NORM_FACTOR 4096.0
         if(dx && (vp.m_projection_type == PROJECTION_MERCATOR ||
                   vp.m_projection_type == PROJECTION_EQUIRECTANGULAR)) {
@@ -504,8 +494,7 @@ void GshhsPolyCell::drawMapPlain( ocpnDC &pnt, double dx, ViewPort &vp, wxColor 
 
         if(dx)
             glPopMatrix();
-    } else
-#endif
+#elif
     {
         DRAW_POLY_FILLED( &poly1, landColor );
         DRAW_POLY_FILLED( &poly2, seaColor );
@@ -513,6 +502,7 @@ void GshhsPolyCell::drawMapPlain( ocpnDC &pnt, double dx, ViewPort &vp, wxColor 
         DRAW_POLY_FILLED( &poly4, seaColor );
         DRAW_POLY_FILLED( &poly5, landColor );
     }
+#endif
 }
 
 void GshhsPolyCell::DrawPolygonContour( ocpnDC &pnt, contour_list * p, double dx, ViewPort &vp )
@@ -540,9 +530,9 @@ void GshhsPolyCell::DrawPolygonContour( ocpnDC &pnt, contour_list * p, double dx
             // Elimination des traits verticaux et horizontaux
             if( ( ( ( x1 == x2 ) && ( ( x1 == long_min ) || ( x1 == long_max ) ) )
                     || ( ( y1 == y2 ) && ( ( y1 == lat_min ) || ( y1 == lat_max ) ) ) ) == 0 ) {
-                wxPoint2DDouble AB = GetDoublePixFromLL(vp,  x1 + dx, y1);
-                wxPoint2DDouble CD = GetDoublePixFromLL(vp,  x2 + dx, y1);
-                pnt.DrawLine(AB.m_x, AB.m_y, CD.m_x, CD.m_y);
+                zchxPointF AB = GetDoublePixFromLL(vp,  x1 + dx, y1);
+                zchxPointF CD = GetDoublePixFromLL(vp,  x2 + dx, y1);
+                pnt.DrawLine(AB.x, AB.y, CD.x, CD.y);
             }
         }
 
@@ -553,9 +543,9 @@ void GshhsPolyCell::DrawPolygonContour( ocpnDC &pnt, contour_list * p, double dx
 
         if( ( ( ( x1 == x2 ) && ( ( x1 == long_min ) || ( x1 == long_max ) ) )
                 || ( ( y1 == y2 ) && ( ( y1 == lat_min ) || ( y1 == lat_max ) ) ) ) == 0 ) {
-                wxPoint2DDouble AB = GetDoublePixFromLL(vp,  x1 + dx, y1);
-                wxPoint2DDouble CD = GetDoublePixFromLL(vp,  x2 + dx, y1);
-                pnt.DrawLine(AB.m_x, AB.m_y, CD.m_x, CD.m_y);
+                zchxPointF AB = GetDoublePixFromLL(vp,  x1 + dx, y1);
+                zchxPointF CD = GetDoublePixFromLL(vp,  x2 + dx, y1);
+                pnt.DrawLine(AB.x, AB.y, CD.x, CD.y);
         }
     }
 }
@@ -609,9 +599,9 @@ GshhsPolyReader::~GshhsPolyReader()
 int GshhsPolyReader::ReadPolyVersion()
 {
     char txtn = 'c';
-    wxString fname = GshhsReader::getFileName_Land( 0 );
+    QString fname = GshhsReader::getFileName_Land( 0 );
     if( fpoly ) fclose( fpoly );
-    fpoly = fopen( fname.mb_str(), "rb" );
+    fpoly = fopen( fname.toUtf8().data(), "rb" );
 
     /* init header */
     if( !fpoly ) return 0;
@@ -626,11 +616,11 @@ void GshhsPolyReader::InitializeLoadQuality( int quality )  // 5 levels: 0=low .
     if( currentQuality != quality ) {
         currentQuality = quality;
 
-        wxString fname = GshhsReader::getFileName_Land( quality );
+        QString fname = GshhsReader::getFileName_Land( quality );
 
         if( fpoly ) fclose( fpoly );
 
-        fpoly = fopen( fname.mb_str(), "rb" );
+        fpoly = fopen( fname.toUtf8().data(), "rb" );
         if( fpoly ) readPolygonFileHeader( fpoly, &polyHeader );
 
         for( int i = 0; i < 360; i++ ) {
@@ -682,8 +672,8 @@ bool GshhsPolyReader::crossing1( wxLineF trajectWorld )
     double x2 = trajectWorld.p2().x, y2 = trajectWorld.p2().y;
 
     int clonmin, clonmax, clatmax, clatmin;
-    clonmin = (int) floor( GSSH_SUBM*wxMin( x1, x2 ) );
-    clonmax = (int) ceil( GSSH_SUBM*wxMax( x1, x2 ) );
+    clonmin = (int) floor( GSSH_SUBM*fmin( x1, x2 ) );
+    clonmax = (int) ceil( GSSH_SUBM*fmax( x1, x2 ) );
 
     if(clonmin < 0) {
         clonmin += GSSH_SUBM*360;
@@ -691,13 +681,13 @@ bool GshhsPolyReader::crossing1( wxLineF trajectWorld )
     }
 
     if(clonmax - clonmin > GSSH_SUBM*180) { /* dont go long way around world */
-        clonmin = (int) floor( GSSH_SUBM*wxMax( x1, x2 ) ) - GSSH_SUBM*360;
-        clonmax = (int) ceil( GSSH_SUBM*wxMin( x1, x2 ) );
+        clonmin = (int) floor( GSSH_SUBM*fmax( x1, x2 ) ) - GSSH_SUBM*360;
+        clonmax = (int) ceil( GSSH_SUBM*fmin( x1, x2 ) );
     }
 
-    clatmin = (int) floor( GSSH_SUBM*wxMin( y1, y2 ));
-    clatmax = (int) ceil( GSSH_SUBM*wxMax( y1, y2 ));
-    wxASSERT(clatmin >= -GSSH_SUBM*90 && clatmax <= GSSH_SUBM*89);
+    clatmin = (int) floor( GSSH_SUBM*fmin( y1, y2 ));
+    clatmax = (int) ceil( GSSH_SUBM*fmax( y1, y2 ));
+    Q_ASSERT(clatmin >= -GSSH_SUBM*90 && clatmax <= GSSH_SUBM*89);
 
     // TODO: optimize by traversing only the cells the segment passes through,
     //       rather than all of the cells which fit in the bounding box,
@@ -710,7 +700,7 @@ bool GshhsPolyReader::crossing1( wxLineF trajectWorld )
         while( clonx >= GSSH_SUBM*360 )
             clonx -= GSSH_SUBM*360;
 
-        wxASSERT( clonx >= 0 && clonx < GSSH_SUBM*360 );
+        Q_ASSERT( clonx >= 0 && clonx < GSSH_SUBM*360 );
 
         if(clonx < GSSH_SUBM*180) {
             if(x1 > 180) x1 -= 360;
@@ -726,20 +716,19 @@ bool GshhsPolyReader::crossing1( wxLineF trajectWorld )
             int cloni = clonx/GSSH_SUBM, clati = (GSSH_SUBM*90+clat)/GSSH_SUBM;
             GshhsPolyCell *&cel = allCells[cloni][clati];
             if(!cel) {
-                mutex1.Lock();
+                QMutexLocker locker(&mutex1);
                 if(!cel) {
                     /* load the needed cell from disk */
                     cel = new GshhsPolyCell(fpoly, cloni, clati-90, &polyHeader);
-                    wxASSERT( cel );
+                    Q_ASSERT( cel );
                 }
-                mutex1.Unlock();
             }
 
             int hash = GSSH_SUBM*(GSSH_SUBM*(90-clati) + clat - cloni) + clonx;
             std::vector<wxLineF> *&high_res_map = cel->high_res_map[hash];
-            wxASSERT(hash >= 0 && hash < GSSH_SUBM*GSSH_SUBM);
+            Q_ASSERT(hash >= 0 && hash < GSSH_SUBM*GSSH_SUBM);
             if(!high_res_map) {
-                mutex2.Lock();
+                QMutexLocker locker(&mutex2);
                 if(!high_res_map) {
                     /* Build the needed sub cell of line segments from the cell */
                     contour_list &poly1 = cel->getPoly1();
@@ -777,7 +766,6 @@ bool GshhsPolyReader::crossing1( wxLineF trajectWorld )
                         }
                     }
                 }
-                mutex2.Unlock();
             }
 
             for(std::vector<wxLineF>::iterator it2 = high_res_map->begin();
@@ -794,16 +782,16 @@ void GshhsPolyReader::readPolygonFileHeader( FILE *polyfile, PolygonFileHeader *
 {
     fseek( polyfile, 0, SEEK_SET );
     if(fread( header, sizeof(PolygonFileHeader), 1, polyfile ) != 1)
-        ZCHX_LOGMSG( _T("gshhs ReadPolygonFileHeader failed") );
+        qDebug("gshhs ReadPolygonFileHeader failed" );
 }
 
 //-------------------------------------------------------------------------
-void GshhsPolyReader::drawGshhsPolyMapPlain( ocpnDC &pnt, ViewPort &vp, wxColor const &seaColor,
-                                             wxColor const &landColor )
+void GshhsPolyReader::drawGshhsPolyMapPlain( ocpnDC &pnt, ViewPort &vp, QColor  const &seaColor,
+                                             QColor  const &landColor )
 {
     if( !fpoly ) return;
 
-    pnt.SetPen( wxNullPen );
+    pnt.SetPen( QPen() );
 
     int clonmin, clonmax, clatmax, clatmin;  // cellules visibles
     LLBBox bbox = vp.GetBBox();
@@ -850,7 +838,7 @@ void GshhsPolyReader::drawGshhsPolyMapPlain( ocpnDC &pnt, ViewPort &vp, wxColor 
             if( clonx >= 0 && clonx <= 359 && clat >= -90 && clat <= 89 ) {
                 if( allCells[clonx][clat + 90] == NULL ) {
                     cel = new GshhsPolyCell( fpoly, clonx, clat, &polyHeader );
-                    wxASSERT( cel );
+                    Q_ASSERT( cel );
                     allCells[clonx][clat + 90] = cel;
                 } else {
                     cel = allCells[clonx][clat + 90];
@@ -913,7 +901,7 @@ void GshhsPolyReader::drawGshhsPolyMapSeaBorders( ocpnDC &pnt, ViewPort &vp )
             if( clonx >= 0 && clonx <= 359 && clat >= -90 && clat <= 89 ) {
                 if( allCells[clonx][clat + 90] == NULL ) {
                     cel = new GshhsPolyCell( fpoly, clonx, clat, &polyHeader );
-                    wxASSERT( cel );
+                    Q_ASSERT( cel );
                     allCells[clonx][clat + 90] = cel;
                 } else {
                     cel = allCells[clonx][clat + 90];
@@ -1046,9 +1034,9 @@ GshhsReader::GshhsReader( )
     }
 
     if( maxQualityAvailable < 0 ) {
-        wxString msg( _T("Unable to initialize background world map. No GSHHS datafiles found in ") );
+        QString msg(("Unable to initialize background world map. No GSHHS datafiles found in ") );
         msg += gWorldMapLocation;
-        ZCHX_LOGMSG( msg );
+        qDebug()<< msg ;
     }
 
 //    int q = selectBestQuality( vp );
@@ -1105,57 +1093,57 @@ void GshhsReader::clearLists()
 }
 //-----------------------------------------------------------------------
 
-wxString GshhsReader::getNameExtension( int quality )
+QString GshhsReader::getNameExtension( int quality )
 {
-    wxString ext;
+    QString ext;
     switch( quality ){
         case 0:
-            ext = _T("c");
+            ext = ("c");
             break;
         case 1:
-            ext = _T("l");
+            ext = ("l");
             break;
         case 2:
-            ext = _T("i");
+            ext = ("i");
             break;
         case 3:
-            ext = _T("h");
+            ext = ("h");
             break;
         case 4:
-            ext = _T("f");
+            ext = ("f");
             break;
         default:
-            ext = _T("l");
+            ext = ("l");
             break;
     }
     return ext;
 }
 
-wxString GshhsReader::getFileName_Land( int quality )
+QString GshhsReader::getFileName_Land( int quality )
 {
-    wxString ext = GshhsReader::getNameExtension( quality );
-    wxString fname = gWorldMapLocation + wxString::Format( _T("poly-%c-1.dat"), ext.GetChar(0) );
+    QString ext = GshhsReader::getNameExtension( quality );
+    QString fname = gWorldMapLocation + QString("").sprintf("poly-%c-1.dat", ext[0].toLatin1() );
     return fname;
 }
 
-wxString GshhsReader::getFileName_boundaries( int quality )
+QString GshhsReader::getFileName_boundaries( int quality )
 {
-    wxString ext = GshhsReader::getNameExtension( quality );
-    wxString fname = gWorldMapLocation + wxString::Format( _T("wdb_borders_%c.b"), ext.GetChar(0) );
+    QString ext = GshhsReader::getNameExtension( quality );
+    QString fname = gWorldMapLocation + QString("").sprintf("wdb_borders_%c.b", ext[0].toLatin1() );
     return fname;
 }
 
-wxString GshhsReader::getFileName_rivers( int quality )
+QString GshhsReader::getFileName_rivers( int quality )
 {
-    wxString ext = GshhsReader::getNameExtension( quality );
-    wxString fname = gWorldMapLocation + wxString::Format( _T("wdb_rivers_%c.b"), ext.GetChar(0) );
+    QString ext = GshhsReader::getNameExtension( quality );
+    QString fname = gWorldMapLocation + QString("").sprintf("wdb_rivers_%c.b", ext[0].toLatin1() );
     return fname;
 }
 
 //-----------------------------------------------------------------------
 bool GshhsReader::gshhsFilesExists( int quality )
 {
-    if( ! wxFile::Access( GshhsReader::getFileName_Land( quality ), wxFile::read ) ) return false;
+    if( !QFile::exists(GshhsReader::getFileName_Land( quality )/*, wxFile::read )*/ )) return false;
     //Borders disabled anyway since the perf optimizations if( ! wxFile::Access( GshhsReader::getFileName_boundaries( quality ), wxFile::read ) ) return false;
     //Rivers disabled anyway since the perf optimizations if( ! wxFile::Access( GshhsReader::getFileName_rivers( quality ), wxFile::read ) ) return false;
 
@@ -1167,9 +1155,10 @@ void GshhsReader::LoadQuality( int newQuality ) // 5 levels: 0=low ... 4=full
 {
     if( quality == newQuality ) return;
 
-    wxStopWatch perftimer;
+    QTime perftimer;
+    perftimer.start();
 
-    wxString fname;
+    QString fname;
 
     quality = newQuality;
     if( quality < 0 ) quality = 0;
@@ -1179,7 +1168,7 @@ void GshhsReader::LoadQuality( int newQuality ) // 5 levels: 0=low ... 4=full
 #if 0 /* too slow to load the whole world at once */
     if( lsPoly_boundaries[quality]->size() == 0 ) {
         fname = getFileName_boundaries( quality );
-        file = fopen( fname.mb_str(), "rb" );
+        file = fopen( fname.toUtf8().data(), "rb" );
 
         if( file != NULL ) {
             ok = true;
@@ -1199,7 +1188,7 @@ void GshhsReader::LoadQuality( int newQuality ) // 5 levels: 0=low ... 4=full
 
     if( lsPoly_rivers[quality]->size() == 0 ) {
         fname = getFileName_rivers( quality );
-        file = fopen( fname.mb_str(), "rb" );
+        file = fopen( fname.toUtf8().data(), "rb" );
         if( file != NULL ) {
             ok = true;
             while( ok ) {
@@ -1214,7 +1203,7 @@ void GshhsReader::LoadQuality( int newQuality ) // 5 levels: 0=low ... 4=full
         }
     }
 #endif
-    ZCHX_LOGMSG(wxString::Format(_T("Loading World Chart Q=%d in %ld ms."), quality, perftimer.Time()));
+    qDebug("Loading World Chart Q=%d in %ld ms.", quality, perftimer.elapsed());
 
 }
 
@@ -1231,7 +1220,7 @@ std::vector<GshhsPolygon*> & GshhsReader::getList_rivers()
 
 //=====================================================================
 
-int GshhsReader::GSHHS_scaledPoints( GshhsPolygon *pol, wxPoint *pts, double declon, ViewPort &vp )
+int GshhsReader::GSHHS_scaledPoints( GshhsPolygon *pol, zchxPoint *pts, double declon, ViewPort &vp )
 {
     LLBBox box;
     box.Set(pol->south, pol->west + declon, pol->north, pol->east + declon);
@@ -1240,10 +1229,10 @@ int GshhsReader::GSHHS_scaledPoints( GshhsPolygon *pol, wxPoint *pts, double dec
 
     // Remove small polygons.
 
-    wxPoint2DDouble p1 = GetDoublePixFromLL(vp,  pol->west + declon, pol->north );
-    wxPoint2DDouble p2 = GetDoublePixFromLL(vp,  pol->east + declon, pol->south );
+    zchxPointF p1 = GetDoublePixFromLL(vp,  pol->west + declon, pol->north );
+    zchxPointF p2 = GetDoublePixFromLL(vp,  pol->east + declon, pol->south );
 
-    if( p1.m_x == p2.m_x && p1.m_y == p2.m_y )
+    if( p1.x == p2.x && p1.y == p2.y )
         return 0;
 
     double x, y;
@@ -1254,8 +1243,8 @@ int GshhsReader::GSHHS_scaledPoints( GshhsPolygon *pol, wxPoint *pts, double dec
     for( itp = ( pol->lsPoints ).begin(); itp != ( pol->lsPoints ).end(); itp++ ) {
         x = ( *itp )->lon + declon;
         y = ( *itp )->lat;
-        wxPoint2DDouble p = GetDoublePixFromLL(vp,  y, x );
-        xx = p.m_x, yy = p.m_y;
+        zchxPointF p = GetDoublePixFromLL(vp,  y, x );
+        xx = p.x, yy = p.y;
         if( j == 0 || ( oxx != xx || oyy != yy ) ) { // Remove close points
             oxx = xx;
             oyy = yy;
@@ -1274,13 +1263,13 @@ void GshhsReader::GsshDrawLines( ocpnDC &pnt, std::vector<GshhsPolygon*> &lst, V
 {
     std::vector<GshhsPolygon*>::iterator iter;
     GshhsPolygon *pol;
-    wxPoint *pts = NULL;
+    zchxPoint *pts = NULL;
     int i;
     int nbp;
 
     int nbmax = 10000;
-    pts = new wxPoint[nbmax];
-    wxASSERT( pts );
+    pts = new zchxPoint[nbmax];
+    Q_ASSERT( pts );
 
     for( i = 0, iter = lst.begin(); iter != lst.end(); iter++, i++ ) {
         pol = *iter;
@@ -1288,8 +1277,8 @@ void GshhsReader::GsshDrawLines( ocpnDC &pnt, std::vector<GshhsPolygon*> &lst, V
         if( nbmax < pol->n + 2 ) {
             nbmax = pol->n + 2;
             delete[] pts;
-            pts = new wxPoint[nbmax];
-            wxASSERT( pts );
+            pts = new zchxPoint[nbmax];
+            Q_ASSERT( pts );
         }
 
         nbp = GSHHS_scaledPoints( pol, pts, 0, vp );
@@ -1322,8 +1311,8 @@ void GshhsReader::GsshDrawLines( ocpnDC &pnt, std::vector<GshhsPolygon*> &lst, V
 }
 
 //-----------------------------------------------------------------------
-void GshhsReader::drawContinents( ocpnDC &pnt, ViewPort &vp, wxColor const &seaColor,
-        wxColor const &landColor )
+void GshhsReader::drawContinents( ocpnDC &pnt, ViewPort &vp, QColor  const &seaColor,
+        QColor  const &landColor )
 {
     LoadQuality( selectBestQuality( vp ) );
     gshhsPoly_reader->drawGshhsPolyMapPlain( pnt, vp, seaColor, landColor );
@@ -1332,21 +1321,21 @@ void GshhsReader::drawContinents( ocpnDC &pnt, ViewPort &vp, wxColor const &seaC
 //-----------------------------------------------------------------------
 void GshhsReader::drawSeaBorders( ocpnDC &pnt, ViewPort &vp )
 {
-    pnt.SetBrush( *wxTRANSPARENT_BRUSH );
+    pnt.SetBrush(Qt::transparent);
     gshhsPoly_reader->drawGshhsPolyMapSeaBorders( pnt, vp );
 }
 
 //-----------------------------------------------------------------------
 void GshhsReader::drawBoundaries( ocpnDC &pnt, ViewPort &vp )
 {
-    pnt.SetBrush( *wxTRANSPARENT_BRUSH );
+    pnt.SetBrush( Qt::transparent);
 
     if( pnt.GetDC() ) {
-        wxPen* pen = wxThePenList->FindOrCreatePen( *wxBLACK, 1, wxPENSTYLE_DOT );
-        pnt.SetPen( *pen );
+        QPen pen(Qt::black, 1, Qt::DotLine );
+        pnt.SetPen( pen );
     } else {
-        wxPen* pen = wxThePenList->FindOrCreatePen( wxColor( 0, 0, 0, 80 ), 2, wxPENSTYLE_LONG_DASH );
-        pnt.SetPen( *pen );
+        QPen pen(QColor ( 0, 0, 0, 80 ), 2, Qt::DashLine);
+        pnt.SetPen( pen );
     }
     GsshDrawLines( pnt, getList_boundaries(), vp, false );
 }
@@ -1395,7 +1384,7 @@ void gshhsCrossesLandInit()
     while( !reader->qualityAvailable[bestQuality] && bestQuality > 0)
         bestQuality--;
     reader->LoadQuality(bestQuality);
-    ZCHX_LOGMSG(wxString::Format("GSHHG: Loaded quality %d for land crossing detection.", bestQuality));
+    qDebug("GSHHG: Loaded quality %d for land crossing detection.", bestQuality);
 }
 
 void gshhsCrossesLandReset() {

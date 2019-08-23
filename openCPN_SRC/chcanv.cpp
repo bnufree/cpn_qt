@@ -2833,12 +2833,12 @@ wxBitmap ChartCanvas::CreateDimBitmap( wxBitmap &Bitmap, double factor )
 
 void ChartCanvas::ShowBrightnessLevelTimedPopup( int brightness, int min, int max )
 {
-    QFont *pfont = FontMgr::Get().FindOrCreateFont( 40, "Microsoft YH", QFont::StyleNormal, QFont::Weight::Bold );
+    QFont pfont = FontMgr::Get().FindOrCreateFont( 40, "Microsoft YH", QFont::StyleNormal, QFont::Weight::Bold );
 
     if( !m_pBrightPopup ) {
         //    Calculate size
         int x, y;
-        QFontMetrics mcs(*pfont);
+        QFontMetrics mcs(pfont);
         x = mcs.width("MAX");
         y = mcs.height();
         m_pBrightPopup = new TimedPopupWin( 3, this);
@@ -2860,7 +2860,7 @@ void ChartCanvas::ShowBrightnessLevelTimedPopup( int brightness, int min, int ma
 
     mdc.drawRect( 0, 0, bmpsx, bmpsy );
 
-    mdc.setFont( *pfont );
+    mdc.setFont( pfont );
     QPen pen = mdc.pen();
     pen.setColor(GetGlobalColor("GREEN4"));
     QString val;
@@ -4878,7 +4878,7 @@ void ChartCanvas::GridDraw( ocpnDC& dc )
     int w, h;
     QPen GridPen( GetGlobalColor(  "SNDG1"  ), 1, Qt::SolidLine );
     dc.SetPen( GridPen );
-    dc.SetFont( *m_pgridFont );
+    dc.SetFont( m_pgridFont );
     dc.SetTextForeground( GetGlobalColor( ( "SNDG1" ) ) );
 
     w = m_canvas_width;
@@ -5051,7 +5051,7 @@ void ChartCanvas::ScaleBarDraw( ocpnDC& dc )
         dc.DrawLine( x_origin, y_origin, x_origin + l1, y_origin);
         dc.DrawLine( x_origin + l1, y_origin, x_origin + l1, y_origin - 12);
 
-        dc.SetFont( *m_pgridFont );
+        dc.SetFont( m_pgridFont );
         dc.SetTextForeground( black );
         int w, h;
         dc.GetTextExtent(s, &w, &h);
@@ -7727,8 +7727,8 @@ void ChartCanvas::RenderChartOutline( ocpnDC &dc, int dbIndex, ViewPort& vp )
 
 static void RouteLegInfo( ocpnDC &dc, zchxPoint ref_point, const QString &first, const QString &second )
 {
-    QFont *dFont = FontMgr::Get().GetFont( ("RouteLegInfoRollover") );
-    dc.SetFont( *dFont );
+    QFont dFont = FontMgr::Get().GetFont( ("RouteLegInfoRollover") );
+    dc.SetFont( dFont );
 
     int w1, h1;
     int w2 = 0;
@@ -8229,8 +8229,8 @@ void ChartCanvas::CreateDepthUnitEmbossMaps( ColorScheme cs )
     ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
     QFont font;
     if( style->embossFont.isEmpty() ){
-        QFont *dFont = FontMgr::Get().GetFont( ("Dialog"), 0 );
-        font = *dFont;
+        QFont dFont = FontMgr::Get().GetFont( ("Dialog"), 0 );
+        font = dFont;
         font.setPointSize(60);
         font.setWeight(QFont::Weight::Bold);
     }
@@ -8263,8 +8263,8 @@ void ChartCanvas::SetOverzoomFont()
 
     QFont font;
     if( style->embossFont.isEmpty() ){
-        QFont *dFont = FontMgr::Get().GetFont( ("Dialog"), 0 );
-        font = *dFont;
+        QFont dFont = FontMgr::Get().GetFont( ("Dialog"), 0 );
+        font = dFont;
         font.setPointSize(40);
         font.setWeight(QFont::Weight::Bold);
     }

@@ -434,7 +434,7 @@ void ocpnDC::DrawLine( int x1, int y1, int x2, int y2, bool b_hiqual )
 }
 
 // Draws thick lines from triangles
-void DrawGLThickLines( int n, QPoint points[],int xoffset,
+void DrawGLThickLines( int n, zchxPoint points[],int xoffset,
                        int yoffset, QPen pen, bool b_hiqual )
 {
 #ifdef ocpnUSE_GL
@@ -445,21 +445,21 @@ void DrawGLThickLines( int n, QPoint points[],int xoffset,
     QVector<qreal> dashes = pen.dashPattern();
     if( dashes.size() > 0 )
     {
-        QPoint p0 = points[0];
+        zchxPoint p0 = points[0];
         for( int i = 1; i < n; i++ ) {
-            DrawGLThickLine( p0.x() + xoffset, p0.y() + yoffset, points[i].x() + xoffset,
-                             points[i].y() + yoffset, pen, b_hiqual );
+            DrawGLThickLine( p0.x + xoffset, p0.y + yoffset, points[i].x + xoffset,
+                             points[i].y + yoffset, pen, b_hiqual );
             p0 = points[i];
         }
         return;
     }
 
     /* cull zero segments */
-    QPoint *cpoints = new QPoint[n];
+    zchxPoint *cpoints = new zchxPoint[n];
     cpoints[0] = points[0];
     int c = 1;
     for( int i = 1; i < n; i++ ) {
-        if(points[i].x() != points[i-1].x() || points[i].y() != points[i-1].y())
+        if(points[i].x != points[i-1].x || points[i].y != points[i-1].y)
             cpoints[c++] = points[i];
     }
 
@@ -469,7 +469,7 @@ void DrawGLThickLines( int n, QPoint points[],int xoffset,
        This code properly calculates vertexes for adjoining segments */
     float t1 = pen.widthF();
 
-    float x0 = cpoints[0].x(), y0 = cpoints[0].y(), x1 = cpoints[1].x(), y1 = cpoints[1].y();
+    float x0 = cpoints[0].x, y0 = cpoints[0].y, x1 = cpoints[1].x, y1 = cpoints[1].y;
     float a0 = atan2f( y1 - y0, x1 - x0 );
 
     // It is also possible to use triangle strip, (and triangle fan for endcap)
@@ -484,7 +484,7 @@ void DrawGLThickLines( int n, QPoint points[],int xoffset,
         float a1;
 
         if(i < c - 1) {
-            x2 = cpoints[i + 1].x(), y2 = cpoints[i + 1].y();
+            x2 = cpoints[i + 1].x, y2 = cpoints[i + 1].y;
             a1 = atan2f( y2 - y1, x2 - x1 );
         } else {
             x2 = x1, y2 = y1;
@@ -531,7 +531,7 @@ void DrawGLThickLines( int n, QPoint points[],int xoffset,
 #endif
 }
 
-void ocpnDC::DrawLines( int n, QPoint points[], int xoffset, int yoffset, bool b_hiqual )
+void ocpnDC::DrawLines( int n, zchxPoint points[], int xoffset, int yoffset, bool b_hiqual )
 {
     if( ConfigurePen() ) {
 
@@ -575,7 +575,7 @@ void ocpnDC::DrawLines( int n, QPoint points[], int xoffset, int yoffset, bool b
 
             glBegin( GL_LINE_STRIP );
             for( int i = 0; i < n; i++ )
-                glVertex2i( points[i].x() + xoffset, points[i].y() + yoffset );
+                glVertex2i( points[i].x + xoffset, points[i].y + yoffset );
             glEnd();
         }
 
@@ -601,7 +601,7 @@ void ocpnDC::StrokeLine( int x1, int y1, int x2, int y2 )
         DrawLine( x1, y1, x2, y2, true );
 }
 
-void ocpnDC::StrokeLines( int n, QPoint *points) {
+void ocpnDC::StrokeLines( int n, zchxPoint *points) {
     if(n < 2) /* optimization and also to avoid assertion in pgc->StrokeLines */
         return;
 
@@ -740,7 +740,7 @@ void ocpnDC::DrawEllipse( int x, int y, int width, int height )
         glDisable( GL_BLEND );
 }
 
-void ocpnDC::DrawPolygon( int n, QPoint points[], int xoffset, int yoffset, float scale )
+void ocpnDC::DrawPolygon( int n, zchxPoint points[], int xoffset, int yoffset, float scale )
 {
         
 #ifdef __QQT__
@@ -754,7 +754,7 @@ void ocpnDC::DrawPolygon( int n, QPoint points[], int xoffset, int yoffset, floa
                 glEnable( GL_POLYGON_SMOOTH );
             glBegin( GL_POLYGON );
             for( int i = 0; i < n; i++ )
-                glVertex2f( (points[i].x() * scale) + xoffset, (points[i].y() * scale) + yoffset );
+                glVertex2f( (points[i].x * scale) + xoffset, (points[i].y * scale) + yoffset );
             glEnd();
             glDisable( GL_POLYGON_SMOOTH );
         }
@@ -764,7 +764,7 @@ void ocpnDC::DrawPolygon( int n, QPoint points[], int xoffset, int yoffset, floa
                 glEnable( GL_LINE_SMOOTH );
             glBegin( GL_LINE_LOOP );
             for( int i = 0; i < n; i++ )
-                glVertex2f( (points[i].x() * scale) + xoffset, (points[i].y() * scale) + yoffset );
+                glVertex2f( (points[i].x * scale) + xoffset, (points[i].y * scale) + yoffset );
             glEnd();
             glDisable( GL_LINE_SMOOTH );
         }
@@ -830,7 +830,7 @@ void APIENTRY ocpnDCendCallback()
 }
 #endif          //#ifdef ocpnUSE_GL
 
-void ocpnDC::DrawPolygonTessellated( int n, QPoint points[], int xoffset, int yoffset )
+void ocpnDC::DrawPolygonTessellated( int n, zchxPoint points[], int xoffset, int yoffset )
 {
 # ifndef ocpnUSE_GLES  // tessalator in glues is broken
         if( n < 5 )
@@ -859,8 +859,8 @@ void ocpnDC::DrawPolygonTessellated( int n, QPoint points[], int xoffset, int yo
             for( int i = 0; i < n; i++ ) {
                 GLvertex* vertex = new GLvertex();
                 gTesselatorVertices.append(vertex );
-                vertex->info.x = (GLdouble) points[i].x();
-                vertex->info.y = (GLdouble) points[i].y();
+                vertex->info.x = (GLdouble) points[i].x;
+                vertex->info.y = (GLdouble) points[i].y;
                 vertex->info.z = (GLdouble) 0.0;
                 vertex->info.r = (GLdouble) 0.0;
                 vertex->info.g = (GLdouble) 0.0;
@@ -876,7 +876,7 @@ void ocpnDC::DrawPolygonTessellated( int n, QPoint points[], int xoffset, int yo
         gTesselatorVertices.clear();
 }
 
-void ocpnDC::StrokePolygon( int n, QPoint points[], int xoffset, int yoffset, float scale )
+void ocpnDC::StrokePolygon( int n, zchxPoint points[], int xoffset, int yoffset, float scale )
 {
 #if QUSE_GRAPHICS_CONTEXT
     if( pgc ) {

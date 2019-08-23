@@ -157,8 +157,8 @@ public:
 
       virtual OcpnProjType GetChartProjectionType(){ return m_projection;}
       virtual QDateTime GetEditionDate(void){ return m_EdDate;}
-      virtual QDateTime getModifyTime(void);
-      virtual quint32   getFileSize(void);
+      virtual QDateTime getModifyTime(void) {return m_ModifyDateTime;}
+      virtual quint32   getFileSize(void) {return mFileSize;}
 
       virtual QString GetPubDate(){ return m_PubYear;}
       virtual int GetNativeScale(){ return m_Chart_Scale;}
@@ -227,6 +227,8 @@ protected:
       ChartDepthUnitType m_depth_unit_id;
 
       QDateTime        m_EdDate;
+      QDateTime         m_ModifyDateTime;
+      quint64           mFileSize;
 
       ThumbData         *pThumbData;
 

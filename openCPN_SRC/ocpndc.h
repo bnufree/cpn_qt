@@ -36,6 +36,7 @@
 #include "TexFont.h"
 #include <QPen>
 #include "bitmap.h"
+#include "_def.h"
 
 
 void DrawGLThickLine( float x1, float y1, float x2, float y2, QPen pen, bool b_hiqual );
@@ -53,6 +54,7 @@ public:
      ocpnDC();
 
      ~ocpnDC();
+     QPainter* GetDC() {return 0;}
 
      void SetBackground( const QBrush &brush );
      void SetPen( const QPen &pen);
@@ -69,11 +71,11 @@ public:
      void GetSize(uint *width, uint *height) const;
 
      void DrawLine( int x1, int y1, int x2, int y2, bool b_hiqual = true);
-     void DrawLines( int n, QPoint points[], int xoffset = 0, int yoffset = 0, bool b_hiqual = true);
+     void DrawLines( int n, zchxPoint points[], int xoffset = 0, int yoffset = 0, bool b_hiqual = true);
 
      void StrokeLine( int x1, int y1, int x2, int y2);
      void StrokeLine( QPoint a, QPoint b) { StrokeLine(a.x(), a.y(), b.x(), b.y()); }
-     void StrokeLines( int n, QPoint *points);
+     void StrokeLines( int n, zchxPoint *points);
 
      void Clear();
      void DrawRectangle( int x, int y, uint w, uint h );
@@ -83,9 +85,9 @@ public:
      void StrokeCircle(int x, int y, int radius);
 
      void DrawEllipse(int x, int y, int width, int height);
-     void DrawPolygon(int n, QPoint points[], int xoffset = 0, int yoffset = 0, float scale =1.0);
-     void DrawPolygonTessellated(int n, QPoint points[], int xoffset = 0, int yoffset = 0);
-     void StrokePolygon(int n, QPoint points[], int xoffset = 0, int yoffset = 0, float scale = 1.0);
+     void DrawPolygon(int n, zchxPoint points[], int xoffset = 0, int yoffset = 0, float scale =1.0);
+     void DrawPolygonTessellated(int n, zchxPoint points[], int xoffset = 0, int yoffset = 0);
+     void StrokePolygon(int n, zchxPoint points[], int xoffset = 0, int yoffset = 0, float scale = 1.0);
 
      void DrawBitmap(const wxBitmap &bitmap, int x, int y, bool usemask);
 

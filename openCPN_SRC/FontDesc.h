@@ -33,13 +33,13 @@ class MyFontDesc
 {
 public:
 
-      MyFontDesc(QString DialogString, QString ConfigString, QFont *pFont, QColor color);
+      MyFontDesc(QString DialogString, QString ConfigString, const QFont& pFont, QColor color);
       ~MyFontDesc();
 
       QString    m_dialogstring;
       QString    m_configstring;
       QString    m_nativeInfo;
-      QFont      *m_font;
+      QFont      m_font;
       QColor     m_color;
 };
 

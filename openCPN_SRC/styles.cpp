@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Symbols
@@ -33,6 +33,7 @@
 #include <QPainter>
 
 extern OCPNPlatform     *g_Platform;
+extern QColor GetGlobalColor(QString colorName);
 
 using namespace ocpnStyle;
 
@@ -90,43 +91,43 @@ wxBitmap MergeBitmaps( wxBitmap back, wxBitmap front, QSize offset )
     // And also in wx3, at least on Windows...
 #if 1 //!wxCHECK_VERSION(2,9,4) 
 
-#if !wxCHECK_VERSION(2,9,4) 
-    merged.UseAlpha();
-    back.UseAlpha();
-    front.UseAlpha();
-#endif    
+//#if !wxCHECK_VERSION(2,9,4)
+//    merged.UseAlpha();
+//    back.UseAlpha();
+//    front.UseAlpha();
+//#endif
     
     QImage im_back = back.ConvertToImage();
     QImage im_result = back.ConvertToImage();// Only way to make result have alpha channel in wxW 2.8.
 
-    unsigned char *presult = im_result.GetData();
-    unsigned char *pback = im_back.GetData();
-    unsigned char *pfront = im_front.GetData();
+    unsigned char *presult = im_result.bits();
+    unsigned char *pback = im_back.bits();
+    unsigned char *pfront = im_front.bits();
 
     unsigned char *afront = NULL;
-    if( im_front.HasAlpha() )
-        afront = im_front.GetAlpha();
+    if( im_front.hasAlphaChannel() )
+        afront = im_front.alphaChannel().bits();
 
     unsigned char *aback = NULL;
-    if( im_back.HasAlpha() )
-        aback = im_back.GetAlpha();
+    if( im_back.hasAlphaChannel() )
+        aback = im_back.alphaChannel().bits();
 
     unsigned char *aresult = NULL;
-    if( im_result.HasAlpha() )
-        aresult = im_result.GetAlpha();
+    if( im_result.hasAlphaChannel() )
+        aresult = im_result.alphaChannel().bits();
 
     // Do alpha blending, associative version of "over" operator.
     if(presult && pback && pfront){ 
-        for( int i = 0; i < back.GetHeight(); i++ ) {
-            for( int j = 0; j < back.GetWidth(); j++ ) {
+        for( int i = 0; i < back.height(); i++ ) {
+            for( int j = 0; j < back.width(); j++ ) {
 
-                int fX = j - offset.x;
-                int fY = i - offset.y;
+                int fX = j - offset.width();
+                int fY = i - offset.height();
 
                 bool inFront = true;
                 if( fX < 0 || fY < 0 ) inFront = false;
-                if( fX >= front.GetWidth() ) inFront = false;
-                if( fY >= front.GetHeight() ) inFront = false;
+                if( fX >= front.width() ) inFront = false;
+                if( fY >= front.height() ) inFront = false;
 
                 if( inFront ) {
                     double alphaF = 1.0;
@@ -172,42 +173,43 @@ wxBitmap MergeBitmaps( wxBitmap back, wxBitmap front, QSize offset )
 wxBitmap ConvertTo24Bit( QColor bgColor, wxBitmap front ) {
     if( front.GetDepth() == 24 ) return front;
 
-#if !wxCHECK_VERSION(2,9,4)
-    front.UseAlpha();
-#endif
+//#if !wxCHECK_VERSION(2,9,4)
+//    front.UseAlpha();
+//#endif
 
     QImage im_front = front.ConvertToImage();
-    unsigned char *pfront = im_front.GetData();
+    unsigned char *pfront = im_front.bits();
     if(!pfront)
-        return wxNullBitmap;
+        return wxBitmap();
     
-    unsigned char *presult = (unsigned char *)malloc(front.GetWidth() * front.GetHeight() * 3);
+    unsigned char *presult = (unsigned char *)malloc(front.width() * front.height() * 3);
     if(!presult)
-        return wxNullBitmap;
+        return wxBitmap();
     
     unsigned char *po_result = presult;
 
     
     unsigned char *afront = NULL;
-    if( im_front.HasAlpha() )
-    afront = im_front.GetAlpha();
+    if( im_front.hasAlphaChannel() )
+    afront = im_front.alphaChannel().bits();
 
-    for( int i = 0; i < front.GetWidth(); i++ ) {
-        for( int j = 0; j < front.GetHeight(); j++ ) {
+    for( int i = 0; i < front.width(); i++ ) {
+        for( int j = 0; j < front.height(); j++ ) {
 
             double alphaF = 1.0;
             if(afront)
                 alphaF = (double) ( *afront++ ) / 256.0;
-             unsigned char r = *pfront++ * alphaF + bgColor.Red() * ( 1.0 - alphaF );
+             unsigned char r = *pfront++ * alphaF + bgColor.red() * ( 1.0 - alphaF );
              *presult++ = r;
-             unsigned char g = *pfront++ * alphaF + bgColor.Green() * ( 1.0 - alphaF );
+             unsigned char g = *pfront++ * alphaF + bgColor.green() * ( 1.0 - alphaF );
              *presult++ = g;
-             unsigned char b = *pfront++ * alphaF + bgColor.Blue() * ( 1.0 - alphaF );
+             unsigned char b = *pfront++ * alphaF + bgColor.blue() * ( 1.0 - alphaF );
              *presult++ = b;
         }
     }
 
-    QImage im_result(front.GetWidth(), front.GetHeight(), po_result);
+    QImage::Format format = afront == NULL ? QImage::Format_RGB32 : QImage::Format_ARGB32;
+    QImage im_result(po_result, front.width(), front.height(), format);
     
     wxBitmap result = wxBitmap( im_result );
     return result;
@@ -229,10 +231,10 @@ bool Style::NativeToolIconExists(const QString & name)
 wxBitmap Style::GetIcon(const QString & name, int width, int height, bool bforceReload)
 {
     if( iconIndex.find( name ) == iconIndex.end() ) {
-        QString msg( _T("The requested icon was not found in the style: ") );
+        QString msg("The requested icon was not found in the style: ");
         msg += name;
-        ZCHX_LOGMSG( msg );
-        return wxBitmap( GetToolSize().x, GetToolSize().y ); // Prevents crashing.
+        qDebug()<<msg;
+        return wxBitmap( GetToolSize().width(), GetToolSize().height() ); // Prevents crashing.
     }
 
     int index = iconIndex[name]; // FIXME: this operation is not const but should be, use 'find'
@@ -241,7 +243,7 @@ wxBitmap Style::GetIcon(const QString & name, int width, int height, bool bforce
 
     if( icon->loaded && !bforceReload)
         return icon->icon;
-    if( icon->size.x == 0 )
+    if( icon->size.width() == 0 )
         icon->size = toolSize[currentOrientation];
     
     QSize retSize = icon->size;
@@ -250,18 +252,18 @@ wxBitmap Style::GetIcon(const QString & name, int width, int height, bool bforce
     
     wxBitmap bm;
 #ifdef ocpnUSE_SVG
-    QString fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + name + _T(".svg");
-    if( wxFileExists( fullFilePath ) )
-        bm = LoadSVG( fullFilePath, retSize.x, retSize.y);
-    else
+    QString fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + name + (".svg");
+    if( QFile::exists(fullFilePath ) )
     {
-///        ZCHX_LOGMSG( _T("Can't find SVG icon: ") + fullFilePath );
+        bm = LoadSVG( fullFilePath, retSize.width(), retSize.height());
+    } else
+    {
 #endif // ocpnUSE_SVG
         QRect location( icon->iconLoc, icon->size );
         bm = graphics->GetSubBitmap( location );
         if(retSize != icon->size){
             QImage scaled_image = bm.ConvertToImage();
-            bm = wxBitmap(scaled_image.Scale(retSize.x, retSize.y, QImage_QUALITY_HIGH));
+            bm = wxBitmap(scaled_image.scaled(retSize.width(), retSize.height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
         }
         
 #ifdef ocpnUSE_SVG
@@ -279,8 +281,8 @@ wxBitmap Style::GetToolIcon(const QString & toolname, int iconType, bool rollove
 //  This will produce a flood of log messages for some PlugIns, notably WMM_PI, and GRADAR_PI
 //        QString msg( _T("The requested tool was not found in the style: ") );
 //        msg += toolname;
-//        ZCHX_LOGMSG( msg );
-        return wxBitmap( GetToolSize().x, GetToolSize().y, 1 );
+//        qDebug()<<( msg );
+        return wxBitmap( GetToolSize().width(), GetToolSize().height(), 1 );
     }
 
     int index = toolIndex[toolname];
@@ -288,7 +290,7 @@ wxBitmap Style::GetToolIcon(const QString & toolname, int iconType, bool rollove
     Tool* tool = (Tool*) tools[index];
  
     QSize size = tool->customSize;
-    if( size.x == 0 )
+    if( size.width() == 0 )
         size = toolSize[currentOrientation];
     
     QSize retSize = size;
@@ -304,47 +306,48 @@ wxBitmap Style::GetToolIcon(const QString & toolname, int iconType, bool rollove
 
             //  If rollover icon does not exist, use the defult icon
             if( rollover ) {
-                if( (tool->rolloverLoc.x != 0) || (tool->rolloverLoc.y != 0) )
+                if( (tool->rolloverLoc.x() != 0) || (tool->rolloverLoc.y() != 0) )
                     location = QRect( tool->rolloverLoc, size );
             }
 
             if( currentOrientation ) {
-                location.x -= verticalIconOffset.x;
-                location.y -= verticalIconOffset.y;
+                location.translate(verticalIconOffset.width() * (-1), verticalIconOffset.height() * (-1));
             }
 
             wxBitmap bm;
 #ifdef ocpnUSE_SVG
             QString fullFilePath;
-            if( rollover ){
-                fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + toolname + _T("_rollover.svg");
-                if( !wxFileExists( fullFilePath ) )
-                    fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + toolname + _T(".svg");
+            if( rollover )
+            {
+                fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + ("_rollover.svg");
+                if( !QFile::exists( fullFilePath ) ) fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + (".svg");
+            } else
+            {
+                fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + (".svg");
             }
-            else
-                fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + toolname + _T(".svg");
-            if( wxFileExists( fullFilePath ) )
-                bm = LoadSVG( fullFilePath, retSize.x, retSize.y );
+            if( QFile::exists(fullFilePath ) )
+                bm = LoadSVG( fullFilePath, retSize.width(), retSize.height() );
             else
             {
-                ///ZCHX_LOGMSG( _T("Can't find SVG: ") + fullFilePath );
+                ///qDebug()<<( _T("Can't find SVG: ") + fullFilePath );
 #endif // ocpnUSE_SVG
                 bm = graphics->GetSubBitmap( location );
                 
                 if( hasBackground ) {
                     bm = MergeBitmaps( GetNormalBG(), bm, QSize( 0, 0 ) );
                 } else {
-                    wxBitmap bg( GetToolSize().x, GetToolSize().y );
-                    wxMemoryDC mdc( bg );
-                    mdc.SetBackground( wxBrush( GetGlobalColor( _T("GREY2") ), wxBRUSHSTYLE_SOLID ) );
-                    mdc.Clear();
-                    mdc.SelectObject( wxNullBitmap );
+                    wxBitmap bg( GetToolSize().width(), GetToolSize().height() );
+                    QPainter mdc;
+                    mdc.begin(bg.GetHandle());
+                    mdc.setBackground( QBrush( GetGlobalColor( ("GREY2") ), Qt::SolidPattern ) );
+                    mdc.eraseRect(0, 0, mdc.device()->width(), mdc.device()->height());
+                    mdc.end();
                     bm = MergeBitmaps( bg, bm, QSize( 0, 0 ) );
                 }
                 
                 if(retSize != size){
                     QImage scaled_image = bm.ConvertToImage();
-                    bm = wxBitmap(scaled_image.Scale(retSize.x, retSize.y, QImage_QUALITY_HIGH));
+                    bm = wxBitmap(scaled_image.scaled(retSize.width(), retSize.height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
                 }
                 
 #ifdef ocpnUSE_SVG
@@ -356,7 +359,7 @@ wxBitmap Style::GetToolIcon(const QString & toolname, int iconType, bool rollove
                 tool->rolloverLoaded = true;
                 return tool->rollover;
             } else {
-                if( toolname == _T("mob_btn") ) {
+                if( toolname == ("mob_btn") ) {
                     double dimLevel = 1.0;
                     if(colorscheme ==  GLOBAL_COLOR_SCHEME_DUSK)
                         dimLevel = 0.5;
@@ -384,46 +387,45 @@ wxBitmap Style::GetToolIcon(const QString & toolname, int iconType, bool rollove
                 offset /= 2;
             }
             if( currentOrientation ) {
-                location.x -= verticalIconOffset.x;
-                location.y -= verticalIconOffset.y;
+                location.translate(verticalIconOffset.width() * (-1), verticalIconOffset.height() * (-1));
             }
             wxBitmap bm;
 #ifdef ocpnUSE_SVG
             QString fullFilePath;
             if( rollover )
-                fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + toolname + _T("_rollover_toggled.svg");
+                fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + ("_rollover_toggled.svg");
             else
-                fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + toolname + _T("_toggled.svg");
-            if( wxFileExists( fullFilePath ) )
-                bm = LoadSVG( fullFilePath, retSize.x, retSize.y );
+                fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + ("_toggled.svg");
+            if( QFile::exists( fullFilePath ) )
+                bm = LoadSVG( fullFilePath, retSize.width(), retSize.height() );
             else
             {
                 // Could not find a toggled SVG, so try to make one
                 if( rollover )
-                    fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + toolname + _T("_rollover.svg");
+                    fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + ("_rollover.svg");
                 else
-                    fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + toolname + _T(".svg");
+                    fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + (".svg");
 
-                if( wxFileExists( fullFilePath ) ){
-                    bm = LoadSVG( fullFilePath, retSize.x, retSize.y );
+                if( QFile::exists( fullFilePath ) ){
+                    bm = LoadSVG( fullFilePath, retSize.width(), retSize.height() );
                     
                     wxBitmap bmBack = GetToggledBG();
-                    if( (bmBack.GetWidth() != retSize.x) || (bmBack.GetHeight() != retSize.y) ){
+                    if( (bmBack.width() != retSize.width()) || (bmBack.height() != retSize.height()) ){
                         QImage scaled_back = bmBack.ConvertToImage();
-                        bmBack = wxBitmap(scaled_back.Scale(retSize.x, retSize.y, QImage_QUALITY_HIGH));
+                        bmBack = wxBitmap(scaled_back.scaled(retSize.width(), retSize.height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
                     }
                     bm = MergeBitmaps( bmBack, bm, QSize(0,0) );
                 }
             }
                 
 #endif // ocpnUSE_SVG
-            if(!bm.Ok()){
+            if(!bm.isOK()){
                 bm = graphics->GetSubBitmap( location );
                 bm = MergeBitmaps( GetToggledBG(), bm, offset );
                 
                 if(retSize != size){
                     QImage scaled_image = bm.ConvertToImage();
-                    bm = wxBitmap(scaled_image.Scale(retSize.x, retSize.y, QImage_QUALITY_HIGH));
+                    bm = wxBitmap(scaled_image.scaled(retSize.width(), retSize.height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
                 }
             }
                 
@@ -443,12 +445,12 @@ wxBitmap Style::GetToolIcon(const QString & toolname, int iconType, bool rollove
 
             wxBitmap bm;
 #ifdef ocpnUSE_SVG
-            QString fullFilePath = myConfigFileDir + this->sysname + wxFileName::GetPathSeparator() + toolname + _T("_disabled.svg");
-            if( wxFileExists( fullFilePath ) )
-                bm = LoadSVG( fullFilePath, retSize.x, retSize.y );
+            QString fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + ("_disabled.svg");
+            if( QFile::exists(fullFilePath ) )
+                bm = LoadSVG( fullFilePath, retSize.width(), retSize.height());
             else
             {
-                ///ZCHX_LOGMSG( _T("Can't find SVG: ") + fullFilePath );
+                ///qDebug()<<( _T("Can't find SVG: ") + fullFilePath );
 #endif // ocpnUSE_SVG
                 bm = graphics->GetSubBitmap( location );
                 
@@ -458,29 +460,28 @@ wxBitmap Style::GetToolIcon(const QString & toolname, int iconType, bool rollove
                 
                 if(retSize != size){
                     QImage scaled_image = bm.ConvertToImage();
-                    bm = wxBitmap(scaled_image.Scale(retSize.x, retSize.y, QImage_QUALITY_HIGH));
+                    bm = wxBitmap(scaled_image.scaled(retSize.width(), retSize.height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
                 }
 #ifdef ocpnUSE_SVG
             }
 #endif // ocpnUSE_SVG
             if( currentOrientation ) {
-                location.x -= verticalIconOffset.x;
-                location.y -= verticalIconOffset.y;
+                location.translate(verticalIconOffset.width() * (-1), verticalIconOffset.height() * (-1));
             }
             tool->disabled = SetBitmapBrightness( bm, colorscheme );
             tool->disabledLoaded = true;
             return tool->disabled;
         }
     }
-    QString msg( _T("A requested icon type for this tool was not found in the style: ") );
+    QString msg( ("A requested icon type for this tool was not found in the style: ") );
     msg += toolname;
-    ZCHX_LOGMSG( msg );
-    return wxBitmap( GetToolSize().x, GetToolSize().y ); // Prevents crashing.
+    qDebug()<< msg ;
+    return wxBitmap( GetToolSize().width(), GetToolSize().height() ); // Prevents crashing.
 }
 
 wxBitmap Style::BuildPluginIcon( wxBitmap &bm, int iconType, double factor )
 {
-    if(  !bm.IsOk() ) return wxNullBitmap;
+    if(  !bm.isOK() ) return wxBitmap();
 
     wxBitmap iconbm;
 
@@ -499,9 +500,9 @@ wxBitmap Style::BuildPluginIcon( wxBitmap &bm, int iconType, double factor )
                     int w = bg.GetWidth() * factor;
                     int h = bg.GetHeight() * factor;
                     QImage scaled_image = bg.ConvertToImage();
-                    bg = wxBitmap(scaled_image.Scale(w, h, QImage_QUALITY_HIGH));
+                    bg = wxBitmap(scaled_image.scaled(w, h, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
                     
-                    QSize offset = QSize( bg.GetWidth() - bm.GetWidth(), bg.GetHeight() - bm.GetHeight() );
+                    QSize offset = QSize( bg.width() - bm.width(), bg.height() - bm.height() );
                     offset /= 2;
                     iconbm = MergeBitmaps( bg, bm, offset );
                 }
@@ -513,7 +514,7 @@ wxBitmap Style::BuildPluginIcon( wxBitmap &bm, int iconType, double factor )
                     if(bg.GetWidth() == bg.GetHeight())
                         nw = nh;
                     QImage scaled_image = bg.ConvertToImage();
-                    bg = wxBitmap(scaled_image.Scale(nw, nh, QImage_QUALITY_HIGH));
+                    bg = wxBitmap(scaled_image.scaled(nw, nh, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
                     
                     QSize offset = QSize( bg.GetWidth() - bm.GetWidth(), bg.GetHeight() - bm.GetHeight() );
                     offset /= 2;
@@ -521,19 +522,20 @@ wxBitmap Style::BuildPluginIcon( wxBitmap &bm, int iconType, double factor )
                 }
                 
             } else {
-                wxBitmap bg( GetToolSize().x, GetToolSize().y );
-                wxMemoryDC mdc( bg );
+                wxBitmap bg( GetToolSize().width(), GetToolSize().height() );
+                QPainter mdc;
+                mdc.begin(bg.GetHandle());
                 QSize offset = GetToolSize() - QSize( bm.GetWidth(), bm.GetHeight() );
                 offset /= 2;
-                mdc.SetBackground( wxBrush( GetGlobalColor( _T("GREY2") ), wxBRUSHSTYLE_SOLID ) );
-                mdc.Clear();
-                mdc.SelectObject( wxNullBitmap );
+                mdc.setBackground( QBrush( GetGlobalColor( ("GREY2") ), Qt::SolidPattern ) );
+                mdc.eraseRect(0, 0, mdc.device()->width(), mdc.device()->height());
+                mdc.end();
                 iconbm = MergeBitmaps( bg, bm, offset );
             }
             break;
         }
         default:
-            return wxNullBitmap;
+            return wxBitmap();
             break;
     }
     return SetBitmapBrightness( iconbm, colorscheme );
@@ -563,18 +565,14 @@ wxBitmap Style::SetBitmapBrightnessAbs( wxBitmap& bitmap, double level )
 {
     QImage image = bitmap.ConvertToImage();
 
-    int gimg_width = image.GetWidth();
-    int gimg_height = image.GetHeight();
+    int gimg_width = image.width();
+    int gimg_height = image.height();
 
     for( int iy = 0; iy < gimg_height; iy++ ) {
-        for( int ix = 0; ix < gimg_width; ix++ ) {
-            if( !image.IsTransparent( ix, iy, 30 ) ) {
-                QImage::RGBValue rgb( image.GetRed( ix, iy ), image.GetGreen( ix, iy ),
-                        image.GetBlue( ix, iy ) );
-                QImage::HSVValue hsv = QImage::RGBtoHSV( rgb );
-                hsv.value = hsv.value * level;
-                QImage::RGBValue nrgb = QImage::HSVtoRGB( hsv );
-                image.SetRGB( ix, iy, nrgb.red, nrgb.green, nrgb.blue );
+        for( int ix = 0; ix < gimg_width; ix++ ) {            
+            if( !zchxFuncUtil::isImageTransparent(image, ix, iy, 30 ) ) {
+                QColor old = image.pixelColor(ix, iy);
+                image.setPixelColor(ix, iy, zchxFuncUtil::getNewRGBColor(old, level));
             }
         }
     }
@@ -585,21 +583,21 @@ wxBitmap Style::GetNormalBG()
 {
     QSize size = toolSize[currentOrientation];
     return graphics->GetSubBitmap(
-            QRect( normalBGlocation[currentOrientation].x, normalBGlocation[currentOrientation].y,
-                    size.x, size.y ) );
+            QRect( normalBGlocation[currentOrientation].x(), normalBGlocation[currentOrientation].y(),
+                    size.width(), size.height() ) );
 }
 
 wxBitmap Style::GetActiveBG()
 {
     return graphics->GetSubBitmap(
-            QRect( activeBGlocation[currentOrientation].x, activeBGlocation[currentOrientation].y,
-                    toolSize[currentOrientation].x, toolSize[currentOrientation].y ) );
+            QRect( activeBGlocation[currentOrientation].x(), activeBGlocation[currentOrientation].y(),
+                    toolSize[currentOrientation].width(), toolSize[currentOrientation].height() ) );
 }
 
 wxBitmap Style::GetToggledBG()
 {
     QSize size = toolSize[currentOrientation];
-    if( toggledBGSize[currentOrientation].x ) {
+    if( toggledBGSize[currentOrientation].width() ) {
         size = toggledBGSize[currentOrientation];
     }
     return graphics->GetSubBitmap( QRect( toggledBGlocation[currentOrientation], size ) );
@@ -608,7 +606,7 @@ wxBitmap Style::GetToggledBG()
 wxBitmap Style::GetToolbarStart()
 {
     QSize size = toolbarStartSize[currentOrientation];
-    if( toolbarStartSize[currentOrientation].x == 0 ) {
+    if( toolbarStartSize[currentOrientation].width() == 0 ) {
         size = toolbarStartSize[currentOrientation];
     }
     return graphics->GetSubBitmap( QRect( toolbarStartLoc[currentOrientation], size ) );
@@ -617,7 +615,7 @@ wxBitmap Style::GetToolbarStart()
 wxBitmap Style::GetToolbarEnd()
 {
     QSize size = toolbarEndSize[currentOrientation];
-    if( toolbarEndSize[currentOrientation].x == 0 ) {
+    if( toolbarEndSize[currentOrientation].width() == 0 ) {
         size = toolbarEndSize[currentOrientation];
     }
     return graphics->GetSubBitmap( QRect( toolbarEndLoc[currentOrientation], size ) );
@@ -631,46 +629,45 @@ int Style::GetToolbarCornerRadius()
 void Style::DrawToolbarLineStart( wxBitmap& bmp, double scale )
 {
     if( !HasToolbarStart() ) return;
-    wxMemoryDC dc( bmp );
+    QPainter dc( bmp .GetHandle());
     wxBitmap sbmp = GetToolbarStart();
     if( fabs(scale - 1.0) > 0.01){
         int h = sbmp.GetHeight() * scale;
         int w = sbmp.GetWidth() * scale;
         if( (h > 0) && (w > 0)){
             QImage scaled_image = sbmp.ConvertToImage();
-            sbmp = wxBitmap(scaled_image.Scale(w, h, QImage_QUALITY_HIGH));
+            sbmp = wxBitmap(scaled_image.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         }
     }
-    dc.DrawBitmap( sbmp, 0, 0, true );
-    dc.SelectObject( wxNullBitmap );
+    dc.drawPixmap(0, 0, *(sbmp.GetHandle()));
 }
 
 void Style::DrawToolbarLineEnd( wxBitmap& bmp, double scale )
 {
     if( !HasToolbarStart() ) return;
-    wxMemoryDC dc( bmp );
+    QPainter dc(bmp.GetHandle());
     wxBitmap sbmp = GetToolbarEnd();
     if( fabs(scale - 1.0) > 0.01){
         int h = sbmp.GetHeight() * scale;
         int w = sbmp.GetWidth() * scale;
         if( (h > 0) && (w > 0)){
             QImage scaled_image = sbmp.ConvertToImage();
-            sbmp = wxBitmap(scaled_image.Scale(w, h, QImage_QUALITY_HIGH));
+            sbmp = wxBitmap(scaled_image.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         }
     }
     
     if( currentOrientation ) {
-        dc.DrawBitmap( sbmp, 0, bmp.GetHeight() - sbmp.GetHeight(), true );
+        dc.drawPixmap(0, bmp.GetHeight() - sbmp.GetHeight(), *(sbmp.GetHandle()) );
     } else {
-        dc.DrawBitmap( sbmp, bmp.GetWidth() - sbmp.GetWidth(), 0, true );
+        dc.drawPixmap( bmp.GetWidth() - sbmp.GetWidth(), 0, *(sbmp.GetHandle()) );
     }
-    dc.SelectObject( wxNullBitmap );
+//    dc.SelectObject( wxNullBitmap );
 }
 
-void Style::SetOrientation( long orient )
+void Style::SetOrientation( Direction orient )
 {
     int newOrient = 0;
-    if( orient == wxTB_VERTICAL ) newOrient = 1;
+    if( orient == Vertical ) newOrient = 1;
     if( newOrient == currentOrientation ) return;
     currentOrientation = newOrient;
     Unload();
@@ -686,13 +683,13 @@ void Style::SetColorScheme( ColorScheme cs )
     colorscheme = cs;
     Unload();
     
-    if( (consoleTextBackgroundSize.x) && (consoleTextBackgroundSize.y)) {
+    if( (consoleTextBackgroundSize.width()) && (consoleTextBackgroundSize.height())) {
         wxBitmap bm = graphics->GetSubBitmap(
             QRect( consoleTextBackgroundLoc, consoleTextBackgroundSize ) );
 
     // The background bitmap in the icons file may be too small, so will grow it arbitrailly
         QImage image = bm.ConvertToImage();
-        image.Rescale( consoleTextBackgroundSize.GetX() * 2, consoleTextBackgroundSize.GetY() * 2 , QImage_QUALITY_NORMAL );
+        image.scaled(consoleTextBackgroundSize.width() * 2, consoleTextBackgroundSize.height() * 2  );
         wxBitmap bn( image );
         consoleTextBackground = SetBitmapBrightness( bn, cs );
     }
@@ -700,12 +697,12 @@ void Style::SetColorScheme( ColorScheme cs )
 
 void Style::Unload()
 {
-    for( unsigned int i = 0; i < tools.Count(); i++ ) {
+    for( unsigned int i = 0; i < tools.count(); i++ ) {
         Tool* tool = (Tool*) tools[i];
         tool->Unload();
     }
 
-    for( unsigned int i = 0; i < icons.Count(); i++ ) {
+    for( unsigned int i = 0; i < icons.count(); i++ ) {
         Icon* icon = (Icon*) icons[i];
         icon->Unload();
     }
@@ -721,7 +718,7 @@ Style::Style( void )
     chartStatusIconWidth = 0;
     chartStatusWindowTransparent = false;
     embossHeight = 40;
-    embossFont = wxEmptyString;
+    embossFont = "";
 
     //  Set compass window style defauilts
     compassMarginTop = 4;
@@ -733,23 +730,23 @@ Style::Style( void )
     compassYoffset = 0;
 
     for( int i = 0; i < 2; i++ ) {
-        toolbarStartLoc[i] = wxPoint( 0, 0 );
-        toolbarEndLoc[i] = wxPoint( 0, 0 );
+        toolbarStartLoc[i] = QPoint( 0, 0 );
+        toolbarEndLoc[i] = QPoint( 0, 0 );
         cornerRadius[i] = 0;
     }
 }
 
 Style::~Style( void )
 {
-    for( unsigned int i = 0; i < tools.Count(); i++ ) {
+    for( unsigned int i = 0; i < tools.count(); i++ ) {
         delete (Tool*) ( tools[i] );
     }
-    tools.Clear();
+    tools.clear();
 
-    for( unsigned int i = 0; i < icons.Count(); i++ ) {
+    for( unsigned int i = 0; i < icons.count(); i++ ) {
         delete (Icon*) ( icons[i] );
     }
-    icons.Clear();
+    icons.clear();
 
     if( graphics ) delete graphics;
 
@@ -761,14 +758,14 @@ StyleManager::StyleManager(void)
 {
     isOK = false;
     currentStyle = NULL;
-    Init( g_Platform->GetSharedDataDir() + _T("uidata") + wxFileName::GetPathSeparator() );
-    Init( g_Platform->GetHomeDir() );
-    Init( g_Platform->GetHomeDir() + _T(".opencpn") + wxFileName::GetPathSeparator() );
-    SetStyle( _T("") );
+    Init( g_Platform->GetDataDir() + QDir::separator() + ("uidata") + QDir::separator() );
+    Init( g_Platform->GetDataDir() );
+    Init( g_Platform->GetDataDir() + QDir::separator() + ("/.opencpn") + QDir::separator() );
+    SetStyle( ("") );
 #ifdef ocpnUSE_SVG
-    ZCHX_LOGMSG(_T("Using SVG Icons"));
+    qDebug()<<(("Using SVG Icons"));
 #else
-    ZCHX_LOGMSG(_T("Using PNG Icons"));
+    qDebug()<<(("Using PNG Icons"));
 #endif    
 }
 
@@ -777,70 +774,68 @@ StyleManager::StyleManager(const QString & configDir)
     isOK = false;
     currentStyle = NULL;
     Init( configDir );
-    SetStyle( _T("") );
+    SetStyle(("") );
 }
 
 StyleManager::~StyleManager(void)
 {
-    for( unsigned int i = 0; i < styles.Count(); i++ ) {
+    for( unsigned int i = 0; i < styles.count(); i++ ) {
         delete (Style*) ( styles[i] );
     }
-    styles.Clear();
+    styles.clear();
 }
 
 void StyleManager::Init(const QString & fromPath)
 {
     TiXmlDocument doc;
-
-    if( !wxDir::Exists( fromPath ) ) {
-        QString msg = _T("No styles found at: ");
-        msg << fromPath;
-        ZCHX_LOGMSG( msg );
+    QDir dir(fromPath);
+    if(!dir.exists())
+    {
+        QString msg = ("No styles found at: ");
+        msg.append(fromPath);
+        qDebug()<<( msg );
         return;
     }
 
-    wxDir dir( fromPath );
-    if( !dir.IsOpened() ) return;
-
-    QString filename;
+    QFileInfoList filelist = dir.entryInfoList(QStringList()<<("style*.xml"), QDir::Files);
 
     // We allow any number of styles to load from files called style<something>.xml
 
-    bool more = dir.GetFirst( &filename, _T("style*.xml"), wxDIR_FILES );
-
-    if( !more ) {
-        QString msg = _T("No styles found at: ");
-        msg << fromPath;
-        ZCHX_LOGMSG( msg );
+    if( !filelist.size() ) {
+        QString msg = ("No styles found at: ");
+        msg.append(fromPath);
+        qDebug()<<msg;
         return;
     }
 
     bool firstFile = true;
-    while( more ) {
-        QString name, extension;
+    for(int i=0; i<filelist.size(); i++)
+    {
+        QFileInfo file = filelist[i];
+//        QString name, extension;
 
-        if( !firstFile ) more = dir.GetNext( &filename );
-        if( !more ) break;
-        firstFile = false;
+//        if( !firstFile ) more = dir.GetNext( &filename );
+//        if( !more ) break;
+//        firstFile = false;
 
-        QString fullFilePath = fromPath + filename;
+        QString fullFilePath = file.absoluteFilePath();
 
-        if( !doc.LoadFile( (const char*) fullFilePath.mb_str() ) ) {
-            QString msg( _T("Attempt to load styles from this file failed: ") );
+        if( !doc.LoadFile( (const char*) fullFilePath.toUtf8().data() ) ) {
+            QString msg(("Attempt to load styles from this file failed: ") );
             msg += fullFilePath;
-            ZCHX_LOGMSG( msg );
+            qDebug()<< msg ;
             continue;
         }
 
-        QString msg( _T("Styles loading from ") );
+        QString msg(("Styles loading from ") );
         msg += fullFilePath;
-        ZCHX_LOGMSG( msg );
+        qDebug()<< msg ;
 
         TiXmlHandle hRoot( doc.RootElement() );
 
-        QString root = QString( doc.RootElement()->Value(), wxConvUTF8 );
-        if( root != _T("styles" ) ) {
-            ZCHX_LOGMSG( _T("    StyleManager: Expected XML Root <styles> not found.") );
+        QString root = QString::fromUtf8(doc.RootElement()->Value() );
+        if( root != ("styles" ) ) {
+            qDebug("    StyleManager: Expected XML Root <styles> not found.") ;
             continue;
         }
 
@@ -848,47 +843,45 @@ void StyleManager::Init(const QString & fromPath)
 
         for( ; styleElem; styleElem = styleElem->NextSiblingElement() ) {
 
-            if( QString( styleElem->Value(), wxConvUTF8 ) == _T("style") ) {
+            if( QString::fromUtf8( styleElem->Value()) == ("style") ) {
 
                 Style* style = new Style();
-                styles.Add( style );
+                styles.append( style );
 
-                style->name = QString( styleElem->Attribute( "name" ), wxConvUTF8 );
-                style->sysname = QString( styleElem->Attribute( "sysname" ), wxConvUTF8 );
+                style->name = QString::fromUtf8( styleElem->Attribute( "name" ) );
+                style->sysname = QString::fromUtf8( styleElem->Attribute( "sysname" ) );
                 style->myConfigFileDir = fromPath;
 
                 TiXmlElement* subNode = styleElem->FirstChild()->ToElement();
 
                 for( ; subNode; subNode = subNode->NextSiblingElement() ) {
-                    QString nodeType( subNode->Value(), wxConvUTF8 );
+                    QString nodeType = QString::fromUtf8(subNode->Value() );
 
-                    if( nodeType == _T("description") ) {
-                        style->description = QString( subNode->GetText(), wxConvUTF8 );
+                    if( nodeType == ("description") ) {
+                        style->description = QString::fromUtf8(subNode->GetText() );
                         continue;
                     }
-                    if( nodeType == _T("chart-status-icon") ) {
+                    if( nodeType == ("chart-status-icon") ) {
                         int w = 0;
                         subNode->QueryIntAttribute( "width", &w );
                         style->chartStatusIconWidth = w;
                         continue;
                     }
-                    if( nodeType == _T("chart-status-window") ) {
-                        style->chartStatusWindowTransparent = QString(
-                                subNode->Attribute( "transparent" ), wxConvUTF8 ).Lower().IsSameAs(
-                                _T("true") );
+                    if( nodeType == ("chart-status-window") ) {
+                        style->chartStatusWindowTransparent = QString::fromUtf8(subNode->Attribute( "transparent" )).toLower() == "true";
                         continue;
                     }
-                    if( nodeType == _T("embossed-indicators") ) {
-                        style->embossFont = QString( subNode->Attribute( "font" ), wxConvUTF8 );
+                    if( nodeType == ("embossed-indicators") ) {
+                        style->embossFont = QString::fromUtf8(subNode->Attribute( "font" ));
                         subNode->QueryIntAttribute( "size", &(style->embossHeight) );
                         continue;
                     }
-                    if( nodeType == _T("graphics-file") ) {
-                        style->graphicsFile = QString( subNode->Attribute( "name" ), wxConvUTF8 );
+                    if( nodeType == ("graphics-file") ) {
+                        style->graphicsFile = QString::fromUtf8(subNode->Attribute( "name" ) );
                         isOK = true; // If we got this far we are at least partially OK...
                         continue;
                     }
-                    if( nodeType == _T("active-route") ) {
+                    if( nodeType == ("active-route") ) {
                         TiXmlHandle handle( subNode );
                         TiXmlElement* tag = handle.Child( "font-color", 0 ).ToElement();
                         if( tag ) {
@@ -896,7 +889,7 @@ void StyleManager::Init(const QString & fromPath)
                             tag->QueryIntAttribute( "r", &r );
                             tag->QueryIntAttribute( "g", &g );
                             tag->QueryIntAttribute( "b", &b );
-                            style->consoleFontColor = wxColour( r, g, b );
+                            style->consoleFontColor = QColor( r, g, b );
                         }
                         tag = handle.Child( "text-background-location", 0 ).ToElement();
                         if( tag ) {
@@ -905,28 +898,28 @@ void StyleManager::Init(const QString & fromPath)
                             tag->QueryIntAttribute( "y", &y );
                             tag->QueryIntAttribute( "width", &w );
                             tag->QueryIntAttribute( "height", &h );
-                            style->consoleTextBackgroundLoc = wxPoint( x, y );
+                            style->consoleTextBackgroundLoc = QPoint( x, y );
                             style->consoleTextBackgroundSize = QSize( w, h );
                         }
                         continue;
                     }
-                    if( nodeType == _T("icons") ) {
+                    if( nodeType == ("icons") ) {
                         TiXmlElement* iconNode = subNode->FirstChild()->ToElement();
 
                         for( ; iconNode; iconNode = iconNode->NextSiblingElement() ) {
-                            QString nodeType( iconNode->Value(), wxConvUTF8 );
-                            if( nodeType == _T("icon") ) {
+                            QString nodeType = QString::fromUtf8(iconNode->Value() );
+                            if( nodeType == ("icon") ) {
                                 Icon* icon = new Icon();
-                                style->icons.Add( icon );
-                                icon->name = QString( iconNode->Attribute( "name" ), wxConvUTF8 );
-                                style->iconIndex[icon->name] = style->icons.Count() - 1;
+                                style->icons.append( icon );
+                                icon->name = QString::fromUtf8( iconNode->Attribute( "name" ) );
+                                style->iconIndex[icon->name] = style->icons.count() - 1;
                                 TiXmlHandle handle( iconNode );
                                 TiXmlElement* tag = handle.Child( "icon-location", 0 ).ToElement();
                                 if( tag ) {
                                     int x, y;
                                     tag->QueryIntAttribute( "x", &x );
                                     tag->QueryIntAttribute( "y", &y );
-                                    icon->iconLoc = wxPoint( x, y );
+                                    icon->iconLoc = QPoint( x, y );
                                 }
                                 tag = handle.Child( "size", 0 ).ToElement();
                                 if( tag ) {
@@ -938,25 +931,25 @@ void StyleManager::Init(const QString & fromPath)
                             }
                         }
                     }
-                    if( nodeType == _T("tools") ) {
+                    if( nodeType == ("tools") ) {
                         TiXmlElement* toolNode = subNode->FirstChild()->ToElement();
 
                         for( ; toolNode; toolNode = toolNode->NextSiblingElement() ) {
-                            QString nodeType( toolNode->Value(), wxConvUTF8 );
+                            QString nodeType = QString::fromUtf8(toolNode->Value() );
 
-                            if( nodeType == _T("horizontal") || nodeType == _T("vertical") ) {
+                            if( nodeType == ("horizontal") || nodeType == ("vertical") ) {
                                 int orientation = 0;
-                                if( nodeType == _T("vertical") ) orientation = 1;
+                                if( nodeType == ("vertical") ) orientation = 1;
 
                                 TiXmlElement* attrNode = toolNode->FirstChild()->ToElement();
                                 for( ; attrNode; attrNode = attrNode->NextSiblingElement() ) {
-                                    QString nodeType( attrNode->Value(), wxConvUTF8 );
-                                    if( nodeType == _T("separation") ) {
+                                    QString nodeType = QString::fromUtf8( attrNode->Value() );
+                                    if( nodeType == ("separation") ) {
                                         attrNode->QueryIntAttribute( "distance",
                                                 &style->toolSeparation[orientation] );
                                         continue;
                                     }
-                                    if( nodeType == _T("margin") ) {
+                                    if( nodeType == ("margin") ) {
                                         attrNode->QueryIntAttribute( "top",
                                                 &style->toolMarginTop[orientation] );
                                         attrNode->QueryIntAttribute( "right",
@@ -965,16 +958,15 @@ void StyleManager::Init(const QString & fromPath)
                                                 &style->toolMarginBottom[orientation] );
                                         attrNode->QueryIntAttribute( "left",
                                                 &style->toolMarginLeft[orientation] );
-                                        QString invis = QString(
-                                                attrNode->Attribute( "invisible" ), wxConvUTF8 );
-                                        style->marginsInvisible = ( invis.Lower() == _T("true") );
+                                        QString invis = QString::fromUtf8( attrNode->Attribute( "invisible" ) );
+                                        style->marginsInvisible = ( invis.toLower() == ("true") );
                                         continue;;
                                     }
-                                    if( nodeType == _T("toggled-location") ) {
+                                    if( nodeType == ("toggled-location") ) {
                                         int x, y;
                                         attrNode->QueryIntAttribute( "x", &x );
                                         attrNode->QueryIntAttribute( "y", &y );
-                                        style->toggledBGlocation[orientation] = wxPoint( x, y );
+                                        style->toggledBGlocation[orientation] = QPoint( x, y );
                                         x = 0;
                                         y = 0;
                                         attrNode->QueryIntAttribute( "width", &x );
@@ -982,11 +974,11 @@ void StyleManager::Init(const QString & fromPath)
                                         style->toggledBGSize[orientation] = QSize( x, y );
                                         continue;
                                     }
-                                    if( nodeType == _T("toolbar-start") ) {
+                                    if( nodeType == ("toolbar-start") ) {
                                         int x, y;
                                         attrNode->QueryIntAttribute( "x", &x );
                                         attrNode->QueryIntAttribute( "y", &y );
-                                        style->toolbarStartLoc[orientation] = wxPoint( x, y );
+                                        style->toolbarStartLoc[orientation] = QPoint( x, y );
                                         x = 0;
                                         y = 0;
                                         attrNode->QueryIntAttribute( "width", &x );
@@ -994,11 +986,11 @@ void StyleManager::Init(const QString & fromPath)
                                         style->toolbarStartSize[orientation] = QSize( x, y );
                                         continue;
                                     }
-                                    if( nodeType == _T("toolbar-end") ) {
+                                    if( nodeType == ("toolbar-end") ) {
                                         int x, y;
                                         attrNode->QueryIntAttribute( "x", &x );
                                         attrNode->QueryIntAttribute( "y", &y );
-                                        style->toolbarEndLoc[orientation] = wxPoint( x, y );
+                                        style->toolbarEndLoc[orientation] = QPoint( x, y );
                                         x = 0;
                                         y = 0;
                                         attrNode->QueryIntAttribute( "width", &x );
@@ -1006,35 +998,35 @@ void StyleManager::Init(const QString & fromPath)
                                         style->toolbarEndSize[orientation] = QSize( x, y );
                                         continue;
                                     }
-                                    if( nodeType == _T("toolbar-corners") ) {
+                                    if( nodeType == ("toolbar-corners") ) {
                                         int r;
                                         attrNode->QueryIntAttribute( "radius", &r );
                                         style->cornerRadius[orientation] = r;
                                         continue;
                                     }
-                                    if( nodeType == _T("background-location") ) {
+                                    if( nodeType == ("background-location") ) {
                                         int x, y;
                                         attrNode->QueryIntAttribute( "x", &x );
                                         attrNode->QueryIntAttribute( "y", &y );
-                                        style->normalBGlocation[orientation] = wxPoint( x, y );
+                                        style->normalBGlocation[orientation] = QPoint( x, y );
                                         style->HasBackground( true );
                                         continue;
                                     }
-                                    if( nodeType == _T("active-location") ) {
+                                    if( nodeType == ("active-location") ) {
                                         int x, y;
                                         attrNode->QueryIntAttribute( "x", &x );
                                         attrNode->QueryIntAttribute( "y", &y );
-                                        style->activeBGlocation[orientation] = wxPoint( x, y );
+                                        style->activeBGlocation[orientation] = QPoint( x, y );
                                         continue;
                                     }
-                                    if( nodeType == _T("size") ) {
+                                    if( nodeType == ("size") ) {
                                         int x, y;
                                         attrNode->QueryIntAttribute( "x", &x );
                                         attrNode->QueryIntAttribute( "y", &y );
                                         style->toolSize[orientation] = QSize( x, y );
                                         continue;
                                     }
-                                    if( nodeType == _T("icon-offset") ) {
+                                    if( nodeType == ("icon-offset") ) {
                                         int x, y;
                                         attrNode->QueryIntAttribute( "x", &x );
                                         attrNode->QueryIntAttribute( "y", &y );
@@ -1044,12 +1036,12 @@ void StyleManager::Init(const QString & fromPath)
                                 }
                                 continue;
                             }
-                            if( nodeType == _T("compass") ) {
+                            if( nodeType == ("compass") ) {
 
                                 TiXmlElement* attrNode = toolNode->FirstChild()->ToElement();
                                 for( ; attrNode; attrNode = attrNode->NextSiblingElement() ) {
-                                    QString nodeType( attrNode->Value(), wxConvUTF8 );
-                                    if( nodeType == _T("margin") ) {
+                                    QString nodeType = QString::fromUtf8(attrNode->Value() );
+                                    if( nodeType == ("margin") ) {
                                         attrNode->QueryIntAttribute( "top",
                                                                      &style->compassMarginTop );
                                         attrNode->QueryIntAttribute( "right",
@@ -1060,13 +1052,13 @@ void StyleManager::Init(const QString & fromPath)
                                                                      &style->compassMarginLeft );
                                         continue;
                                     }
-                                    if( nodeType == _T("compass-corners") ) {
+                                    if( nodeType == ("compass-corners") ) {
                                             int r;
                                             attrNode->QueryIntAttribute( "radius", &r );
                                             style->compasscornerRadius = r;
                                             continue;
                                         }
-                                    if( nodeType == _T("offset") ) {
+                                    if( nodeType == ("offset") ) {
                                         attrNode->QueryIntAttribute( "x",
                                                                      &style->compassXoffset );
                                         attrNode->QueryIntAttribute( "y",
@@ -1076,11 +1068,11 @@ void StyleManager::Init(const QString & fromPath)
                                 }
                              }
 
-                             if( nodeType == _T("tool") ) {
+                             if( nodeType == ("tool") ) {
                                 Tool* tool = new Tool();
-                                style->tools.Add( tool );
-                                tool->name = QString( toolNode->Attribute( "name" ), wxConvUTF8 );
-                                style->toolIndex[tool->name] = style->tools.Count() - 1;
+                                style->tools.append( tool );
+                                tool->name = QString::fromUtf8( toolNode->Attribute( "name" ) );
+                                style->toolIndex[tool->name] = style->tools.count() - 1;
                                 TiXmlHandle toolHandle( toolNode );
                                 TiXmlElement* toolTag =
                                         toolHandle.Child( "icon-location", 0 ).ToElement();
@@ -1088,21 +1080,21 @@ void StyleManager::Init(const QString & fromPath)
                                     int x, y;
                                     toolTag->QueryIntAttribute( "x", &x );
                                     toolTag->QueryIntAttribute( "y", &y );
-                                    tool->iconLoc = wxPoint( x, y );
+                                    tool->iconLoc = QPoint( x, y );
                                 }
                                 toolTag = toolHandle.Child( "rollover-location", 0 ).ToElement();
                                 if( toolTag ) {
                                     int x, y;
                                     toolTag->QueryIntAttribute( "x", &x );
                                     toolTag->QueryIntAttribute( "y", &y );
-                                    tool->rolloverLoc = wxPoint( x, y );
+                                    tool->rolloverLoc = QPoint( x, y );
                                 }
                                 toolTag = toolHandle.Child( "disabled-location", 0 ).ToElement();
                                 if( toolTag ) {
                                     int x, y;
                                     toolTag->QueryIntAttribute( "x", &x );
                                     toolTag->QueryIntAttribute( "y", &y );
-                                    tool->disabledLoc = wxPoint( x, y );
+                                    tool->disabledLoc = QPoint( x, y );
                                 }
                                 toolTag = toolHandle.Child( "size", 0 ).ToElement();
                                 if( toolTag ) {
@@ -1143,10 +1135,10 @@ void StyleManager::SetStyle(QString name)
         }
     }
 
-    if( (name.Length() == 0) || !bstyleFound )
+    if( (name.length() == 0) || !bstyleFound )
         selectFirst = true;
 
-    for( unsigned int i = 0; i < styles.Count(); i++ ) {
+    for( unsigned int i = 0; i < styles.count(); i++ ) {
         style = (Style*) ( styles[i] );
         if( style->name == name || selectFirst ) {
             if( style->graphics ) {
@@ -1155,13 +1147,12 @@ void StyleManager::SetStyle(QString name)
                 break;
             }
 
-            QString fullFilePath = style->myConfigFileDir + wxFileName::GetPathSeparator()
-                    + style->graphicsFile;
+            QString fullFilePath = style->myConfigFileDir + QDir::separator() + style->graphicsFile;
 
-            if( !wxFileName::FileExists( fullFilePath ) ) {
-                QString msg( _T("Styles Graphics File not found: ") );
+            if( !QFile::exists( fullFilePath ) ) {
+                QString msg(("Styles Graphics File not found: ") );
                 msg += fullFilePath;
-                ZCHX_LOGMSG( msg );
+                qDebug()<< msg ;
                 ok = false;
                 if( selectFirst ) continue;
                 break;
@@ -1169,10 +1160,10 @@ void StyleManager::SetStyle(QString name)
 
             QImage img; // Only image does PNG LoadFile properly on GTK.
 
-            if( !img.LoadFile( fullFilePath, wxBITMAP_TYPE_PNG ) ) {
-                QString msg( _T("Styles Graphics File failed to load: ") );
+            if( !img.load(fullFilePath, "PNG" ) ) {
+                QString msg(("Styles Graphics File failed to load: ") );
                 msg += fullFilePath;
-                ZCHX_LOGMSG( msg );
+                qDebug()<< msg ;
                 ok = false;
                 break;
             }

@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  efficient mipmap generation for use by opengl
@@ -27,7 +27,7 @@
 #include <string.h>
 #include "mipmap.h"
 
-#if defined(__AVX2__) || (defined(__MSVC__) &&  (_MSC_VER >= 1700))
+//#if defined(__AVX2__) || (defined(__MSVC__) &&  (_MSC_VER >= 1700))
 #include <immintrin.h>
 
 // typically 16 times faster than generic
@@ -81,4 +81,4 @@ void MipMap_32_avx2( int width, int height, unsigned char *source, unsigned char
         u += stride;
     }
 }
-#endif
+//#endif

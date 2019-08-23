@@ -36,8 +36,8 @@ extern OCPNPlatform  *g_Platform;
 ChInfoWin::ChInfoWin( QWidget *parent ):QWidget(parent)
 {
     this->setWindowFlags(Qt::SubWindow);
-    QFont *dFont = FontMgr::Get().GetFont("Dialog") ;
-    this->setFont(*dFont);
+    QFont dFont = FontMgr::Get().GetFont("Dialog") ;
+    this->setFont(dFont);
     this->setLayout(new QVBoxLayout);
     m_pInfoTextCtl = new QLabel(this);
     m_pInfoTextCtl->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
