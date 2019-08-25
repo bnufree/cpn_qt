@@ -34,6 +34,7 @@
 #include <vector>
 #include <QList>
 #include "_def.h"
+#include <QFont>
 
 #define CURRENT_SENC_FORMAT_VERSION  200
 
@@ -229,7 +230,7 @@ public:
     int        yoffs;       //
     S52color   *pcol;       // pointer to S52colour
     int        dis;         // display
-    QFont     *pFont;
+    QFont*     pFont;
     int        rul_seq_creator;  // sequence number of the Rule creating this object
     int           RGBA_width;
     int           RGBA_height;

@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -36,7 +36,7 @@
 #include "mygeom.h"
 #include "cutil.h"
 #include "georef.h"
-#include "navutil.h"                            // for LogMessageOnce
+//#include "navutil.h"                            // for LogMessageOnce
 #include "ocpn_pixel.h"
 #include "ocpndc.h"
 #include "s52utils.h"

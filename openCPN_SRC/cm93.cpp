@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  cm93 Chart Object
@@ -32,7 +32,7 @@
 #include "georef.h"
 #include "mygeom.h"
 #include "cutil.h"
-#include "navutil.h"                            // for LogMessageOnce
+//#include "navutil.h"                            // for LogMessageOnce
 #include "ocpn_pixel.h"                         // for ocpnUSE_DIBSECTION
 #include "ocpndc.h"
 //#include "pluginmanager.h"  // for PlugInManager

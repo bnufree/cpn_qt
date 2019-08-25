@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  * Authors:  David Register
@@ -37,6 +37,7 @@
 #include "OCPNPlatform.h"
 #include "FontMgr.h"
 #include "mipmap/mipmap.h"
+#include "zchxmapmainwindow.h"
 
 #ifndef GL_ETC1_RGB8_OES
 #define GL_ETC1_RGB8_OES                                        0x8D64
@@ -67,14 +68,14 @@ extern int              g_uncompressed_tile_size;
 extern int              g_nCPUCount;
 
 extern bool             b_inCompressAllCharts;
-extern MyFrame         *gFrame;
+extern zchxMapMainWindow         *gFrame;
 extern arrayofCanvasPtr  g_canvasArray;
 
 extern OCPNPlatform *g_Platform;
 extern ColorScheme global_color_scheme;
 
 extern PFNGLGETCOMPRESSEDTEXIMAGEPROC s_glGetCompressedTexImage;
-extern bool GetMemoryStatus( int *mem_total, int *mem_used );
+//extern bool GetMemoryStatus( int *mem_total, int *mem_used );
 extern QThread*         g_Main_thread;
 
 bool bthread_debug;
@@ -979,7 +980,7 @@ bool glTextureManager::ScheduleJob(glTexFactory* client, const QRect &rect, int 
         todo_list.insert(0, pt); // push to front as a stack
         if(bthread_debug){
             int mem_used;
-            GetMemoryStatus(0, &mem_used);
+            gFrame->getMemoryStatus(0, &mem_used);
             qDebug( "Adding job: %08X  Job Count: %lu  mem_used %d\n", pt->ident, (unsigned long)todo_list.count(), mem_used);
         }
  
@@ -1221,7 +1222,7 @@ bool glTextureManager::FactoryCrunch(double factor)
     }
 
     int mem_used, mem_start;
-    GetMemoryStatus(0, &mem_used);
+    gFrame->getMemoryStatus(0, &mem_used);
     double hysteresis = 0.90;
     mem_start = mem_used;
     ChartPathHashTexfactType::iterator it0;
@@ -1282,7 +1283,7 @@ bool glTextureManager::FactoryCrunch(double factor)
 
     ptf_oldest->FreeSome( g_memCacheLimit * factor * hysteresis);
 
-    GetMemoryStatus(0, &mem_used);
+    gFrame->getMemoryStatus(0, &mem_used);
 
     bMemCrunch = ( g_memCacheLimit && ( (mem_used > (double)(g_memCacheLimit) * factor *hysteresis && 
                             mem_used > (double)(m_prevMemUsed) * factor *hysteresis)
@@ -1388,8 +1389,8 @@ void glTextureManager::BuildCompressedCache()
 
     m_progDialog = new QProgressDialog();
 
-    QFont *qFont = GetOCPNScaledFont("Dialog");
-    int fontSize = qFont->pointSize();
+    QFont qFont = FontMgr::Get().getSacledFontDefaultSize("Dialog");
+    int fontSize = qFont.pointSize();
     QFont sFont;
     QSize csz = gFrame->rect().size();
     if(csz.width() < 500 || csz.height() < 500)

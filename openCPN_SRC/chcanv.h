@@ -1,4 +1,4 @@
-﻿
+
 /***************************************************************************
  *
  * Project:  OpenCPN
@@ -75,7 +75,7 @@ int SetScreenBrightness(int brightness);
       class wxBoundingBox;
       class ocpnBitmap;
       class WVSChart;
-      class MyFrame;
+//      class MyFrame;
       class ChartBaseBSB;
       class ChartBase;
       class S57ObjectTree;
@@ -140,6 +140,8 @@ public:
       void SetupGlCanvas( );
       void PaintCleanup();
       void Scroll(int dx, int dy);
+      void SetAlertString( QString str){ m_alertString = str;}
+      QString GetAlertString(){ return m_alertString; }
 
 protected:
       //    Methods
@@ -346,7 +348,7 @@ public:
       wxBitmap    *pscratch_bm;
       bool        m_brepaint_piano;
       double      m_cursor_lon, m_cursor_lat;
-      Undo        *undo;
+//      Undo        *undo;
       QPoint     r_rband;
       double      m_prev_rlat;
       double      m_prev_rlon;
@@ -618,7 +620,7 @@ private:
 
       ColorScheme m_cs;
       
-      TimedPopupWin *m_pBrightPopup;
+//      TimedPopupWin *m_pBrightPopup;
       
       ViewPort    m_cache_vp;
       wxBitmap    *m_prot_bm;
@@ -709,6 +711,7 @@ private:
       bool         m_MouseDragging;
       QRect       m_scaleBarRect;
       bool         m_bShowCompassWin;
+      QString      m_alertString;
 };
 
 typedef QList<ChartCanvas*> arrayofCanvasPtr;

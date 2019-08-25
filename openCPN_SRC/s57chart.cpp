@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -33,7 +33,7 @@
 #include "mygeom.h"
 #include "cutil.h"
 #include "georef.h"
-#include "navutil.h"                            // for LogMessageOnce
+//#include "navutil.h"                            // for LogMessageOnce
 #include "ocpn_pixel.h"
 #include "ocpndc.h"
 #include "s52utils.h"
@@ -52,6 +52,7 @@
 #include "Osenc.h"
 #include "chcanv.h"
 #include "SencManager.h"
+#include <QDebug>
 
 #ifdef __MSVC__
 #define _CRTDBG_MAP_ALLOC
@@ -98,7 +99,7 @@ extern bool              g_bGDAL_Debug;
 extern bool              g_bDebugS57;
 extern zchxMapMainWindow*          gFrame;
 //extern PlugInManager     *g_pi_manager;
-extern bool              g_b_overzoox;
+extern bool              g_b_overzoom_x;
 extern bool              g_b_EnableVBO;
 extern SENCThreadManager *g_SencThreadManager;
 extern ColorScheme       global_color_scheme;
@@ -1094,7 +1095,7 @@ void s57chart::AssembleLineGeometry( void )
 
                                     // calculate the centroid of this connector segment, used for viz testing
                                     double lat, lon;
-                                    fromSM_Plugin( (pair.e0 + pair.e1)/2, (pair.n0 + pair.n1)/2, ref_lat, ref_lon, &lat, &lon );
+                                    fromSM( (pair.e0 + pair.e1)/2, (pair.n0 + pair.n1)/2, ref_lat, ref_lon, &lat, &lon );
                                     pcs->cs_lat_avg = lat;
                                     pcs->cs_lon_avg = lon;
 
@@ -1171,7 +1172,7 @@ void s57chart::AssembleLineGeometry( void )
 
                                         // calculate the centroid of this connector segment, used for viz testing
                                         double lat, lon;
-                                        fromSM_Plugin( (pair.e0 + pair.e1)/2, (pair.n0 + pair.n1)/2, ref_lat, ref_lon, &lat, &lon );
+                                        fromSM( (pair.e0 + pair.e1)/2, (pair.n0 + pair.n1)/2, ref_lat, ref_lon, &lat, &lon );
                                         pcs->cs_lat_avg = lat;
                                         pcs->cs_lon_avg = lon;
 
@@ -1217,7 +1218,7 @@ void s57chart::AssembleLineGeometry( void )
 
                                         // calculate the centroid of this connector segment, used for viz testing
                                         double lat, lon;
-                                        fromSM_Plugin( (pair.e0 + pair.e1)/2, (pair.n0 + pair.n1)/2, ref_lat, ref_lon, &lat, &lon );
+                                        fromSM( (pair.e0 + pair.e1)/2, (pair.n0 + pair.n1)/2, ref_lat, ref_lon, &lat, &lon );
                                         pcs->cs_lat_avg = lat;
                                         pcs->cs_lon_avg = lon;
 
@@ -3781,7 +3782,7 @@ int s57chart::BuildSENCFile( const QString& FullPath000, const QString& SENCFile
     
     //  LOD calculation
     double display_ppm = 1 / .00025;     // nominal for most LCD displays
-    double meters_per_pixel_max_scale = GetNormalScaleMin(0,g_b_overzoox)/display_ppm;
+    double meters_per_pixel_max_scale = GetNormalScaleMin(0,g_b_overzoom_x)/display_ppm;
     m_LOD_meters = meters_per_pixel_max_scale * g_SENC_LOD_pixels;
 
     //  Establish a common reference point for the chart
@@ -5258,9 +5259,9 @@ QString s57chart::CreateObjDescriptions( ListOfObjRazRules* rule_list )
             if( lon > 180.0 ) lon -= 360.;
 
             positionString.clear();
-            positionString += toSDMM( 1, lat );
+            positionString += zchxFuncUtil::toSDMM( 1, lat );
             positionString += (" ");
-            positionString += toSDMM( 2, lon );
+            positionString += zchxFuncUtil::toSDMM( 2, lon );
 
             if( isLight ) {
                 curLight = new S57Light;

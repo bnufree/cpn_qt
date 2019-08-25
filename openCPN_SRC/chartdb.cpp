@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Database Object
@@ -447,9 +447,12 @@ ChartBase *ChartDB::GetChart(const char *theFilePath, ChartClassDescriptor &char
         pch = new s57chart;
     }
     else if (chart_desc.m_descriptor_type == PLUGIN_DESCRIPTOR) {
+        qDebug()<<"chart plugin not supported yet";
+#if 0
         LoadS57();
         ChartPlugInWrapper *cpiw = new ChartPlugInWrapper(chart_desc.m_class_name);
         pch = (ChartBase *)cpiw;
+#endif
     }
     else
     {
@@ -1353,10 +1356,13 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
             //                chart_class_name = cte.GetChartClassName();
             if(chart_class_name.length())
             {
+                qDebug()<<"chart plugin not supported yet."<<chart_class_name;
+#if 0
                 ChartPlugInWrapper *cpiw = new ChartPlugInWrapper(chart_class_name);
                 Ch = (ChartBase *)cpiw;
                 if(chart_family == CHART_FAMILY_VECTOR)
                     LoadS57();
+#endif
             }
         }
 

@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S52 Presentation Library
@@ -38,11 +38,16 @@
 #include "s52utils.h"
 #include "chartsymbols.h"
 #include "TexFont.h"
-#include "ocpn_plugin.h"
+//#include "ocpn_plugin.h"
 #include "gdal/cpl_csv.h"
 #include <QFile>
 #include "zchxconfig.h"
 #include "bitmap.h"
+#include <QFont>
+#include <QPainter>
+#include <QDateTime>
+#include "OCPNPlatform.h"
+#include "FontMgr.h"
 
 
 #ifndef PROJECTION_MERCATOR
@@ -57,6 +62,8 @@ extern bool    g_oz_vector_scale;
 extern float g_ChartScaleFactorExp;
 extern int g_chart_zoom_modifier_vector;
 extern zchxConfig*      g_config;
+extern OCPNPlatform*        g_Platform;
+
 
 float g_scaminScale;
 
@@ -70,6 +77,7 @@ extern bool GetDoubleAttr( S57Obj *obj, const char *AttrName, double &val );
 void PLIBDrawGLThickLine( float x1, float y1, float x2, float y2, QPen pen, bool b_hiqual );
 
 void LoadS57Config();
+extern QColor GetGlobalColor( QString str);
 
 
 //  S52_TextC Implementation
@@ -373,7 +381,7 @@ s52plib::s52plib( const QString& PLib, bool b_forceLegacy )
     m_coreVersionMinor = 6;
     m_coreVersionPatch = 0;
     
-    m_myConfig = PI_GetPLIBStateHash();
+    m_myConfig = GetStateHash();
 
     // GL Options/capabilities
     m_useStencil = false;
@@ -1128,8 +1136,8 @@ int s52plib::S52_load_Plib( const QString& PLib, bool b_forceLegacy )
         ( *_cond_sym )[index] = (Rule *) ( condTable[i].condInst );
     }
 
-    QString s57data_dir = *GetpSharedDataLocation();
-    s57data_dir += "s57data";
+    QString s57data_dir = g_Platform->GetDataDir();
+    s57data_dir += "/s57data";
     
     QString oc_file( s57data_dir );
     oc_file.append( "/s57objectclasses.csv" );
@@ -1774,8 +1782,8 @@ bool s52plib::RenderText(S52_TextC *ptext, int x, int y, QRect *pRectDrawn,
 
         int old_size = ptext->pFont->pointSize();
         int new_size = old_size * scale_factor;
-        scaled_font = FindOrCreateFont_PlugIn( new_size, ptext->pFont->family(),
-                                               ptext->pFont->style(), ptext->pFont->weight(), false );
+        scaled_font->setPointSize(new_size);
+        scaled_font->setUnderline(false);
         //            wxScreenDC sdc;
         //            sdc.GetTextExtent( ptext->frmtd, &w_scaled, &h_scaled, &descent, &exlead, scaled_font ); // measure the text
         QFontMetrics mecs(*scaled_font);
@@ -2092,7 +2100,7 @@ bool s52plib::RenderText(S52_TextC *ptext, int x, int y, QRect *pRectDrawn,
         }
 
         if( bdraw ) {
-            QColor wcolor = GetFontColour_PlugIn("ChartTexts");
+            QColor wcolor = FontMgr::Get().GetFontColor("ChartTexts");
 
             // If the user has not changed the color from BLACK, then use the color specified in the S52 LUP
             if( wcolor == Qt::black )
@@ -2175,8 +2183,8 @@ bool s52plib::TextRenderCheck( ObjRazRules *rzRules )
     
     //    An optimization for CM93 charts.
     //    Don't show the text associated with some objects, since CM93 database includes _texto objects aplenty
-    if( ( (int)rzRules->obj->auxParm3 == (int)PI_CHART_TYPE_CM93 )
-            || ( (int)rzRules->obj->auxParm3 == (int)PI_CHART_TYPE_CM93COMP ) ) {
+    if( ( (int)rzRules->obj->auxParm3 == (int)CHART_TYPE_CM93 )
+            || ( (int)rzRules->obj->auxParm3 == (int)CHART_TYPE_CM93COMP ) ) {
         if( !strncmp( rzRules->obj->FeatureName, "BUAARE", 6 ) )
             return false;
         else if( !strncmp( rzRules->obj->FeatureName, "SEAARE", 6 ) )
@@ -2248,7 +2256,8 @@ int s52plib::RenderT_All( ObjRazRules *rzRules, Rules *rules, ViewPort *vp, bool
                     fontweight = QFont::Weight::Bold;
             }
 
-            QFont *specFont = FindOrCreateFont_PlugIn( text->bsize, "Microsofy YH", QFont::Style::StyleNormal, fontweight );
+            QFont *specFont = new QFont("Microsofy YaHei",text->bsize, fontweight );
+            specFont->setStyle(  QFont::Style::StyleNormal);
             
             //Get the width of a single average character in the spec font
             QFontMetrics mecs(*specFont);
@@ -2287,8 +2296,7 @@ int s52plib::RenderT_All( ObjRazRules *rzRules, Rules *rules, ViewPort *vp, bool
 #else
                 default_size += 2;     // default to 2pt larger than system UI font
 #endif
-                
-                QFont *templateFont = GetOCPNScaledFont_PlugIn("ChartTexts", default_size );
+                QFont templateFont = FontMgr::Get().getSacledFontDefaultSize("ChartTexts", default_size );
                 
                 // NOAA ENC fles requests font size up to 20 points, which looks very
                 // disproportioned. Let's scale those sizes down to more reasonable values.
@@ -2299,12 +2307,12 @@ int s52plib::RenderT_All( ObjRazRules *rzRules, Rules *rules, ViewPort *vp, bool
                     if( fontSize > 13 ) fontSize -= 3;
 
                 // Now factor in the users selected font size.
-                fontSize += templateFont->pointSize() - 10;
+                fontSize += templateFont.pointSize() - 10;
                 
                 // In no case should font size be less than 10, since it becomes unreadable
                 fontSize = qMax(10, fontSize);
 
-                text->pFont = FindOrCreateFont_PlugIn( fontSize, qApp->font().family(), templateFont->style(), fontweight, false);
+                text->pFont = new QFont(FontMgr::Get().FindOrCreateFont( fontSize, qApp->font().family(), templateFont.style(), fontweight, false));
             }
         }
 
@@ -4529,8 +4537,7 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
             int leg_len = (int) ( sector_radius * canvas_pix_per_mm );
 
             //QColor c = GetGlobalColor( _T ( "CHBLK" ) );
-            QColor c;
-            GetGlobalColor( "CHBLK" , &c);
+            QColor c = GetGlobalColor( "CHBLK");
 
             buffer.color[2][0] = c.red();
             buffer.color[2][1] = c.green();
@@ -6323,8 +6330,8 @@ int s52plib::RenderToGLAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
             float x_origin = rzRules->obj->x_origin;
             
             if(rzRules->obj->m_chart_context->chart) {          // not a PlugIn Chart
-                if( ( (int)rzRules->obj->auxParm3 == (int)PI_CHART_TYPE_CM93 )
-                        || ( (int)rzRules->obj->auxParm3 == (int)PI_CHART_TYPE_CM93COMP ) )
+                if( ( (int)rzRules->obj->auxParm3 == (int)CHART_TYPE_CM93 )
+                        || ( (int)rzRules->obj->auxParm3 == (int)CHART_TYPE_CM93COMP ) )
                 {
                     //      We may need to translate object coordinates by 360 degrees to conform.
                     if( BBView.GetMaxLon() >= 180. ) {

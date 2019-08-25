@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Navigation Utility Functions
@@ -23,20 +23,6 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  **************************************************************************/
 
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif //precompiled headers
-
-#include <wx/tokenzr.h>
-#include <wx/sstream.h>
-#include <wx/image.h>
-#include <wx/filename.h>
-#include <wx/graphics.h>
-#include <wx/dir.h>
-#include <wx/listbook.h>
-
 #include "dychart.h"
 
 #include <stdlib.h>
@@ -44,9 +30,6 @@
 #include <time.h>
 #include <locale>
 #include <list>
-
-#include <wx/listimpl.cpp>
-#include <wx/progdlg.h>
 
 #include "config.h"
 #include "chart1.h"
@@ -69,7 +52,6 @@
 #include "OCPN_Sound.h"
 #include "Layer.h"
 #include "NavObjectCollection.h"
-#include "NMEALogWindow.h"
 #include "AIS_Decoder.h"
 #include "OCPNPlatform.h"
 #include "Track.h"

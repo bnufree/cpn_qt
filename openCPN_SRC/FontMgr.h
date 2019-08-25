@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -74,6 +74,7 @@ class FontMgr
         { return FindOrCreateFont(pointSize, family, (QFont::Style)style, weight, underline); }
         
         static void Shutdown();
+        QFont  getSacledFontDefaultSize(const QString& item, int default_szie = 0);
         
     private: // private for singleton
         FontMgr();

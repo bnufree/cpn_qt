@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -27,12 +27,13 @@
 
 #include "s57chart.h"
 #include "Osenc.h"
-#include "chart1.h"
+//#include "chart1.h"
 #include "chcanv.h"
-#include "zchxLog.h"
+//#include "zchxLog.h"
+#include "zchxmapmainwindow.h"
 
 
-extern MyFrame*          gFrame;
+extern zchxMapMainWindow*          gFrame;
 //extern SENCThreadManager *g_SencThreadManager;
 extern ColorScheme       global_color_scheme;
 extern int               g_nCPUCount;
@@ -49,7 +50,7 @@ SENCJobTicket::SENCJobTicket()
     m_status = THREAD_INACTIVE;
 }
 
-const int wxEVT_OCPN_BUILDSENCTHREAD = QEvent::registerEventType();
+const QEvent::Type wxEVT_OCPN_BUILDSENCTHREAD = (QEvent::Type)(QEvent::registerEventType());
  
 //----------------------------------------------------------------------------------
 //      OCPN_BUILDSENC_ThreadEvent Implementation
@@ -79,21 +80,21 @@ QEvent* OCPN_BUILDSENC_ThreadEvent::Clone() const
 //----------------------------------------------------------------------------------
 //      SENCThreadManager Implementation
 //----------------------------------------------------------------------------------
-SENCThreadManager::SENCThreadManager():QObject(0)
+SENCThreadManager::SENCThreadManager(QObject* parent):QObject(parent)
 {
     // ideally we would use the cpu count -1, and only launch jobs
     // when the idle load average is sufficient (greater than 1)
-     int nCPU =  qMax(1, std::thread::hardware_concurrency());
+     int nCPU =  fmax(1, std::thread::hardware_concurrency());
      if(g_nCPUCount > 0)    nCPU = g_nCPUCount;
  
       // obviously there's at least one CPU!
      if (nCPU < 1)   nCPU = 1;
 
-    m_max_jobs =  qMax(nCPU - 1, 1);
+    m_max_jobs =  fmax(nCPU - 1, 1);
     //m_max_jobs = 1;
 
 //    if(bthread_debug)
-    ZCHX_LOGMSG(QString("").sprintf(" SENC: nCPU: %d    m_max_jobs :%d\n", nCPU, m_max_jobs).toStdString().data());
+    qDebug(QString("").sprintf(" SENC: nCPU: %d    m_max_jobs :%d\n", nCPU, m_max_jobs).toStdString().data());
     
 //     m_timer.Connect(wxEVT_TIMER, wxTimerEventHandler( glTextureManager::OnTimer ), NULL, this);
 //     m_timer.Start(500);
@@ -108,7 +109,7 @@ bool SENCThreadManager::event(QEvent *e)
 {
     if(e->type() == wxEVT_OCPN_BUILDSENCTHREAD)
     {
-        OCPN_BUILDSENC_ThreadEvent *event = qobject_cast<OCPN_BUILDSENC_ThreadEvent*>(e);
+        OCPN_BUILDSENC_ThreadEvent *event = (OCPN_BUILDSENC_ThreadEvent*)(e);
         if(event)OnEvtThread(*event);
         return true;
     }
@@ -162,8 +163,8 @@ void SENCThreadManager::StartTopJob()
             SENCBuildThread *thread = new SENCBuildThread( startCandidate, this);
             startCandidate->m_thread = thread;
             startCandidate->m_status = THREAD_STARTED;
-            thread->setPriority(20);
-            thread->run();
+            thread->setPriority(QThread::NormalPriority);
+            thread->start();
             nRunning++;
         }
     }
@@ -200,12 +201,12 @@ void SENCThreadManager::FinishJob(SENCJobTicket *ticket)
 
     
     if(nRunning){
-        wxString count;
-        count.Printf(_T("  %ld"), ticket_list.size());
-        gFrame->GetPrimaryCanvas()->SetAlertString( _("Preparing vector chart  ") + count);
+        QString count;
+        count.sprintf("  %ld", ticket_list.size());
+        gFrame->GetPrimaryCanvas()->SetAlertString( ("Preparing vector chart  ") + count);
     }
     else{
-        gFrame->GetPrimaryCanvas()->SetAlertString( _T(""));
+        gFrame->GetPrimaryCanvas()->SetAlertString( (""));
     }        
 #endif
 
@@ -271,8 +272,7 @@ void SENCThreadManager::OnEvtThread( OCPN_BUILDSENC_ThreadEvent & event )
         default:
             break;
     }
-    if(gFrame)
-        gFrame->GetEventHandler()->AddPendingEvent(Sevent);
+//    if(gFrame)        gFrame->GetEventHandler()->AddPendingEvent(Sevent);
 
 }
 
@@ -282,16 +282,15 @@ void SENCThreadManager::OnEvtThread( OCPN_BUILDSENC_ThreadEvent & event )
 
 
 SENCBuildThread::SENCBuildThread(SENCJobTicket *ticket, SENCThreadManager *manager)
+:QThread(0)
 {
     m_FullPath000 = ticket->m_FullPath000;
     m_SENCFileName = ticket->m_SENCFileName;
     m_manager = manager;
     m_ticket = ticket;
-    
-    Create();
 }
 
-void * SENCBuildThread::Entry()
+void SENCBuildThread::run()
 {
 
 //#ifdef __MSVC__
@@ -313,17 +312,16 @@ void * SENCBuildThread::Entry()
         senc.setNoErrDialog( true );
 
         m_ticket->m_SENCResult = SENC_BUILD_STARTED;
-        OCPN_BUILDSENC_ThreadEvent Sevent(wxEVT_OCPN_BUILDSENCTHREAD, 0);
+        OCPN_BUILDSENC_ThreadEvent Sevent;
         Sevent.stat = 0;
         Sevent.type = SENC_BUILD_STARTED;
         Sevent.m_ticket = m_ticket;
-        if(m_manager)
-            m_manager->QueueEvent(Sevent.Clone());
+//        if(m_manager) m_manager->QueueEvent(Sevent.Clone());
  
 
         int ret = senc.createSenc200( m_FullPath000, m_SENCFileName, false );
 
-        OCPN_BUILDSENC_ThreadEvent Nevent(wxEVT_OCPN_BUILDSENCTHREAD, 0);
+        OCPN_BUILDSENC_ThreadEvent Nevent;
         Nevent.stat = ret;
         Nevent.m_ticket = m_ticket;
         if(ret == ERROR_INGESTING000)
@@ -332,15 +330,14 @@ void * SENCBuildThread::Entry()
             Nevent.type = SENC_BUILD_DONE_NOERROR;
 
         m_ticket->m_SENCResult = Sevent.type;
-        if(m_manager)
-            m_manager->QueueEvent(Nevent.Clone());
+//        if(m_manager)     m_manager->QueueEvent(Nevent.Clone());
 
         //if(ret == ERROR_INGESTING000)
           //  return BUILD_SENC_NOK_PERMANENT;
         //else
           //  return ret;
 
-        return 0;
+//        return 0;
     }           // try
     
 //#ifdef __MSVC__    
@@ -356,7 +353,7 @@ void * SENCBuildThread::Entry()
         }
         
         
-        return 0;
+//        return 0;
     }
 //#endif    
     

@@ -1,4 +1,4 @@
-﻿#include "zchxmapmainwindow.h"
+#include "zchxmapmainwindow.h"
 #include <QApplication>
 #include <QSharedMemory>
 #include <QMutex>
@@ -10,6 +10,7 @@
 #include <QTextCodec>
 #include <QMessageBox>
 
+zchxMapMainWindow* gFrame = 0;
 
 void logMessageOutputQt5(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
@@ -38,7 +39,7 @@ void logMessageOutputQt5(QtMsgType type, const QMessageLogContext &context, cons
     QString message = QString("[%1] %2 [%3] [%4] %5").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"))
             .arg(text).arg(context.file).arg(context.line).arg(msg);
 
-    QDir dir(QCoreApplication::applicationDirPath() + QString("/log"));
+    QDir dir(QApplication::applicationDirPath() + QString("/log"));
     if(!dir.exists())
     {
         dir.mkpath(dir.path());
@@ -86,8 +87,10 @@ int main(int argc, char *argv[])
 
 
     //make size as 9:16
+//    gFrame = new zchxMapMainWindow();
+//    gFrame->showMaximized();
     zchxMapMainWindow w;
-    w.showMaximized();
+    w.show();
 
     return a.exec();
 }

@@ -1,4 +1,4 @@
-﻿#include "zchxoptionsdlg.h"
+#include "zchxoptionsdlg.h"
 #include "ui_zchxoptionsdlg.h"
 #include "zchxchecklistwidget.h"
 #include "zchxopengloptiondlg.h"
@@ -40,7 +40,7 @@ extern  int             g_cm93_zoom_factor;
 extern  int             g_nDepthUnitDisplay;
 extern OCPNPlatform     *g_Platform;
 extern s52plib          *ps52plib;
-extern  zchxMapMainWindow   *mMainWindow;
+extern  zchxMapMainWindow   *gFrame;
 
 zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
     QDialog(parent),
@@ -240,8 +240,8 @@ void zchxOptionsDlg::processApply(bool apply)
 
     m_returnChanges |= GENERIC_CHANGED | k_vectorcharts | k_charts | m_groups_changed ;
 
-    if (apply && mMainWindow) {
-        mMainWindow->ProcessOptionsDialog(m_returnChanges, m_pWorkDirList);
+    if (apply && gFrame) {
+        gFrame->ProcessOptionsDialog(m_returnChanges, m_pWorkDirList);
         m_CurrentDirList = *m_pWorkDirList; // Perform a deep copy back to main database.
 
         //  We can clear a few flag bits on "Apply", so they won't be recognised at the "OK" click.
@@ -249,7 +249,7 @@ void zchxOptionsDlg::processApply(bool apply)
         m_returnChanges &= ~( CHANGE_CHARTS | FORCE_UPDATE | SCAN_UPDATE );
         k_charts = 0;
 
-        mMainWindow->RefreshAllCanvas();
+        gFrame->RefreshAllCanvas();
     }
     setCursor(QCursor(cursor_type));
 }

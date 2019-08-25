@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  PlugIn Object Definition/API
@@ -912,21 +912,6 @@ typedef enum PI_InitReturn
     PI_INIT_FAIL_NOERROR       // Init failed, request no explicit error message
 }_PI_InitReturn;
 
-class PI_line_segment_element
-{
-public:
-    size_t              vbo_offset;
-    size_t              n_points;
-    int                 priority;
-    float               lat_max;                // segment bounding box
-    float               lat_min;
-    float               lon_max;
-    float               lon_min;
-    int                 type;
-    void                *private0;
-   
-    PI_line_segment_element *next;
-};
 
 
 class DECL_EXP PI_S57Obj

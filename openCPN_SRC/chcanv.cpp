@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Canvas
@@ -36,8 +36,8 @@
 #include "geodesic.h"
 #include "styles.h"
 #include "piano.h"
-#include "navutil.h"
-#include "kml.h"
+//#include "navutil.h"
+//#include "kml.h"
 //#include "concanv.h"
 #include "thumbwin.h"
 #include "chartdb.h"
@@ -47,7 +47,7 @@
 #include "tcmgr.h"
 #include "ocpn_pixel.h"
 #include "ocpndc.h"
-#include "undo.h"
+//#include "undo.h"
 //#include "toolbar.h"
 #include "timers.h"
 #include "glTextureDescriptor.h"
@@ -365,8 +365,6 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
 
     m_OSoffsetx = 0.;
     m_OSoffsety = 0.;
-    
-    undo = new Undo(this);
 
     VPoint.Invalidate();
 
@@ -610,7 +608,7 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     double factor_night = 0.25;
 
 
-    m_pBrightPopup = NULL;
+//    m_pBrightPopup = NULL;
     
 #ifdef ocpnUSE_GL
     if ( !g_bdisable_opengl )
@@ -642,7 +640,7 @@ ChartCanvas::~ChartCanvas()
     delete pCursorPencil;
     delete pCursorCross;
 
-    delete m_pBrightPopup;
+//    delete m_pBrightPopup;
 
     delete m_pCIWin;
 
@@ -662,8 +660,6 @@ ChartCanvas::~ChartCanvas()
 
 
     delete m_prot_bm;
-
-    delete undo;
 #ifdef ocpnUSE_GL
     if( !g_bdisable_opengl ) {
         delete m_glcc;
@@ -2104,7 +2100,7 @@ void ChartCanvas::keyPressEvent(QKeyEvent *event)
             }
         }
 
-        SetScreenBrightness( g_nbrightness );
+//        SetScreenBrightness( g_nbrightness );
         ShowBrightnessLevelTimedPopup( g_nbrightness / 10, 1, 10 );
         gFrame->raise();        // And reactivate the application main
 
@@ -2367,11 +2363,11 @@ void ChartCanvas::keyPressEvent(QKeyEvent *event)
                 break;
 
             case 25:                       // Ctrl Y
-                if( undo->AnythingToRedo() ) {
-                    undo->RedoNextAction();
-                    InvalidateGL();
-                    Refresh( false );
-                }
+//                if( undo->AnythingToRedo() ) {
+//                    undo->RedoNextAction();
+//                    InvalidateGL();
+//                    Refresh( false );
+//                }
                 break;
 
             case 26:
@@ -2432,7 +2428,7 @@ void ChartCanvas::keyPressEvent(QKeyEvent *event)
                     gamma_state = 0;
                     break;
                 }
-                SetScreenBrightness( g_nbrightness );
+//                SetScreenBrightness( g_nbrightness );
 
                 break;
 
@@ -2833,6 +2829,7 @@ wxBitmap ChartCanvas::CreateDimBitmap( wxBitmap &Bitmap, double factor )
 
 void ChartCanvas::ShowBrightnessLevelTimedPopup( int brightness, int min, int max )
 {
+#if 0
     QFont pfont = FontMgr::Get().FindOrCreateFont( 40, "Microsoft YH", QFont::StyleNormal, QFont::Weight::Bold );
 
     if( !m_pBrightPopup ) {
@@ -2875,6 +2872,7 @@ void ChartCanvas::ShowBrightnessLevelTimedPopup( int brightness, int min, int ma
 
     m_pBrightPopup->SetBitmap(QBitmap::fromImage(bmp.ConvertToImage()) );
     m_pBrightPopup->show();
+#endif
 }
 
 
@@ -3633,7 +3631,7 @@ bool ChartCanvas::PanCanvas( double dx, double dy )
 
 void ChartCanvas::ReloadVP( bool b_adjust )
 {
-    if( g_brightness_init ) SetScreenBrightness( g_nbrightness );
+//    if( g_brightness_init ) SetScreenBrightness( g_nbrightness );
 
     LoadVP( VPoint, b_adjust );
 }
@@ -5024,7 +5022,8 @@ void ChartCanvas::ScaleBarDraw( ocpnDC& dc )
             unit = ( unit == DISTANCE_MI ) ? DISTANCE_FT : DISTANCE_M;
         
         // nice number
-        float dist = toUsrDistance( d, unit ), logdist = log(dist) / log(10.F);
+        float dist = zchxFuncUtil::toUsrDistance( d, unit );
+        float logdist = log(dist) / log(10.F);
         float places = floor(logdist), rem = logdist - places;
         dist = pow(10, places);
 
@@ -5033,12 +5032,13 @@ void ChartCanvas::ScaleBarDraw( ocpnDC& dc )
         else if(rem < .5)
             dist /= 2;
 
-        QString s = QString("").sprintf("%g ", dist) + getUsrDistanceUnit( unit );
+        QString s = QString("").sprintf("%g ", dist) + zchxFuncUtil::getUsrDistanceUnit( unit );
         QColor black = GetGlobalColor( "UBLCK"  );
         QPen pen1 = QPen( black , 3, Qt::SolidLine );
         double rotation = -VPoint.rotation;
 
-        ll_gc_ll( blat, blon, rotation * 180 / PI + 90, fromUsrDistance(dist, unit), &tlat, &tlon );
+        ll_gc_ll( blat, blon, rotation * 180 / PI + 90,
+                  zchxFuncUtil::fromUsrDistance(dist, unit), &tlat, &tlon );
         zchxPoint r;
         GetCanvasPointPix( tlat, tlon, r );
         int l1 = r.x - x_origin;

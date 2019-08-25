@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Bar Window
@@ -45,21 +45,19 @@
 // Class declarations
 typedef QList<QRect> RectArray;
 
-class MyFrame;
+class zchxMapMainWindow;
 class ChartCanvas;
 class ocpnDC;
 
 //----------------------------------------------------------------------------
 // Piano
 //----------------------------------------------------------------------------
-class Piano /*: public wxEvtHandler*/
+class Piano /*: public wxEvtHandler*/:public QObject
 {
+    Q_OBJECT
 public:
       Piano( ChartCanvas *parent );
       ~Piano();
-
-      void Paint(int y, QPainter &dc, QPainter *shapeDC=NULL);
-      void Paint(int y, ocpnDC &dc, QPainter *shapeDC=NULL);
       void DrawGL(int y);
       void FormatKeys(void);
       bool MouseEvent(QMouseEvent* event);
@@ -81,7 +79,7 @@ public:
       void SetTMercIcon(wxBitmap *picon_bmp){ if( m_pTmercIconBmp ) delete m_pTmercIconBmp; m_pTmercIconBmp = picon_bmp; }
       void SetPolyIcon(wxBitmap *picon_bmp){ if( m_pPolyIconBmp ) delete m_pPolyIconBmp; m_pPolyIconBmp = picon_bmp; }
       void ShowBusy( bool busy );
-      void onTimerEvent(QTimerEvent &event);
+
       
       zchxPoint GetKeyOrigin(int key_index);
       void ResetRollover(void);
@@ -94,6 +92,8 @@ public:
       QString &GetStoredHash();
       
       int GetnKeys(){ return m_nRegions; }
+public slots:
+      void onTimerEvent();
       
 private:
       void BuildGLTexture();
@@ -126,7 +126,7 @@ private:
       std::vector<int> m_tmerc_index_array;
       std::vector<int> m_poly_index_array;
       bool        m_bBusy;
-      QTimer     m_eventTimer;
+      QTimer     *m_eventTimer;
       int         m_click_sel_index;
       int         m_click_sel_dbindex;
       int         m_action;

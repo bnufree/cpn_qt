@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  * Authors:  David Register
@@ -65,7 +65,7 @@ private:
 #include "ChInfoWin.h"
 #include "thumbwin.h"
 #include "chartdb.h"
-#include "navutil.h"
+//#include "navutil.h"
 #include "TexFont.h"
 #include "glTexCache.h"
 #include "gshhs.h"
@@ -104,14 +104,15 @@ extern "C" void glOrthof(float left,  float right,  float bottom,  float top,  f
 #include "cm93.h"                   // for chart outline draw
 #include "s57chart.h"               // for ArrayOfS57Obj
 #include "s52plib.h"
+#include "zchxmapmainwindow.h"
 
-extern bool GetMemoryStatus(int *mem_total, int *mem_used);
+//extern bool GetMemoryStatus(int *mem_total, int *mem_used);
 
 #ifndef GL_DEPTH_STENCIL_ATTACHMENT
 #define GL_DEPTH_STENCIL_ATTACHMENT       0x821A
 #endif
 
-extern MyFrame *gFrame;
+extern zchxMapMainWindow *gFrame;
 extern s52plib *ps52plib;
 extern bool g_bopengl;
 extern bool g_bDebugOGL;
@@ -544,7 +545,7 @@ void glChartCanvas::FlushFBO( void )
 
 void glChartCanvas::OnActivate( /*wxActivateEvent& event*/ )
 {
-    if(m_pParentCanvas) m_pParentCanvas->OnActivate( /*event*/ );
+//    if(m_pParentCanvas) m_pParentCanvas->OnActivate( /*event*/ );
 }
 
 void glChartCanvas::initializeGL()
@@ -2259,7 +2260,7 @@ void glChartCanvas::RenderRasterChartRegionGL( ChartBase *chart, ViewPort &vp, L
     int mem_used = 0;
     if (g_memCacheLimit > 0) {
         // GetMemoryStatus is slow on linux
-        GetMemoryStatus(0, &mem_used);
+        gFrame->getMemoryStatus(0, &mem_used);
     }
 
     glTexTile **tiles = pTexFact->GetTiles(numtiles);
@@ -3421,7 +3422,7 @@ void glChartCanvas::Render()
     if (m_pParentCanvas->m_Compass)
         m_pParentCanvas->m_Compass->Paint(gldc);
     
-
+    RenderGLAlertMessage();
 
     //quiting?
     if( g_bquiting )
@@ -3680,6 +3681,46 @@ QColor glChartCanvas::GetBackGroundColor()const
     QBrush brush = pal.background();
     return brush.color();
 }
+
+void glChartCanvas::RenderGLAlertMessage()
+{
+    if(!m_pParentCanvas->GetAlertString().isEmpty())
+    {
+        QString msg = m_pParentCanvas->GetAlertString();
+
+        QFont pfont("Micorosoft Yahei", 10, QFont::Weight::Normal);
+        TexFont texfont;
+        texfont.Build(pfont);
+
+        int w, h;
+        texfont.GetTextExtent( msg, &w, &h);
+        h += 2;
+        w += 4;
+        int yp = m_pParentCanvas->VPoint.pix_height - 20 - h;
+
+        QRect sbr = m_pParentCanvas->GetScaleBarRect();
+        int xp = sbr.x()+sbr.width() + 5;
+
+        glColor3ub( 243, 229, 47 );
+
+        glBegin(GL_QUADS);
+        glVertex2i(xp, yp);
+        glVertex2i(xp+w, yp);
+        glVertex2i(xp+w, yp+h);
+        glVertex2i(xp, yp+h);
+        glEnd();
+
+        glEnable(GL_BLEND);
+        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+        glColor3ub( 0, 0, 0 );
+        glEnable(GL_TEXTURE_2D);
+        texfont.RenderString( msg, xp, yp);
+        glDisable(GL_TEXTURE_2D);
+
+    }
+}
+
 
 
 void glChartCanvas::FastZoom(float factor)

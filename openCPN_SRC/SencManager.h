@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -27,7 +27,7 @@
 #define __SENCMGR_H__
 
 #include <QEvent>
-#include <Qthread>
+#include <QThread>
 
 // ----------------------------------------------------------------------------
 // Useful Prototypes
@@ -62,7 +62,7 @@ typedef enum{
     SENC_BUILD_DONE_ERROR,
 } EVENTSENCResult;
 
-extern  const int wxEVT_OCPN_BUILDSENCTHREAD;
+extern  const QEvent::Type wxEVT_OCPN_BUILDSENCTHREAD;
 
 //----------------------------------------------------------------------------
 // s57 Chart Thread based SENC job ticket
@@ -114,7 +114,7 @@ class SENCThreadManager : public QObject
 {
     Q_OBJECT
 public:
-    SENCThreadManager();
+    explicit SENCThreadManager(QObject* parent = 0);
     ~SENCThreadManager();
 
     void OnEvtThread( OCPN_BUILDSENC_ThreadEvent & event );
@@ -139,9 +139,10 @@ protected:
 //----------------------------------------------------------------------------
 class SENCBuildThread : public QThread
 {
+    Q_OBJECT
 public:
     SENCBuildThread( SENCJobTicket *ticket, SENCThreadManager *manager);
-    void *Entry();
+    void run();
 
     QString m_FullPath000;
     QString m_SENCFileName;

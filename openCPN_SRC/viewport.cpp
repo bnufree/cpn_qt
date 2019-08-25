@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  ViewPort
@@ -34,8 +34,8 @@
 #include "geodesic.h"
 #include "styles.h"
 //#include "routeman.h"
-#include "navutil.h"
-#include "kml.h"
+//#include "navutil.h"
+//#include "kml.h"
 //#include "concanv.h"
 #include "thumbwin.h"
 #include "chartdb.h"

@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -33,6 +33,7 @@
 
 extern QString g_locale;
 extern OCPNPlatform     *g_Platform;
+extern bool g_bresponsive;
 
 QString s_locale;
 int g_default_font_size;
@@ -125,9 +126,9 @@ QString FontMgr::GetFontConfigKey( const QString &description )
     using namespace std;
     locale loc;
     const collate<char>& coll = use_facet<collate<char> >( loc );
-//    char cFontDesc[101];
-//    wcstombs( cFontDesc, description.c_str(), 100 );
-//    cFontDesc[100] = 0;
+    //    char cFontDesc[101];
+    //    wcstombs( cFontDesc, description.c_str(), 100 );
+    //    cFontDesc[100] = 0;
 
     QByteArray abuf = description.toUtf8();
     
@@ -254,7 +255,7 @@ MyFontDesc* FontMgr::FindFontByConfigString( QString pConfigString )
     
     return NULL;
 }
-    
+
 
 void FontMgr::LoadFontNative(const QString& pConfigString, const QString &pNativeDesc )
 {
@@ -375,8 +376,8 @@ void FontMgr::ScrubList( )
         candidateArray.append(candidate);
         i++;
     }
-        
-    //  The Aux Key array    
+
+    //  The Aux Key array
     for(unsigned int i=0 ; i <  m_AuxKeyArray.size() ; i++){
         candidateArray.append(m_AuxKeyArray[i]);
     }
@@ -403,9 +404,9 @@ void FontMgr::ScrubList( )
                 }
             }
         }
-    }        
+    }
 
-    // now we have an array of correct translations    
+    // now we have an array of correct translations
     // Walk the loaded list again.
     // If a list item's translation is not in the "good" array, mark it for removal
     
@@ -437,7 +438,7 @@ void FontMgr::ScrubList( )
             i--;
         }
     }
- 
+
     //  And finally, for good measure, make sure that everything in the candidate array has a valid entry in the list
     i = 0;
     while( true ){
@@ -447,11 +448,11 @@ void FontMgr::ScrubList( )
         }
 
         GetFont( /*wxGetTranslation*/(candidate), g_default_font_size );
-     
+
         i++;
     }
- 
-     
+
+
 }
 
 bool FontMgr::AddAuxKey( QString key )
@@ -462,5 +463,31 @@ bool FontMgr::AddAuxKey( QString key )
     }
     m_AuxKeyArray.append(key);
     return true;
+}
+
+QFont FontMgr::getSacledFontDefaultSize(const QString &item, int default_size)
+{
+    QFont dFont = GetFont( item, default_size );
+    int req_size = dFont.pointSize();
+
+    if( g_bresponsive )
+    {
+        //      Adjust font size to be no smaller than xx mm actual size
+        double scaled_font_size = dFont.pointSize();
+
+        double points_per_mm  = g_Platform->getFontPointsperPixel() * g_Platform->GetDisplayDPmm();
+        double min_scaled_font_size = 3 * points_per_mm;    // smaller than 3 mm is unreadable
+        int nscaled_font_size = fmax( qRound(scaled_font_size), min_scaled_font_size );
+
+        if(req_size >= nscaled_font_size)
+            return dFont;
+        else{
+            return FindOrCreateFont( nscaled_font_size,
+                                     dFont.family(),
+                                     dFont.style(),
+                                     dFont.weight());
+        }
+    }
+    return dFont;
 }
 

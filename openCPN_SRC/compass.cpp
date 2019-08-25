@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  OpenCPN Main wxWidgets Program
@@ -24,12 +24,7 @@
  ***************************************************************************
  *
  */
-#include "wx/wxprec.h"
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif //precompiled headers
-#include "config.h"
-#include "ocpn_types.h"
+#include "zchxconfig.h"
 #include "compass.h"
 #include "chcanv.h"
 #include "styles.h"
@@ -41,7 +36,7 @@ extern ocpnStyle::StyleManager* g_StyleManager;
 extern bool bGPSValid;
 extern bool g_bSatValid;
 extern int g_SatsInView;
-extern MyFrame *gFrame;
+extern zchxMapMainWindow *gFrame;
 extern bool g_bopengl;
 
 ocpnCompass::ocpnCompass( ChartCanvas *parent, bool bShowGPS)
@@ -50,12 +45,12 @@ ocpnCompass::ocpnCompass( ChartCanvas *parent, bool bShowGPS)
     m_bshowGPS = bShowGPS;
     
      ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
-     _img_compass = style->GetIcon( _T("CompassRose") );
-     _img_gpsRed = style->GetIcon( _T("gpsRed") );
+     _img_compass = style->GetIcon(("CompassRose") );
+     _img_gpsRed = style->GetIcon(("gpsRed") );
 
     m_rose_angle = -999;  // force a refresh when first used
 
-     m_rect = wxRect(style->GetCompassXOffset(), style->GetCompassYOffset(),
+     m_rect = QRect(style->GetCompassXOffset(), style->GetCompassYOffset(),
              _img_compass.GetWidth() + _img_gpsRed.GetWidth() + style->GetCompassLeftMargin() * 2
                      + style->GetToolSeparation(),
                      _img_compass.GetHeight() + style->GetCompassTopMargin() + style->GetCompassBottomMargin() );
@@ -81,7 +76,7 @@ ocpnCompass::~ocpnCompass()
 
 void ocpnCompass::Paint( ocpnDC& dc )
 {
-    if(m_shown && m_StatBmp.IsOk()){
+    if(m_shown && m_StatBmp.isOK()){
 # if defined(ocpnUSE_GLES) || defined(ocpnUSE_GL)  // GLES does not do ocpnDC::DrawBitmap(), so use texture
         if(g_bopengl && texobj){
             glBindTexture( GL_TEXTURE_2D, texobj );
@@ -89,17 +84,17 @@ void ocpnCompass::Paint( ocpnDC& dc )
             
             glBegin( GL_QUADS );
             
-            glTexCoord2f( 0, 0 );  glVertex2i( m_rect.x, m_rect.y );
-            glTexCoord2f( 1, 0 );  glVertex2i( m_rect.x + m_rect.width, m_rect.y );
-            glTexCoord2f( 1, 1 );  glVertex2i( m_rect.x + m_rect.width, m_rect.y + m_rect.height );
-            glTexCoord2f( 0, 1 );  glVertex2i( m_rect.x, m_rect.y + m_rect.height );
+            glTexCoord2f( 0, 0 );  glVertex2i( m_rect.x(), m_rect.y() );
+            glTexCoord2f( 1, 0 );  glVertex2i( m_rect.x() + m_rect.width(), m_rect.y() );
+            glTexCoord2f( 1, 1 );  glVertex2i( m_rect.x() + m_rect.width(), m_rect.y() + m_rect.height() );
+            glTexCoord2f( 0, 1 );  glVertex2i( m_rect.x(), m_rect.y() + m_rect.height() );
             
             glEnd();
             glDisable( GL_TEXTURE_2D );
             
         }
         else {
-         dc.DrawBitmap( m_StatBmp, m_rect.x, m_rect.y, true );
+         dc.DrawBitmap(m_StatBmp, m_rect.x(), m_rect.y(), true );
         }
     
 #else
@@ -109,12 +104,12 @@ void ocpnCompass::Paint( ocpnDC& dc )
         
 }
 
-bool ocpnCompass::MouseEvent( wxMouseEvent& event )
+bool ocpnCompass::MouseEvent( QMouseEvent& event )
 {
-    if(!m_shown || !m_rect.Contains(event.GetPosition()))
+    if(!m_shown || !m_rect.contains(event.pos()))
         return false;
 
-    if (event.LeftDown())
+    if (event.type() == QEvent::MouseButtonPress && event.button() == Qt::LeftButton)
         m_parent->ToggleCourseUp( );
     return true;
 }
@@ -128,7 +123,7 @@ void ocpnCompass::SetColorScheme( ColorScheme cs )
 void ocpnCompass::UpdateStatus( bool bnew )
 {
     if( bnew ){
-        m_lastgpsIconName.Clear();        // force an update to occur
+        m_lastgpsIconName.clear();        // force an update to occur
         
         //  We clear the texture so that any onPaint method will not use a stale texture
 #ifdef ocpnUSE_GLES  
@@ -157,7 +152,7 @@ void ocpnCompass::SetScaleFactor( float factor)
     //  Precalculate the background sizes to get m_rect width/height
     wxBitmap compassBg, gpsBg;
     int orient = style->GetOrientation();
-    style->SetOrientation( wxTB_HORIZONTAL );
+    style->SetOrientation( ocpnStyle::Style::Hortizontal );
     if( style->HasBackground() ) {
         compassBg = style->GetNormalBG();
         style->DrawToolbarLineStart( compassBg );
@@ -168,12 +163,12 @@ void ocpnCompass::SetScaleFactor( float factor)
     }
 
     if(fabs(m_scale-1.0) > 0.1){
-        wxImage bg_img = compassBg.ConvertToImage();
-        bg_img.Rescale(compassBg.GetWidth() * m_scale, compassBg.GetHeight() *m_scale, wxIMAGE_QUALITY_NORMAL);
+        QImage bg_img = compassBg.ConvertToImage();
+        bg_img = bg_img.scaled(compassBg.GetWidth() * m_scale, compassBg.GetHeight() *m_scale);
         compassBg = wxBitmap( bg_img );
             
         bg_img = gpsBg.ConvertToImage();
-        bg_img.Rescale(gpsBg.GetWidth() * m_scale, gpsBg.GetHeight() *m_scale, wxIMAGE_QUALITY_NORMAL);
+        bg_img = bg_img.scaled(gpsBg.GetWidth() * m_scale, gpsBg.GetHeight() *m_scale);
         gpsBg = wxBitmap( bg_img );
      }
 
@@ -181,7 +176,7 @@ void ocpnCompass::SetScaleFactor( float factor)
      if( !style->marginsInvisible ) 
          width += style->GetCompassLeftMargin() + style->GetToolSeparation();
      
-     m_rect = wxRect(style->GetCompassXOffset(), style->GetCompassYOffset(),
+     m_rect = QRect(style->GetCompassXOffset(), style->GetCompassYOffset(),
                     width,
                      compassBg.GetHeight() + style->GetCompassTopMargin() + style->GetCompassBottomMargin());
 
@@ -193,20 +188,20 @@ void ocpnCompass::CreateBmp( bool newColorScheme )
     if(!m_shown)
         return;
 
-    wxString gpsIconName;
+    QString gpsIconName;
     ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
 
     // In order to draw a horizontal compass window when the toolbar is vertical, we
     // need to save away the sizes and backgrounds for the two icons.
 
     static wxBitmap compassBg, gpsBg;
-    static wxSize toolsize;
+    static QSize toolsize;
     static int topmargin, leftmargin, radius;
 
 
-    if( ! compassBg.IsOk() || newColorScheme ) {
+    if( ! compassBg.isOK() || newColorScheme ) {
         int orient = style->GetOrientation();
-        style->SetOrientation( wxTB_HORIZONTAL );
+        style->SetOrientation( ocpnStyle::Style::Hortizontal );
         if( style->HasBackground() ) {
             compassBg = style->GetNormalBG();
             style->DrawToolbarLineStart( compassBg );
@@ -217,12 +212,12 @@ void ocpnCompass::CreateBmp( bool newColorScheme )
         }
 
         if(fabs(m_scale-1.0) > 0.1){
-            wxImage bg_img = compassBg.ConvertToImage();
-            bg_img.Rescale(compassBg.GetWidth() * m_scale, compassBg.GetHeight() *m_scale, wxIMAGE_QUALITY_NORMAL);
+            QImage bg_img = compassBg.ConvertToImage();
+            bg_img = bg_img.scaled(compassBg.GetWidth() * m_scale, compassBg.GetHeight() *m_scale);
             compassBg = wxBitmap( bg_img );
             
             bg_img = gpsBg.ConvertToImage();
-            bg_img.Rescale(gpsBg.GetWidth() * m_scale, gpsBg.GetHeight() *m_scale, wxIMAGE_QUALITY_NORMAL);
+            bg_img = bg_img.scaled(gpsBg.GetWidth() * m_scale, gpsBg.GetHeight() *m_scale);
             gpsBg = wxBitmap( bg_img );
         }
     
@@ -230,23 +225,23 @@ void ocpnCompass::CreateBmp( bool newColorScheme )
         topmargin = style->GetCompassTopMargin();
         radius = style->GetCompassCornerRadius();
 
-        if( orient == wxTB_VERTICAL )
-            style->SetOrientation( wxTB_VERTICAL );
+        if( orient == ocpnStyle::Style::Vertical )
+            style->SetOrientation( ocpnStyle::Style::Vertical );
     }
 
     bool b_need_refresh = false;
 
     if( bGPSValid ) {
         if( g_bSatValid ) {
-            gpsIconName = _T("gps3Bar");
-            if( g_SatsInView <= 8 ) gpsIconName = _T("gps2Bar");
-            if( g_SatsInView <= 4 ) gpsIconName = _T("gps1Bar");
-            if( g_SatsInView < 0 ) gpsIconName = _T("gpsGry");
+            gpsIconName = ("gps3Bar");
+            if( g_SatsInView <= 8 ) gpsIconName = ("gps2Bar");
+            if( g_SatsInView <= 4 ) gpsIconName = ("gps1Bar");
+            if( g_SatsInView < 0 ) gpsIconName = ("gpsGry");
 
         } else
-            gpsIconName = _T("gpsGrn");
+            gpsIconName = ("gpsGrn");
     } else
-        gpsIconName = _T("gpsRed");
+        gpsIconName = ("gpsRed");
 
     if( m_lastgpsIconName != gpsIconName ) b_need_refresh = true;
 
@@ -272,79 +267,80 @@ void ocpnCompass::CreateBmp( bool newColorScheme )
         
     m_StatBmp.Create( width, compassBg.GetHeight() + topmargin + style->GetCompassBottomMargin() );
 
-    m_rect.width = m_StatBmp.GetWidth();
-    m_rect.height = m_StatBmp.GetHeight();
+    m_rect.setSize(QSize(m_StatBmp.GetWidth(),m_StatBmp.GetHeight()));
     
-    if( !m_StatBmp.IsOk() )
+    if( !m_StatBmp.isOK() )
         return;
 
     m_MaskBmp = wxBitmap( m_StatBmp.GetWidth(), m_StatBmp.GetHeight() );
     if( style->marginsInvisible ) {
-        wxMemoryDC sdc( m_MaskBmp );
-        sdc.SetBackground( *wxWHITE_BRUSH );
-        sdc.Clear();
-        sdc.SetBrush( *wxBLACK_BRUSH );
-        sdc.SetPen( *wxBLACK_PEN );
-        wxSize maskSize = wxSize(m_MaskBmp.GetWidth() - leftmargin,
+        QPainter sdc;
+        sdc.begin(m_MaskBmp.GetHandle() );
+        sdc.setBackground(Qt::white);
+        sdc.eraseRect(0, 0, sdc.device()->width(), sdc.device()->height());
+        sdc.setBrush(Qt::black );
+        sdc.setPen(QPen(Qt::black) );
+        QSize maskSize = QSize(m_MaskBmp.GetWidth() - leftmargin,
                                  m_MaskBmp.GetHeight() - (2 * topmargin));
-        sdc.DrawRoundedRectangle( wxPoint( leftmargin, topmargin ), maskSize, radius );
-        sdc.SelectObject( wxNullBitmap );
+        sdc.drawRoundedRect( QRect(QPoint( leftmargin, topmargin ), maskSize), radius, radius );
+        sdc.end();
     } else if(radius) {
-        wxMemoryDC sdc( m_MaskBmp );
-        sdc.SetBackground( *wxWHITE_BRUSH );
-        sdc.Clear();
-        sdc.SetBrush( *wxBLACK_BRUSH );
-        sdc.SetPen( *wxBLACK_PEN );
-        sdc.DrawRoundedRectangle( 0, 0, m_MaskBmp.GetWidth(), m_MaskBmp.GetHeight(), radius );
-        sdc.SelectObject( wxNullBitmap );
+        QPainter sdc;
+        sdc.begin( m_MaskBmp.GetHandle() );
+        sdc.setBackground( Qt::white );
+        sdc.eraseRect(0, 0, sdc.device()->width(), sdc.device()->height());
+        sdc.setBrush( Qt::black );
+        sdc.setPen( Qt::black );
+        sdc.drawRoundedRect(QRect(0, 0, m_MaskBmp.GetWidth(), m_MaskBmp.GetHeight()), radius, radius );
+        sdc.end();
     }
-    m_StatBmp.SetMask(new wxMask(m_MaskBmp, *wxWHITE));
+    m_StatBmp.SetMask(new wxMask(m_MaskBmp, Qt::white));
 
-    wxMemoryDC mdc;
-    mdc.SelectObject( m_StatBmp );
-    mdc.SetBackground( wxBrush( GetGlobalColor( _T("COMP1") ), wxBRUSHSTYLE_SOLID ) );
-    mdc.Clear();
+    QPainter mdc;
+    mdc.begin( m_StatBmp.GetHandle() );
+    mdc.setBackground( QBrush( GetGlobalColor( ("COMP1") ), Qt::SolidPattern ) );
+    mdc.eraseRect(0, 0, mdc.device()->width(), mdc.device()->height());
 
-    mdc.SetPen( wxPen( GetGlobalColor( _T("UITX1") ), 1 ) );
-    mdc.SetBrush( wxBrush( GetGlobalColor( _T("UITX1") ), wxBRUSHSTYLE_TRANSPARENT ) );
+    mdc.setPen( QPen( GetGlobalColor( ("UITX1") ), 1 ) );
+    mdc.setBrush( QBrush( GetGlobalColor( ("UITX1") ), Qt::NoBrush ) );
     
     if( !style->marginsInvisible )
-        mdc.DrawRoundedRectangle( 0, 0, m_StatBmp.GetWidth(), m_StatBmp.GetHeight(),radius );
+        mdc.drawRoundedRect( QRect(0, 0, m_StatBmp.GetWidth(), m_StatBmp.GetHeight()),radius, radius );
 
-    wxPoint offset(leftmargin, topmargin);
+    zchxPoint offset(leftmargin, topmargin);
 
     //    Build Compass Rose, rotated...
     wxBitmap BMPRose;
-    wxPoint after_rotate;
+    zchxPoint after_rotate;
 
-    int cwidth = style->GetToolSize().x * m_scale;
-    int cheight = style->GetToolSize().y * m_scale;
-    cheight = wxMin(cheight, compassBg.GetHeight());
-    cwidth = wxMin( cwidth, cheight );
+    int cwidth = style->GetToolSize().width() * m_scale;
+    int cheight = style->GetToolSize().height() * m_scale;
+    cheight = fmin(cheight, compassBg.GetHeight());
+    cwidth = fmin( cwidth, cheight );
     cheight = cwidth;
     
     if( m_parent->m_bCourseUp )
-        BMPRose = style->GetIcon( _T("CompassRose"), cwidth, cheight );
+        BMPRose = style->GetIcon( ("CompassRose"), cwidth, cheight );
     else
-        BMPRose = style->GetIcon( _T("CompassRoseBlue"), cwidth, cheight );
+        BMPRose = style->GetIcon( ("CompassRoseBlue"), cwidth, cheight );
     if( ( fabs( m_parent->GetVPRotation() ) > .01 ) || ( fabs( m_parent->GetVPSkew() ) > .01 ) ) {
-         wxImage rose_img = BMPRose.ConvertToImage();
-         wxPoint rot_ctr( cwidth / 2, cheight / 2  );
-         wxImage rot_image = rose_img.Rotate( rose_angle, rot_ctr, true, &after_rotate );
-         BMPRose = wxBitmap( rot_image ).GetSubBitmap( wxRect( -after_rotate.x, -after_rotate.y, cwidth, cheight ));
+         QImage rose_img = BMPRose.ConvertToImage();
+         zchxPoint rot_ctr( cwidth / 2, cheight / 2  );
+//         QImage rot_image = rose_img.Rotate( rose_angle, rot_ctr, true, &after_rotate );
+//         BMPRose = wxBitmap( rot_image ).GetSubBitmap( QRect( -after_rotate.x, -after_rotate.y, cwidth, cheight ));
      }
 
     wxBitmap iconBm;
 
     if( style->HasBackground() ) {
-        iconBm = MergeBitmaps( compassBg, BMPRose, wxSize( 0, 0 ) );
+        iconBm = MergeBitmaps( compassBg, BMPRose, QSize( 0, 0 ) );
     } else {
         iconBm = BMPRose;
     }
     
-    iconBm = ConvertTo24Bit( wxColor(0,0,0), iconBm);
+    iconBm = ConvertTo24Bit( QColor(0,0,0), iconBm);
         
-    mdc.DrawBitmap( iconBm, offset );
+    mdc.drawPixmap(offset.toPoint(), *(iconBm.GetHandle()) );
     offset.x += iconBm.GetWidth();
     offset.x += style->GetToolSeparation();
 
@@ -352,11 +348,11 @@ void ocpnCompass::CreateBmp( bool newColorScheme )
 
     if(m_bshowGPS){
         //  GPS Icon
-        int twidth = style->GetToolSize().x * m_scale;
-        int theight = style->GetToolSize().y * m_scale;
-        theight = wxMin(cheight, compassBg.GetHeight());
-        int swidth = wxMax( twidth, theight );
-        int sheight = wxMin( twidth, theight );
+        int twidth = style->GetToolSize().width() * m_scale;
+        int theight = style->GetToolSize().height() * m_scale;
+        theight = fmin(cheight, compassBg.GetHeight());
+        int swidth = fmax( twidth, theight );
+        int sheight = fmin( twidth, theight );
         
         //  Sometimes, the SVG renderer gets the size wrong due to some internal rounding error.
         //  If so found, it seems to work OK by just reducing the requested size by one pixel....
@@ -365,17 +361,18 @@ void ocpnCompass::CreateBmp( bool newColorScheme )
             gicon = style->GetIcon( gpsIconName, swidth-1, sheight-1, true );
 
         if( style->HasBackground() ) {
-            iconBm = MergeBitmaps( gpsBg, gicon, wxSize( 0, 0 ) );
+            iconBm = MergeBitmaps( gpsBg, gicon, QSize( 0, 0 ) );
         } else {
             iconBm = gicon;
         }
         
-        iconBm = ConvertTo24Bit( wxColor(0,0,0), iconBm);
-        mdc.DrawBitmap( iconBm, offset );
-        mdc.SelectObject( wxNullBitmap );
-        
+        iconBm = ConvertTo24Bit( QColor(0,0,0), iconBm);
+        mdc.drawPixmap(offset.toPoint(), *(iconBm.GetHandle()) );
         m_lastgpsIconName = gpsIconName;
     }
+
+    mdc.end();
+
 
 #if defined(ocpnUSE_GLES)   // GLES does not do ocpnDC::DrawBitmap(), so use texture
     if(g_bopengl){

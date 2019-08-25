@@ -1,4 +1,4 @@
-﻿#ifndef ZCHXMAPMAINWINDOW_H
+#ifndef ZCHXMAPMAINWINDOW_H
 #define ZCHXMAPMAINWINDOW_H
 
 #include <QMainWindow>
@@ -84,6 +84,9 @@ public slots:
     void    slotShowLightDiscriptions(bool sts);
     void    slotShowDisplayCategory();
     void    RefreshAllCanvas( bool bErase = true);
+    void    SetGPSCompassScale();
+    double  GetMag(double a);
+    void    InvalidateAllGL();
 
 private:
     QAction* addCustomAction(QMenu* menu, const QString &text, const QObject *receiver, const char* slot, bool check = false, const QVariant& data = QVariant());

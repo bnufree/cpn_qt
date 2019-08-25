@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -109,7 +109,7 @@ public:
 
     void SetRootGPXNode(void);
     bool IsOpenCPN();
-    LLBBox &GetBBox( ) { return BBox;};
+    LLBBox &GetBBox( ) { return BBox;}
     
     LLBBox     BBox;
     pugi::xml_node      m_gpx_root;

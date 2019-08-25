@@ -1,4 +1,4 @@
-﻿#include "zchxmapmainwindow.h"
+#include "zchxmapmainwindow.h"
 #include "ui_zchxmapmainwindow.h"
 #include <windows.h>
 #include <psapi.h>
@@ -14,6 +14,8 @@
 #include "S57ClassRegistrar.h"
 #include "s57RegistrarMgr.h"
 #include "glChartCanvas.h"
+#include "thumbwin.h"
+#include "styles.h"
 
 
 //MyFrame                   *gFrame;
@@ -42,6 +44,124 @@ zchxConfig                *pConfig;
 extern zchxMapMainWindow*  gFrame;
 int                       g_nDepthUnitDisplay;
 
+int                       g_nCacheLimit;
+int                       g_memCacheLimit;
+ThumbWin                  *pthumbwin;
+//bool                      g_bGDAL_Debug;
+
+//double                    g_VPRotate; // Viewport rotation angle, used on "Course Up" mode
+//bool                      g_bCourseUp;
+//int                       g_COGAvgSec = 15; // COG average period (sec.) for Course Up Mode
+//double                    g_COGAvg;
+//bool                      g_bLookAhead;
+//bool                      g_bskew_comp;
+bool                      g_bopengl;
+//bool                      g_bSoftwareGL;
+//bool                      g_bShowFPS;
+//bool                      g_bsmoothpanzoom;
+bool                      g_fog_overzoom;
+double                    g_overzoom_emphasis_base;
+bool                      g_oz_vector_scale;
+
+QString                  ChartListFileName;
+QString                  AISTargetNameFileName;
+QString                  gWorldMapLocation, gDefaultWorldMapLocation;
+QString                  *pInit_Chart_Dir;
+QString                  g_VisibleLayers;
+QString                  g_InvisibleLayers;
+QString                  g_VisiNameinLayers;
+QString                  g_InVisiNameinLayers;
+
+bool            g_bShowStatusBar;
+bool            g_bShowMenuBar;
+bool            g_bShowCompassWin;
+bool            g_bShowChartBar;
+double          g_display_size_mm;
+double          g_config_display_size_mm;
+bool            g_config_display_size_manual;
+bool            g_bskew_comp;
+bool            g_bresponsive;
+bool            g_bAutoHideToolbar;
+int             g_nAutoHideToolbar;
+bool            g_bsmoothpanzoom;
+bool            g_bShowTrue;
+bool            g_bShowMag;
+int             g_iSDMMFormat;
+int             g_iDistanceFormat;
+int             g_iSpeedFormat;
+bool            g_bEnableZoomToCursor;
+int             g_chart_zoom_modifier;
+int             g_chart_zoom_modifier_vector;
+int             g_GUIScaleFactor;
+float                     g_compass_scalefactor;
+int             g_ChartScaleFactor;
+int             g_ShipScaleFactor;
+float           g_ChartScaleFactorExp;
+float           g_ShipScaleFactorExp;
+int             g_cm93_zoom_factor;
+bool                      g_bInlandEcdis;
+bool                      g_b_assume_azerty;
+bool                      g_benable_rotate;
+bool                      g_b_overzoom_x = true; // Allow high overzoom
+ChartDummy                *pDummyChart;
+int               g_sticky_chart;
+double                    gLat, gLon, gCog, gSog, gHdt, gHdm, gVar;
+double                    g_UserVar;
+double                    vLat, vLon;
+double                    initial_scale_ppm, initial_rotation;
+zchxConfig*      g_config;
+bool                      g_bDebugS57;
+bool                      g_bGDAL_Debug;
+double                    g_VPRotate; // Viewport rotation angle, used on "Course Up" mode
+bool                      g_bCourseUp;
+int                       g_COGAvgSec = 15; // COG average period (sec.) for Course Up Mode
+double                    g_COGAvg;
+bool                      g_bLookAhead;
+bool                      g_bFirstRun;
+bool                      g_bUpgradeInProcess;
+float                     g_selection_radius_mm = 2.0;
+float                     g_selection_radius_touch_mm = 10.0;
+
+int                       g_maintoolbar_x;
+int                       g_maintoolbar_y;
+long                      g_maintoolbar_orient;
+float                     g_toolbar_scalefactor;
+QThread                   *g_Main_thread = 0;
+int                     g_nCPUCount;
+bool                        g_bSoftwareGL;
+bool                        g_bGLexpert;
+ChartCanvas      *g_focusCanvas;
+ChartCanvas      *g_overlayCanvas;
+bool             b_inCompressAllCharts;
+unsigned int     g_canvasConfig;
+bool                      g_bcompression_wait;
+QString                  g_locale;
+QString                  g_localeOverride;
+bool             g_btouch;
+bool                      g_bdisable_opengl;
+
+ChartGroupArray           *g_pGroupArray;
+int                       g_GroupIndex;
+bool                      g_bNeedDBUpdate;
+bool                      g_bPreserveScaleOnX;
+bool                      g_bFullscreen;
+bool                      g_bFullScreenQuilt = true;
+bool                      g_bQuiltEnable;
+bool                      g_bQuiltStart;
+bool                      g_bquiting;
+ocpnStyle::StyleManager*  g_StyleManager;
+double                    g_ChartNotRenderScaleFactor;
+std::vector<int>               g_quilt_noshow_index_array;
+int                       g_nbrightness = 100;
+bool                      bDBUpdateInProgress;
+bool                      bGPSValid;
+int                       g_SatsInView;
+bool                      g_bSatValid;
+
+
+
+
+
 
 
 zchxMapMainWindow::zchxMapMainWindow(QWidget *parent) :
@@ -54,6 +174,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent) :
 {
     ChartData = mChartDB;
     ui->setupUi(this);
+    g_Main_thread = QThread::currentThread();
     //工具
     QMenu* tools = this->menuBar()->addMenu(tr("Tools"));
     addCustomAction(tools,tr("Options"),this, SLOT(slotOpenSettingDlg()));
@@ -642,7 +763,7 @@ void zchxMapMainWindow::slotOnFrameTimer1Out()
         if( gGPS_Watchdog <= 0 ) {
             bGPSValid = false;
             if( gGPS_Watchdog == 0  ){
-                wxString msg;
+                QString msg;
                 msg.Printf( _T("   ***GPS Watchdog timeout at Lat:%g   Lon: %g"), gLat, gLon );
                 ZCHX_LOGMSG(msg);
             }
@@ -758,25 +879,25 @@ void zchxMapMainWindow::slotOnFrameTimer1Out()
         if( ( logspan.IsLongerThan( wxTimeSpan( 0, 30, 0, 0 ) ) ) || ( minuteUTC == 0 )
                 || ( minuteUTC == 30 ) ) {
             if( logspan.IsLongerThan( wxTimeSpan( 0, 1, 0, 0 ) ) ) {
-                wxString day = lognow.FormatISODate();
-                wxString utc = lognow.FormatISOTime();
-                wxString navmsg = _T("LOGBOOK:  ");
+                QString day = lognow.FormatISODate();
+                QString utc = lognow.FormatISOTime();
+                QString navmsg = _T("LOGBOOK:  ");
                 navmsg += day;
                 navmsg += _T(" ");
                 navmsg += utc;
                 navmsg += _T(" UTC ");
 
                 if( bGPSValid ) {
-                    wxString data;
+                    QString data;
                     data.Printf( _T(" GPS Lat %10.5f Lon %10.5f "), gLat, gLon );
                     navmsg += data;
 
-                    wxString cog;
+                    QString cog;
                     if( std::isnan(gCog) ) cog.Printf( _T("COG ----- ") );
                     else
                         cog.Printf( _T("COG %10.5f "), gCog );
 
-                    wxString sog;
+                    QString sog;
                     if( std::isnan(gSog) ) sog.Printf( _T("SOG -----  ") );
                     else
                         sog.Printf( _T("SOG %6.2f ") + getUsrSpeedUnit(), toUsrSpeed( gSog ) );
@@ -784,7 +905,7 @@ void zchxMapMainWindow::slotOnFrameTimer1Out()
                     navmsg += cog;
                     navmsg += sog;
                 } else {
-                    wxString data;
+                    QString data;
                     data.Printf( _T(" DR Lat %10.5f Lon %10.5f"), gLat, gLon );
                     navmsg += data;
                 }
@@ -813,7 +934,7 @@ void zchxMapMainWindow::slotOnFrameTimer1Out()
 
     //      Update the Toolbar Status windows and lower status bar the first time watchdog times out
         if( ( gGPS_Watchdog == 0 ) || ( gSAT_Watchdog == 0 ) ) {
-            wxString sogcog( _T("SOG --- ") + getUsrSpeedUnit() + + _T("     ") + _T(" COG ---\u00B0") );
+            QString sogcog( _T("SOG --- ") + getUsrSpeedUnit() + + _T("     ") + _T(" COG ---\u00B0") );
             if( GetStatusBar() ) SetStatusText( sogcog, STAT_FIELD_SOGCOG );
 
             gCog = 0.0;                                 // say speed is zero to kill ownship predictor
@@ -1014,7 +1135,7 @@ bool zchxMapMainWindow::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b
 
     wxGenericProgressDialog *pprog = nullptr;
     if( b_prog ) {
-        wxString longmsg = _("OpenCPN Chart Update");
+        QString longmsg = _("OpenCPN Chart Update");
         longmsg += _T("..........................................................................");
 
         pprog = new wxGenericProgressDialog();
@@ -1032,7 +1153,7 @@ bool zchxMapMainWindow::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b
 
     ZCHX_LOGMSG( _T("   ") );
     ZCHX_LOGMSG( _T("Starting chart database Update...") );
-    wxString gshhg_chart_loc = gWorldMapLocation;
+    QString gshhg_chart_loc = gWorldMapLocation;
     gWorldMapLocation = wxEmptyString;
     ChartData->Update( DirArray, b_force, pprog );
     ChartData->SaveBinary(ChartListFileName);
@@ -1185,6 +1306,29 @@ void zchxMapMainWindow::RefreshAllCanvas( bool bErase)
     }
 }
 
+void zchxMapMainWindow::SetGPSCompassScale()
+{
+    g_compass_scalefactor = g_Platform->GetCompassScaleFactor( g_GUIScaleFactor );
+
+}
+
+double zchxMapMainWindow::GetMag(double a)
+{
+    if(!std::isnan(gVar)){
+        if((a - gVar) >360.)
+            return (a - gVar - 360.);
+        else
+            return ((a - gVar) >= 0.) ? (a - gVar) : (a - gVar + 360.);
+    }
+    else{
+        if((a - g_UserVar) >360.)
+            return (a - g_UserVar - 360.);
+        else
+            return ((a - g_UserVar) >= 0.) ? (a - g_UserVar) : (a - g_UserVar + 360.);
+    }
+}
+
+
 
 ColorScheme GetColorScheme()
 {
@@ -1227,7 +1371,7 @@ void LoadS57()
     g_SencThreadManager = new SENCThreadManager();
 
 //      Set up a useable CPL library error handler for S57 stuff
-    CPLSetErrorHandler( MyCPLErrorHandler );
+//    CPLSetErrorHandler( MyCPLErrorHandler );
 
 //      Init the s57 chart object, specifying the location of the required csv files
     g_csv_locn = g_Platform->GetDataDir();
@@ -1262,7 +1406,7 @@ void LoadS57()
     /*    From wxWidgets documentation
 
      wxStandardPaths::GetUserDataDir
-     wxString GetUserDataDir() const
+     QString GetUserDataDir() const
      Return the directory for the user-dependent application data files:
      * Unix: ~/.appname
      * Windows: C:\Documents and Settings\username\Application Data\appname
@@ -1349,5 +1493,20 @@ void LoadS57()
         delete ps52plib;
         ps52plib = NULL;
     }
+}
+
+
+void zchxMapMainWindow::InvalidateAllGL()
+{
+#ifdef ocpnUSE_GL
+    // For each canvas
+    for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
+        ChartCanvas *cc = g_canvasArray.at(i);
+        if(cc){
+            cc->InvalidateGL();
+            cc->Refresh();
+        }
+    }
+#endif
 }
 

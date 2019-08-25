@@ -92,17 +92,17 @@ HEADERS += \
     chartsymbols.h \
     chcanv.h \
     ChInfoWin.h \
-#    compass.h \
+    compass.h \
 #    concanv.h \
 #    ConfigMgr.h \
 #    crashprint.h \
-#    cutil.h \
+    cutil.h \
 #    DarkMode.h \
 #    DetailSlider.h \
 #    dsPortType.h \
 #    dychart.h \
 #    emboss_data.h \
-#    FlexHash.h \
+    FlexHash.h \
     FontDesc.h \
     FontMgr.h \
 #    garmin_wrapper.h \
@@ -139,7 +139,7 @@ HEADERS += \
     ogr_s57.h \
 #    options.h \
     Osenc.h \
-#    piano.h \
+    piano.h \
 #    pluginmanager.h \
 #    PositionParser.h \
 #    printtable.h \
@@ -165,7 +165,7 @@ HEADERS += \
 #    scrollingdialog.h \
 #    Select.h \
 #    SelectItem.h \
-#    SencManager.h \
+    SencManager.h \
 #    SendToGpsDlg.h \
 #    Station_Data.h \
     styles.h \
@@ -225,14 +225,14 @@ SOURCES += \
     chartsymbols.cpp \
     chcanv.cpp \
     ChInfoWin.cpp \
-#    compass.cpp \
+    compass.cpp \
 #    compasswin.cpp \
 #    concanv.cpp \
 #    ConfigMgr.cpp \
 #    crashprint.cpp \
-#    cutil.cpp \
+    cutil.cpp \
 #    DetailSlider.cpp \
-#    FlexHash.cpp \
+    FlexHash.cpp \
     FontDesc.cpp \
     FontMgr.cpp \
 #    garmin_wrapper.cpp \
@@ -269,7 +269,7 @@ SOURCES += \
     ogrs57layer.cpp \
 #    options.cpp \
     Osenc.cpp \
-#    piano.cpp \
+    piano.cpp \
 #    pluginmanager.cpp \
 #    PositionParser.cpp \
 #    printtable.cpp \
@@ -327,7 +327,9 @@ SOURCES += \
     zchxs57listctrlbox.cpp \
     cm93.cpp \
     mbtiles.cpp \
-    bitmap.cpp
+    bitmap.cpp \
+    _def.cpp \
+    vector2d.cpp
 
 OBJECTIVE_SOURCES += \
     DarkMode.mm

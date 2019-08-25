@@ -1,4 +1,4 @@
-﻿/***************************************************************************
+/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  OpenCPN Platform specific support utilities
@@ -28,7 +28,7 @@
 #include "chart1.h"
 #include "cutil.h"
 #include "styles.h"
-#include "navutil.h"
+//#include "navutil.h"
 #include "FontMgr.h"
 #include "s52s57.h"
 #include "Select.h"
@@ -54,6 +54,7 @@
 #include "setupapi.h"                   // presently stored in opencpn/src
 
 #include <cstdlib>
+#include "zchxmapmainwindow.h"
 
 void appendOSDirSlash( QString* pString );
 
@@ -70,7 +71,7 @@ extern bool                      g_bFirstRun;
 extern bool                      g_bUpgradeInProcess;
 
 extern int                       quitflag;
-extern MyFrame                   *gFrame;
+extern zchxMapMainWindow                   *gFrame;
 
 extern zchxConfig                  *pConfig;
 

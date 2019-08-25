@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Bar Window
@@ -25,12 +25,6 @@
  *
  *
  */
-
-#include "wx/wxprec.h"
-
-#ifndef  WX_PRECOMP
-#include "wx/wx.h"
-#endif //precompiled headers
 #include "dychart.h"
 
 #include "chcanv.h"
@@ -48,9 +42,6 @@
 #include "androidUTIL.h"
 #endif
 
-#include <wx/arrimpl.cpp>
-WX_DEFINE_OBJARRAY(RectArray);
-
 //------------------------------------------------------------------------------
 //    External Static Storage
 //------------------------------------------------------------------------------
@@ -62,15 +53,8 @@ extern int  g_GUIScaleFactor;
 extern Piano                     *g_Piano;
 extern OCPNPlatform              *g_Platform;
 
-//------------------------------------------------------------------------------
-//          Piano Window Implementation
-//------------------------------------------------------------------------------
-BEGIN_EVENT_TABLE(Piano, wxEvtHandler)
-    EVT_TIMER ( PIANO_EVENT_TIMER, Piano::onTimerEvent )
-END_EVENT_TABLE()
-
 // Define a constructor
-Piano::Piano(ChartCanvas *parent)
+Piano::Piano(ChartCanvas *parent) : QObject(parent)
 {
     m_parentCanvas = parent;;
     
@@ -95,8 +79,11 @@ Piano::Piano(ChartCanvas *parent)
     m_pTmercIconBmp = NULL;
 
     SetColorScheme( GLOBAL_COLOR_SCHEME_RGB );      // default
-    
-    m_eventTimer.SetOwner( this, PIANO_EVENT_TIMER );
+    m_eventTimer = new QTimer(this);
+    m_eventTimer->setSingleShot(true);
+    m_eventTimer->setInterval(10);
+    connect(m_eventTimer, SIGNAL(timeout()), this, SLOT(onTimerEvent()));
+//    m_eventTimer.SetOwner( this, PIANO_EVENT_TIMER );
 
     m_tex = m_tex_piano_height = 0;
 }
@@ -110,118 +97,11 @@ Piano::~Piano()
     if( m_pVizIconBmp ) delete m_pVizIconBmp;
 }
 
-void Piano::Paint( int y, wxDC& dc, wxDC *shapeDC )
+
+static void SetColor(unsigned char color[4], const QBrush &brush)
 {
-    ocpnDC odc(dc);
-    Paint(y, odc, shapeDC);
-}
-
-void Piano::Paint( int y, ocpnDC& dc, wxDC *shapeDC )
-{
-    if(shapeDC) {
-        shapeDC->SetBackground( *wxBLACK_BRUSH);
-        shapeDC->SetBrush( *wxWHITE_BRUSH);
-        shapeDC->SetPen( *wxWHITE_PEN);
-        shapeDC->Clear();
-    }
-
-    ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
-    if(!style->chartStatusWindowTransparent) {
-        dc.SetPen( *wxTRANSPARENT_PEN );
-        dc.SetBrush( m_backBrush );
-        dc.DrawRectangle( 0, y, m_parentCanvas->GetClientSize().x, GetHeight() );
-    }
-
-//    Create the Piano Keys
-
-    int nKeys = m_key_array.size();
-
-    wxPen ppPen( GetGlobalColor( _T("CHBLK") ), 1, wxPENSTYLE_SOLID );
-    dc.SetPen( ppPen );
-
-    for( int i = 0; i < nKeys; i++ ) {
-        int key_db_index = m_key_array[i];
-
-        if( -1 == key_db_index ) continue;
-
-        bool selected = InArray(m_active_index_array, key_db_index);
-
-        if( ChartData->GetDBChartType( key_db_index ) == CHART_TYPE_CM93 ||
-            ChartData->GetDBChartType( key_db_index ) == CHART_TYPE_CM93COMP ) {
-            if(selected)
-                dc.SetBrush( m_scBrush );
-            else
-                dc.SetBrush( m_cBrush );
-        } else if( ChartData->GetDBChartType( key_db_index ) == CHART_TYPE_MBTILES){
-            if(selected)
-                dc.SetBrush( m_tileBrush );
-            else
-                dc.SetBrush( m_utileBrush );
-        } else if( ChartData->GetDBChartFamily( key_db_index ) == CHART_FAMILY_VECTOR ) {
-            if(selected)
-                dc.SetBrush( m_svBrush );
-            else
-                dc.SetBrush( m_vBrush );
-        } else { // Raster Chart
-            if(selected)
-                dc.SetBrush( m_srBrush );
-            else
-                dc.SetBrush( m_rBrush );
-        }
-
-        if(m_bBusy)
-            dc.SetBrush( m_unavailableBrush );
-            
-        wxRect box = KeyRect[i];
-        box.y += y;
-
-        if( m_brounded ) {
-            dc.DrawRoundedRectangle( box.x, box.y, box.width, box.height, 4 );
-            if(shapeDC)
-                shapeDC->DrawRoundedRectangle( box.x, box.y, box.width, box.height, 4 );
-        } else {
-            dc.DrawRectangle( box.x, box.y, box.width, box.height );
-            if(shapeDC)
-                shapeDC->DrawRectangle( box );
-        }
-
-        if(InArray(m_eclipsed_index_array, key_db_index)) {
-            dc.SetBrush( m_backBrush );
-            int w = 3;
-            dc.DrawRoundedRectangle( box.x + w, box.y + w, box.width - ( 2 * w ),
-                                     box.height - ( 2 * w ), 3 );
-        }
-
-        //    Look in the current noshow array for this index
-        if(InArray(m_noshow_index_array, key_db_index) &&
-           m_pInVizIconBmp && m_pInVizIconBmp->IsOk() )
-            dc.DrawBitmap(ConvertTo24Bit( dc.GetBrush().GetColour(), *m_pInVizIconBmp ),
-                          box.x + 4, box.y + 3, false );
-
-        //    Look in the current skew array for this index
-        if(InArray(m_skew_index_array, key_db_index) &&
-           m_pSkewIconBmp && m_pSkewIconBmp->IsOk())
-            dc.DrawBitmap(ConvertTo24Bit( dc.GetBrush().GetColour(), *m_pSkewIconBmp ),
-                          box.x + box.width - m_pSkewIconBmp->GetWidth() - 4, box.y + 2, false );
-
-        //    Look in the current tmerc array for this index
-        if(InArray(m_tmerc_index_array, key_db_index) &&
-           m_pTmercIconBmp && m_pTmercIconBmp->IsOk() )
-            dc.DrawBitmap(ConvertTo24Bit( dc.GetBrush().GetColour(), *m_pTmercIconBmp ),
-                          box.x + box.width - m_pTmercIconBmp->GetWidth() - 4, box.y + 2, false );
-
-        //    Look in the current poly array for this index
-        if(InArray(m_poly_index_array, key_db_index) &&
-           m_pPolyIconBmp && m_pPolyIconBmp->IsOk() )
-            dc.DrawBitmap(ConvertTo24Bit( dc.GetBrush().GetColour(), *m_pPolyIconBmp ),
-                          box.x + box.width - m_pPolyIconBmp->GetWidth() - 4, box.y + 2, false );
-    }
-}
-
-static void SetColor(unsigned char color[4], const wxBrush &brush)
-{
-    const wxColour &c = brush.GetColour();
-    color[0] = c.Red(), color[1] = c.Green(), color[2] = c.Blue(), color[3] = 255;
+    const QColor &c = brush.color();
+    color[0] = c.red(), color[1] = c.green(), color[2] = c.blue(), color[3] = 255;
 }
 
 #if 0 // alternate implementation, it is much faster most frames (only a single quad is rendered),
@@ -503,14 +383,14 @@ void Piano::BuildGLTexture()
 #ifdef ocpnUSE_GL    
     int h = GetHeight();
 
-    wxBrush tbackBrush; // transparent back brush
+    QBrush tbackBrush; // transparent back brush
     ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
     if(style->chartStatusWindowTransparent)
-        tbackBrush = wxColour(1,1,1);
+        tbackBrush = QColor(1,1,1);
     else
         tbackBrush = m_backBrush;
 
-    wxBrush brushes[] = { m_scBrush, m_cBrush, m_svBrush, m_vBrush, m_srBrush, m_rBrush, m_tileBrush, m_utileBrush, m_unavailableBrush };
+    QBrush brushes[] = { m_scBrush, m_cBrush, m_svBrush, m_vBrush, m_srBrush, m_rBrush, m_tileBrush, m_utileBrush, m_unavailableBrush };
 
     m_tex_piano_height = h;
     m_texw = 64;
@@ -527,41 +407,42 @@ void Piano::BuildGLTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); 
 
     wxBitmap bmp(m_texw, m_texh);
-    wxMemoryDC dc(bmp);
+    QPainter dc;
+    dc.begin(bmp.GetHandle());
 
-    dc.SetPen( *wxTRANSPARENT_PEN );
-    dc.SetBrush(tbackBrush);
-    dc.DrawRectangle(0, 0, m_texw, m_texh);
+    dc.setPen( Qt::transparent );
+    dc.setBrush(tbackBrush);
+    dc.drawRect(0, 0, m_texw, m_texh);
 
     // draw the needed rectangles with minimal width
-    wxPen ppPen( GetGlobalColor( _T("CHBLK") ), 1, wxPENSTYLE_SOLID );
-    dc.SetPen( ppPen );
+    QPen ppPen( GetGlobalColor( ("CHBLK") ), 1, Qt::SolidLine );
+    dc.setPen( ppPen );
     for(unsigned int b = 0; b < (sizeof brushes) / (sizeof *brushes); b++) {
         unsigned int x = 0, y = h * b;
 
-        dc.SetBrush(brushes[b]);
+        dc.setBrush(brushes[b]);
 
         int u = 3, v = 2;
-        dc.DrawRectangle(x+u, y+v, 3, h-2*v);
+        dc.drawRect(x+u, y+v, 3, h-2*v);
         x+=3+2*u;
         
-        dc.DrawRoundedRectangle(x+u, y+v, 9, h-2*v, 4);
+        dc.drawRoundedRect(QRect(x+u, y+v, 9, h-2*v), 4, 4);
         x+=9+2*u;
 
         int w = 3;
-        dc.DrawRoundedRectangle(x+u, y+v, 12, h-2*v, 4);
-        dc.SetBrush( m_backBrush );
-        dc.DrawRoundedRectangle(x+u+w, y+v+w, 12-2*w, h-2*v-2*w, 3);
+        dc.drawRoundedRect(QRect(x+u, y+v, 12, h-2*v), 4, 4);
+        dc.setBrush( m_backBrush );
+        dc.drawRoundedRect(QRect(x+u+w, y+v+w, 12-2*w, h-2*v-2*w), 3, 3);
         x+=12+2*u;
 
         if(x >= m_texw)
-            printf("texture too small\n");
+            qDebug("texture too small\n");
     }
-    dc.SelectObject( wxNullBitmap );
+    dc.end();
 
-    wxImage image = bmp.ConvertToImage();
+    QImage image = bmp.ConvertToImage();
 
-    unsigned char *data = new unsigned char[4*m_texw*m_texh], *d = data, *e = image.GetData(), *a = image.GetAlpha();
+    unsigned char *data = new unsigned char[4*m_texw*m_texh], *d = data, *e = image.bits(), *a = image.alphaChannel().bits();
     for(unsigned int i=0; i<m_texw*m_texh; i++) {
         if(style->chartStatusWindowTransparent &&
            e[0] == 1 && e[1] == 1 && e[2] == 1)
@@ -580,10 +461,10 @@ void Piano::BuildGLTexture()
 
     for(unsigned int i = 0; i < (sizeof bitmaps) / (sizeof *bitmaps); i++) {
         int iw = bitmaps[i]->GetWidth(), ih = bitmaps[i]->GetHeight();
-        wxASSERT(ih <= 16);
+        Q_ASSERT(ih <= 16);
 
-        wxImage im = bitmaps[i]->ConvertToImage();
-        unsigned char *data = new unsigned char[4*iw*ih], *d = data, *e = im.GetData(), *a = im.GetAlpha();
+        QImage im = bitmaps[i]->ConvertToImage();
+        unsigned char *data = new unsigned char[4*iw*ih], *d = data, *e = im.bits(), *a = im.alphaChannel().bits();
         for(int j = 0; j<iw*ih; j++) {
             memcpy(d, e, 3), d+=3, e+=3;
             *d = *a, d++, a++;
@@ -599,7 +480,7 @@ void Piano::BuildGLTexture()
 void Piano::DrawGL(int off)
 {
 #ifdef ocpnUSE_GL    
-    unsigned int w = m_parentCanvas->GetClientSize().x, h = GetHeight(), endx = 0;
+    unsigned int w = m_parentCanvas->size().width(), h = GetHeight(), endx = 0;
  
     if(m_tex_piano_height != h)
         BuildGLTexture();
@@ -632,7 +513,7 @@ void Piano::DrawGL(int off)
         if(!InArray(m_active_index_array, key_db_index))
             b++;
 
-        wxRect box = KeyRect[i];
+        QRect box = KeyRect[i];
         float y = h*b, v1 = (y+.5)/m_texh, v2 = (y+h-.5)/m_texh;
         // u contains the pixel coordinates in the texture for the three possible rectangles
         const float u[3][6] = {{0, 3, 4, 4, 5, 8},
@@ -648,7 +529,7 @@ void Piano::DrawGL(int off)
             uindex = 0;
 
         // if the chart is too narrow.. we maybe render the "wrong" rectangle because it can be thinner
-        int x1 = box.x, x2 = x1+box.width, w = 2*uindex+1;
+        int x1 = box.x(), x2 = x1+box.width(), w = 2*uindex+1;
         while(x1 + w > x2 - w && uindex > 0)
             uindex--, w -= 2;
 
@@ -700,7 +581,7 @@ void Piano::DrawGL(int off)
 
         if( -1 == key_db_index ) continue;
 
-        wxRect box = KeyRect[i];
+        QRect box = KeyRect[i];
 
         wxBitmap *bitmaps[] = {m_pInVizIconBmp, m_pTmercIconBmp, m_pSkewIconBmp, m_pPolyIconBmp};
         int index;
@@ -719,14 +600,14 @@ void Piano::DrawGL(int off)
 
         int x1, y1, iw = bitmaps[index]->GetWidth(), ih = bitmaps[index]->GetHeight();
         if(InArray(m_noshow_index_array, key_db_index))
-            x1 = box.x + 4, y1 = box.y + 3;
+            x1 = box.x() + 4, y1 = box.y() + 3;
         else
-            x1 = box.x + box.width - iw - 4, y1 = box.y + 2;
+            x1 = box.x() + box.width() - iw - 4, y1 = box.y() + 2;
 
         y1 += off;
         int x2 = x1 + iw, y2 = y1 + ih;
 
-        wxBrush brushes[] = { m_scBrush, m_cBrush, m_svBrush, m_vBrush, m_srBrush, m_rBrush, m_tileBrush, m_utileBrush, m_unavailableBrush };
+        QBrush brushes[] = { m_scBrush, m_cBrush, m_svBrush, m_vBrush, m_srBrush, m_rBrush, m_tileBrush, m_utileBrush, m_unavailableBrush };
 
         float yoff = ((sizeof brushes) / (sizeof *brushes))*h + 16*index;
         float u1 = 0, u2 = (float)iw / m_texw;
@@ -761,22 +642,22 @@ void Piano::SetColorScheme( ColorScheme cs )
 
     //    Recreate the local brushes
 
-    m_backBrush = wxBrush( GetGlobalColor( _T("UIBDR") ), wxBRUSHSTYLE_SOLID );
+    m_backBrush = QBrush( GetGlobalColor( ("UIBDR") ), Qt::SolidPattern );
 
-    m_rBrush = wxBrush( GetGlobalColor( _T("BLUE2") ), wxBRUSHSTYLE_SOLID );    // Raster Chart unselected
-    m_srBrush = wxBrush( GetGlobalColor( _T("BLUE1") ), wxBRUSHSTYLE_SOLID );    // and selected
+    m_rBrush = QBrush( GetGlobalColor( ("BLUE2") ), Qt::SolidPattern );    // Raster Chart unselected
+    m_srBrush = QBrush( GetGlobalColor( ("BLUE1") ), Qt::SolidPattern );    // and selected
 
-    m_vBrush = wxBrush( GetGlobalColor( _T("GREEN2") ), wxBRUSHSTYLE_SOLID );    // Vector Chart unselected
-    m_svBrush = wxBrush( GetGlobalColor( _T("GREEN1") ), wxBRUSHSTYLE_SOLID );    // and selected
+    m_vBrush = QBrush( GetGlobalColor( ("GREEN2") ), Qt::SolidPattern );    // Vector Chart unselected
+    m_svBrush = QBrush( GetGlobalColor( ("GREEN1") ), Qt::SolidPattern );    // and selected
 
-    m_utileBrush = wxBrush( GetGlobalColor( _T("VIO01") ), wxBRUSHSTYLE_SOLID );     // MBTiles Chart unselected
-    m_tileBrush = wxBrush( GetGlobalColor(  _T("VIO02") ), wxBRUSHSTYLE_SOLID );    // and selected
+    m_utileBrush = QBrush( GetGlobalColor( ("VIO01") ), Qt::SolidPattern );     // MBTiles Chart unselected
+    m_tileBrush = QBrush( GetGlobalColor( ("VIO02") ), Qt::SolidPattern );    // and selected
 
-    m_cBrush = wxBrush( GetGlobalColor( _T("YELO2") ), wxBRUSHSTYLE_SOLID );     // CM93 Chart unselected
-    m_scBrush = wxBrush( GetGlobalColor( _T("YELO1") ), wxBRUSHSTYLE_SOLID );    // and selected
+    m_cBrush = QBrush( GetGlobalColor(("YELO2") ), Qt::SolidPattern );     // CM93 Chart unselected
+    m_scBrush = QBrush( GetGlobalColor(("YELO1") ), Qt::SolidPattern );    // and selected
 
 
-    m_unavailableBrush = wxBrush( GetGlobalColor( _T("UINFD") ), wxBRUSHSTYLE_SOLID );    // and unavailable
+    m_unavailableBrush = QBrush( GetGlobalColor(("UINFD") ), Qt::SolidPattern );    // and unavailable
 
     m_tex_piano_height = 0; // force texture to update
 }
@@ -832,56 +713,56 @@ bool Piano::InArray(std::vector<int> &array, int key)
     return false;
 }
 
-wxString Piano::GetStateHash()
+QString Piano::GetStateHash()
 {
-    wxString hash;
+    QString hash;
 
     for(unsigned int i=0 ; i < m_key_array.size() ; i++){
-        wxString a;
-        a.Printf(_T("%dK"), m_key_array[i]);
+        QString a;
+        a.sprintf("%dK", m_key_array[i]);
         hash += a;
     }
     for(unsigned int i=0 ; i < m_noshow_index_array.size() ; i++){
-        wxString a;
-        a.Printf(_T("%dN"), m_noshow_index_array[i]);
+        QString a;
+        a.sprintf("%dN", m_noshow_index_array[i]);
         hash += a;
     }
     for(unsigned int i=0 ; i < m_active_index_array.size() ; i++){
-        wxString a;
-        a.Printf(_T("%dA"), m_active_index_array[i]);
+        QString a;
+        a.sprintf("%dA", m_active_index_array[i]);
         hash += a;
     }
     for(unsigned int i=0 ; i < m_eclipsed_index_array.size() ; i++){
-        wxString a;
-        a.Printf(_T("%dE"), m_eclipsed_index_array[i]);
+        QString a;
+        a.sprintf("%dE", m_eclipsed_index_array[i]);
         hash += a;
     }
     for(unsigned int i=0 ; i < m_skew_index_array.size() ; i++){
-        wxString a;
-        a.Printf(_T("%dW"), m_skew_index_array[i]);
+        QString a;
+        a.sprintf("%dW", m_skew_index_array[i]);
         hash += a;
     }
     for(unsigned int i=0 ; i < m_tmerc_index_array.size() ; i++){
-        wxString a;
-        a.Printf(_T("%dM"), m_tmerc_index_array[i]);
+        QString a;
+        a.sprintf("%dM", m_tmerc_index_array[i]);
         hash += a;
     }
     for(unsigned int i=0 ; i < m_poly_index_array.size() ; i++){
-        wxString a;
-        a.Printf(_T("%dP"), m_poly_index_array[i]);
+        QString a;
+        a.sprintf("%dP", m_poly_index_array[i]);
         hash += a;
     }
 
     return hash;
 }
 
-wxString &Piano::GenerateAndStoreNewHash()
+QString &Piano::GenerateAndStoreNewHash()
 {
     m_hash = GetStateHash();
     return m_hash;
 }
 
-wxString &Piano::GetStoredHash()
+QString &Piano::GetStoredHash()
 {
     return m_hash;
 }
@@ -889,7 +770,7 @@ wxString &Piano::GetStoredHash()
 void Piano::FormatKeys( void )
 {
     ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
-    int width = m_parentCanvas->GetClientSize().x, height = GetHeight();
+    int width = m_parentCanvas->size().width(), height = GetHeight();
     width *= g_btouch ? 0.98f : 0.6f;
 
     int nKeys = m_key_array.size();
@@ -898,18 +779,17 @@ void Piano::FormatKeys( void )
         if( !kw )
             kw = width / nKeys;
 
-        kw = wxMin(kw, (m_parentCanvas->GetClientSize().x * 3 / 4) / nKeys);
-        kw = wxMax(kw, 6);
+        kw = fmin(kw, (m_parentCanvas->size().width() * 3 / 4) / nKeys);
+        kw = fmax(kw, 6);
         
 //    Build the Key Regions
 
-        KeyRect.Empty();
-        KeyRect.Alloc( nKeys );
+        KeyRect.clear();
         m_width = 0;
         for( int i = 0; i < nKeys; i++ ) {
-            wxRect r( ( i * kw ) + 3, 2, kw - 6, height - 4 );
-            KeyRect.Add( r );
-            m_width = r.x + r.width;
+            QRect r( ( i * kw ) + 3, 2, kw - 6, height - 4 );
+            KeyRect.append( r );
+            m_width = r.x() + r.width();
         }
     }
     m_nRegions = nKeys;
@@ -918,19 +798,19 @@ void Piano::FormatKeys( void )
 zchxPoint Piano::GetKeyOrigin( int key_index )
 {
     if( ( key_index >= 0 ) && ( key_index <= (int) m_key_array.size() - 1 ) ) {
-        wxRect box = KeyRect[key_index];
-        return zchxPoint( box.x, box.y );
+        QRect box = KeyRect[key_index];
+        return zchxPoint( box.x(), box.y() );
     } else
         return zchxPoint( -1, -1 );
 }
 
 bool Piano::MouseEvent( QMouseEvent* event )
 {
+    QPoint pos = event->pos();
+    int x = pos.x();
+    int y = pos.y();
 
-    int x, y;
-    event.GetPosition( &x, &y );
-
-    if(event.Leaving() || y < m_parentCanvas->GetCanvasHeight() - GetHeight()) {
+    if(/*event.Leaving() ||*/ y < m_parentCanvas->GetCanvasHeight() - GetHeight()) {
         if(m_bleaving)
             return false;
         m_bleaving = true;
@@ -943,7 +823,7 @@ bool Piano::MouseEvent( QMouseEvent* event )
     int sel_dbindex = -1;
 
     for( int i = 0; i < m_nRegions; i++ ) {
-        if( KeyRect[i].Contains( x, 6 ) ) {
+        if( KeyRect[i].contains( x, 6 ) ) {
             sel_index = i;
             sel_dbindex = m_key_array[i];
             break;
@@ -951,25 +831,22 @@ bool Piano::MouseEvent( QMouseEvent* event )
     }
 
     if(g_btouch){
-        if( event.LeftDown() ) {
+        if( zchxFuncUtil::IsLeftMouseDown(event) ) {
             if( -1 != sel_index ){
                 m_action = DEFERRED_KEY_CLICK_DOWN;
                 ShowBusy( true );
- #ifdef __OCPN__ANDROID__
-                androidShowBusyIcon();
- #endif                
-                m_eventTimer.Start(10, wxTIMER_ONE_SHOT);
+                m_eventTimer->start();
             }
-        } if( event.LeftUp() ) {
+        } if( zchxFuncUtil::IsLeftMouseUp(event) ) {
             if( -1 != sel_index ){
                 m_click_sel_index = sel_index;
                 m_click_sel_dbindex = sel_dbindex;
-                if(!m_eventTimer.IsRunning()){
+                if(!m_eventTimer->isActive()){
                     m_action = DEFERRED_KEY_CLICK_UP;
-                    m_eventTimer.Start(10, wxTIMER_ONE_SHOT);
+                    m_eventTimer->start();
                 }
             }
-        } else if( event.RightDown() ) {
+        } else if( zchxFuncUtil::IsRightMouseDown(event) ) {
             if( sel_index != m_hover_last ) {
                 m_parentCanvas->HandlePianoRollover( sel_index, sel_dbindex );
                 m_hover_last = sel_index;
@@ -978,7 +855,7 @@ bool Piano::MouseEvent( QMouseEvent* event )
 //                m_eventTimer.Start(3000, wxTIMER_ONE_SHOT);
                 
             }
-        } else if( event.ButtonUp() ) {
+        } else if( zchxFuncUtil::IsMouseUp(event)) {
             m_parentCanvas->HandlePianoRollover( -1, -1 );
             ResetRollover();
         }
@@ -987,19 +864,19 @@ bool Piano::MouseEvent( QMouseEvent* event )
         if( m_bleaving ) {
             m_parentCanvas->HandlePianoRollover( -1, -1 );
             ResetRollover();
-        } else if( event.LeftDown() ) {
+        } else if( zchxFuncUtil::IsLeftMouseDown(event) ) {
             if( -1 != sel_index ) {
                 m_parentCanvas->HandlePianoClick( sel_index, sel_dbindex );
-                m_parentCanvas->Raise();
+                m_parentCanvas->raise();
             } else
                 return false;
-        } else if( event.RightDown() ) {
+        } else if( zchxFuncUtil::IsRightMouseDown(event) ) {
             if( -1 != sel_index ) {
                 m_parentCanvas->HandlePianoRClick( x, y, sel_index, sel_dbindex );
-                m_parentCanvas->Raise();
+                m_parentCanvas->raise();
             } else
                 return false;
-        } else if(!event.ButtonUp()){
+        } else if(!zchxFuncUtil::IsMouseUp(event)){
             if( sel_index != m_hover_last ) {
                 m_parentCanvas->HandlePianoRollover( sel_index, sel_dbindex );
                 m_hover_last = sel_index;
@@ -1008,18 +885,6 @@ bool Piano::MouseEvent( QMouseEvent* event )
     }
 
     return true;
-
-    /*
-     Todo:
-     Could do something like this to better encapsulate the pianowin
-     Allows us to get rid of global statics...
-
-     wxCommandEvent ev(MyPianoEvent);    // Private event
-     ..set up event to specify action...SelectChart, SetChartThumbnail, etc
-     ::PostEvent(pEventReceiver, ev);    // event receiver passed to ctor
-
-     */
-
 }
 
 void Piano::ResetRollover( void )
@@ -1035,8 +900,8 @@ int Piano::GetHeight()
     if(g_btouch){
         double size_mult =  exp( g_GUIScaleFactor * 0.0953101798043 ); //ln(1.1)
         height *= size_mult;
-        height = wxMin(height, 100);     // absolute boundaries
-        height = wxMax(height, 10);
+        height = fmin(height, 100);     // absolute boundaries
+        height = fmax(height, 10);
     }
     height *= g_Platform->GetDisplayDensityFactor();
     
@@ -1049,7 +914,7 @@ int Piano::GetWidth()
 }
 
     
-void Piano::onTimerEvent(wxTimerEvent &event)
+void Piano::onTimerEvent()
 {
     switch(m_action){
         case DEFERRED_KEY_CLICK_DOWN:

@@ -1,4 +1,4 @@
-﻿#ifndef _DEF_H
+#ifndef _DEF_H
 #define _DEF_H
 
 #include <QApplication>
@@ -7,7 +7,7 @@
 #include <QPolygon>
 #include <QPolygonF>
 #include <QImage>
-
+#include <QMouseEvent>
 /*  menu and toolbar item kinds */
 enum wxItemKind
 {
@@ -22,6 +22,8 @@ enum wxItemKind
 const           QString APP_DIR = QApplication::applicationDirPath();
 const           QString MAP_DIR = QString("%1/mapdata").arg(APP_DIR);
 const           QString PLUGIN_DIR = QString("%1/plugins").arg(MAP_DIR);
+
+
 
 enum NaviMode{
     Navi_North = 0,         //正北导航
@@ -362,121 +364,83 @@ private:
     uint64_t mLastRead;
 };
 
+enum
+{
+    DISTANCE_NMI = 0,
+    DISTANCE_MI,
+    DISTANCE_KM,
+    DISTANCE_M,
+    DISTANCE_FT,
+    DISTANCE_FA,
+    DISTANCE_IN,
+    DISTANCE_CM
+};
+
+enum
+{
+    SPEED_KTS = 0,
+    SPEED_MPH,
+    SPEED_KMH,
+    SPEED_MS
+};
+
 class zchxFuncUtil
 {
 public:
     zchxFuncUtil() {}
-    static bool isDirExist(const QString& name)
-    {
-        QDir dir(name);
-        return dir.exists();
-    }
+    static bool isDirExist(const QString& name);
+    static bool isFileExist(const QString& name);
+    static QTextCodec* codesOfName(const QString& name);
+    static QString convertCodesStringToUtf8(const char* str, const QString& codes);
+    static bool isSameAs(const QString& p1, const QString& p2, bool caseSensitive );
+    static bool renameFileExt(QString& newPath,
+                              const QString& oldFile,
+                              const QString& newExt);
+    static QString getNewFileNameWithExt(const QString& oldName, const QString& newExt);
+    static QString getFileName(const QString& fullName);
+    static QString getFileExt(const QString& fullname);
+    static QString getTempDir();
+    static bool isImageTransparent(const QImage& img, int x, int y, int alpha);
+    static QColor getNewRGBColor(const QColor& rgb, double level);
+    static bool IsLeftMouseDown(QMouseEvent* e);
+    static bool IsLeftMouseUp(QMouseEvent* e);
+    static bool IsRightMouseDown(QMouseEvent* e);
+    static bool IsRightMouseUp(QMouseEvent* e);
+    static bool IsMouseUp(QMouseEvent* e);
+    static double toUsrDistance( double nm_distance, int unit  );
+    static QString getUsrDistanceUnit( int unit = -1);
+    static double fromUsrDistance( double usr_distance, int unit );
+    static double toUsrSpeed( double kts_speed, int unit = -1 );
+    static double fromUsrSpeed( double usr_speed, int unit = -1 );
+    static QString getUsrSpeedUnit( int unit = -1 );
+    static QString toSDMM(int NEflag, double a, bool hi_precision = true);
+    static QString FormatDistanceAdaptive( double distance );
+    static QString formatAngle(double angle);
+    static double  fromDMM(QString sdms);
+    static void AlphaBlending(int x, int y, int size_x, int size_y, float radius,
+                              QColor color, unsigned char transparency );
 
-    static bool isFileExist(const QString& name)
-    {
-        return QFile::exists(name);
-    }
-
-    static QTextCodec* codesOfName(const QString& name)
-    {
-        return QTextCodec::codecForName(name.toLatin1().data());
-    }
-
-    static QString convertCodesStringToUtf8(const char* str, const QString& codes)
-    {
-        QTextCodec *src_codes = codesOfName(codes);
-        QTextCodec *utf8 = codesOfName("UTF-8");
-        QString unicode = src_codes->toUnicode(str);
-        return QString::fromUtf8(utf8->fromUnicode(unicode));
-    }
-
-    static bool isSameAs(const QString& p1, const QString& p2, bool caseSensitive )
-    {
-        Qt::CaseSensitivity val = (caseSensitive == true ?  Qt::CaseSensitive : Qt::CaseInsensitive);
-        return QString::compare(p1, p2, val) == 0;
-    }
-
-    static bool renameFileExt(QString& newPath, const QString& oldFile, const QString& newExt)
-    {
-        QFile file(oldFile);
-        if(file.exists())
-        {
-            int last_index = oldFile.lastIndexOf(".");
-            if(last_index >= 0)
-            {
-                QString ext = oldFile.mid(last_index+1);
-                QString newname = oldFile;
-                newname.replace(last_index+1, ext.size(), newExt);
-                if(file.rename(newname))
-                {
-                    newPath = newname;
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    static QString getNewFileNameWithExt(const QString& oldName, const QString& newExt)
-    {
-        int last_index = oldName.lastIndexOf(".");
-        if(last_index >= 0)
-        {
-            QString ext = oldName.mid(last_index+1);
-            QString newname = oldName;
-            newname.replace(last_index+1, ext.size(), newExt);
-            return newname;
-        }
-        QString temp = oldName;
-        return temp.append(".").append(newExt);
-    }
-
-
-    static QString getFileName(const QString& fullName)
-    {
-        int index = fullName.lastIndexOf(".");
-        return fullName.left(index);
-    }
-
-    static QString getFileExt(const QString& fullname)
-    {
-        int index = fullname.lastIndexOf(".");
-        return fullname.mid(index+1);
-    }
-
-    static QString getTempDir()
-    {
-        QString path = QApplication::applicationDirPath();
-        if(path.right(1) != QDir::separator()) path.append(QDir::separator());
-        QString temp_path = QString("%1__temp").arg(path);
-        QDir dir(temp_path);
-        if(!dir.exists()) dir.mkpath(temp_path);
-        return temp_path;
-    }
-
-    static bool isImageTransparent(const QImage& img, int x, int y, int alpha)
-    {
-        QColor color = img.pixelColor(x, y);
-        if(color.alpha() <= alpha) return true;
-        return false;
-    }
-
-    static QColor getNewRGBColor(const QColor& rgb, double level)
-    {
-        QColor hsv = rgb.toHsv();
-        int h = hsv.hsvHue();
-        int s = hsv.hsvSaturation();
-        int v = hsv.value();
-        int new_v = (int)( v * level);
-        hsv.setHsv(h, s, new_v);
-        return hsv.toRgb();
-    }
 
 };
 
 
 typedef QList<float *> MyFloatPtrArray;
+
+class PI_line_segment_element
+{
+public:
+    size_t              vbo_offset;
+    size_t              n_points;
+    int                 priority;
+    float               lat_max;                // segment bounding box
+    float               lat_min;
+    float               lon_max;
+    float               lon_min;
+    int                 type;
+    void                *private0;
+
+    PI_line_segment_element *next;
+};
 
 #define         Q_INDEX_NOT_FOUND       -1
 

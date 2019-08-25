@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -165,6 +165,7 @@ protected:
 
     void RenderQuiltViewGL( ViewPort &vp, const OCPNRegion &rect_region );
     void RenderQuiltViewGLText( ViewPort &vp, const OCPNRegion &rect_region );
+    void    RenderGLAlertMessage();
     
     void BuildFBO();
     void SetupOpenGL();
