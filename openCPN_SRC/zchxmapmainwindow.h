@@ -16,6 +16,8 @@ class zchxConfig;
 class ChartCanvas;
 class ChartBase;
 class ChartDB;
+class OCPNPlatform;
+
 
 QColor GetGlobalColor(QString colorName);
 
@@ -51,6 +53,7 @@ public:
     void SetChartUpdatePeriod();
     ChartCanvas *GetPrimaryCanvas();
     double GetBestVPScale( ChartBase *pchart );
+    OCPNPlatform *platform() {return mPlantForm;}
 
 
 public slots:
@@ -114,6 +117,8 @@ private:
     QTimer                     *FrameTimer1;
     //地图数据库
     ChartDB                     *mChartDB;
+    //
+    OCPNPlatform                *mPlantForm;
 };
 
 #endif // ZCHXMAPMAINWINDOW_H

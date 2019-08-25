@@ -1,4 +1,4 @@
-﻿#include "zchxopengloptiondlg.h"
+#include "zchxopengloptiondlg.h"
 #include "ui_zchxopengloptiondlg.h"
 #include "_def.h"
 #include <QDir>
@@ -6,6 +6,7 @@
 #include "zchxconfig.h"
 #include "glTextureManager.h"
 #include "GL/gl.h"
+#include "OCPNPlatform.h"
 
 
 extern      zchxGLOptions                       g_GLOptions;
@@ -183,7 +184,9 @@ QString zchxOpenGlOptionDlg::GetTextureCacheSize(void) const
 
 QString zchxOpenGlOptionDlg::getCachePath() const
 {
-    return QString("%1/raster_texture_cache").arg(MAP_DIR);
+    if(!mMainWindow) return "";
+    if(!mMainWindow->platform()) return "";
+    return QString("%1/raster_texture_cache").arg(mMainWindow->platform()->GetDataDir());
 }
 
 

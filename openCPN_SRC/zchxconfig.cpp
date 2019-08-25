@@ -1,4 +1,4 @@
-﻿#include "zchxconfig.h"
+#include "zchxconfig.h"
 #include <QTextCodec>
 #include "GL/gl.h"
 #include "s52plib.h"
@@ -16,7 +16,7 @@ extern int                       g_nDepthUnitDisplay;
 
 zchxConfig::zchxConfig( const QString &LocalFileName ) : QSettings(LocalFileName)
 {
-    this->setIniCodec(QTextCodec::codecForName("UTF8"));
+    this->setIniCodec(QTextCodec::codecForName("UTF-8"));
     m_bSkipChangeSetUpdate = false;
 }
 

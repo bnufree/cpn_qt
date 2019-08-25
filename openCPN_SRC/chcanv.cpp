@@ -7755,7 +7755,7 @@ static void RouteLegInfo( ocpnDC &dc, zchxPoint ref_point, const QString &first,
     yp = ref_point.y;
     yp += hilite_offset;
 
-    AlphaBlending( dc, xp, yp, w, h, 0.0, GetGlobalColor( ( "YELO1" ) ), 172 );
+    zchxFuncUtil::AlphaBlending(xp, yp, w, h, 0.0, GetGlobalColor( ( "YELO1" ) ), 172 );
     
     dc.SetPen( QPen( GetGlobalColor( ( "UBLCK" ) ) ) );
     dc.SetTextForeground( FontMgr::Get().GetFontColor( ("RouteLegInfoRollover") ) );

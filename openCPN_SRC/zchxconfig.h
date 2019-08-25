@@ -1,4 +1,4 @@
-﻿#ifndef ZCHXCONFIG_H
+#ifndef ZCHXCONFIG_H
 #define ZCHXCONFIG_H
 
 #include <QSettings>
@@ -436,7 +436,7 @@ class zchxConfig : public QSettings
 {
     Q_OBJECT
 public:
-    zchxConfig(const QString &LocalFileName = QString("%1/opencpn.ini").arg(MAP_DIR));
+    zchxConfig(const QString &LocalFileName);
     void setDefault(const QString & prefix,const QString &key, const QVariant &value);
     void setCustomValue(const QString & prefix,const QString & key, const QVariant & value);
     QVariant getCustomValue(const QString& prefix,const QString &keys, const QVariant &defaultValue = QVariant());

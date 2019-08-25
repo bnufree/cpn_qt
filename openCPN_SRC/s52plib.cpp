@@ -132,8 +132,9 @@ const char *MyPLIBCSVGetField( const char * pszFilename, const char * pszKeyFiel
 QString GetS57AttributeDecode( QString& att, int ival )
 {
     QString ret_val = "";
+    if(!g_Platform) return ret_val;
     
-    QString s57data_dir = QString("%1/s57data").arg(MAP_DIR);
+    QString s57data_dir = QString("%1/s57data").arg(g_Platform->GetDataDir());
     if( !s57data_dir.length() ) return ret_val;
 
     //  Get the attribute code from the acronym

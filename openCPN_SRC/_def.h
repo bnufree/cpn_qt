@@ -19,10 +19,6 @@ enum wxItemKind
     wxITEM_MAX
 };
 
-const           QString APP_DIR = QApplication::applicationDirPath();
-const           QString MAP_DIR = QString("%1/mapdata").arg(APP_DIR);
-const           QString PLUGIN_DIR = QString("%1/plugins").arg(MAP_DIR);
-
 
 
 enum NaviMode{

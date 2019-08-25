@@ -506,15 +506,23 @@ QString OCPNPlatform::GetSupplementalLicenseString()
     return lic;
 }
     
+//const           QString APP_DIR = QApplication::applicationDirPath();
+//const           QString MAP_DIR = QString("%1/mapdata").arg(APP_DIR);
+//const           QString PLUGIN_DIR = QString("%1/plugins").arg(MAP_DIR);
+
+
 
 QString OCPNPlatform::GetAppDir()
 {
-    return APP_DIR;
+    return QApplication::applicationDirPath();
 }
 
 QString OCPNPlatform::GetDataDir()
 {
-    return MAP_DIR;
+    QString data_dir = QString("%1/map_data").arg(GetAppDir());
+    QDir dir(data_dir);
+    if(!dir.exists()) dir.mkpath(data_dir);
+    return data_dir;
 }
 
 QString OCPNPlatform::GetPathSeparator()
@@ -530,7 +538,10 @@ QString OCPNPlatform::GetPathSeparator()
 
 QString OCPNPlatform::GetPluginDir()
 {
-    return PLUGIN_DIR;
+    QString plugin_dir = QString("%1/plugin").arg(GetDataDir());
+    QDir dir(plugin_dir);
+    if(!dir.exists()) dir.mkpath(plugin_dir);
+    return plugin_dir;
 }
 
 QString OCPNPlatform::NormalizePath(const QString &full_path) {
@@ -539,7 +550,7 @@ QString OCPNPlatform::NormalizePath(const QString &full_path) {
 
 QString OCPNPlatform::GetConfigFileName()
 {
-    return QString("%1/opencpn.ini").arg(MAP_DIR);
+    return QString("%1/opencpn.ini").arg(GetDataDir());
 }
 
 

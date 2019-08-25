@@ -158,7 +158,7 @@ bool                      bGPSValid;
 int                       g_SatsInView;
 bool                      g_bSatValid;
 
-
+bool              g_bSpaceDropMark;
 
 
 
@@ -169,9 +169,10 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent) :
     ui(new Ui::zchxMapMainWindow),
     mChartDB(new ChartDB()),
     mOptionDlg(0),
-    mConfigObj(new zchxConfig),
-    FrameTimer1(0)
+    FrameTimer1(0),
+    mPlantForm(new OCPNPlatform)
 {
+    mConfigObj = mPlantForm->GetConfigObject();
     ChartData = mChartDB;
     ui->setupUi(this);
     g_Main_thread = QThread::currentThread();
