@@ -1,13 +1,13 @@
 #include "_def.h"
 #include "zchxmapmainwindow.h"
 #include "GL/gl.h"
+#include <windows.h>
+#include <psapi.h>
+#include <QDebug>
 
-extern int g_iDistanceFormat;
-extern int g_iSpeedFormat;
-extern bool g_bShowMag;
-extern bool g_bShowTrue;
-extern zchxMapMainWindow *gFrame;
-extern int g_iSDMMFormat;
+extern int                       g_iSDMMFormat;
+extern int                       g_iDistanceFormat;
+extern int                       g_iSpeedFormat;
 
 
 bool zchxFuncUtil::isDirExist(const QString& name)
@@ -223,7 +223,7 @@ double zchxFuncUtil::fromUsrDistance( double usr_distance, int unit )
 {
     double ret = NAN;
     if ( unit == -1 )
-        unit = g_iDistanceFormat;
+        unit =  g_iDistanceFormat;
     switch( unit ){
         case DISTANCE_NMI: //Nautical miles
             ret = usr_distance;
@@ -273,7 +273,7 @@ double zchxFuncUtil::toUsrSpeed( double kts_speed, int unit )
 /**************************************************************************/
 /*          Converts the speed from the units selected by user to knots   */
 /**************************************************************************/
-double fromUsrSpeed( double usr_speed, int unit )
+double fromUsrSpeed( double usr_speed, int unit  )
 {
     double ret = NAN;
     if ( unit == -1 )
@@ -296,7 +296,7 @@ double fromUsrSpeed( double usr_speed, int unit )
     return ret;
 }
 
-QString zchxFuncUtil::getUsrSpeedUnit( int unit )
+QString zchxFuncUtil::getUsrSpeedUnit( int unit  )
 {
     QString ret;
     if ( unit == -1 )
@@ -322,7 +322,7 @@ QString zchxFuncUtil::getUsrSpeedUnit( int unit )
 QString zchxFuncUtil::FormatDistanceAdaptive( double distance ) {
     QString result;
     int unit = g_iDistanceFormat;
-    double usrDistance = toUsrDistance( distance, unit );
+    double usrDistance = toUsrDistance( distance, unit);
     if( usrDistance < 0.1 &&
       ( unit == DISTANCE_KM || unit == DISTANCE_MI || unit == DISTANCE_NMI ) ) {
         unit = ( unit == DISTANCE_MI ) ? DISTANCE_FT : DISTANCE_M;
@@ -346,7 +346,7 @@ QString zchxFuncUtil::FormatDistanceAdaptive( double distance ) {
 /**************************************************************************/
 /*          Formats the coordinates to string                             */
 /**************************************************************************/
-QString zchxFuncUtil::toSDMM( int NEflag, double a, bool hi_precision )
+QString zchxFuncUtil::toSDMM( int NEflag, double a,  bool hi_precision )
 {
     QString s;
     double mpy;
@@ -500,15 +500,22 @@ double zchxFuncUtil::fromDMM( QString sdms )
     return sign * ( stk[0] + ( stk[1] + stk[2] / 60 ) / 60 );
 }
 
-QString zchxFuncUtil::formatAngle(double angle)
+//extern int g_iDistanceFormat;
+//extern int g_iSpeedFormat;
+//extern bool g_bShowMag;
+//extern bool g_bShowTrue;
+//extern zchxMapMainWindow *gFrame;
+//extern int g_iSDMMFormat;
+
+QString zchxFuncUtil::formatAngle(double angle, double mag, bool show_mag, bool show_true)
 {
     QString out;
-    if( g_bShowMag && g_bShowTrue ) {
-        out.sprintf("%.0f \u00B0T (%.0f \u00B0M)", angle, gFrame->GetMag(angle));
-    } else if( g_bShowTrue ) {
+    if( show_mag && show_true ) {
+        out.sprintf("%.0f \u00B0T (%.0f \u00B0M)", angle, /*gFrame->GetMag(angle)*/mag);
+    } else if( show_true ) {
         out.sprintf("%.0f \u00B0T", angle);
     } else {
-        out.sprintf("%.0f \u00B0M", gFrame->GetMag(angle));
+        out.sprintf("%.0f \u00B0M", /*gFrame->GetMag(angle)*/mag);
     }
     return out;
 }
@@ -528,6 +535,92 @@ void zchxFuncUtil::AlphaBlending(int x, int y, int size_x, int size_y,
     glVertex2i( x, y + size_y );
     glEnd();
     glDisable( GL_BLEND );
+}
+
+
+qint64 zchxFuncUtil::getProcessIDFromSystem()
+{
+    return GetCurrentProcessId();
+}
+
+qint64 zchxFuncUtil::getApplicationMemoryUse( )
+{
+    int memsize = -1;
+    HANDLE hProcess = GetCurrentProcess();
+    if( NULL == hProcess ) return 0;
+    PROCESS_MEMORY_COUNTERS pmc;
+
+    if( GetProcessMemoryInfo( hProcess, &pmc, sizeof( pmc ) ) ) {
+        memsize = pmc.WorkingSetSize / 1024;
+    }
+
+    CloseHandle( hProcess );
+    return memsize;
+}
+
+void  zchxFuncUtil::getMemoryStatus(int* total, int* used)
+{
+    int mem_used = getApplicationMemoryUse();
+    MEMORYSTATUSEX statex;
+    statex.dwLength = sizeof( statex );
+    GlobalMemoryStatusEx( &statex );
+    int mem_total = statex.ullTotalPhys / 1024;
+    if(total) *total = mem_total;
+    if(used) *used = mem_used;
+//    qDebug()<<"memory total:"<<mem_total<<"  app used:"<<mem_used;
+}
+
+
+QString zchxFuncUtil::getAppDir()
+{
+    return QApplication::applicationDirPath();
+}
+
+QString zchxFuncUtil::getDataDir()
+{
+    QString data_dir = QString("%1/map_data").arg(getAppDir());
+    QDir dir(data_dir);
+    if(!dir.exists()) dir.mkpath(data_dir);
+    return data_dir;
+}
+
+QString zchxFuncUtil::getPathSeparator()
+{
+    return QDir::separator();
+}
+
+
+
+QString zchxFuncUtil::getPluginDir()
+{
+    QString plugin_dir = QString("%1/plugin").arg(getDataDir());
+    QDir dir(plugin_dir);
+    if(!dir.exists()) dir.mkpath(plugin_dir);
+    return plugin_dir;
+}
+
+
+QString zchxFuncUtil::getConfigFileName()
+{
+    return QString("%1/opencpn.ini").arg(getDataDir());
+}
+
+float zchxFuncUtil::getChartScaleFactorExp( float scale_linear )
+{
+    double factor = 1.0;
+#ifndef __OCPN__ANDROID__
+    factor =  exp( scale_linear * (log(3.0) / 5.0) );
+
+#else
+    // the idea here is to amplify the scale factor for higher density displays, in a measured way....
+    factor =  exp( scale_linear * (0.693 / 5.0) * getAndroidDisplayDensity());
+#endif
+
+    factor = fmax(factor, .5);
+    factor = fmin(factor, 4.);
+
+
+    return factor;
 }
 
 

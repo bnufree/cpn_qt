@@ -1,4 +1,4 @@
-#include "zchxopengloptiondlg.h"
+﻿#include "zchxopengloptiondlg.h"
 #include "ui_zchxopengloptiondlg.h"
 #include "_def.h"
 #include <QDir>
@@ -199,10 +199,10 @@ zchxOpenGlOptionDlg::~zchxOpenGlOptionDlg()
 
 void zchxOpenGlOptionDlg::on_OK_clicked()
 {
-
+    accept();
 }
 
 void zchxOpenGlOptionDlg::on_Cancel_clicked()
 {
-
+    reject();
 }

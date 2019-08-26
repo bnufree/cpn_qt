@@ -8,7 +8,8 @@ class zchxOpenGlOptionDlg;
 }
 
 class zchxMapMainWindow;
-class zchxConfig;
+class glTextureManager;
+
 
 class zchxOpenGlOptionDlg : public QDialog
 {
@@ -28,7 +29,7 @@ public:
     int GetTextureMemorySize(void) const;
     QString GetTextureCacheSize(void) const ;
     void Populate(void) ;
-
+    void setGLTextureManager(glTextureManager* mgr) {mGLTextureMgr = mgr;}
 private:
     QString getCachePath() const;
 
@@ -44,6 +45,7 @@ private:
     Ui::zchxOpenGlOptionDlg *ui;
     bool m_brebuild_cache;
     zchxMapMainWindow*          mMainWindow;
+    glTextureManager*           mGLTextureMgr;
 };
 
 #endif // ZCHXOPENGLOPTIONDLG_H

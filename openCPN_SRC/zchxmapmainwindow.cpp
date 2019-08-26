@@ -1,4 +1,4 @@
-#include "zchxmapmainwindow.h"
+﻿#include "zchxmapmainwindow.h"
 #include "ui_zchxmapmainwindow.h"
 #include <windows.h>
 #include <psapi.h>
@@ -16,15 +16,8 @@
 #include "glChartCanvas.h"
 #include "thumbwin.h"
 #include "styles.h"
+#include <QVBoxLayout>
 
-
-//MyFrame                   *gFrame;
-
-//ConsoleCanvas             *console;
-
-//MyConfig                  *pConfig;
-
-//ChartBase                 *Current_Vector_Ch;
 ChartDB                   *ChartData = NULL;
 arrayofCanvasPtr            g_canvasArray;
 ColorScheme               global_color_scheme = GLOBAL_COLOR_SCHEME_DAY;
@@ -47,18 +40,7 @@ int                       g_nDepthUnitDisplay;
 int                       g_nCacheLimit;
 int                       g_memCacheLimit;
 ThumbWin                  *pthumbwin;
-//bool                      g_bGDAL_Debug;
-
-//double                    g_VPRotate; // Viewport rotation angle, used on "Course Up" mode
-//bool                      g_bCourseUp;
-//int                       g_COGAvgSec = 15; // COG average period (sec.) for Course Up Mode
-//double                    g_COGAvg;
-//bool                      g_bLookAhead;
-//bool                      g_bskew_comp;
 bool                      g_bopengl;
-//bool                      g_bSoftwareGL;
-//bool                      g_bShowFPS;
-//bool                      g_bsmoothpanzoom;
 bool                      g_fog_overzoom;
 double                    g_overzoom_emphasis_base;
 bool                      g_oz_vector_scale;
@@ -167,14 +149,19 @@ bool              g_bSpaceDropMark;
 zchxMapMainWindow::zchxMapMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::zchxMapMainWindow),
-    mChartDB(new ChartDB()),
+    mChartDB(/*new ChartDB()*/0),
     mOptionDlg(0),
     FrameTimer1(0),
-    mPlantForm(new OCPNPlatform)
+    mPlatForm(/*new OCPNPlatform*/0),
+    mConfigObj(0)
 {
-    mConfigObj = mPlantForm->GetConfigObject();
-    ChartData = mChartDB;
+
     ui->setupUi(this);
+    ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
+    mDisplayWidget = new ChartCanvas(this, 0);
+    ui->centralwidget->layout()->addWidget(mDisplayWidget);
+    if(mPlatForm)mConfigObj = mPlatForm->GetConfigObject();
+    ChartData = mChartDB;
     g_Main_thread = QThread::currentThread();
     //工具
     QMenu* tools = this->menuBar()->addMenu(tr("Tools"));
@@ -226,7 +213,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent) :
     //窗口刷新
     FrameTimer1 = new QTimer(this);
     FrameTimer1->setInterval(TIMER_GFRAME_1);
-    connect(FrameTimer1, SIGNAL(timeout()), this, SLOT(slotOnFrameTimer1Out()));
+//    connect(FrameTimer1, SIGNAL(timeout()), this, SLOT(slotOnFrameTimer1Out()));
 }
 
 zchxMapMainWindow::~zchxMapMainWindow()
@@ -1499,7 +1486,6 @@ void LoadS57()
 
 void zchxMapMainWindow::InvalidateAllGL()
 {
-#ifdef ocpnUSE_GL
     // For each canvas
     for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
         ChartCanvas *cc = g_canvasArray.at(i);
@@ -1508,6 +1494,5 @@ void zchxMapMainWindow::InvalidateAllGL()
             cc->Refresh();
         }
     }
-#endif
 }
 

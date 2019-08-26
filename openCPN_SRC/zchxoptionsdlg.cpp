@@ -8,6 +8,10 @@
 #include "s52utils.h"
 #include "cm93.h"
 #include "zchxmapmainwindow.h"
+#include "zchxconfig.h"
+#include "zchxopengloptiondlg.h"
+#include "glChartCanvas.h"
+#include "chcanv.h"
 
 extern  bool            g_bShowStatusBar;
 extern  bool            g_bShowMenuBar;
@@ -41,6 +45,7 @@ extern  int             g_nDepthUnitDisplay;
 extern OCPNPlatform     *g_Platform;
 extern s52plib          *ps52plib;
 extern  zchxMapMainWindow   *gFrame;
+extern  zchxGLOptions    g_GLOptions;
 
 zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
     QDialog(parent),
@@ -66,11 +71,57 @@ zchxOptionsDlg::~zchxOptionsDlg()
     delete ui;
 }
 
-
+extern bool g_bGLexpert;
+extern bool g_bShowFPS;
+extern bool g_bSoftwareGL;
 
 void zchxOptionsDlg::on_bOpenGL_clicked()
 {
+    zchxOpenGlOptionDlg dlg(gFrame);
 
+    if (dlg.exec() == QDialog::Accepted) {
+        if(gFrame->GetPrimaryCanvas()->GetglCanvas()){
+            g_GLOptions.m_bUseAcceleratedPanning =
+                    g_bGLexpert ? dlg.GetAcceleratedPanning()
+                                : gFrame->GetPrimaryCanvas()->GetglCanvas()->CanAcceleratePanning();
+        }
+
+        g_bShowFPS = dlg.GetShowFPS();
+        g_bSoftwareGL = dlg.GetSoftwareGL();
+
+        g_GLOptions.m_GLPolygonSmoothing = dlg.GetPolygonSmoothing();
+        g_GLOptions.m_GLLineSmoothing = dlg.GetLineSmoothing();
+
+        if (g_bGLexpert) {
+            // user defined
+            g_GLOptions.m_bTextureCompressionCaching =
+                    dlg.GetTextureCompressionCaching();
+            g_GLOptions.m_iTextureMemorySize = dlg.GetTextureMemorySize();
+        } else {
+            // caching is on if textures are compressed
+            g_GLOptions.m_bTextureCompressionCaching = dlg.GetTextureCompression();
+        }
+
+        if (g_bopengl && g_glTextureManager && g_GLOptions.m_bTextureCompression != dlg.GetTextureCompression()) {
+            // new g_GLoptions setting is needed in callees
+            g_GLOptions.m_bTextureCompression = dlg.GetTextureCompression();
+
+            if(gFrame->GetPrimaryCanvas()->GetglCanvas()){
+                Qt::CursorShape old = cursor().shape();
+                setCursor(Qt::BusyCursor);
+                gFrame->GetPrimaryCanvas()->GetglCanvas()->SetupCompression();
+                g_glTextureManager->ClearAllRasterTextures();
+                setCursor(old);
+            }
+        }
+        else
+            g_GLOptions.m_bTextureCompression = dlg.GetTextureCompression();
+
+    }
+
+    if (dlg.GetRebuildCache()) {
+        m_returnChanges = REBUILD_RASTER_CACHE;
+    }
 }
 
 void zchxOptionsDlg::on_OK_clicked()

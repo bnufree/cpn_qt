@@ -1,4 +1,4 @@
-#ifndef ZCHXMAPMAINWINDOW_H
+﻿#ifndef ZCHXMAPMAINWINDOW_H
 #define ZCHXMAPMAINWINDOW_H
 
 #include <QMainWindow>
@@ -52,8 +52,9 @@ public:
     void UpdateRotationState( double rotation );
     void SetChartUpdatePeriod();
     ChartCanvas *GetPrimaryCanvas();
+    QWidget* getGlChartCanvas();
     double GetBestVPScale( ChartBase *pchart );
-    OCPNPlatform *platform() {return mPlantForm;}
+    OCPNPlatform *platform() {return mPlatForm;}
 
 
 public slots:
@@ -118,7 +119,9 @@ private:
     //地图数据库
     ChartDB                     *mChartDB;
     //
-    OCPNPlatform                *mPlantForm;
+    OCPNPlatform                *mPlatForm;
+    //显示窗口
+    ChartCanvas*                mDisplayWidget;
 };
 
 #endif // ZCHXMAPMAINWINDOW_H
