@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  ViewPort
@@ -40,18 +40,18 @@
 #include "thumbwin.h"
 #include "chartdb.h"
 #include "chartimg.h"
-#include "chart1.h"
+//#include "chart1.h"
 #include "cutil.h"
 //#include "TrackPropDlg.h"
-#include "tcmgr.h"
+//#include "tcmgr.h"
 //#include "routemanagerdialog.h"
 //#include "pluginmanager.h"
 #include "ocpn_pixel.h"
 #include "ocpndc.h"
-#include "undo.h"
+//#include "undo.h"
 //#include "multiplexer.h"
 #include "timers.h"
-#include "tide_time.h"
+//#include "tide_time.h"
 #include "glTextureDescriptor.h"
 #include "ChInfoWin.h"
 #include "Quilt.h"
@@ -61,7 +61,7 @@
 //#include "AIS_Decoder.h"
 //#include "AIS_Target_Data.h"
 //#include "AISTargetAlertDialog.h"
-#include "SendToGpsDlg.h"
+//#include "SendToGpsDlg.h"
 #include "OCPNRegion.h"
 #include "gshhs.h"
 

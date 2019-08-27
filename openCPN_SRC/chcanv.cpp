@@ -42,7 +42,7 @@
 #include "thumbwin.h"
 #include "chartdb.h"
 #include "chartimg.h"
-#include "chart1.h"
+//#include "chart1.h"
 #include "cutil.h"
 #include "tcmgr.h"
 #include "ocpn_pixel.h"
@@ -128,7 +128,7 @@ extern IDX_entry        *gpIDX;
 extern int               gpIDXn;
 extern int              g_iDistanceFormat;
 
-extern GoToPositionDialog *pGoToPositionDialog;
+//extern GoToPositionDialog *pGoToPositionDialog;
 extern QString GetLayerName(int id);
 extern bool             g_bsimplifiedScalebar;
 

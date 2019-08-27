@@ -17,7 +17,7 @@
 zchxConfig* zchxConfig::minstance = 0;
 zchxConfig::MGarbage zchxConfig::Garbage;
 
-extern OCPNPlatform                 *g_Platform;
+//extern OCPNPlatform                 *g_Platform;
 extern zchxMapMainWindow          *gFrame;
 
 extern double           g_ChartNotRenderScaleFactor;
@@ -192,7 +192,7 @@ extern int              g_own_ship_sog_cog_calc_damp_sec;
 extern bool             g_bShowMenuBar;
 extern bool             g_bShowCompassWin;
 
-extern s52plib          *ps52plib;
+//extern s52plib          *ps52plib;
 
 extern int              g_cm93_zoom_factor;
 extern bool             g_b_legacy_input_filter_behaviour;
@@ -284,7 +284,7 @@ extern QColor         g_colourTrackLineColour;
 extern QString         g_default_wp_icon;
 extern QString         g_default_routepoint_icon;
 
-extern ChartGroupArray  *g_pGroupArray;
+//extern ChartGroupArray  *g_pGroupArray;
 extern int              g_GroupIndex;
 
 extern bool             g_bDebugOGL;
@@ -293,7 +293,7 @@ extern QString         g_GPS_Ident;
 extern bool             g_bGarminHostUpload;
 extern QString         g_uploadConnection;
 
-extern ocpnStyle::StyleManager* g_StyleManager;
+//extern ocpnStyle::StyleManager* g_StyleManager;
 extern QStringList    TideCurrentDataSet;
 extern QString         g_TCData_Dir;
 
@@ -352,7 +352,7 @@ extern int                     g_nCPUCount;
 
 extern bool             g_bDarkDecorations;
 extern unsigned int     g_canvasConfig;
-extern arrayofCanvasConfigPtr g_canvasConfigArray;
+//extern arrayofCanvasConfigPtr g_canvasConfigArray;
 extern QString         g_lastAppliedTemplateGUID;
 
 extern int              g_route_prop_x, g_route_prop_y;
@@ -560,8 +560,8 @@ int zchxConfig::loadMyConfig()
 
     //  Perform any required post processing and validation
     if(!ret_Val){
-        g_ChartScaleFactorExp = g_Platform->getChartScaleFactorExp( g_ChartScaleFactor );
-        g_ShipScaleFactorExp = g_Platform->getChartScaleFactorExp( g_ShipScaleFactor );
+        g_ChartScaleFactorExp = zchxFuncUtil::getChartScaleFactorExp( g_ChartScaleFactor );
+        g_ShipScaleFactorExp = zchxFuncUtil::getChartScaleFactorExp( g_ShipScaleFactor );
 
         g_COGFilterSec = qMin(g_COGFilterSec, MAX_COGSOG_FILTER_SECONDS);
         g_COGFilterSec = qMax(g_COGFilterSec, 1);
@@ -1253,6 +1253,7 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
 
 void zchxConfig::LoadS57Config()
 {
+#if 0
     if( !ps52plib )  return;
     beginGroup("Settings/GlobalState");
     ps52plib->SetShowS57Text( Read("bShowS57Text", PARAM_BOOL, 0, 0).toBool() );
@@ -1322,6 +1323,7 @@ void zchxConfig::LoadS57Config()
         }
         endGroup();
     }
+#endif
 }
 
 #if 0
@@ -1446,7 +1448,7 @@ bool zchxConfig::LoadChartDirArray( ArrayOfCDI &ChartDirArray )
                 nAdjustChartDirs++;
                 remove(str );
                 QString new_dir = dirname.mid(dirname.indexOf("SampleCharts" ) );
-                new_dir.insert(0, g_Platform->GetDataDir() + "/" );
+                new_dir.insert(0, zchxFuncUtil::getDataDir() + "/" );
                 dirname = new_dir;
             }
 
@@ -2051,7 +2053,7 @@ void zchxConfig::UpdateSettings()
 
     //    S57 Object Filter Settings
     endGroup();
-
+#if 0
     beginGroup("Settings/ObjectFilter");
 
     if(  ps52plib ) {
@@ -2067,6 +2069,7 @@ void zchxConfig::UpdateSettings()
         }
     }
     endGroup();
+#endif
 
     //    Global State
 
@@ -2179,6 +2182,7 @@ void zchxConfig::UpdateSettings()
 
     endGroup();
     beginGroup("Settings/GlobalState");
+#if 0
     if(  ps52plib ) {
         Write("bShowS57Text",  ps52plib->GetShowS57Text() );
         Write("bShowS57ImportantTextOnly",  ps52plib->GetShowS57ImportantTextOnly() );
@@ -2201,13 +2205,14 @@ void zchxConfig::UpdateSettings()
         Write("S52_MAR_TWO_SHADES", S52_getMarinerParam( S52_MAR_TWO_SHADES ) );
         Write("S52_DEPTH_UNIT_SHOW",  ps52plib->m_nDepthUnitDisplay );
     }
+#endif
     endGroup();
     beginGroup("Directories");
     Write("S57DataLocation", ("") );
     Write("InitChartDir", *pInit_Chart_Dir );
     Write("GPXIODir", g_gpx_path );
     Write("TCDataDir", g_TCData_Dir );
-    Write("BasemapDir", g_Platform->NormalizePath(gWorldMapLocation) );
+//    Write("BasemapDir", g_Platform->NormalizePath(gWorldMapLocation) );
     endGroup();
 
 

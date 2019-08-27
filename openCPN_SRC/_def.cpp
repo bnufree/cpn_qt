@@ -8,6 +8,7 @@
 #include "s52plib.h"
 #include "chcanv.h"
 #include "CanvasConfig.h"
+#include "FontMgr.h"
 
  OCPNPlatform                   *g_Platform = NULL;
  zchxMapMainWindow              *gFrame = NULL;
@@ -367,6 +368,7 @@ ChartCanvas      *g_focusCanvas = 0;
  ChartCanvas      *g_overlayCanvas = 0;
 
 
+double zchxFuncUtil::m_pt_per_pixel = 0.0;
 
 bool zchxFuncUtil::isDirExist(const QString& name)
 {
@@ -979,6 +981,19 @@ float zchxFuncUtil::getChartScaleFactorExp( float scale_linear )
 
 
     return factor;
+}
+
+double zchxFuncUtil::getFontPointsperPixel( void )
+{
+    if(m_pt_per_pixel == 0)
+    {
+        QFont f = FontMgr::Get().FindOrCreateFont( 12, "Microsoft YaHei", QFont::StyleNormal, QFont::Bold, false);
+        double width = QFontMetricsF(f).width("H");
+        double height = QFontMetricsF(f).height();
+        if(height > 0) m_pt_per_pixel = 12.0 / height;
+    }
+    return m_pt_per_pixel;
+
 }
 
 

@@ -146,17 +146,14 @@ ThumbWin     *pthumbwin = 0;
 zchxMapMainWindow::zchxMapMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::zchxMapMainWindow),
-    mChartDB(/*new ChartDB()*/0),
-    mOptionDlg(0),
-    FrameTimer1(0),
-    mPlatForm(/*new OCPNPlatform*/0)
+    mEcdisWidget(0)
 {
 
     ui->setupUi(this);
     ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
-    mDisplayWidget = new ChartCanvas(this, 0);
-    ui->centralwidget->layout()->addWidget(mDisplayWidget);
-    ChartData = mChartDB;
+    mEcdisWidget = new ChartCanvas(this, 0);
+    ui->centralwidget->layout()->addWidget(mEcdisWidget);
+//    ChartData = mChartDB;
     g_Main_thread = QThread::currentThread();
     //工具
     QMenu* tools = this->menuBar()->addMenu(tr("Tools"));
@@ -199,16 +196,6 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent) :
     addCustomAction(display, tr("Base"), this, SLOT(slotShowDisplayCategory()), false, ColorScheme::GLOBAL_COLOR_SCHEME_DAY);
     addCustomAction(display, tr("Standard"), this, SLOT(slotShowDisplayCategory()), false, ColorScheme::GLOBAL_COLOR_SCHEME_DUSK);
     addCustomAction(display, tr("All"), this, SLOT(slotShowDisplayCategory()), false, ColorScheme::GLOBAL_COLOR_SCHEME_NIGHT);
-
-    mMonitorTimer = new QTimer();
-    mMonitorTimer->setInterval(30000);
-    connect(mMonitorTimer, SIGNAL(timeout()), this, SLOT(slotMemoryMonitor()));
-    mMonitorTimer->start();
-
-    //窗口刷新
-    FrameTimer1 = new QTimer(this);
-    FrameTimer1->setInterval(TIMER_GFRAME_1);
-//    connect(FrameTimer1, SIGNAL(timeout()), this, SLOT(slotOnFrameTimer1Out()));
 }
 
 zchxMapMainWindow::~zchxMapMainWindow()
@@ -216,18 +203,11 @@ zchxMapMainWindow::~zchxMapMainWindow()
     delete ui;
 }
 
-
-void zchxMapMainWindow::setApplicationName(const QString &name)
-{
-    mApplicationName = name;
-}
-
-
 void zchxMapMainWindow::slotOpenSettingDlg()
 {
     qDebug()<<"open settings windows now";
-    if(!mOptionDlg) mOptionDlg = new zchxOptionsDlg(this);
-    mOptionDlg->show();
+    zchxOptionsDlg* dlg = new zchxOptionsDlg(this);
+    dlg->show();
 }
 
 void zchxMapMainWindow::slotMeasureDistance()
@@ -553,10 +533,7 @@ bool zchxMapMainWindow::ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray )
 #endif
 }
 
-void zchxMapMainWindow::startFrameTimer1()
-{
-    if(FrameTimer1) FrameTimer1->start();
-}
+
 
 void zchxMapMainWindow::slotOnFrameTimer1Out()
 {
@@ -1121,14 +1098,7 @@ void zchxMapMainWindow::ToggleColorScheme()
 bool zchxMapMainWindow::DoChartUpdate( void )
 {
     bool return_val = false;
-
-    // ..For each canvas...
-    for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
-        ChartCanvas *cc = g_canvasArray.at(i);
-        if(cc)
-            return_val |= cc->DoCanvasUpdate();
-    }
-
+    if(mEcdisWidget) return_val = mEcdisWidget->DoCanvasUpdate();
     return return_val;
 
 }
@@ -1159,10 +1129,7 @@ void zchxMapMainWindow::UpdateRotationState( double rotation )
 
 ChartCanvas *zchxMapMainWindow::GetPrimaryCanvas()
 {
-    if(g_canvasArray.count() > 0)
-        return g_canvasArray.at(0);
-    else
-        return NULL;
+    return mEcdisWidget;
 }
 
 void zchxMapMainWindow::SetChartUpdatePeriod( )

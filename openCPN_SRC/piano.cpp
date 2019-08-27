@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Bar Window
@@ -30,7 +30,7 @@
 #include "chcanv.h"
 #include "piano.h"
 #include "chartdb.h"
-#include "chart1.h"
+//#include "chart1.h"
 #include "chartbase.h"
 #include "styles.h"
 #include "ocpndc.h"

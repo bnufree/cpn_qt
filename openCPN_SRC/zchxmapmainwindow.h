@@ -28,14 +28,10 @@ class zchxMapMainWindow : public QMainWindow
 public:
     explicit zchxMapMainWindow(QWidget *parent = 0);
     ~zchxMapMainWindow();
-
-    void setApplicationName(const QString& name);
-    QString applicationName() const {return mApplicationName;}
     void    setActionCheckSts(const QString& action, bool check);
     void    setActionEnableSts(const QString& action, bool check);
     bool    ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray );
     bool    UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName );
-    void    startFrameTimer1();
     ColorScheme GetColorScheme();
 
     void DoStackDown( ChartCanvas *cc );
@@ -46,10 +42,8 @@ public:
     void UpdateRotationState( double rotation );
     void SetChartUpdatePeriod();
     ChartCanvas *GetPrimaryCanvas();
-    QWidget* getGlChartCanvas();
+//    QWidget* getGlChartCanvas();
     double GetBestVPScale( ChartBase *pchart );
-    OCPNPlatform *platform() {return mPlatForm;}
-
 
 public slots:
     //工具
@@ -92,27 +86,11 @@ private slots:
 
 private:
     Ui::zchxMapMainWindow *ui;
-    //内存监控
-    quint64               mProcessedID;
-    QString               mApplicationName;
-    quint64               mMemUsed;
-    quint64               mMemTotal;
 
-    //程序关闭检测
-    bool                  mInCloseWindow;
-    QTimer                *mMonitorTimer;
     //菜单管理
     QMap<QString, QAction*>     mActionMap;
-    //配置对话框
-    zchxOptionsDlg*             mOptionDlg;
-    //定时事件
-    QTimer                     *FrameTimer1;
-    //地图数据库
-    ChartDB                     *mChartDB;
-    //
-    OCPNPlatform                *mPlatForm;
     //显示窗口
-    ChartCanvas*                mDisplayWidget;
+    ChartCanvas*                mEcdisWidget;
 };
 
 #endif // ZCHXMAPMAINWINDOW_H

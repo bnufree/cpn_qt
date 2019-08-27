@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Bar Window
@@ -28,10 +28,11 @@
 #ifndef __statwin_H__
 #define __statwin_H__
 
-#include "chart1.h"
+//#include "chart1.h"
 #include "bitmap.h"
 #include "_def.h"
 #include <QPainter>
+#include "GL/gl.h"
 
 //----------------------------------------------------------------------------
 //   constants
