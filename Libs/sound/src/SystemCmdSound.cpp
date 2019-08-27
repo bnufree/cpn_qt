@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -77,7 +77,7 @@ bool SystemCmdSound::Load(const char* path, int deviceIndex)
     m_path = path;
 #ifdef _DEBUG
     if (deviceIndex != -1) {
-        wxLogWarning("Selecting device is not supported by SystemCmdSound");
+        qDebug("Selecting device is not supported by SystemCmdSound");
     }
 #endif /* _DEBUG */
     m_OK = QFile::exists(QString::fromStdString(m_path));
