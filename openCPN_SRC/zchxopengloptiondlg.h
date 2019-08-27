@@ -1,4 +1,4 @@
-﻿#ifndef ZCHXOPENGLOPTIONDLG_H
+#ifndef ZCHXOPENGLOPTIONDLG_H
 #define ZCHXOPENGLOPTIONDLG_H
 
 #include <QDialog>
@@ -7,16 +7,12 @@ namespace Ui {
 class zchxOpenGlOptionDlg;
 }
 
-class zchxMapMainWindow;
-class glTextureManager;
-
-
 class zchxOpenGlOptionDlg : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit zchxOpenGlOptionDlg(zchxMapMainWindow* frame,  QWidget *parent = 0);
+    explicit zchxOpenGlOptionDlg(QWidget *parent = 0);
     ~zchxOpenGlOptionDlg();
     bool GetAcceleratedPanning(void) const;
     bool GetTextureCompression(void) const;
@@ -29,7 +25,6 @@ public:
     int GetTextureMemorySize(void) const;
     QString GetTextureCacheSize(void) const ;
     void Populate(void) ;
-    void setGLTextureManager(glTextureManager* mgr) {mGLTextureMgr = mgr;}
 private:
     QString getCachePath() const;
 
@@ -44,8 +39,6 @@ private slots:
 private:
     Ui::zchxOpenGlOptionDlg *ui;
     bool m_brebuild_cache;
-    zchxMapMainWindow*          mMainWindow;
-    glTextureManager*           mGLTextureMgr;
 };
 
 #endif // ZCHXOPENGLOPTIONDLG_H

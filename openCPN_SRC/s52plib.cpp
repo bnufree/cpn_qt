@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S52 Presentation Library
@@ -7847,7 +7847,7 @@ void s52plib::ClearNoshow(void)
 void s52plib::PLIB_LoadS57Config()
 {
     //    Get a pointer to the opencpn configuration object
-    zchxConfig *pconfig = g_config;
+    zchxConfig *pconfig = ZCHX_CFG_INS;
     
     int read_int;
     double dval;

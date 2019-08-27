@@ -1,4 +1,4 @@
-#ifndef _DEF_H
+﻿#ifndef _DEF_H
 #define _DEF_H
 
 #include <QApplication>
@@ -425,6 +425,10 @@ public:
     static QString getPluginDir();
     static QString getConfigFileName();
     static float getChartScaleFactorExp( float scale_linear );
+    static double getFontPointsperPixel();
+
+public:
+    static double m_pt_per_pixel;
 
 
 };

@@ -80,9 +80,54 @@ SOURCES += \
     zchxoptionsdlg.cpp \
     zchxconfig.cpp \
     zchxopengloptiondlg.cpp \
-    glTexCache.cpp \
-    glTextureDescriptor.cpp \
-    glTextureManager.cpp
+    zchxmapmainwindow.cpp \
+#    glTexCache.cpp \
+#    glTextureDescriptor.cpp \
+#    glTextureManager.cpp \
+#    s52plib.cpp \
+#    s52utils.cpp \
+    OCPNPlatform.cpp \
+    FontDesc.cpp \
+    FontMgr.cpp \
+#    chartdb.cpp \
+#    chartdbs.cpp \
+#    chartimg.cpp \
+#    chartsymbols.cpp \
+#    OCPNRegion.cpp \
+#    georef.cpp \
+#    vector2d.cpp \
+#    viewport.cpp \
+#    bitmap.cpp \
+#    glChartCanvas.cpp \
+#    bbox.cpp \
+#    chcanv.cpp \
+#    Quilt.cpp \
+#    SencManager.cpp \
+#    s57RegistrarMgr.cpp \
+#    s57chart.cpp \
+#    mygeom.cpp \
+#    cutil.cpp \
+#    s57obj.cpp \
+#    s52cnsy.cpp \
+#    TexFont.cpp \
+#    styles.cpp \
+#    mbtiles.cpp \
+#    FlexHash.cpp \
+#    LLRegion.cpp \
+#    ocpn_pixel.cpp \
+#    ChartDataInputStream.cpp \
+#    pugixml.cpp \
+#    ocpndc.cpp \
+#    gshhs.cpp \
+#    piano.cpp \
+#    compass.cpp \
+#    ChInfoWin.cpp \
+#    Osenc.cpp \
+#    s57classregistrar.cpp \
+#    ogrs57datasource.cpp \
+#    s57reader.cpp \
+#    s57featuredefns.cpp \
+#    ogrs57layer.cpp
 
 
 
@@ -102,13 +147,54 @@ HEADERS += \
     zchxoptionsdlg.h \
     zchxconfig.h \
     zchxopengloptiondlg.h \
-    glTexCache.h \
-    glTextureDescriptor.h \
-    glTextureManager.h
+    zchxmapmainwindow.h \
+#    glTexCache.h \
+#    glTextureDescriptor.h \
+#    glTextureManager.h \
+#    s52plib.h \
+#    s52s57.h \
+#    s52utils.h \
+    OCPNPlatform.h \
+    FontDesc.h \
+    FontMgr.h \
+#    chartdb.h \
+#    chartdbs.h \
+#    chartimg.h \
+#    chartsymbols.h \
+#    OCPNRegion.h \
+#    georef.h \
+#    vector2D.h \
+#    viewport.h \
+#    bitmap.h \
+#    glChartCanvas.h \
+#    bbox.h \
+#    chcanv.h \
+#    Quilt.h \
+#    SencManager.h \
+#    s57RegistrarMgr.h \
+#    s57chart.h \
+#    mygeom.h \
+#    cutil.h \
+#    TexFont.h \
+#    styles.h \
+#    mbtiles.h \
+#    FlexHash.h \
+#    LLRegion.h \
+#    ocpn_pixel.h \
+#    ChartDataInputStream.h \
+#    pugixml.hpp \
+#    ocpndc.h \
+#    gshhs.h \
+#    piano.h \
+#    compass.h \
+#    ChInfoWin.h \
+#    Osenc.h \
+#    S57ClassRegistrar.h
 
 FORMS += \
     zchxoptionsdlg.ui \
-    zchxopengloptiondlg.ui
+    zchxopengloptiondlg.ui \
+    zchxmapmainwindow.ui
 
 
 

@@ -1,4 +1,4 @@
-#ifndef ZCHXCONFIG_H
+﻿#ifndef ZCHXCONFIG_H
 #define ZCHXCONFIG_H
 
 #include <QSettings>
@@ -466,6 +466,9 @@ public:
     QStringList getChildKeys(const QString& prefix);
     void LoadS57Config();
     QVariant Read(const QString& key, ParamType type,  void* ret, const QVariant& val = QVariant());
+    void     Write(const QString& key, const QVariant& val){setValue(key, val);}
+    void     WriteDefault(const QString& key, const QVariant& val);
+    void     DeleteGroup(const QString& group);
 
 
     //    int LoadMyConfig();
@@ -476,9 +479,9 @@ public:
     //    virtual void SaveCanvasConfigs( );
     //    virtual void SaveConfigCanvas( canvasConfig *cc );
 
-    //    virtual bool UpdateChartDirs(ArrayOfCDI &dirarray);
-    //    virtual bool LoadChartDirArray(ArrayOfCDI &ChartDirArray);
-    //    virtual void UpdateSettings();
+        virtual bool UpdateChartDirs(ArrayOfCDI &dirarray);
+        virtual bool LoadChartDirArray(ArrayOfCDI &ChartDirArray);
+        virtual void UpdateSettings();
     //    bool LoadLayers(QString &path);
         int LoadMyConfigRaw( bool bAsTemplate = false );
     //    virtual void UpdateNavObj();
@@ -488,6 +491,8 @@ private:
     bool                    m_bSkipChangeSetUpdate;
     QString                 mPreFix;
     zchxConfig(const QString &LocalFileName);
+    QString                m_sNavObjSetFile;
+    QString                m_sNavObjSetChangesFile;
 private:
     static zchxConfig     *minstance;
 

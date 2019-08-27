@@ -22,7 +22,7 @@
  ***************************************************************************
  */
 #include "ChInfoWin.h"
-#include "chart1.h"
+//#include "chart1.h"
 #include "OCPNPlatform.h"
 #include "FontMgr.h"
 #include <QPainter>

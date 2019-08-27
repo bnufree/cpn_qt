@@ -1,4 +1,4 @@
-#include "zchxconfig.h"
+﻿#include "zchxconfig.h"
 #include <QTextCodec>
 #include "GL/gl.h"
 #include "s52plib.h"
@@ -10,12 +10,14 @@
 #include "CanvasConfig.h"
 #include "chartdbs.h"
 #include "styles.h"
+#include "georef.h"
+#include "FontMgr.h"
 
 
 zchxConfig* zchxConfig::minstance = 0;
 zchxConfig::MGarbage zchxConfig::Garbage;
 
-extern OCPNPlatform                 *g_Platform;
+//extern OCPNPlatform                 *g_Platform;
 extern zchxMapMainWindow          *gFrame;
 
 extern double           g_ChartNotRenderScaleFactor;
@@ -146,8 +148,10 @@ extern int              g_ScaledNumWeightRange;
 extern int              g_ScaledNumWeightSizeOfT;
 extern int              g_ScaledSizeMinimal;
 
-extern int              g_S57_dialog_sx, g_S57_dialog_sy;
-int                     g_S57_extradialog_sx, g_S57_extradialog_sy;
+extern int              g_S57_dialog_sx;
+extern int              g_S57_dialog_sy;
+extern int                     g_S57_extradialog_sx;
+extern int              g_S57_extradialog_sy;
 
 extern int              g_iNavAidRadarRingsNumberVisible;
 extern float            g_fNavAidRadarRingsStep;
@@ -188,7 +192,7 @@ extern int              g_own_ship_sog_cog_calc_damp_sec;
 extern bool             g_bShowMenuBar;
 extern bool             g_bShowCompassWin;
 
-extern s52plib          *ps52plib;
+//extern s52plib          *ps52plib;
 
 extern int              g_cm93_zoom_factor;
 extern bool             g_b_legacy_input_filter_behaviour;
@@ -251,7 +255,7 @@ extern bool             g_bfilter_cogsog;
 extern int              g_COGFilterSec;
 extern int              g_SOGFilterSec;
 
-int                     g_navobjbackups;
+extern int                     g_navobjbackups;
 
 extern bool             g_bQuiltEnable;
 extern bool             g_bFullScreenQuilt;
@@ -280,7 +284,7 @@ extern QColor         g_colourTrackLineColour;
 extern QString         g_default_wp_icon;
 extern QString         g_default_routepoint_icon;
 
-extern ChartGroupArray  *g_pGroupArray;
+//extern ChartGroupArray  *g_pGroupArray;
 extern int              g_GroupIndex;
 
 extern bool             g_bDebugOGL;
@@ -289,7 +293,7 @@ extern QString         g_GPS_Ident;
 extern bool             g_bGarminHostUpload;
 extern QString         g_uploadConnection;
 
-extern ocpnStyle::StyleManager* g_StyleManager;
+//extern ocpnStyle::StyleManager* g_StyleManager;
 extern QStringList    TideCurrentDataSet;
 extern QString         g_TCData_Dir;
 
@@ -344,18 +348,18 @@ extern bool             g_benableUDPNullHeader;
 extern QString         g_uiStyle;
 extern bool             g_useMUI;
 
-int                     g_nCPUCount;
+extern int                     g_nCPUCount;
 
 extern bool             g_bDarkDecorations;
 extern unsigned int     g_canvasConfig;
-extern arrayofCanvasConfigPtr g_canvasConfigArray;
+//extern arrayofCanvasConfigPtr g_canvasConfigArray;
 extern QString         g_lastAppliedTemplateGUID;
 
 extern int              g_route_prop_x, g_route_prop_y;
 extern int              g_route_prop_sx, g_route_prop_sy;
 
-QString                g_gpx_path;
-bool                    g_bLayersLoaded;
+extern QString                g_gpx_path;
+extern bool                    g_bLayersLoaded;
 extern zchxGLOptions g_GLOptions;
 
 /*-------------------------------------------
@@ -389,6 +393,15 @@ void zchxConfig::setDefault(const QString & prefix,const QString &key, const QVa
     }
     endGroup();
 }
+
+void zchxConfig::WriteDefault(const QString &key, const QVariant &def)
+{
+    if(value(key).toString().isEmpty())
+    {
+        setValue(key, def);
+    }
+}
+
 /*-------------------------------------------
  * 设置配置文件值
 ---------------------------------------------*/
@@ -547,8 +560,8 @@ int zchxConfig::loadMyConfig()
 
     //  Perform any required post processing and validation
     if(!ret_Val){
-        g_ChartScaleFactorExp = g_Platform->getChartScaleFactorExp( g_ChartScaleFactor );
-        g_ShipScaleFactorExp = g_Platform->getChartScaleFactorExp( g_ShipScaleFactor );
+        g_ChartScaleFactorExp = zchxFuncUtil::getChartScaleFactorExp( g_ChartScaleFactor );
+        g_ShipScaleFactorExp = zchxFuncUtil::getChartScaleFactorExp( g_ShipScaleFactor );
 
         g_COGFilterSec = qMin(g_COGFilterSec, MAX_COGSOG_FILTER_SECONDS);
         g_COGFilterSec = qMax(g_COGFilterSec, 1);
@@ -599,27 +612,30 @@ int zchxConfig::loadMyConfig()
 QVariant zchxConfig::Read(const QString &key, ParamType type, void *ret, const QVariant& def)
 {
     QVariant val = value(key, def);
-    switch (type) {
-    case PARAM_BOOL:
-        *(bool*)ret = val.toBool();
-        break;
-    case PARAM_INT:
-        *(int*)ret = val.toInt();
-        break;
-    case PARAM_DOUBLE:
-        *(double*)ret = val.toDouble();
-        break;
-    case PARAM_FLOAT:
-        *(float*)ret = val.toFloat();
-        break;
-    case PARAM_STRING:
-        *(QString*)ret = val.toString();
-        break;
-    case PARAM_STRINGLIST:
-        *(QStringList*)ret = val.toStringList();
-        break;
-    default:
-        break;
+    if(ret)
+    {
+        switch (type) {
+        case PARAM_BOOL:
+            *(bool*)ret = val.toBool();
+            break;
+        case PARAM_INT:
+            *(int*)ret = val.toInt();
+            break;
+        case PARAM_DOUBLE:
+            *(double*)ret = val.toDouble();
+            break;
+        case PARAM_FLOAT:
+            *(float*)ret = val.toFloat();
+            break;
+        case PARAM_STRING:
+            *(QString*)ret = val.toString();
+            break;
+        case PARAM_STRINGLIST:
+            *(QStringList*)ret = val.toStringList();
+            break;
+        default:
+            break;
+        }
     }
 
     return val;
@@ -923,135 +939,106 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     Read("bShowTargetTracks", PARAM_BOOL, &g_bAISShowTracks );
 
 
-    if( Read("TargetTracksLimit", &s ) ) {
-        s.ToDouble( &g_AISShowTracks_Limit );
-        g_AISShowTracks_Limit = qMax(300.0, g_AISShowTracks_Limit);
-    }
-    if( Read("TargetTracksMinutes", &s ) ) {
-        s.ToDouble( &g_AISShowTracks_Mins );
-        g_AISShowTracks_Mins = qMax(1.0, g_AISShowTracks_Mins);
-        g_AISShowTracks_Mins = qMin(g_AISShowTracks_Limit, g_AISShowTracks_Mins);
-    }
+    Read("TargetTracksLimit", PARAM_DOUBLE, &g_AISShowTracks_Limit );
+    g_AISShowTracks_Limit = qMax(300.0, g_AISShowTracks_Limit);
+    Read("TargetTracksMinutes", PARAM_DOUBLE, &g_AISShowTracks_Mins );
+    g_AISShowTracks_Mins = qMax(1.0, g_AISShowTracks_Mins);
+    g_AISShowTracks_Mins = qMin(g_AISShowTracks_Limit, g_AISShowTracks_Mins);
 
-    Read("bHideMooredTargets", &g_bHideMoored );
-    if(Read("MooredTargetMaxSpeedKnots", &s ))
-        s.ToDouble( &g_ShowMoored_Kts );
+    Read("bHideMooredTargets",  PARAM_BOOL, &g_bHideMoored );
+    Read("MooredTargetMaxSpeedKnots", PARAM_DOUBLE, &g_ShowMoored_Kts );
 
-    Read(_T ("bShowScaledTargets"), &g_bAllowShowScaled );
-    Read("AISScaledNumber", &g_ShowScaled_Num );
-    Read("AISScaledNumberWeightSOG", &g_ScaledNumWeightSOG );
-    Read("AISScaledNumberWeightCPA", &g_ScaledNumWeightCPA );
-    Read("AISScaledNumberWeightTCPA", &g_ScaledNumWeightTCPA );
-    Read("AISScaledNumberWeightRange",& g_ScaledNumWeightRange );
-    Read("AISScaledNumberWeightSizeOfTarget", &g_ScaledNumWeightSizeOfT );
-    Read("AISScaledSizeMinimal", &g_ScaledSizeMinimal );
-    Read(_T("AISShowScaled"), &g_bShowScaled );
+    Read("bShowScaledTargets", PARAM_BOOL, &g_bAllowShowScaled );
+    Read("AISScaledNumber", PARAM_INT, &g_ShowScaled_Num );
+    Read("AISScaledNumberWeightSOG",PARAM_INT,  &g_ScaledNumWeightSOG );
+    Read("AISScaledNumberWeightCPA", PARAM_INT, &g_ScaledNumWeightCPA );
+    Read("AISScaledNumberWeightTCPA", PARAM_INT, &g_ScaledNumWeightTCPA );
+    Read("AISScaledNumberWeightRange",PARAM_INT, &g_ScaledNumWeightRange );
+    Read("AISScaledNumberWeightSizeOfTarget", PARAM_INT, &g_ScaledNumWeightSizeOfT );
+    Read("AISScaledSizeMinimal", PARAM_INT, &g_ScaledSizeMinimal );
+    Read("AISShowScaled", PARAM_BOOL, &g_bShowScaled );
 
-    Read("bShowAreaNotices", &g_bShowAreaNotices );
-    Read("bDrawAISSize", &g_bDrawAISSize );
-    Read("bShowAISName", &g_bShowAISName );
-    Read("bAISAlertDialog", &g_bAIS_CPA_Alert );
-    Read("ShowAISTargetNameScale", &g_Show_Target_Name_Scale );
-    Read("bWplIsAprsPositionReport", &g_bWplIsAprsPosition );
-    Read("AISCOGPredictorWidth", &g_ais_cog_predictor_width );
+    Read("bShowAreaNotices", PARAM_BOOL, &g_bShowAreaNotices );
+    Read("bDrawAISSize", PARAM_BOOL, &g_bDrawAISSize );
+    Read("bShowAISName", PARAM_BOOL, &g_bShowAISName );
+    Read("bAISAlertDialog", PARAM_BOOL, &g_bAIS_CPA_Alert );
+    Read("ShowAISTargetNameScale", PARAM_INT, &g_Show_Target_Name_Scale );
+    Read("bWplIsAprsPositionReport", PARAM_BOOL, &g_bWplIsAprsPosition );
+    Read("AISCOGPredictorWidth", PARAM_INT, &g_ais_cog_predictor_width );
 
-    Read("bAISAlertAudio", &g_bAIS_CPA_Alert_Audio );
-    Read("AISAlertAudioFile", &g_sAIS_Alert_Sound_File );
-    Read("bAISAlertSuppressMoored", &g_bAIS_CPA_Alert_Suppress_Moored );
+    Read("bAISAlertAudio", PARAM_BOOL, &g_bAIS_CPA_Alert_Audio );
+    Read("AISAlertAudioFile", PARAM_STRING, &g_sAIS_Alert_Sound_File );
+    Read("bAISAlertSuppressMoored", PARAM_BOOL, &g_bAIS_CPA_Alert_Suppress_Moored );
 
-    Read("bAISAlertAckTimeout", &g_bAIS_ACK_Timeout );
-    if(Read("AlertAckTimeoutMinutes", &s ))
-        s.ToDouble( &g_AckTimeout_Mins );
+    Read("bAISAlertAckTimeout", PARAM_BOOL, &g_bAIS_ACK_Timeout );
+    Read("AlertAckTimeoutMinutes", PARAM_DOUBLE, &g_AckTimeout_Mins );
 
-    Read("AlertDialogSizeX", &g_ais_alert_dialog_sx );
-    Read("AlertDialogSizeY", &g_ais_alert_dialog_sy );
-    Read("AlertDialogPosX", &g_ais_alert_dialog_x );
-    Read("AlertDialogPosY", &g_ais_alert_dialog_y );
-    Read("QueryDialogPosX", &g_ais_query_dialog_x );
-    Read("QueryDialogPosY", &g_ais_query_dialog_y );
+    Read("AlertDialogSizeX", PARAM_INT, &g_ais_alert_dialog_sx );
+    Read("AlertDialogSizeY", PARAM_INT, &g_ais_alert_dialog_sy );
+    Read("AlertDialogPosX", PARAM_INT, &g_ais_alert_dialog_x );
+    Read("AlertDialogPosY", PARAM_INT, &g_ais_alert_dialog_y );
+    Read("QueryDialogPosX", PARAM_INT, &g_ais_query_dialog_x );
+    Read("QueryDialogPosY", PARAM_INT, &g_ais_query_dialog_y );
 
-    Read("AISTargetListPerspective", &g_AisTargetList_perspective );
-    Read("AISTargetListRange", &g_AisTargetList_range );
-    Read("AISTargetListSortColumn", &g_AisTargetList_sortColumn );
-    Read("bAISTargetListSortReverse", &g_bAisTargetList_sortReverse );
-    Read("AISTargetListColumnSpec", &g_AisTargetList_column_spec );
-    Read("AISTargetListColumnOrder"), &g_AisTargetList_column_order);
+    Read("AISTargetListPerspective", PARAM_STRING, &g_AisTargetList_perspective );
+    Read("AISTargetListRange", PARAM_INT, &g_AisTargetList_range );
+    Read("AISTargetListSortColumn", PARAM_INT, &g_AisTargetList_sortColumn );
+    Read("bAISTargetListSortReverse", PARAM_BOOL, &g_bAisTargetList_sortReverse );
+    Read("AISTargetListColumnSpec", PARAM_STRING, &g_AisTargetList_column_spec );
+    Read("AISTargetListColumnOrder", PARAM_STRING, &g_AisTargetList_column_order);
 
-    Read("bAISRolloverShowClass", &g_bAISRolloverShowClass );
-    Read("bAISRolloverShowCOG", &g_bAISRolloverShowCOG );
-    Read("bAISRolloverShowCPA", &g_bAISRolloverShowCPA );
+    Read("bAISRolloverShowClass", PARAM_BOOL, &g_bAISRolloverShowClass );
+    Read("bAISRolloverShowCOG", PARAM_BOOL, &g_bAISRolloverShowCOG );
+    Read("bAISRolloverShowCPA", PARAM_BOOL, &g_bAISRolloverShowCPA );
 
-    Read("S57QueryDialogSizeX", &g_S57_dialog_sx );
-    Read("S57QueryDialogSizeY", &g_S57_dialog_sy );
-    Read("S57QueryExtraDialogSizeX", &g_S57_extradialog_sx );
-    Read("S57QueryExtraDialogSizeY", &g_S57_extradialog_sy );
+    Read("S57QueryDialogSizeX", PARAM_INT, &g_S57_dialog_sx );
+    Read("S57QueryDialogSizeY", PARAM_INT, &g_S57_dialog_sy );
+    Read("S57QueryExtraDialogSizeX", PARAM_INT, &g_S57_extradialog_sx );
+    Read("S57QueryExtraDialogSizeY", PARAM_INT, &g_S57_extradialog_sy );
+    endGroup();
 
-
-    QString strpres("PresentationLibraryData" ) );
+    QString strpres("PresentationLibraryData");
     QString valpres;
-    SetPath("/Directories" ) );
-    Read( strpres, &valpres );       // Get the File name
-    if(!valpres.IsEmpty())
+    beginGroup("Directories");
+    Read( strpres, PARAM_STRING, &valpres );       // Get the File name
+    if(!valpres.isEmpty())
         g_UserPresLibData = valpres;
 
-    QString strs("SENCFileLocation" ) );
-    SetPath("/Directories" ) );
+    QString strs("SENCFileLocation" );
     QString vals;
-    Read( strs, &vals );       // Get the Directory name
-    if(!vals.IsEmpty())
+    Read( strs, PARAM_STRING, &vals );       // Get the Directory name
+    if(!vals.isEmpty())
         g_SENCPrefix = vals;
 
-    SetPath("/Directories" ) );
     QString vald;
-    Read("InitChartDir", &vald );    // Get the Directory name
+    Read("InitChartDir", PARAM_STRING, &vald );    // Get the Directory name
 
     QString dirnamed( vald );
-    if( !dirnamed.IsEmpty() ) {
-        if( pInit_Chart_Dir->IsEmpty() )   // on second pass, don't overwrite
+    if( !dirnamed.isEmpty() ) {
+        if( pInit_Chart_Dir->isEmpty() )   // on second pass, don't overwrite
         {
-            pInit_Chart_Dir->Clear();
-            pInit_Chart_Dir->Append( vald );
+            pInit_Chart_Dir->clear();
+            pInit_Chart_Dir->append(vald );
         }
     }
 
-    Read("GPXIODir", &g_gpx_path );    // Get the Directory name
-    Read("TCDataDir", &g_TCData_Dir );    // Get the Directory name
-    Read("BasemapDir"), &gWorldMapLocation );
-
-    SetPath("/Settings/GlobalState" ) );
-
-    if(Read("nColorScheme", &read_int ))
-        global_color_scheme = (ColorScheme) read_int;
-
-    if(! bAsTemplate ){
-        SetPath("/Settings/NMEADataSource" ) );
-
-        QString connectionconfigs;
-        Read ("DataConnections",  &connectionconfigs );
-        if(!connectionconfigs.IsEmpty()){
-            QStringList confs = QStringTokenize(connectionconfigs, _T("|"));
-            g_pConnectionParams->Clear();
-            for (size_t i = 0; i < confs.Count(); i++)
-            {
-                ConnectionParams * prm = new ConnectionParams(confs[i]);
-                if (!prm->Valid) {
-                    ZCHX_LOGMSG("Skipped invalid DataStream config") );
-                    delete prm;
-                    continue;
-                }
-                g_pConnectionParams->Add(prm);
-            }
-        }
-    }
+    Read("GPXIODir", PARAM_STRING, &g_gpx_path );    // Get the Directory name
+    Read("TCDataDir", PARAM_STRING, &g_TCData_Dir );    // Get the Directory name
+    Read("BasemapDir", PARAM_STRING, &gWorldMapLocation );
+    endGroup();
 
 
+    beginGroup("Settings/GlobalState");
 
-    SetPath("/Settings/GlobalState" ) );
+    Read("nColorScheme", PARAM_INT, &read_int, 1 );
+    global_color_scheme = (ColorScheme) read_int;
     QString st;
 
-    double st_lat, st_lon;
-    if( Read("VPLatLon", &st ) ) {
-        sscanf( st.mb_str( wxConvUTF8, "%lf,%lf", &st_lat, &st_lon );
+    double st_lat = 0.0, st_lon = 0.0;
+    Read("VPLatLon", PARAM_STRING, &st );
+    if(st.trimmed().length())
+    {
+        sscanf(st.toUtf8().data(), "%lf,%lf", &st_lat, &st_lon );
 
         //    Sanity check the lat/lon...both have to be reasonable.
         if( fabs( st_lon ) < 360. ) {
@@ -1066,22 +1053,22 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
 
         if( fabs( st_lat ) < 90.0 ) vLat = st_lat;
 
-        s.Printf("Setting Viewpoint Lat/Lon %g, %g", vLat, vLon );
-        ZCHX_LOGMSG( s );
+        s.sprintf("Setting Viewpoint Lat/Lon %g, %g", vLat, vLon );
+        qDebug()<< s;
 
     }
 
     double st_view_scale, st_rotation;
-    if( Read( QString("VPScale" ), &st ) ) {
-        sscanf( st.mb_str( wxConvUTF8, "%lf", &st_view_scale );
+    if( Read("VPScale", PARAM_STRING, &st ).toString().size() > 0 ) {
+        sscanf( st.toUtf8().data(), "%lf", &st_view_scale );
         //    Sanity check the scale
         st_view_scale = fmax ( st_view_scale, .001/32 );
         st_view_scale = fmin ( st_view_scale, 4 );
         initial_scale_ppm = st_view_scale;
     }
 
-    if( Read( QString("VPRotation" ), &st ) ) {
-        sscanf( st.mb_str( wxConvUTF8, "%lf", &st_rotation );
+    if( Read("VPRotation", PARAM_STRING, &st ).toString().size() > 0 ) {
+        sscanf( st.toUtf8().data(), "%lf", &st_rotation );
         //    Sanity check the rotation
         st_rotation = fmin ( st_rotation, 360 );
         st_rotation = fmax ( st_rotation, 0 );
@@ -1090,8 +1077,8 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
 
     QString sll;
     double lat, lon;
-    if( Read("OwnShipLatLon", &sll ) ) {
-        sscanf( sll.mb_str( wxConvUTF8, "%lf,%lf", &lat, &lon );
+    if( Read("OwnShipLatLon", PARAM_STRING, &sll ).toString().size() > 0 ) {
+        sscanf( sll.toUtf8().data(), "%lf,%lf", &lat, &lon );
 
         //    Sanity check the lat/lon...both have to be reasonable.
         if( fabs( lon ) < 360. ) {
@@ -1106,262 +1093,220 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
 
         if( fabs( lat ) < 90.0 ) gLat = lat;
 
-        s.Printf("Setting Ownship Lat/Lon %g, %g", gLat, gLon );
-        ZCHX_LOGMSG( s );
+        s.sprintf("Setting Ownship Lat/Lon %g, %g", gLat, gLon );
+        qDebug()<< s ;
 
     }
+    endGroup();
 
     //    Fonts
 
     //  Load the persistent Auxiliary Font descriptor Keys
-    SetPath ("/Settings/AuxFontKeys" ) );
-
-    QString strk;
-    long dummyk;
-    QString kval;
-    bool bContk = GetFirstEntry( strk, dummyk );
-    bool bNewKey = false;
-    while( bContk ) {
-        Read( strk, &kval );
-        bNewKey = FontMgr::Get().AddAuxKey(kval);
+    beginGroup("Settings/AuxFontKeys" );
+    QStringList list = childKeys();
+    for( int i=0; i<list.size(); i++ ) {
+        QString strk = list[i];
+        QString kval;
+        Read( strk, PARAM_STRING, &kval );
+        if(kval.size() == 0) continue;
+        bool bNewKey = FontMgr::Get().AddAuxKey(kval);
         if(!bAsTemplate && !bNewKey) {
-            DeleteEntry( strk );
-            dummyk--;
+            remove(strk);
         }
-        bContk = GetNextEntry( strk, dummyk );
     }
+    endGroup();;
 
-#ifdef __WXX11__
-    SetPath ("/Settings/X11Fonts" ) );
-#endif
-
-#ifdef __WXGTK__
-    SetPath ("/Settings/GTKFonts" ) );
-#endif
-
-#ifdef __WXMSW__
-    SetPath("/Settings/MSWFonts" ) );
-#endif
-
-#ifdef __WXMAC__
-    SetPath ("/Settings/MacFonts" ) );
-#endif
-
-#ifdef __WXQT__
-    SetPath ("/Settings/QTFonts" ) );
-#endif
+    beginGroup("Settings/QTFonts" );
 
     QString str;
-    long dummy;
-    QString *pval = new QString;
     QStringList deleteList;
-
-    bool bCont = GetFirstEntry( str, dummy );
-    while( bCont ) {
-        Read( str, pval );
-
-        if( str.StartsWith( _T("Font") ) ) {
+    list = childKeys();
+    for( int i=0; i<list.size(); i++ ) {
+        str = list[i];
+        QString pval;
+        Read( str, PARAM_STRING,  &pval );
+        if( str.startsWith("Font" ) )
+        {
             // Convert pre 3.1 setting. Can't delete old entries from inside the
             // GetNextEntry() loop, so we need to save those and delete outside.
-            deleteList.Add( str );
-            QString oldKey = pval->BeforeFirst( _T(':') );
+            deleteList.append( str );
+            QString oldKey = pval.left(pval.indexOf(':'));
             str = FontMgr::GetFontConfigKey( oldKey );
         }
 
-        if( pval->IsEmpty() || pval->StartsWith(_T(":")) ) {
-            deleteList.Add( str );
+        if( pval.isEmpty() || pval.startsWith((":")) )
+        {
+            deleteList.append( str );
+        } else
+        {
+            FontMgr::Get().LoadFontNative( str, pval );
         }
-        else
-            FontMgr::Get().LoadFontNative( &str, pval );
-
-        bCont = GetNextEntry( str, dummy );
     }
 
-    for( unsigned int i=0; i<deleteList.Count(); i++ ) {
-        DeleteEntry( deleteList[i] );
+    for( unsigned int i=0; i<deleteList.count(); i++ )
+    {
+        remove(deleteList[i] );
     }
-    deleteList.Clear();
-    delete pval;
+    deleteList.clear();
 
     //  Tide/Current Data Sources
-    SetPath("/TideCurrentDataSources" ) );
-    if( GetNumberOfEntries() ) {
-        TideCurrentDataSet.Clear();
-        QString str, val;
-        long dummy;
-        int iDir = 0;
-        bool bCont = GetFirstEntry( str, dummy );
-        while( bCont ) {
-            Read( str, &val );       // Get a file name
-            TideCurrentDataSet.Add(val);
-            bCont = GetNextEntry( str, dummy );
+    beginGroup("TideCurrentDataSources" );
+    list = childKeys();
+    if( list.size() > 0 ) {
+        TideCurrentDataSet.clear();
+        for( int i=0; i<list.size(); i++ ) {
+            QString str = list[i];
+            QString val;
+            Read( str, PARAM_STRING, &val );       // Get a file name
+            if(val.size() > 0)
+                TideCurrentDataSet.append(val);
         }
     }
+    endGroup();
 
-
-
-    //    Groups
-    LoadConfigGroups( g_pGroupArray );
 
     //     //    Multicanvas Settings
     //     LoadCanvasConfigs();
 
-    SetPath("/Settings/Others" ) );
+    beginGroup("Settings/Others");
 
     // Radar rings
-    Read("RadarRingsNumberVisible", &val );
-    if( val.Length() > 0 ) g_iNavAidRadarRingsNumberVisible = atoi( val.mb_str() );
+    Read("RadarRingsNumberVisible", PARAM_STRING, &val );
+    if( val.length() > 0 ) g_iNavAidRadarRingsNumberVisible = atoi( val.toUtf8().data() );
 
-    Read("RadarRingsStep", &val );
-    if( val.Length() > 0 ) g_fNavAidRadarRingsStep = atof( val.mb_str() );
+    Read("RadarRingsStep", PARAM_STRING, &val );
+    if( val.length() > 0 ) g_fNavAidRadarRingsStep = atof( val.toUtf8().data() );
 
-    Read("RadarRingsStepUnits", &g_pNavAidRadarRingsStepUnits );
+    Read("RadarRingsStepUnits", PARAM_INT, &g_pNavAidRadarRingsStepUnits );
 
     QString l_wxsOwnshipRangeRingsColour;
-    Read("RadarRingsColour", &l_wxsOwnshipRangeRingsColour );
-    if(l_wxsOwnshipRangeRingsColour.Length()) g_colourOwnshipRangeRingsColour.Set( l_wxsOwnshipRangeRingsColour );
+    Read("RadarRingsColour", PARAM_STRING, &l_wxsOwnshipRangeRingsColour );
+    if(l_wxsOwnshipRangeRingsColour.length()) g_colourOwnshipRangeRingsColour.setNamedColor(l_wxsOwnshipRangeRingsColour );
 
     // Waypoint Radar rings
-    Read("WaypointRangeRingsNumber", &val );
-    if( val.Length() > 0 ) g_iWaypointRangeRingsNumber = atoi( val.mb_str() );
+    Read("WaypointRangeRingsNumber", PARAM_STRING, &val );
+    if( val.length() > 0 ) g_iWaypointRangeRingsNumber = atoi( val.toUtf8().data() );
 
-    Read("WaypointRangeRingsStep", &val );
-    if( val.Length() > 0 ) g_fWaypointRangeRingsStep = atof( val.mb_str() );
+    Read("WaypointRangeRingsStep", PARAM_STRING, &val );
+    if( val.length() > 0 ) g_fWaypointRangeRingsStep = atof( val.toUtf8().data() );
 
-    Read("WaypointRangeRingsStepUnits", &g_iWaypointRangeRingsStepUnits );
+    Read("WaypointRangeRingsStepUnits", PARAM_INT, &g_iWaypointRangeRingsStepUnits );
 
     QString l_wxsWaypointRangeRingsColour;
-    Read("WaypointRangeRingsColour", &l_wxsWaypointRangeRingsColour );
-    g_colourWaypointRangeRingsColour.Set( l_wxsWaypointRangeRingsColour );
+    Read("WaypointRangeRingsColour", PARAM_STRING, &l_wxsWaypointRangeRingsColour );
+    g_colourWaypointRangeRingsColour.setNamedColor(l_wxsWaypointRangeRingsColour );
 
-    if ( !Read( _T("WaypointUseScaMin"), &g_bUseWptScaMin ) ) g_bUseWptScaMin = false;
-    if ( !Read( _T("WaypointScaMinValue"), &g_iWpt_ScaMin ) ) g_iWpt_ScaMin = 2147483646;
-    if ( !Read( _T("WaypointUseScaMinOverrule"), &g_bOverruleScaMin ) ) g_bOverruleScaMin = false;
-    if ( !Read( _T("WaypointsShowName"), &g_bShowWptName ) ) g_bShowWptName = true;
+    Read("WaypointUseScaMin", PARAM_BOOL, &g_bUseWptScaMin, false );
+    Read("WaypointScaMinValue", PARAM_INT, &g_iWpt_ScaMin, 2147483646 );
+    Read("WaypointUseScaMinOverrule", PARAM_BOOL, &g_bOverruleScaMin, false );
+    Read("WaypointsShowName", PARAM_BOOL, &g_bShowWptName, true );
 
 
 
     //  Support Version 3.0 and prior config setting for Radar Rings
     bool b300RadarRings= true;
-    if(Read ("ShowRadarRings", &b300RadarRings )){
-        if(!b300RadarRings)
-            g_iNavAidRadarRingsNumberVisible = 0;
-    }
+    Read("ShowRadarRings", PARAM_BOOL, &b300RadarRings, true );
+    if(!b300RadarRings)
+        g_iNavAidRadarRingsNumberVisible = 0;
 
-    Read("ConfirmObjectDeletion", &g_bConfirmObjectDelete );
+    Read("ConfirmObjectDeletion", PARAM_BOOL, &g_bConfirmObjectDelete );
 
     // Waypoint dragging with mouse
     g_bWayPointPreventDragging = false;
-    Read("WaypointPreventDragging", &g_bWayPointPreventDragging );
+    Read("WaypointPreventDragging", PARAM_BOOL, &g_bWayPointPreventDragging );
 
     g_bEnableZoomToCursor = false;
-    Read("EnableZoomToCursor", &g_bEnableZoomToCursor );
+    Read("EnableZoomToCursor", PARAM_BOOL, &g_bEnableZoomToCursor );
 
-    val.Clear();
-    Read("TrackIntervalSeconds", &val );
-    if( val.Length() > 0 ) {
-        double tval = atof( val.mb_str() );
+    val.clear();
+    Read("TrackIntervalSeconds", PARAM_STRING, &val );
+    if( val.length() > 0 ) {
+        double tval = atof( val.toUtf8().data() );
         if( tval >= 2. ) g_TrackIntervalSeconds = tval;
     }
 
-    val.Clear();
-    Read("TrackDeltaDistance", &val );
-    if( val.Length() > 0 ) {
-        double tval = atof( val.mb_str() );
+    val.clear();
+    Read("TrackDeltaDistance", PARAM_STRING, &val );
+    if( val.length() > 0 ) {
+        double tval = atof( val.toUtf8().data() );
         if( tval >= 0.05 ) g_TrackDeltaDistance = tval;
     }
 
-    Read("TrackPrecision", &g_nTrackPrecision );
+    Read("TrackPrecision", PARAM_INT, &g_nTrackPrecision );
 
-    Read("NavObjectFileName", m_sNavObjSetFile );
+    Read("NavObjectFileName", PARAM_STRING, &m_sNavObjSetFile );
 
-    Read("RouteLineWidth", &g_route_line_width );
-    Read("TrackLineWidth", &g_track_line_width );
+    Read("RouteLineWidth", PARAM_INT, &g_route_line_width );
+    Read("TrackLineWidth", PARAM_INT, &g_track_line_width );
 
     QString l_wxsTrackLineColour;
-    if(Read("TrackLineColour", &l_wxsTrackLineColour ))
-        g_colourTrackLineColour.Set( l_wxsTrackLineColour );
+    if(Read("TrackLineColour", PARAM_STRING, &l_wxsTrackLineColour ).toString().size() > 0)
+        g_colourTrackLineColour.setNamedColor(l_wxsTrackLineColour );
 
-    Read("TideCurrentWindowScale", &g_tcwin_scale );
-    Read("DefaultWPIcon", &g_default_wp_icon );
-    Read("DefaultRPIcon", &g_default_routepoint_icon );
-
-    SetPath("/MMSIProperties" ) );
-    int iPMax = GetNumberOfEntries();
-    if( iPMax ) {
-        g_MMSI_Props_Array.Empty();
-        QString str, val;
-        long dummy;
-        int iDir = 0;
-        bool bCont = pConfig->GetFirstEntry( str, dummy );
-        while( bCont ) {
-            pConfig->Read( str, &val );       // Get an entry
-
-            MMSIProperties *pProps = new MMSIProperties( val );
-            g_MMSI_Props_Array.Add(pProps);
-
-            bCont = pConfig->GetNextEntry( str, dummy );
-
-        }
-    }
+    Read("TideCurrentWindowScale", PARAM_INT, &g_tcwin_scale );
+    Read("DefaultWPIcon", PARAM_STRING, &g_default_wp_icon );
+    Read("DefaultRPIcon", PARAM_STRING, &g_default_routepoint_icon );
+    endGroup();
 
     return ( 0 );
 }
 
 void zchxConfig::LoadS57Config()
 {
-    if( !mS52LibObj )  return;
-    mS52LibObj->SetShowS57Text( !(getCustomValue("Settings/GlobalStat", "bShowS57Text", 0).toInt() == 0 ) );
-    mS52LibObj->SetShowS57ImportantTextOnly( !(getCustomValue("Settings/GlobalStat", "bShowS57ImportantTextOnly", 0).toInt() == 0 ) );
-    mS52LibObj->SetShowLdisText( !(getCustomValue("Settings/GlobalStat", "bShowLightDescription", 0).toInt() == 0 ) );
-    mS52LibObj->SetExtendLightSectors( !(getCustomValue("Settings/GlobalStat", "bExtendLightSectors", 0).toInt() == 0 ));
-    mS52LibObj->SetDisplayCategory((enum _DisCat) getCustomValue("Settings/GlobalStat", "nDisplayCategory", (enum _DisCat) STANDARD).toInt() );
-    mS52LibObj->m_nSymbolStyle = (LUPname) getCustomValue("Settings/GlobalStat", "nSymbolStyle", (enum _LUPname) PAPER_CHART).toInt();
-    mS52LibObj->m_nBoundaryStyle = (LUPname) getCustomValue("Settings/GlobalStat", "nBoundaryStyle", PLAIN_BOUNDARIES).toInt();
-    mS52LibObj->m_bShowSoundg = !( getCustomValue("Settings/GlobalStat", "bShowSoundg", 1).toInt() == 0 );
-    mS52LibObj->m_bShowMeta = !( getCustomValue("Settings/GlobalStat", "bShowMeta", 0).toInt() == 0 );
-    mS52LibObj->m_bUseSCAMIN = !( getCustomValue("Settings/GlobalStat", "bUseSCAMIN", 1).toInt() == 0 );
-    mS52LibObj->m_bShowAtonText = !( getCustomValue("Settings/GlobalStat", "bShowAtonText", 1).toInt() == 0 );
-    mS52LibObj->m_bDeClutterText = !( getCustomValue("Settings/GlobalStat", "bDeClutterText", 0).toInt() == 0 );
-    mS52LibObj->m_bShowNationalTexts = !( getCustomValue("Settings/GlobalStat", "bShowNationalText", 0).toInt() == 0 );
+#if 0
+    if( !ps52plib )  return;
+    beginGroup("Settings/GlobalState");
+    ps52plib->SetShowS57Text( Read("bShowS57Text", PARAM_BOOL, 0, 0).toBool() );
+    ps52plib->SetShowS57ImportantTextOnly(Read("bShowS57ImportantTextOnly", PARAM_BOOL, 0, 0).toBool() );
+    ps52plib->SetShowLdisText(Read("bShowLightDescription", PARAM_BOOL, 0, 0).toBool());
+    ps52plib->SetExtendLightSectors(Read("bExtendLightSectors", PARAM_BOOL, 0, 0).toBool());
+    ps52plib->SetDisplayCategory((enum _DisCat) Read("nDisplayCategory", PARAM_INT, 0, (enum _DisCat) STANDARD).toInt() );
+    ps52plib->m_nSymbolStyle = (LUPname) Read("nSymbolStyle", PARAM_INT,  0, (enum _LUPname) PAPER_CHART).toInt();
+    ps52plib->m_nBoundaryStyle = (LUPname) Read("nBoundaryStyle", PARAM_INT, 0, PLAIN_BOUNDARIES).toInt();
+    ps52plib->m_bShowSoundg = Read("bShowSoundg", PARAM_BOOL, 0, 1).toBool();
+    ps52plib->m_bShowMeta =  Read("bShowMeta", PARAM_BOOL, 0, 0).toBool();
+    ps52plib->m_bUseSCAMIN = Read("bUseSCAMIN", PARAM_BOOL, 0, 1).toBool();
+    ps52plib->m_bShowAtonText =  Read("bShowAtonText",PARAM_BOOL, 0, 1).toBool();
+    ps52plib->m_bDeClutterText = Read("bDeClutterText", PARAM_BOOL, 0,0).toBool();
+    ps52plib->m_bShowNationalTexts = Read("bShowNationalText", PARAM_BOOL, 0, 0).toBool();
 
-    double dval = getCustomValue("Settings/GlobalStat", "S52_MAR_SAFETY_CONTOUR", 5.0).toDouble();
+    double dval = Read("S52_MAR_SAFETY_CONTOUR", PARAM_DOUBLE, 0, 5.0).toDouble();
     S52_setMarinerParam( S52_MAR_SAFETY_CONTOUR, dval );
     S52_setMarinerParam( S52_MAR_SAFETY_DEPTH, dval ); // Set safety_contour and safety_depth the same
 
-    dval = getCustomValue("Settings/GlobalStat", "S52_MAR_SHALLOW_CONTOUR", 3.0).toDouble();
+    dval = Read("S52_MAR_SHALLOW_CONTOUR",PARAM_DOUBLE, 0, 3.0).toDouble();
     S52_setMarinerParam( S52_MAR_SHALLOW_CONTOUR, dval );
 
-    dval = getCustomValue("Settings/GlobalStat", "S52_MAR_DEEP_CONTOUR", 10.0).toDouble();
+    dval = Read("S52_MAR_DEEP_CONTOUR", PARAM_DOUBLE,0, 10.0).toDouble();
     S52_setMarinerParam(S52_MAR_DEEP_CONTOUR, dval );
 
-    dval = getCustomValue("Settings/GlobalStat", "S52_MAR_TWO_SHADES", 0.0).toDouble();
+    dval = Read("S52_MAR_TWO_SHADES", PARAM_DOUBLE, 0, 0.0).toDouble();
     S52_setMarinerParam(S52_MAR_TWO_SHADES, dval );
 
-    mS52LibObj->UpdateMarinerParams();
-
-    int read_int = getCustomValue("Settings/GlobalState", "S52_DEPTH_UNIT_SHOW", 1).toInt();
+    ps52plib->UpdateMarinerParams();
+    int read_int = Read("S52_DEPTH_UNIT_SHOW", PARAM_INT,0, 1).toInt();
     read_int = qMax(read_int, 0);        // qualify value
     read_int = qMin(read_int, 2);
-    mS52LibObj->m_nDepthUnitDisplay = read_int;
+    ps52plib->m_nDepthUnitDisplay = read_int;
     g_nDepthUnitDisplay = read_int;
 
     //    S57 Object Class Visibility
-
+    endGroup();
     OBJLElement *pOLE;
     QString section = "Settings/ObjectFilter";
     int iOBJMax = getChildCount(section);
     if( iOBJMax ) {
         QStringList keys = getChildKeys(section);
+        beginGroup(section);
         foreach (QString key, keys) {
-            long val = getCustomValue(section, key).toLongLong();
+            long val = Read(key, PARAM_INT,0).toLongLong();
             bool bNeedNew = false;
             QString sObj;
             if(key.startsWith("viz"))
             {
                 sObj = key.mid(3);
-                for( unsigned int iPtr = 0; iPtr <  mS52LibObj->pOBJLArray->count(); iPtr++ ) {
-                    pOLE = (OBJLElement *) (  mS52LibObj->pOBJLArray->at( iPtr ) );
+                for( unsigned int iPtr = 0; iPtr <  ps52plib->pOBJLArray->count(); iPtr++ ) {
+                    pOLE = (OBJLElement *) (  ps52plib->pOBJLArray->at( iPtr ) );
                     if( !strncmp( pOLE->OBJLName, sObj.toUtf8().data(), 6 ) ) {
                         pOLE->nViz = val;
                         bNeedNew = false;
@@ -1372,11 +1317,13 @@ void zchxConfig::LoadS57Config()
                     pOLE = (OBJLElement *) calloc( sizeof(OBJLElement), 1 );
                     memcpy( pOLE->OBJLName, sObj.toUtf8().data(), OBJL_NAME_LEN );
                     pOLE->nViz = 1;
-                    mS52LibObj->pOBJLArray->append((void *) pOLE );
+                    ps52plib->pOBJLArray->append((void *) pOLE );
                 }
             }
         }
+        endGroup();
     }
+#endif
 }
 
 #if 0
@@ -1464,26 +1411,26 @@ bool zchxConfig::LoadLayers(QString &path)
 
     return true;
 }
+#endif
 
 bool zchxConfig::LoadChartDirArray( ArrayOfCDI &ChartDirArray )
 {
     //    Chart Directories
-    SetPath("/ChartDirectories" ) );
-    int iDirMax = GetNumberOfEntries();
-    if( iDirMax ) {
-        ChartDirArray.Empty();
-        QString str, val;
-        long dummy;
-        int nAdjustChartDirs = 0;
-        int iDir = 0;
-        bool bCont = pConfig->GetFirstEntry( str, dummy );
-        while( bCont ) {
-            pConfig->Read( str, &val );       // Get a Directory name
+    beginGroup("ChartDirectories" );
+    QStringList keys = childKeys();
+    int iDirMax = keys.size();
+    if(iDirMax > 0) ChartDirArray.clear();
+    int nAdjustChartDirs = 0;
+    int iDir = 0;
+    for( int i=0; i<iDirMax; i++ ) {
+        QString str = keys[i];
+        QString val;
+        Read(str, PARAM_STRING, &val);
+        QString dirname( val );
+        if( !dirname.isEmpty() )
+        {
 
-            QString dirname( val );
-            if( !dirname.IsEmpty() ) {
-
-                /*     Special case for first time run after Windows install with sample chart data...
+            /*     Special case for first time run after Windows install with sample chart data...
    We desire that the sample configuration file opencpn.ini should not contain any
    installation dependencies, so...
    Detect and update the sample [ChartDirectories] entries to point to the Shared Data directory
@@ -1496,30 +1443,26 @@ bool zchxConfig::LoadChartDirArray( ArrayOfCDI &ChartDirArray )
    ChartDir1=c:\Program Files\opencpn\SampleCharts\\MaptechRegion7
 
    */
-                if( dirname.Find("SampleCharts" ) ) == 0 ) // only update entries starting with "SampleCharts"
-                {
-                    nAdjustChartDirs++;
-
-                    pConfig->DeleteEntry( str );
-                    QString new_dir = dirname.Mid( dirname.Find("SampleCharts" ) ) );
-                    new_dir.Prepend( g_Platform->GetSharedDataDir() );
-                    dirname = new_dir;
-                }
-
-                ChartDirInfo cdi;
-                cdi.fullpath = dirname.BeforeFirst( '^' );
-                cdi.magic_number = dirname.AfterFirst( '^' );
-
-                ChartDirArray.Add( cdi );
-                iDir++;
+            if( dirname.indexOf("SampleCharts" )  == 0 ) // only update entries starting with "SampleCharts"
+            {
+                nAdjustChartDirs++;
+                remove(str );
+                QString new_dir = dirname.mid(dirname.indexOf("SampleCharts" ) );
+                new_dir.insert(0, zchxFuncUtil::getDataDir() + "/" );
+                dirname = new_dir;
             }
 
-            bCont = pConfig->GetNextEntry( str, dummy );
+            ChartDirInfo cdi;
+            cdi.fullpath = dirname.left(dirname.indexOf( '^' ));
+            cdi.magic_number = dirname.mid(dirname.indexOf('^') + 1);
+
+            ChartDirArray.append(cdi );
+            iDir++;
         }
-
-        if( nAdjustChartDirs ) pConfig->UpdateChartDirs( ChartDirArray );
     }
+    endGroup();
 
+    if( nAdjustChartDirs ) UpdateChartDirs( ChartDirArray );
     return true;
 }
 
@@ -1529,40 +1472,35 @@ bool zchxConfig::LoadChartDirArray( ArrayOfCDI &ChartDirArray )
 
 bool zchxConfig::UpdateChartDirs( ArrayOfCDI& dir_array )
 {
-    QString key, dir;
     QString str_buf;
 
-    SetPath("/ChartDirectories" ) );
-    int iDirMax = GetNumberOfEntries();
+    beginGroup("ChartDirectories" );
+    int iDirMax = childKeys().size();
     if( iDirMax ) {
-
-        long dummy;
-
-        for( int i = 0; i < iDirMax; i++ ) {
-            GetFirstEntry( key, dummy );
-            DeleteEntry( key, false );
+        QStringList keys = childKeys();
+        foreach (QString key, keys) {
+            remove(key);
         }
     }
 
-    iDirMax = dir_array.GetCount();
+    iDirMax = dir_array.count();
 
     for( int iDir = 0; iDir < iDirMax; iDir++ ) {
         ChartDirInfo cdi = dir_array[iDir];
 
         QString dirn = cdi.fullpath;
-        dirn.Append( _T("^") );
-        dirn.Append( cdi.magic_number );
+        dirn.append(("^") );
+        dirn.append( cdi.magic_number );
 
-        str_buf.Printf("ChartDir%d", iDir + 1 );
-
-        Write( str_buf, dirn );
-
+        str_buf.sprintf("ChartDir%d", iDir + 1 );
+        setValue(str_buf, dirn);
     }
 
-    Flush();
+    endGroup();
     return true;
 }
 
+#if 0
 void zchxConfig::CreateConfigGroups( ChartGroupArray *pGroupArray )
 {
     if( !pGroupArray ) return;
@@ -1717,7 +1655,7 @@ void zchxConfig::LoadConfigCanvas( canvasConfig *cConfig, bool bApplyAsTemplate 
         cConfig->iLon = START_LON;
 
         if( Read("canvasVPLatLon", &st ) ) {
-            sscanf( st.mb_str( wxConvUTF8, "%lf,%lf", &st_lat, &st_lon );
+            sscanf( st.toUtf8().data( wxConvUTF8, "%lf,%lf", &st_lat, &st_lon );
 
             //    Sanity check the lat/lon...both have to be reasonable.
             if( fabs( st_lon ) < 360. ) {
@@ -1739,7 +1677,7 @@ void zchxConfig::LoadConfigCanvas( canvasConfig *cConfig, bool bApplyAsTemplate 
 
         double st_view_scale;
         if( Read( QString("canvasVPScale" ), &st ) ) {
-            sscanf( st.mb_str( wxConvUTF8, "%lf", &st_view_scale );
+            sscanf( st.toUtf8().data( wxConvUTF8, "%lf", &st_view_scale );
             //    Sanity check the scale
             st_view_scale = fmax ( st_view_scale, .001/32 );
             st_view_scale = fmin ( st_view_scale, 4 );
@@ -1748,7 +1686,7 @@ void zchxConfig::LoadConfigCanvas( canvasConfig *cConfig, bool bApplyAsTemplate 
 
         double st_rotation;
         if( Read( QString("canvasVPRotation" ), &st ) ) {
-            sscanf( st.mb_str( wxConvUTF8, "%lf", &st_rotation );
+            sscanf( st.toUtf8().data( wxConvUTF8, "%lf", &st_rotation );
             //    Sanity check the rotation
             st_rotation = fmin ( st_rotation, 360 );
             st_rotation = fmax ( st_rotation, 0 );
@@ -1921,43 +1859,36 @@ void zchxConfig::SaveConfigCanvas( canvasConfig *cConfig )
 #endif
 }
 
+#endif
 
+
+void zchxConfig::DeleteGroup(const QString &group)
+{
+    beginGroup(group);
+    QStringList keys = childKeys();
+    foreach (QString key, keys) {
+        remove(key);
+    }
+    endGroup();
+}
 
 void zchxConfig::UpdateSettings()
 {
-#if 0
-    //  Temporarily suppress logging of trivial non-fatal wxLogSysError() messages provoked by Android security...
-#ifdef __OCPN__ANDROID__
-    wxLogNull logNo;
-#endif
-
-
     //    Global options and settings
-    SetPath("/Settings" ) );
+    beginGroup("Settings");
 
     Write("LastAppliedTemplate", g_lastAppliedTemplateGUID );
-
     Write("ConfigVersionString", g_config_version_string );
-#ifdef SYSTEM_SOUND_CMD
-    if ( wxIsEmpty( g_CmdSoundString ) )
-        g_CmdSoundString = QString( SYSTEM_SOUND_CMD );
     Write("CmdSoundString", g_CmdSoundString );
-#endif /* SYSTEM_SOUND_CMD */
     Write("NavMessageShown", n_NavMessageShown );
     Write("InlandEcdis", g_bInlandEcdis );
-
-    Write("DarkDecorations"), g_bDarkDecorations );
+    Write("DarkDecorations", g_bDarkDecorations );
 
     Write("UIexpert", g_bUIexpert );
     Write("SpaceDropMark", g_bSpaceDropMark );
-    //    Write("UIStyle", g_StyleManager->GetStyleNextInvocation() );      //Not desired for O5 MUI
-
     Write("ShowStatusBar", g_bShowStatusBar );
-#ifndef __WXOSX__
     Write("ShowMenuBar", g_bShowMenuBar );
-#endif
     Write("DefaultFontSize", g_default_font_size );
-
     Write("Fullscreen", g_bFullscreen );
     Write("ShowCompassWindow", g_bShowCompassWin );
     Write("SetSystemTime", s_bSetSystemTime );
@@ -1975,18 +1906,14 @@ void zchxConfig::UpdateSettings()
     Write("SDMMFormat", g_iSDMMFormat );
     Write("MostRecentGPSUploadConnection", g_uploadConnection );
     Write("ShowChartBar", g_bShowChartBar );
-
     Write("GUIScaleFactor", g_GUIScaleFactor );
     Write("ChartObjectScaleFactor", g_ChartScaleFactor );
     Write("ShipScaleFactor", g_ShipScaleFactor );
-
     Write("FilterNMEA_Avg", g_bfilter_cogsog );
     Write("FilterNMEA_Sec", g_COGFilterSec );
-
     Write("ShowTrue", g_bShowTrue );
     Write("ShowMag", g_bShowMag );
-    Write("UserMagVariation", QString::Format( _T("%.2f"), g_UserVar ) );
-
+    Write("UserMagVariation", QString("").sprintf("%.2f", g_UserVar ) );
     Write("CM93DetailFactor", g_cm93_zoom_factor );
     Write("CM93DetailZoomPosX", g_detailslider_dialog_x );
     Write("CM93DetailZoomPosY", g_detailslider_dialog_y );
@@ -2003,18 +1930,13 @@ void zchxConfig::UpdateSettings()
     Write("FogOnOverzoom", g_fog_overzoom );
     Write("OverzoomVectorScale", g_oz_vector_scale );
     Write("OverzoomEmphasisBase", g_overzoom_emphasis_base );
-
-#ifdef ocpnUSE_GL
-    /* opengl options */
     Write("UseAcceleratedPanning", g_GLOptions.m_bUseAcceleratedPanning );
-
     Write("GPUTextureCompression", g_GLOptions.m_bTextureCompression);
     Write("GPUTextureCompressionCaching", g_GLOptions.m_bTextureCompressionCaching);
     Write("GPUTextureDimension", g_GLOptions.m_iTextureDimension );
     Write("GPUTextureMemSize", g_GLOptions.m_iTextureMemorySize );
     Write("PolygonSmoothing", g_GLOptions.m_GLPolygonSmoothing);
     Write("LineSmoothing", g_GLOptions.m_GLLineSmoothing);
-#endif
     Write("SmoothPanZoom", g_bsmoothpanzoom );
 
     Write("CourseUpMode", g_bCourseUp );
@@ -2032,19 +1954,19 @@ void zchxConfig::UpdateSettings()
     Write("OwnShipGPSOffsetY", g_n_gps_antenna_offset_y );
     Write("OwnShipMinSize", g_n_ownship_min_mm );
     Write("OwnShipSogCogCalc", g_own_ship_sog_cog_calc );
-    Write("OwnShipSogCogCalcDampSec"), g_own_ship_sog_cog_calc_damp_sec );
+    Write("OwnShipSogCogCalcDampSec", g_own_ship_sog_cog_calc_damp_sec );
 
     QString racr;
     //   racr.Printf("%g", g_n_arrival_circle_radius );
     //   Write("RouteArrivalCircleRadius", racr );
-    Write("RouteArrivalCircleRadius", QString::Format( _T("%.2f"), g_n_arrival_circle_radius ));
+    Write("RouteArrivalCircleRadius", QString("").sprintf("%.2f", g_n_arrival_circle_radius ));
 
     Write("ChartQuilting", g_bQuiltEnable );
 
-    Write("NMEALogWindowSizeX", NMEALogWindow::Get().GetSizeW());
-    Write("NMEALogWindowSizeY", NMEALogWindow::Get().GetSizeH());
-    Write("NMEALogWindowPosX", NMEALogWindow::Get().GetPosX());
-    Write("NMEALogWindowPosY", NMEALogWindow::Get().GetPosY());
+//    Write("NMEALogWindowSizeX", NMEALogWindow::Get().GetSizeW());
+//    Write("NMEALogWindowSizeY", NMEALogWindow::Get().GetSizeH());
+//    Write("NMEALogWindowPosX", NMEALogWindow::Get().GetPosX());
+//    Write("NMEALogWindowPosY", NMEALogWindow::Get().GetPosY());
 
     Write("PreserveScaleOnX", g_bPreserveScaleOnX );
 
@@ -2060,7 +1982,7 @@ void zchxConfig::UpdateSettings()
 
     Write("NMEAAPBPrecision", g_NMEAAPBPrecision );
 
-    Write( _T("TalkerIdText"), g_TalkerIdText );
+    Write("TalkerIdText", g_TalkerIdText );
 
     Write("AnchorWatch1GUID", g_AW1GUID );
     Write("AnchorWatch2GUID", g_AW2GUID );
@@ -2072,12 +1994,12 @@ void zchxConfig::UpdateSettings()
     Write("iENCToolbarX", g_iENCToolbarPosX );
     Write("iENCToolbarY", g_iENCToolbarPosY );
 
-    if ( !g_bInlandEcdis ){
+//    if ( !g_bInlandEcdis ){
         Write("GlobalToolbarConfig", g_toolbarConfig );
         Write("DistanceFormat", g_iDistanceFormat );
         Write("SpeedFormat", g_iSpeedFormat );
         Write("ShowDepthUnits", g_bShowDepthUnits );
-    }
+//    }
     Write("GPSIdent", g_GPS_Ident );
     Write("UseGarminHostUpload", g_bGarminHostUpload );
 
@@ -2094,30 +2016,30 @@ void zchxConfig::UpdateSettings()
     Write("SelectionRadiusTouchMM", g_selection_radius_touch_mm );
 
     QString st0;
-    st0.Printf("%g", g_PlanSpeed );
+    st0.sprintf("%g", g_PlanSpeed );
     Write("PlanSpeed", st0 );
 
-    if(g_bLayersLoaded){
-        QString vis, invis, visnames, invisnames;
-        LayerList::iterator it;
-        int index = 0;
-        for( it = ( *pLayerList ).begin(); it != ( *pLayerList ).end(); ++it, ++index ) {
-            Layer *lay = (Layer *) ( *it );
-            if( lay->IsVisibleOnChart() ) vis += ( lay->m_LayerName ) + _T(";");
-            else
-                invis += ( lay->m_LayerName ) + _T(";");
+//    if(g_bLayersLoaded){
+//        QString vis, invis, visnames, invisnames;
+//        LayerList::iterator it;
+//        int index = 0;
+//        for( it = ( *pLayerList ).begin(); it != ( *pLayerList ).end(); ++it, ++index ) {
+//            Layer *lay = (Layer *) ( *it );
+//            if( lay->IsVisibleOnChart() ) vis += ( lay->m_LayerName ) + _T(";");
+//            else
+//                invis += ( lay->m_LayerName ) + _T(";");
 
-            if( lay->HasVisibleNames() == wxCHK_CHECKED ) {
-                visnames += ( lay->m_LayerName) + _T(";");
-            } else if( lay->HasVisibleNames() == wxCHK_UNCHECKED ) {
-                invisnames += ( lay->m_LayerName) + _T(";");
-            }
-        }
-        Write("VisibleLayers", vis );
-        Write("InvisibleLayers", invis );
-        Write("VisNameInLayers", visnames);
-        Write("InvisNameInLayers", invisnames);
-    }
+//            if( lay->HasVisibleNames() == wxCHK_CHECKED ) {
+//                visnames += ( lay->m_LayerName) + _T(";");
+//            } else if( lay->HasVisibleNames() == wxCHK_UNCHECKED ) {
+//                invisnames += ( lay->m_LayerName) + _T(";");
+//            }
+//        }
+//        Write("VisibleLayers", vis );
+//        Write("InvisibleLayers", invis );
+//        Write("VisNameInLayers", visnames);
+//        Write("InvisNameInLayers", invisnames);
+//    }
     Write("Locale", g_locale );
     Write("LocaleOverride", g_localeOverride );
 
@@ -2130,25 +2052,28 @@ void zchxConfig::UpdateSettings()
     Write("DefaultBoatSpeed", g_defaultBoatSpeed);
 
     //    S57 Object Filter Settings
+    endGroup();
+#if 0
+    beginGroup("Settings/ObjectFilter");
 
-    SetPath("/Settings/ObjectFilter" ) );
+    if(  ps52plib ) {
+        for( unsigned int iPtr = 0; iPtr <  ps52plib->pOBJLArray->count(); iPtr++ ) {
+            OBJLElement *pOLE = (OBJLElement *) (  ps52plib->pOBJLArray->at( iPtr ) );
 
-    if(  mS52LibObj ) {
-        for( unsigned int iPtr = 0; iPtr <  mS52LibObj->pOBJLArray->GetCount(); iPtr++ ) {
-            OBJLElement *pOLE = (OBJLElement *) (  mS52LibObj->pOBJLArray->Item( iPtr ) );
-
-            QString st1("viz" ) );
+            QString st1("viz");
             char name[7];
             strncpy( name, pOLE->OBJLName, 6 );
             name[6] = 0;
-            st1.Append( QString( name, wxConvUTF8 ) );
+            st1.append( QString::fromUtf8(name) );
             Write( st1, pOLE->nViz );
         }
     }
+    endGroup();
+#endif
 
     //    Global State
 
-    SetPath("/Settings/GlobalState" ) );
+    beginGroup("Settings/GlobalState");
 
     QString st1;
 
@@ -2165,12 +2090,9 @@ void zchxConfig::UpdateSettings()
     //  }
     //     }
 
-    st1.Printf("%10.4f, %10.4f", gLat, gLon );
+    st1.sprintf("%10.4f, %10.4f", gLat, gLon );
     Write("OwnShipLatLon", st1 );
-
-    //    Various Options
-    SetPath("/Settings/GlobalState" ) );
-    if ( !g_bInlandEcdis ) Write("nColorScheme", (int) gFrame->GetColorScheme() );
+    Write("nColorScheme", (int) gFrame->GetColorScheme() );
 
     Write("FrameWinX", g_nframewin_x );
     Write("FrameWinY", g_nframewin_y );
@@ -2190,8 +2112,10 @@ void zchxConfig::UpdateSettings()
     Write("RoutePropPosX", g_route_prop_x );
     Write("RoutePropPosY", g_route_prop_y );
 
+    endGroup();
+
     //    AIS
-    SetPath("/Settings/AIS" ) );
+    beginGroup("Settings/AIS");
 
     Write("bNoCPAMax", g_bCPAMax );
     Write("NoCPAMaxNMi", g_CPAMax_NM );
@@ -2229,7 +2153,7 @@ void zchxConfig::UpdateSettings()
     Write("AISScaledNumberWeightRange", g_ScaledNumWeightRange );
     Write("AISScaledNumberWeightSizeOfTarget", g_ScaledNumWeightSizeOfT );
     Write("AISScaledSizeMinimal", g_ScaledSizeMinimal );
-    Write("AISShowScaled"), g_bShowScaled);
+    Write("AISShowScaled", g_bShowScaled);
 
     Write("AlertDialogSizeX", g_ais_alert_dialog_sx );
     Write("AlertDialogSizeY", g_ais_alert_dialog_sy );
@@ -2242,7 +2166,7 @@ void zchxConfig::UpdateSettings()
     Write("AISTargetListSortColumn", g_AisTargetList_sortColumn );
     Write("bAISTargetListSortReverse", g_bAisTargetList_sortReverse );
     Write("AISTargetListColumnSpec", g_AisTargetList_column_spec );
-    Write("AISTargetListColumnOrder"), g_AisTargetList_column_order);
+    Write("AISTargetListColumnOrder", g_AisTargetList_column_order);
 
     Write("S57QueryDialogSizeX", g_S57_dialog_sx );
     Write("S57QueryDialogSizeY", g_S57_dialog_sy );
@@ -2256,86 +2180,60 @@ void zchxConfig::UpdateSettings()
     Write("bAISAlertAckTimeout", g_bAIS_ACK_Timeout );
     Write("AlertAckTimeoutMinutes", g_AckTimeout_Mins );
 
-    SetPath("/Settings/GlobalState" ) );
-    if(  mS52LibObj ) {
-        Write("bShowS57Text",  mS52LibObj->GetShowS57Text() );
-        Write("bShowS57ImportantTextOnly",  mS52LibObj->GetShowS57ImportantTextOnly() );
-        if ( !g_bInlandEcdis ) Write("nDisplayCategory", (long)  mS52LibObj->GetDisplayCategory() );
-        Write("nSymbolStyle", (int)  mS52LibObj->m_nSymbolStyle );
-        Write("nBoundaryStyle", (int)  mS52LibObj->m_nBoundaryStyle );
+    endGroup();
+    beginGroup("Settings/GlobalState");
+#if 0
+    if(  ps52plib ) {
+        Write("bShowS57Text",  ps52plib->GetShowS57Text() );
+        Write("bShowS57ImportantTextOnly",  ps52plib->GetShowS57ImportantTextOnly() );
+        Write("nDisplayCategory", ps52plib->GetDisplayCategory() );
+        Write("nSymbolStyle", (int)  ps52plib->m_nSymbolStyle );
+        Write("nBoundaryStyle", (int)  ps52plib->m_nBoundaryStyle );
 
-        Write("bShowSoundg",  mS52LibObj->m_bShowSoundg );
-        Write("bShowMeta",  mS52LibObj->m_bShowMeta );
-        Write("bUseSCAMIN",  mS52LibObj->m_bUseSCAMIN );
-        Write("bShowAtonText",  mS52LibObj->m_bShowAtonText );
-        Write("bShowLightDescription",  mS52LibObj->m_bShowLdisText );
-        Write("bExtendLightSectors",  mS52LibObj->m_bExtendLightSectors );
-        Write("bDeClutterText",  mS52LibObj->m_bDeClutterText );
-        Write("bShowNationalText",  mS52LibObj->m_bShowNationalTexts );
+        Write("bShowSoundg",  ps52plib->m_bShowSoundg );
+        Write("bShowMeta",  ps52plib->m_bShowMeta );
+        Write("bUseSCAMIN",  ps52plib->m_bUseSCAMIN );
+        Write("bShowAtonText",  ps52plib->m_bShowAtonText );
+        Write("bShowLightDescription",  ps52plib->m_bShowLdisText );
+        Write("bExtendLightSectors",  ps52plib->m_bExtendLightSectors );
+        Write("bDeClutterText",  ps52plib->m_bDeClutterText );
+        Write("bShowNationalText",  ps52plib->m_bShowNationalTexts );
 
         Write("S52_MAR_SAFETY_CONTOUR", S52_getMarinerParam( S52_MAR_SAFETY_CONTOUR ) );
         Write("S52_MAR_SHALLOW_CONTOUR", S52_getMarinerParam( S52_MAR_SHALLOW_CONTOUR ) );
         Write("S52_MAR_DEEP_CONTOUR", S52_getMarinerParam( S52_MAR_DEEP_CONTOUR ) );
         Write("S52_MAR_TWO_SHADES", S52_getMarinerParam( S52_MAR_TWO_SHADES ) );
-        Write("S52_DEPTH_UNIT_SHOW",  mS52LibObj->m_nDepthUnitDisplay );
+        Write("S52_DEPTH_UNIT_SHOW",  ps52plib->m_nDepthUnitDisplay );
     }
-    SetPath("/Directories" ) );
-    Write("S57DataLocation", _T("") );
-    //    Write("SENCFileLocation", _T("") );
-
-    SetPath("/Directories" ) );
+#endif
+    endGroup();
+    beginGroup("Directories");
+    Write("S57DataLocation", ("") );
     Write("InitChartDir", *pInit_Chart_Dir );
     Write("GPXIODir", g_gpx_path );
     Write("TCDataDir", g_TCData_Dir );
-    Write("BasemapDir", g_Platform->NormalizePath(gWorldMapLocation) );
+//    Write("BasemapDir", g_Platform->NormalizePath(gWorldMapLocation) );
+    endGroup();
 
-    SetPath("/Settings/NMEADataSource" ) );
-    QString connectionconfigs;
-    for (size_t i = 0; i < g_pConnectionParams->Count(); i++)
-    {
-        if (i > 0)
-            connectionconfigs.Append(_T("|"));
-        connectionconfigs.Append(g_pConnectionParams->Item(i)->Serialize());
-    }
-    Write ("DataConnections", connectionconfigs );
 
     //    Fonts
 
     //  Store the persistent Auxiliary Font descriptor Keys
-    SetPath("/Settings/AuxFontKeys" ) );
+    beginGroup("Settings/AuxFontKeys" );
 
     QStringList keyArray = FontMgr::Get().GetAuxKeyArray();
-    for(unsigned int i=0 ; i <  keyArray.GetCount() ; i++){
+    for(unsigned int i=0 ; i <  keyArray.count() ; i++){
         QString key;
-        key.Printf(_T("Key%i"), i);
+        key.sprintf("Key%i", i);
         QString keyval = keyArray[i];
         Write( key, keyval );
     }
+    endGroup();
 
     QString font_path;
-#ifdef __WXX11__
-    font_path = ("/Settings/X11Fonts" ) );
-#endif
-
-#ifdef __WXGTK__
-    font_path = ("/Settings/GTKFonts" ) );
-#endif
-
-#ifdef __WXMSW__
-    font_path = ("/Settings/MSWFonts" ) );
-#endif
-
-#ifdef __WXMAC__
-    font_path = ("/Settings/MacFonts" ) );
-#endif
-
-#ifdef __WXQT__
-    font_path = ("/Settings/QTFonts" ) );
-#endif
-
+    font_path = ("Settings/QTFonts" );
     DeleteGroup(font_path);
-
-    SetPath( font_path );
+    beginGroup(font_path );
 
     int nFonts = FontMgr::Get().GetNumFonts();
 
@@ -2344,35 +2242,37 @@ void zchxConfig::UpdateSettings()
         QString valstring = FontMgr::Get().GetFullConfigDesc( i );
         Write( cfstring, valstring );
     }
+    endGroup();
 
     //  Tide/Current Data Sources
-    DeleteGroup("/TideCurrentDataSources" ) );
-    SetPath("/TideCurrentDataSources" ) );
-    unsigned int iDirMax = TideCurrentDataSet.Count();
+    DeleteGroup("TideCurrentDataSources" );
+    beginGroup("TideCurrentDataSources" );
+    unsigned int iDirMax = TideCurrentDataSet.count();
     for( unsigned int id = 0 ; id < iDirMax ; id++ ) {
         QString key;
-        key.Printf(_T("tcds%d"), id);
+        key.sprintf("tcds%d", id);
         Write( key, TideCurrentDataSet[id] );
     }
+    endGroup();
 
-    SetPath("/Settings/Others" ) );
+    beginGroup("Settings/Others" );
 
     // Radar rings
     Write("ShowRadarRings", (bool)(g_iNavAidRadarRingsNumberVisible > 0) );  //3.0.0 config support
     Write("RadarRingsNumberVisible", g_iNavAidRadarRingsNumberVisible );
     Write("RadarRingsStep", g_fNavAidRadarRingsStep );
     Write("RadarRingsStepUnits", g_pNavAidRadarRingsStepUnits );
-    Write("RadarRingsColour", g_colourOwnshipRangeRingsColour.GetAsString( wxC2S_HTML_SYNTAX ) );
+    Write("RadarRingsColour", g_colourOwnshipRangeRingsColour.name());
     Write("WaypointUseScaMin", g_bUseWptScaMin );
     Write("WaypointScaMinValue", g_iWpt_ScaMin );
     Write("WaypointUseScaMinOverrule", g_bOverruleScaMin );
-    Write( _T("WaypointsShowName"), g_bShowWptName );
+    Write("WaypointsShowName", g_bShowWptName );
 
     // Waypoint Radar rings
     Write("WaypointRangeRingsNumber", g_iWaypointRangeRingsNumber );
     Write("WaypointRangeRingsStep", g_fWaypointRangeRingsStep );
     Write("WaypointRangeRingsStepUnits", g_iWaypointRangeRingsStepUnits );
-    Write("WaypointRangeRingsColour", g_colourWaypointRangeRingsColour.GetAsString( wxC2S_HTML_SYNTAX ) );
+    Write("WaypointRangeRingsColour", g_colourWaypointRangeRingsColour.name() );
 
     Write("ConfirmObjectDeletion", g_bConfirmObjectDelete );
 
@@ -2387,256 +2287,244 @@ void zchxConfig::UpdateSettings()
 
     Write("RouteLineWidth", g_route_line_width );
     Write("TrackLineWidth", g_track_line_width );
-    Write("TrackLineColour", g_colourTrackLineColour.GetAsString( wxC2S_HTML_SYNTAX ) );
+    Write("TrackLineColour", g_colourTrackLineColour.name() );
     Write("DefaultWPIcon", g_default_wp_icon );
     Write("DefaultRPIcon", g_default_routepoint_icon );
-
-    DeleteGroup(_T ( "/MMSIProperties" ));
-    SetPath("/MMSIProperties" ) );
-    for(unsigned int i=0 ; i < g_MMSI_Props_Array.GetCount() ; i++){
-        QString p;
-        p.Printf(_T("Props%d"), i);
-        Write( p, g_MMSI_Props_Array[i]->Serialize() );
-    }
-
-    SaveCanvasConfigs();
-
-    Flush();
-#endif
-}
-#endif
-
-
-void zchxConfig::setShowStatusBar(bool sts)
-{
-    mShowChartBar = sts;
-    setCustomValue(COMMON_SEC, SHOW_STATUS_BAR, sts);
+    endGroup();
+//    SaveCanvasConfigs();
 }
 
-void zchxConfig::setShowMenuBar(bool sts)
-{
-    mShowMenuBar = sts;
-    setCustomValue(COMMON_SEC, SHOW_MENU_BAR, sts);
-}
 
-void zchxConfig::setShowCompassWin(bool sts)
-{
-    mShowCompassWin = sts;
-    setCustomValue(COMMON_SEC, SHOW_COMPASS_WINDOW, sts);
-}
+//void zchxConfig::setShowStatusBar(bool sts)
+//{
+//    mShowChartBar = sts;
+//    setCustomValue(COMMON_SEC, SHOW_STATUS_BAR, sts);
+//}
 
-void zchxConfig::setShowChartBar(bool sts)
-{
-    mShowChartBar = sts;
-    setCustomValue(COMMON_SEC, SHOW_CHART_BAR, sts);
-}
+//void zchxConfig::setShowMenuBar(bool sts)
+//{
+//    mShowMenuBar = sts;
+//    setCustomValue(COMMON_SEC, SHOW_MENU_BAR, sts);
+//}
 
-void zchxConfig::setDiplaySizeMM(double val)
-{
-    mDisplaySizeMM = val;
-    //    setCustomValue(COMMON_SEC, DISPLAY_SIZE_MM, val);
-}
+//void zchxConfig::setShowCompassWin(bool sts)
+//{
+//    mShowCompassWin = sts;
+//    setCustomValue(COMMON_SEC, SHOW_COMPASS_WINDOW, sts);
+//}
 
-void zchxConfig::setConfigDisplaySizeMM(double sts)
-{
-    mConfigDisplaySizeMM = sts;
-    setCustomValue(COMMON_SEC, DISPLAY_SIZE_MM, sts);
-}
+//void zchxConfig::setShowChartBar(bool sts)
+//{
+//    mShowChartBar = sts;
+//    setCustomValue(COMMON_SEC, SHOW_CHART_BAR, sts);
+//}
 
-void zchxConfig::setConfigDisplaySizeManual(bool sts)
-{
-    mConfigDisplaySizeManual = sts;
-    setCustomValue(COMMON_SEC, DISPLAY_SIZE_MANUAL, sts);
-}
+//void zchxConfig::setDiplaySizeMM(double val)
+//{
+//    mDisplaySizeMM = val;
+//    //    setCustomValue(COMMON_SEC, DISPLAY_SIZE_MM, val);
+//}
 
-void zchxConfig::setSkewComp(bool sts)
-{
-    mSkewComp = sts;
-    setCustomValue(COMMON_SEC, SKEW_TO_NORTH_UP, sts);
-}
+//void zchxConfig::setConfigDisplaySizeMM(double sts)
+//{
+//    mConfigDisplaySizeMM = sts;
+//    setCustomValue(COMMON_SEC, DISPLAY_SIZE_MM, sts);
+//}
 
-void zchxConfig::setResponsive(bool sts)
-{
-    mResponsive = sts;
-    setCustomValue(COMMON_SEC, RESPONSIVE_GRAPHICS, sts);
-}
+//void zchxConfig::setConfigDisplaySizeManual(bool sts)
+//{
+//    mConfigDisplaySizeManual = sts;
+//    setCustomValue(COMMON_SEC, DISPLAY_SIZE_MANUAL, sts);
+//}
 
-void zchxConfig::setAutoHideToolBar(bool sts)
-{
-    mAutoHideToolbar = sts;
-    setCustomValue(COMMON_SEC, AUTO_HIDE_TOOLBAR, sts);
-}
+//void zchxConfig::setSkewComp(bool sts)
+//{
+//    mSkewComp = sts;
+//    setCustomValue(COMMON_SEC, SKEW_TO_NORTH_UP, sts);
+//}
 
-void zchxConfig::setAutoHideToolBarSecs(int sts)
-{
-    mAutoHideToolbarSecs = sts;
-    setCustomValue(COMMON_SEC, AUTO_HIDE_TOOLBAR_SECS, sts);
-}
+//void zchxConfig::setResponsive(bool sts)
+//{
+//    mResponsive = sts;
+//    setCustomValue(COMMON_SEC, RESPONSIVE_GRAPHICS, sts);
+//}
 
-void zchxConfig::setSmoothPanZoom(bool sts)
-{
-    mSmoothPanZoom = sts;
-    setCustomValue(COMMON_SEC, SMOOTH_PAN_ZOOM, sts);
-}
+//void zchxConfig::setAutoHideToolBar(bool sts)
+//{
+//    mAutoHideToolbar = sts;
+//    setCustomValue(COMMON_SEC, AUTO_HIDE_TOOLBAR, sts);
+//}
 
-void zchxConfig::setCogAvgSec(int sts)
-{
-    mCOGAvgSec = sts;
-    setCustomValue(COMMON_SEC, COG_UP_AVG_SECONDS, sts);
-}
+//void zchxConfig::setAutoHideToolBarSecs(int sts)
+//{
+//    mAutoHideToolbarSecs = sts;
+//    setCustomValue(COMMON_SEC, AUTO_HIDE_TOOLBAR_SECS, sts);
+//}
 
-void zchxConfig::setShowTrue(bool sts)
-{
-    mShowTrue = sts;
-    setCustomValue(COMMON_SEC, SHOW_TRUE, sts);
-}
+//void zchxConfig::setSmoothPanZoom(bool sts)
+//{
+//    mSmoothPanZoom = sts;
+//    setCustomValue(COMMON_SEC, SMOOTH_PAN_ZOOM, sts);
+//}
 
-void zchxConfig::setShowMag(bool sts)
-{
-    mShowMag = sts;
-    setCustomValue(COMMON_SEC, SHOW_MAG, sts);
-}
+//void zchxConfig::setCogAvgSec(int sts)
+//{
+//    mCOGAvgSec = sts;
+//    setCustomValue(COMMON_SEC, COG_UP_AVG_SECONDS, sts);
+//}
 
-void zchxConfig::setSDMMFormat(int sts)
-{
-    mSDMMFormat = sts;
-    setCustomValue(COMMON_SEC, SDMM_FORMAT, sts);
-}
+//void zchxConfig::setShowTrue(bool sts)
+//{
+//    mShowTrue = sts;
+//    setCustomValue(COMMON_SEC, SHOW_TRUE, sts);
+//}
 
-void zchxConfig::setDistanceFormat(int sts)
-{
-    mDistanceFormat = sts;
-    setCustomValue(COMMON_SEC, DISTANCE_FORMAT, sts);
-}
+//void zchxConfig::setShowMag(bool sts)
+//{
+//    mShowMag = sts;
+//    setCustomValue(COMMON_SEC, SHOW_MAG, sts);
+//}
 
-void zchxConfig::setSpeedFormat(int sts)
-{
-    mSpeedFormat = sts;
-    setCustomValue(COMMON_SEC, SPEED_FORMAT, sts);
-}
+//void zchxConfig::setSDMMFormat(int sts)
+//{
+//    mSDMMFormat = sts;
+//    setCustomValue(COMMON_SEC, SDMM_FORMAT, sts);
+//}
 
-void zchxConfig::setEnableZoomToCursor(bool sts)
-{
-    mEnableZoomToCursor = sts;
-    setCustomValue(COMMON_SEC, ENABLE_ZOOM_TO_CURSOR, sts);
-}
+//void zchxConfig::setDistanceFormat(int sts)
+//{
+//    mDistanceFormat = sts;
+//    setCustomValue(COMMON_SEC, DISTANCE_FORMAT, sts);
+//}
 
-void zchxConfig::setChartZoomModifier(int sts)
-{
-    mChartZoomModifier = sts;
-    setCustomValue(COMMON_SEC, ZOOM_DETAIL_FACTOR, sts);
-}
+//void zchxConfig::setSpeedFormat(int sts)
+//{
+//    mSpeedFormat = sts;
+//    setCustomValue(COMMON_SEC, SPEED_FORMAT, sts);
+//}
 
-void zchxConfig::setChartZoomModifierVector(int sts)
-{
-    mChartZoomModifierVector = sts;
-    setCustomValue(COMMON_SEC, ZOOM_DETAIL_FACTOR_VECTOR, sts);
-}
+//void zchxConfig::setEnableZoomToCursor(bool sts)
+//{
+//    mEnableZoomToCursor = sts;
+//    setCustomValue(COMMON_SEC, ENABLE_ZOOM_TO_CURSOR, sts);
+//}
 
-void zchxConfig::setGUIScaleFactor(int sts)
-{
-    mGUIScaleFactor = sts;
-    setCustomValue(COMMON_SEC, GUI_SCALE_FACTOR, sts);
-}
+//void zchxConfig::setChartZoomModifier(int sts)
+//{
+//    mChartZoomModifier = sts;
+//    setCustomValue(COMMON_SEC, ZOOM_DETAIL_FACTOR, sts);
+//}
 
-void zchxConfig::setChartScaleFactor(int sts)
-{
-    mChartScaleFactor = sts;
-    setCustomValue(COMMON_SEC, CHART_OBJECT_SCALE_FACTOR, sts);
-}
+//void zchxConfig::setChartZoomModifierVector(int sts)
+//{
+//    mChartZoomModifierVector = sts;
+//    setCustomValue(COMMON_SEC, ZOOM_DETAIL_FACTOR_VECTOR, sts);
+//}
 
-void zchxConfig::setShipScaleFactor(int sts)
-{
-    mShipScaleFactor = sts;
-    setCustomValue(COMMON_SEC, SHIP_SCALE_FACTOR, sts);
-}
+//void zchxConfig::setGUIScaleFactor(int sts)
+//{
+//    mGUIScaleFactor = sts;
+//    setCustomValue(COMMON_SEC, GUI_SCALE_FACTOR, sts);
+//}
 
-void zchxConfig::setChartScaleFactorExp(float sts)
-{
-    mChartScaleFactorExp = sts;
-}
+//void zchxConfig::setChartScaleFactor(int sts)
+//{
+//    mChartScaleFactor = sts;
+//    setCustomValue(COMMON_SEC, CHART_OBJECT_SCALE_FACTOR, sts);
+//}
 
-void zchxConfig::setShipScaleFactorExp(float sts)
-{
-    mShipScaleFactorExp = sts;
-}
+//void zchxConfig::setShipScaleFactor(int sts)
+//{
+//    mShipScaleFactor = sts;
+//    setCustomValue(COMMON_SEC, SHIP_SCALE_FACTOR, sts);
+//}
 
-void zchxConfig::setOpenGL(bool sts)
-{
-    mOpenGL = sts;
-    setCustomValue(COMMON_SEC, OPEN_GL, sts);
-}
+//void zchxConfig::setChartScaleFactorExp(float sts)
+//{
+//    mChartScaleFactorExp = sts;
+//}
 
-void zchxConfig:: setCm93ZoomFactor(int sts)
-{
-    mCm93ZoomFactor = sts;
-    setCustomValue(COMMON_SEC, CM93_DETAIL_FACTOR, sts);
-}
+//void zchxConfig::setShipScaleFactorExp(float sts)
+//{
+//    mShipScaleFactorExp = sts;
+//}
 
-void zchxConfig::setDepthUnitDisplay(int sts)
-{
-    mDepthUnitDisplay = sts;
-    setCustomValue(COMMON_SEC, S52_DEPTH_UNIT_SHOW_S, sts);
-}
+//void zchxConfig::setOpenGL(bool sts)
+//{
+//    mOpenGL = sts;
+//    setCustomValue(COMMON_SEC, OPEN_GL, sts);
+//}
 
-void zchxConfig::setGLLineSmoothing(bool sts)
-{
-    mGLOptions.m_GLLineSmoothing = sts;
-    setCustomValue(COMMON_SEC, LINE_SMOOTHING, sts);
-}
+//void zchxConfig:: setCm93ZoomFactor(int sts)
+//{
+//    mCm93ZoomFactor = sts;
+//    setCustomValue(COMMON_SEC, CM93_DETAIL_FACTOR, sts);
+//}
 
-void  zchxConfig::setGLPolygonSmoothing(bool sts)
-{
-    mGLOptions.m_GLPolygonSmoothing = sts;
-    setCustomValue(COMMON_SEC, POLYGON_SMOOTHING, sts);
-}
+//void zchxConfig::setDepthUnitDisplay(int sts)
+//{
+//    mDepthUnitDisplay = sts;
+//    setCustomValue(COMMON_SEC, S52_DEPTH_UNIT_SHOW_S, sts);
+//}
 
-void zchxConfig::setGLUseAcceleratedPanning(bool sts)
-{
-    mGLOptions.m_bUseAcceleratedPanning = sts;
-    setCustomValue(COMMON_SEC, USE_ACCELERATED_PANNING, sts);
-}
+//void zchxConfig::setGLLineSmoothing(bool sts)
+//{
+//    mGLOptions.m_GLLineSmoothing = sts;
+//    setCustomValue(COMMON_SEC, LINE_SMOOTHING, sts);
+//}
 
-void zchxConfig::setGLTextureCompression(bool sts)
-{
-    mGLOptions.m_bTextureCompression = sts;
-    setCustomValue(COMMON_SEC, GPU_TEXTURE_COMPRESSION, sts);
-}
+//void  zchxConfig::setGLPolygonSmoothing(bool sts)
+//{
+//    mGLOptions.m_GLPolygonSmoothing = sts;
+//    setCustomValue(COMMON_SEC, POLYGON_SMOOTHING, sts);
+//}
 
-void zchxConfig::setGLTextureCompressionCaching(bool sts)
-{
-    mGLOptions.m_bTextureCompressionCaching = sts;
-    setCustomValue(COMMON_SEC, GPU_TEXTURE_COMPRESSION_CACHING, sts);
-}
+//void zchxConfig::setGLUseAcceleratedPanning(bool sts)
+//{
+//    mGLOptions.m_bUseAcceleratedPanning = sts;
+//    setCustomValue(COMMON_SEC, USE_ACCELERATED_PANNING, sts);
+//}
 
-void zchxConfig::setGLTextureDimension(int val)
-{
-    mGLOptions.m_iTextureDimension = val;
-    setCustomValue(COMMON_SEC, GPU_TEXTURE_DEMENSION, val);
-}
-void zchxConfig::setGLTextureMemorySize(int val)
-{
-    mGLOptions.m_iTextureMemorySize = val;
-    setCustomValue(COMMON_SEC, GPU_TEXTURE_MEMSIZE, val);
-}
+//void zchxConfig::setGLTextureCompression(bool sts)
+//{
+//    mGLOptions.m_bTextureCompression = sts;
+//    setCustomValue(COMMON_SEC, GPU_TEXTURE_COMPRESSION, sts);
+//}
 
-void zchxConfig::setGLExpert(bool sts)
-{
-    mGLExpert = sts;
-    setCustomValue(COMMON_SEC, OPENGL_EXPERT, sts);
-}
+//void zchxConfig::setGLTextureCompressionCaching(bool sts)
+//{
+//    mGLOptions.m_bTextureCompressionCaching = sts;
+//    setCustomValue(COMMON_SEC, GPU_TEXTURE_COMPRESSION_CACHING, sts);
+//}
 
-void zchxConfig::setShowFPS(bool sts)
-{
-    mShowFPS = sts;
-    setCustomValue(COMMON_SEC, SHOW_FPS, sts);
-}
+//void zchxConfig::setGLTextureDimension(int val)
+//{
+//    mGLOptions.m_iTextureDimension = val;
+//    setCustomValue(COMMON_SEC, GPU_TEXTURE_DEMENSION, val);
+//}
+//void zchxConfig::setGLTextureMemorySize(int val)
+//{
+//    mGLOptions.m_iTextureMemorySize = val;
+//    setCustomValue(COMMON_SEC, GPU_TEXTURE_MEMSIZE, val);
+//}
 
-void zchxConfig::setSoftwareGL(bool sts)
-{
-    mSoftwareGL = sts;
-    setCustomValue(COMMON_SEC, SOFTWARE_GL, sts);
-}
+//void zchxConfig::setGLExpert(bool sts)
+//{
+//    mGLExpert = sts;
+//    setCustomValue(COMMON_SEC, OPENGL_EXPERT, sts);
+//}
+
+//void zchxConfig::setShowFPS(bool sts)
+//{
+//    mShowFPS = sts;
+//    setCustomValue(COMMON_SEC, SHOW_FPS, sts);
+//}
+
+//void zchxConfig::setSoftwareGL(bool sts)
+//{
+//    mSoftwareGL = sts;
+//    setCustomValue(COMMON_SEC, SOFTWARE_GL, sts);
+//}
 
 zchxConfig::~zchxConfig()
 {

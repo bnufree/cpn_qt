@@ -43,7 +43,7 @@
 #include "SQLiteCpp/SQLiteCpp.h"
 
 #include "mbtiles.h"
-#include "chart1.h"
+//#include "chart1.h"
 #include "chcanv.h"
 #include "glChartCanvas.h"
 #include <QDebug>

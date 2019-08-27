@@ -1,5 +1,4 @@
-﻿//#include "zchxmapmainwindow.h"
-#include <QApplication>
+﻿#include <QApplication>
 #include <QSharedMemory>
 #include <QMutex>
 #include <QFile>
@@ -11,8 +10,8 @@
 #include <QMessageBox>
 #include <QDebug>
 #include "_def.h"
+#include "zchxmapmainwindow.h"
 
-//zchxMapMainWindow* gFrame = 0;
 
 #undef QT_MESSAGELOG_FILE
 #undef QT_MESSAGELOG_LINE
@@ -119,8 +118,8 @@ int main(int argc, char *argv[])
     //make size as 9:16
 //    gFrame = new zchxMapMainWindow();
 //    gFrame->showMaximized();
-//    zchxMapMainWindow w;
-//    w.show();
+    zchxMapMainWindow w;
+    w.show();
 
     return a.exec();
 }

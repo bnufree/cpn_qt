@@ -77,8 +77,8 @@ public:
 //--------------------------------------------------------------------------
 //      Platform Display Support
 //--------------------------------------------------------------------------
-    static QCursor ShowBusySpinner( void );
-    static QCursor HideBusySpinner( void );
+    QCursor ShowBusySpinner( Qt::CursorShape old = Qt::ArrowCursor );
+    QCursor HideBusySpinner( void );
     double getFontPointsperPixel( void );
     QSize getDisplaySize();
     double GetDisplaySizeMM();
@@ -103,7 +103,6 @@ public:
     QString GetPluginDir();
     QString GetPathSeparator();
     QString GetConfigFileName();
-    zchxConfig *GetConfigObject();
     QString GetSupplementalLicenseString();
     QString NormalizePath(const QString &full_path); //Adapt for portable use
     
@@ -125,7 +124,7 @@ private:
     int         m_displaySizeMMOverride;
     bool        m_bdisableWindowsDisplayEnum;
     int         mCpuCoreNum;
-    zchxConfig      *mConfigObj;
+    Qt::CursorShape         mOldShape;
 };
 
 

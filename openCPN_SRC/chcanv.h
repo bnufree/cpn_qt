@@ -1,4 +1,4 @@
-
+﻿
 /***************************************************************************
  *
  * Project:  OpenCPN
@@ -29,14 +29,14 @@
 
 #include "bbox.h"
 
-#include "chart1.h"                 // for enum types
+//#include "chart1.h"                 // for enum types
 #include "ocpndc.h"
-#include "undo.h"
+//#include "undo.h"
 
 #include "ocpCursor.h"
-#include "GoToPositionDialog.h"
+//#include "GoToPositionDialog.h"
 #include "DetailSlider.h"
-#include "RolloverWin.h"
+//#include "RolloverWin.h"
 #include "timers.h"
 #include "emboss_data.h"
 #include "S57Sector.h"
@@ -47,7 +47,7 @@
 #include "bitmap.h"
 
 
-class wxGLContext;
+//class wxGLContext;
 class GSHHSChart;
 class IDX_entry;
 class ocpnCompass;

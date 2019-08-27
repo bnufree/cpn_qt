@@ -42,8 +42,8 @@ extern  float           g_ShipScaleFactorExp;
 extern  bool            g_bopengl;
 extern  int             g_cm93_zoom_factor;
 extern  int             g_nDepthUnitDisplay;
-extern OCPNPlatform     *g_Platform;
-extern s52plib          *ps52plib;
+//extern OCPNPlatform     *g_Platform;
+//extern s52plib          *ps52plib;
 extern  zchxMapMainWindow   *gFrame;
 extern  zchxGLOptions    g_GLOptions;
 
@@ -53,6 +53,7 @@ zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
     m_pWorkDirList(0)
 {
     ui->setupUi(this);
+    this->setAttribute(Qt::WA_DeleteOnClose);
     this->setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
     ui->pPointStyle->setItemData(0, PAPER_CHART);
     ui->pPointStyle->setItemData(1, SIMPLIFIED);
@@ -77,31 +78,33 @@ extern bool g_bSoftwareGL;
 
 void zchxOptionsDlg::on_bOpenGL_clicked()
 {
-    zchxOpenGlOptionDlg dlg(gFrame);
+    zchxOpenGlOptionDlg *dlg = new zchxOpenGlOptionDlg;
 
-    if (dlg.exec() == QDialog::Accepted) {
+    if (dlg->exec() == QDialog::Accepted) {
+#if 0
         if(gFrame->GetPrimaryCanvas()->GetglCanvas()){
             g_GLOptions.m_bUseAcceleratedPanning =
                     g_bGLexpert ? dlg.GetAcceleratedPanning()
                                 : gFrame->GetPrimaryCanvas()->GetglCanvas()->CanAcceleratePanning();
         }
+#endif
 
-        g_bShowFPS = dlg.GetShowFPS();
-        g_bSoftwareGL = dlg.GetSoftwareGL();
+        g_bShowFPS = dlg->GetShowFPS();
+        g_bSoftwareGL = dlg->GetSoftwareGL();
 
-        g_GLOptions.m_GLPolygonSmoothing = dlg.GetPolygonSmoothing();
-        g_GLOptions.m_GLLineSmoothing = dlg.GetLineSmoothing();
+        g_GLOptions.m_GLPolygonSmoothing = dlg->GetPolygonSmoothing();
+        g_GLOptions.m_GLLineSmoothing = dlg->GetLineSmoothing();
 
         if (g_bGLexpert) {
             // user defined
             g_GLOptions.m_bTextureCompressionCaching =
-                    dlg.GetTextureCompressionCaching();
-            g_GLOptions.m_iTextureMemorySize = dlg.GetTextureMemorySize();
+                    dlg->GetTextureCompressionCaching();
+            g_GLOptions.m_iTextureMemorySize = dlg->GetTextureMemorySize();
         } else {
             // caching is on if textures are compressed
-            g_GLOptions.m_bTextureCompressionCaching = dlg.GetTextureCompression();
+            g_GLOptions.m_bTextureCompressionCaching = dlg->GetTextureCompression();
         }
-
+#if 0
         if (g_bopengl && g_glTextureManager && g_GLOptions.m_bTextureCompression != dlg.GetTextureCompression()) {
             // new g_GLoptions setting is needed in callees
             g_GLOptions.m_bTextureCompression = dlg.GetTextureCompression();
@@ -116,23 +119,26 @@ void zchxOptionsDlg::on_bOpenGL_clicked()
         }
         else
             g_GLOptions.m_bTextureCompression = dlg.GetTextureCompression();
+#endif
 
     }
 
-    if (dlg.GetRebuildCache()) {
+    if (dlg->GetRebuildCache()) {
         m_returnChanges = REBUILD_RASTER_CACHE;
     }
+
+    delete dlg;
 }
 
 void zchxOptionsDlg::on_OK_clicked()
 {
     processApply(false);
-    accept();
+    close();
 }
 
 void zchxOptionsDlg::on_CANCEL_clicked()
 {
-    reject();
+    close();
 }
 
 void zchxOptionsDlg::on_APPLY_clicked()
@@ -193,9 +199,9 @@ void zchxOptionsDlg::processApply(bool apply)
     g_chart_zoom_modifier_vector = ui->m_pSlider_Zoom_Vector->value();
     g_GUIScaleFactor = ui->m_pSlider_GUI_Factor->value();
     g_ChartScaleFactor = ui->m_pSlider_Chart_Factor->value();
-    g_ChartScaleFactorExp = g_Platform->getChartScaleFactorExp(g_ChartScaleFactor);
+    g_ChartScaleFactorExp = zchxFuncUtil::getChartScaleFactorExp(g_ChartScaleFactor);
     g_ShipScaleFactor = ui->m_pSlider_Ship_Factor->value();
-    g_ShipScaleFactorExp = g_Platform->getChartScaleFactorExp(g_ShipScaleFactor);
+    g_ShipScaleFactorExp = zchxFuncUtil::getChartScaleFactorExp(g_ShipScaleFactor);
     if (g_bopengl != ui->pOpenGL->isChecked()) m_returnChanges |= GL_CHANGED;
     g_bopengl = ui->pOpenGL->isChecked();
 
@@ -205,6 +211,7 @@ void zchxOptionsDlg::processApply(bool apply)
     //  Process the UserStandard display list, noting if any changes were made
     bool bUserStdChange = false;
     int nOBJL = ui->ps57CtlListBox->count();
+#if 0
     for (int iPtr = 0; iPtr < nOBJL; iPtr++) {
         int itemIndex = -1;
         for (size_t i = 0; i < marinersStdXref.size(); i++) {
@@ -287,6 +294,7 @@ void zchxOptionsDlg::processApply(bool apply)
             m_returnChanges |= S52_CHANGED;
         }
     }
+#endif
 
 
     m_returnChanges |= GENERIC_CHANGED | k_vectorcharts | k_charts | m_groups_changed ;
@@ -338,7 +346,7 @@ void zchxOptionsDlg::resetMarStdList(bool bsetConfig, bool bsetStd)
 {
     ui->ps57CtlListBox->clear();
     marinersStdXref.clear();
-
+#if 0
     for (unsigned int iPtr = 0; iPtr < ps52plib->pOBJLArray->count(); iPtr++)
     {
         OBJLElement* pOLE = (OBJLElement*)(ps52plib->pOBJLArray->at(iPtr));
@@ -383,5 +391,6 @@ void zchxOptionsDlg::resetMarStdList(bool bsetConfig, bool bsetStd)
         if(bsetStd && cat == STANDARD) bviz = true;
         ui->ps57CtlListBox->setChecked(newpos, bviz);
     }
+#endif
 }
 

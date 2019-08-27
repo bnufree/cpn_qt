@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -37,7 +37,7 @@ extern zchxMapMainWindow*          gFrame;
 //extern SENCThreadManager *g_SencThreadManager;
 extern ColorScheme       global_color_scheme;
 extern int               g_nCPUCount;
-extern S57ClassRegistrar *g_poRegistrar;
+S57ClassRegistrar *g_poRegistrar = 0;
 
 
 

@@ -1,4 +1,4 @@
-﻿#ifndef ZCHXMAPMAINWINDOW_H
+#ifndef ZCHXMAPMAINWINDOW_H
 #define ZCHXMAPMAINWINDOW_H
 
 #include <QMainWindow>
@@ -10,6 +10,7 @@
 namespace Ui {
 class zchxMapMainWindow;
 }
+#if 0
 class QTimer;
 class zchxOptionsDlg;
 class zchxConfig;
@@ -17,6 +18,7 @@ class ChartCanvas;
 class ChartBase;
 class ChartDB;
 class OCPNPlatform;
+#endif
 
 
 QColor GetGlobalColor(QString colorName);
@@ -28,38 +30,26 @@ class zchxMapMainWindow : public QMainWindow
 public:
     explicit zchxMapMainWindow(QWidget *parent = 0);
     ~zchxMapMainWindow();
-
-    void setApplicationName(const QString& name);
-    QString applicationName() const {return mApplicationName;}
-
-    quint64 proceeId() const {return mProcessedID;}
-    void    setProcessID(quint64 id) {mProcessedID = id;}
-    quint64 getProcessIDFromSystem();
-    int     GetApplicationMemoryUse(void);
-    void    getMemoryStatus(int* total = 0, int* used = 0);
     void    setActionCheckSts(const QString& action, bool check);
     void    setActionEnableSts(const QString& action, bool check);
-    zchxConfig*     getConfigObj() {return mConfigObj;}
     bool    ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray );
     bool    UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName );
-    void    startFrameTimer1();
-
+    ColorScheme GetColorScheme();
+#if 0
     void DoStackDown( ChartCanvas *cc );
     void DoStackUp( ChartCanvas *cc );
     void DoStackDelta( ChartCanvas *cc, int direction );
+#endif
     void ToggleColorScheme();
     bool DoChartUpdate( void );
     void UpdateRotationState( double rotation );
     void SetChartUpdatePeriod();
-    ChartCanvas *GetPrimaryCanvas();
-    QWidget* getGlChartCanvas();
-    double GetBestVPScale( ChartBase *pchart );
-    OCPNPlatform *platform() {return mPlatForm;}
-
+//    ChartCanvas *GetPrimaryCanvas();
+//    QWidget* getGlChartCanvas();
+//    double GetBestVPScale( ChartBase *pchart );
 
 public slots:
     //工具
-    void    slotMemoryMonitor() {getMemoryStatus();}
     void    slotOpenSettingDlg();
     void    slotMeasureDistance();
     //导航
@@ -99,29 +89,11 @@ private slots:
 
 private:
     Ui::zchxMapMainWindow *ui;
-    //内存监控
-    quint64               mProcessedID;
-    QString               mApplicationName;
-    quint64               mMemUsed;
-    quint64               mMemTotal;
 
-    //程序关闭检测
-    bool                  mInCloseWindow;
-    QTimer                *mMonitorTimer;
     //菜单管理
     QMap<QString, QAction*>     mActionMap;
-    //配置对话框
-    zchxOptionsDlg*             mOptionDlg;
-    //配置文件
-    zchxConfig*                 mConfigObj;
-    //定时事件
-    QTimer                     *FrameTimer1;
-    //地图数据库
-    ChartDB                     *mChartDB;
-    //
-    OCPNPlatform                *mPlatForm;
     //显示窗口
-    ChartCanvas*                mDisplayWidget;
+//    ChartCanvas*                mEcdisWidget;
 };
 
 #endif // ZCHXMAPMAINWINDOW_H
