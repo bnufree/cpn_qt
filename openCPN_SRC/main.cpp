@@ -1,4 +1,4 @@
-#include "zchxmapmainwindow.h"
+﻿#include "zchxmapmainwindow.h"
 #include <QApplication>
 #include <QSharedMemory>
 #include <QMutex>

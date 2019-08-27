@@ -1,4 +1,4 @@
-#include "zchxoptionsdlg.h"
+﻿#include "zchxoptionsdlg.h"
 #include "ui_zchxoptionsdlg.h"
 #include "zchxchecklistwidget.h"
 #include "zchxopengloptiondlg.h"

@@ -1,4 +1,4 @@
-#ifndef ZCHXCONFIG_H
+﻿#ifndef ZCHXCONFIG_H
 #define ZCHXCONFIG_H
 
 #include <QSettings>

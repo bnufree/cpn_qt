@@ -1,4 +1,4 @@
-#include "zchxopengloptiondlg.h"
+﻿#include "zchxopengloptiondlg.h"
 #include "ui_zchxopengloptiondlg.h"
 #include "_def.h"
 #include <QDir>

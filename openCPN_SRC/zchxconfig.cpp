@@ -1,4 +1,4 @@
-#include "zchxconfig.h"
+﻿#include "zchxconfig.h"
 #include <QTextCodec>
 #include "GL/gl.h"
 #include "s52plib.h"
