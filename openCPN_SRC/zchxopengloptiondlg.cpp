@@ -199,10 +199,10 @@ zchxOpenGlOptionDlg::~zchxOpenGlOptionDlg()
 
 void zchxOpenGlOptionDlg::on_OK_clicked()
 {
-
+    accept();
 }
 
 void zchxOpenGlOptionDlg::on_Cancel_clicked()
 {
-
+    reject();
 }

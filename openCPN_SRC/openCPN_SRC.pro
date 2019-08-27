@@ -73,270 +73,128 @@ exists($$PWD/translations/zchx_ecdis_zh_CN.ts){
 
 DEFINES *= ZCHX_OPENCPN_PLUGIN ocpnUSE_GL
 
-
-
-
-
-
-
-HEADERS += \
-    bbox.h \
-#    CanvasConfig.h \
-#    CanvasOptions.h \
-#    chart1.h \
-    chartbase.h \
-    ChartDataInputStream.h \
-    chartdb.h \
-    chartdbs.h \
-    chartimg.h \
-    chartsymbols.h \
-    chcanv.h \
-    ChInfoWin.h \
-    compass.h \
-#    concanv.h \
-#    ConfigMgr.h \
-#    crashprint.h \
-    cutil.h \
-#    DarkMode.h \
-#    DetailSlider.h \
-#    dsPortType.h \
-#    dychart.h \
-#    emboss_data.h \
-    FlexHash.h \
-    FontDesc.h \
-    FontMgr.h \
-#    garmin_wrapper.h \
-#    geodesic.h \
-    georef.h \
-    glChartCanvas.h \
-    glTexCache.h \
-    glTextureDescriptor.h \
-    glTextureManager.h \
-#    GoToPositionDialog.h \
-    gshhs.h \
-#    Hyperlink.h \
-#    IDX_entry.h \
-#    iENCToolbar.h \
-#    kml.h \
-#    Layer.h \
-#    LinkPropDlg.h \
-    LLRegion.h \
-#    macutils.h \
-#    MarkIcon.h \
-#    MUIBar.h \
-    mygeom.h \
-#    NavObjectCollection.h \
-#    NMEALogWindow.h \
-#    OCP_DataStreamInputhread.h \
-#    ocpCursor.h \
-#    OCPN_AUIManager.h \
-    ocpn_pixel.h \
-#    ocpn_types.h \
-    ocpndc.h \
-#    OCPNListCtrl.h \
-     OCPNPlatform.h \
-    OCPNRegion.h \
-    ogr_s57.h \
-#    options.h \
-    Osenc.h \
-    piano.h \
-#    pluginmanager.h \
-#    PositionParser.h \
-#    printtable.h \
-#    pugiconfig.hpp \
-    pugixml.hpp \
-    Quilt.h \
-#    RolloverWin.h \
-#    Route.h \
-#    routeman.h \
-#    RoutePoint.h \
-    s52plib.h \
-    s52s57.h \
-    s52utils.h \
-    s57.h \
-    s57chart.h \
-    S57ClassRegistrar.h \
-    S57Light.h \
-#    s57mgr.h \
-    S57ObjectDesc.h \
-#    S57QueryDialog.h \
-    s57RegistrarMgr.h \
-    S57Sector.h \
-#    scrollingdialog.h \
-#    Select.h \
-#    SelectItem.h \
-    SencManager.h \
-#    SendToGpsDlg.h \
-#    Station_Data.h \
-    styles.h \
-#    TC_Error_Code.h \
-#    TCDataFactory.h \
-#    TCDataSource.h \
-#    TCDS_Ascii_Harmonic.h \
-#    TCDS_Binary_Harmonic.h \
-#    tcmgr.h \
-#    TCWin.h \
-    TexFont.h \
-    thumbwin.h \
-#    tide_time.h \
-#    time_textbox.h \
-#    timers.h \
-#    toolbar.h \
-#    Track.h \
-#    trackprintout.h \
-#    TTYScroll.h \
-#    TTYWindow.h \
-#    tzdata.h \
-#    undo.h \
-#    vector2D.h \
-    viewport.h \
-#    wificlient.h \
-#    WindowDestroyListener.h \
-#    wx28compat.h \
-    GL/gl.h \
-    GL/gl_private.h \
-    GL/glext.h \
-    GL/glu.h \
-    _def.h \
-#    ocpn_plugin.h \
-    opencpn_global.h \
-    objectfactory.h \
-    zchxoptionsdlg.h \
-    zchxopengloptiondlg.h \
-#    zchxchecklistwidget.h \
-#    zchxframe.h \
-    zchxmapmainwindow.h \
-    zchxconfig.h \
-    zchxs57listctrlbox.h \
-    cm93.h \
-    mbtiles.h \
-    bitmap.h \
-    ocpn_plugin.h
-
 SOURCES += \
-    bbox.cpp \
-#    CanvasConfig.cpp \
-#    CanvasOptions.cpp \
-#    chart1.cpp \
-    ChartDataInputStream.cpp \
+    main.cpp \
+    _def.cpp \
+    zchxs57listctrlbox.cpp \
+    zchxoptionsdlg.cpp \
+    zchxconfig.cpp \
+    zchxopengloptiondlg.cpp \
+    glTexCache.cpp \
+    glTextureDescriptor.cpp \
+    glTextureManager.cpp \
+    zchxmapmainwindow.cpp \
+    s52plib.cpp \
+    s52utils.cpp \
+    OCPNPlatform.cpp \
+    FontDesc.cpp \
+    FontMgr.cpp \
     chartdb.cpp \
     chartdbs.cpp \
     chartimg.cpp \
     chartsymbols.cpp \
-    chcanv.cpp \
-    ChInfoWin.cpp \
-    compass.cpp \
-#    compasswin.cpp \
-#    concanv.cpp \
-#    ConfigMgr.cpp \
-#    crashprint.cpp \
-    cutil.cpp \
-#    DetailSlider.cpp \
-    FlexHash.cpp \
-    FontDesc.cpp \
-    FontMgr.cpp \
-#    garmin_wrapper.cpp \
-#    geodesic.cpp \
-    georef.cpp \
-    glChartCanvas.cpp \
-    glTexCache.cpp \
-    glTextureDescriptor.cpp \
-    glTextureManager.cpp \
-#    GoToPositionDialog.cpp \
-    gshhs.cpp \
-#    Hyperlink.cpp \
-#    IDX_entry.cpp \
-#    iENCToolbar.cpp \
-#    kml.cpp \
-#    Layer.cpp \
-#    LinkPropDlg.cpp \
-    LLRegion.cpp \
-#    MarkInfo.cpp \
-#    MUIBar.cpp \
-#    multiplexer.cpp \
-    mygeom.cpp \
-#    NavObjectCollection.cpp \
-#    NMEALogWindow.cpp \
-#    OCP_DataStreamInputhread.cpp \
-#    ocpCursor.cpp \
-#    OCPN_AUIManager.cpp \
-    ocpn_pixel.cpp \
-    ocpndc.cpp \
-#    OCPNListCtrl.cpp \
-    OCPNPlatform.cpp \
     OCPNRegion.cpp \
-    ogrs57datasource.cpp \
-    ogrs57layer.cpp \
-#    options.cpp \
-    Osenc.cpp \
-    piano.cpp \
-#    pluginmanager.cpp \
-#    PositionParser.cpp \
-#    printtable.cpp \
-    pugixml.cpp \
-    Quilt.cpp \
-#    RolloverWin.cpp \
-#    Route.cpp \
-#    routeman.cpp \
-#    routemanagerdialog.cpp \
-#    RoutePoint.cpp \
-    s52cnsy.cpp \
-    s52plib.cpp \
-    s52utils.cpp \
-    s57chart.cpp \
-    s57classregistrar.cpp \
-    s57featuredefns.cpp \
-#    s57mgr.cpp \
-    s57obj.cpp \
-#    S57QueryDialog.cpp \
-    s57reader.cpp \
-    s57RegistrarMgr.cpp \
-#    scrollingdialog.cpp \
-#    Select.cpp \
-#    SelectItem.cpp \
-    SencManager.cpp \
-#    SendToGpsDlg.cpp \
-#    Station_Data.cpp \
-    styles.cpp \
-#    TCDataFactory.cpp \
-#    TCDataSource.cpp \
-#    TCDS_Ascii_Harmonic.cpp \
-#    TCDS_Binary_Harmonic.cpp \
-#    tcmgr.cpp \
-#    TCWin.cpp \
-    TexFont.cpp \
-    thumbwin.cpp \
-#    toolbar.cpp \
-#    Track.cpp \
-#    trackprintout.cpp \
-#    TrackPropDlg.cpp \
-#    TTYScroll.cpp \
-#    TTYWindow.cpp \
-#    undo.cpp \
+    georef.cpp \
+    vector2d.cpp \
     viewport.cpp \
-#    wificlient.cpp \
-#    macutils.c \
-#    ocpnhelper.c \
-    zchxoptionsdlg.cpp \
-    zchxopengloptiondlg.cpp \
-#    zchxchecklistwidget.cpp \
-#    zchxframe.cpp \
-    main.cpp \
-    zchxmapmainwindow.cpp \
-    zchxconfig.cpp \
-    zchxs57listctrlbox.cpp \
-    cm93.cpp \
-    mbtiles.cpp \
     bitmap.cpp \
-    _def.cpp \
-    vector2d.cpp
+    glChartCanvas.cpp \
+    bbox.cpp \
+    chcanv.cpp \
+    Quilt.cpp \
+    SencManager.cpp \
+    s57RegistrarMgr.cpp \
+    s57chart.cpp \
+    mygeom.cpp \
+    cutil.cpp \
+    s57obj.cpp \
+    s52cnsy.cpp \
+    TexFont.cpp \
+    styles.cpp \
+    mbtiles.cpp \
+    FlexHash.cpp \
+    LLRegion.cpp \
+    ocpn_pixel.cpp \
+    ChartDataInputStream.cpp \
+    pugixml.cpp \
+    ocpndc.cpp \
+    gshhs.cpp \
+    piano.cpp \
+    compass.cpp \
+    ChInfoWin.cpp \
+    Osenc.cpp \
+    s57classregistrar.cpp \
+    ogrs57datasource.cpp \
+    s57reader.cpp \
+    s57featuredefns.cpp \
+    ogrs57layer.cpp
 
-OBJECTIVE_SOURCES += \
-    DarkMode.mm
+
+
+
+win32: QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
+win32: QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
+win32: QMAKE_CFLAGS -= -Zc:strictStrings
+win32: QMAKE_CXXFLAGS -= -Zc:strictStrings
+
+HEADERS += \
+    _def.h \
+    GL/gl.h \
+    GL/gl_private.h \
+    GL/glext.h \
+    GL/glu.h \
+    zchxs57listctrlbox.h \
+    zchxoptionsdlg.h \
+    zchxconfig.h \
+    zchxopengloptiondlg.h \
+    glTexCache.h \
+    glTextureDescriptor.h \
+    glTextureManager.h \
+    zchxmapmainwindow.h \
+    s52plib.h \
+    s52s57.h \
+    s52utils.h \
+    OCPNPlatform.h \
+    FontDesc.h \
+    FontMgr.h \
+    chartdb.h \
+    chartdbs.h \
+    chartimg.h \
+    chartsymbols.h \
+    OCPNRegion.h \
+    georef.h \
+    vector2D.h \
+    viewport.h \
+    bitmap.h \
+    glChartCanvas.h \
+    bbox.h \
+    chcanv.h \
+    Quilt.h \
+    SencManager.h \
+    s57RegistrarMgr.h \
+    s57chart.h \
+    mygeom.h \
+    cutil.h \
+    TexFont.h \
+    styles.h \
+    mbtiles.h \
+    FlexHash.h \
+    LLRegion.h \
+    ocpn_pixel.h \
+    ChartDataInputStream.h \
+    pugixml.hpp \
+    ocpndc.h \
+    gshhs.h \
+    piano.h \
+    compass.h \
+    ChInfoWin.h \
+    Osenc.h \
+    S57ClassRegistrar.h
 
 FORMS += \
-#    sendtogpsdlg.ui \
     zchxoptionsdlg.ui \
     zchxopengloptiondlg.ui \
     zchxmapmainwindow.ui
+
+
 

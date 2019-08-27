@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Authors:  David Register
@@ -166,7 +166,7 @@ extern unsigned int     g_canvasConfig;
 extern ChartCanvas      *g_focusCanvas;
 extern ChartCanvas      *g_overlayCanvas;
 
-zchxGLOptions g_GLOptions;
+extern zchxGLOptions g_GLOptions;
 
 //    For VBO(s)
 bool         g_b_EnableVBO;
@@ -2260,7 +2260,7 @@ void glChartCanvas::RenderRasterChartRegionGL( ChartBase *chart, ViewPort &vp, L
     int mem_used = 0;
     if (g_memCacheLimit > 0) {
         // GetMemoryStatus is slow on linux
-        gFrame->getMemoryStatus(0, &mem_used);
+        zchxFuncUtil::getMemoryStatus(0, &mem_used);
     }
 
     glTexTile **tiles = pTexFact->GetTiles(numtiles);
@@ -2985,7 +2985,7 @@ void glChartCanvas::Render()
             if(VPoint.b_quilt && m_pParentCanvas->m_pQuilt->IsQuiltVector() &&
                 ( m_cache_vp.view_scale_ppm != VPoint.view_scale_ppm || m_cache_vp.rotation != VPoint.rotation))
             {
-                    OCPNPlatform::ShowBusySpinner();
+                    g_Platform->ShowBusySpinner();
                     busy = true;
             }
             
@@ -3160,7 +3160,7 @@ void glChartCanvas::Render()
             ( s_glBindFramebuffer )( GL_FRAMEBUFFER_EXT, 0 );
 
             if(busy)
-                OCPNPlatform::HideBusySpinner();
+                g_Platform->HideBusySpinner();
         
         } // newview
 

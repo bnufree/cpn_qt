@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  OpenCPN Main wxWidgets Program
@@ -34,8 +34,8 @@
 
 extern ocpnStyle::StyleManager* g_StyleManager;
 extern bool bGPSValid;
-extern bool g_bSatValid;
-extern int g_SatsInView;
+bool g_bSatValid;
+int g_SatsInView;
 extern zchxMapMainWindow *gFrame;
 extern bool g_bopengl;
 

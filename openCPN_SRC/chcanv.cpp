@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Canvas
@@ -111,7 +111,7 @@ extern double           g_ChartNotRenderScaleFactor;
 extern double           gLat, gLon, gCog, gSog, gHdt;
 //extern double           vLat, vLon;
 extern ChartDB          *ChartData;
-extern bool             bDBUpdateInProgress;
+bool             bDBUpdateInProgress;
 extern ColorScheme      global_color_scheme;
 extern int              g_nbrightness;
 
@@ -183,7 +183,7 @@ extern bool             g_bUseRaster;
 extern bool             g_bUseVector;
 extern bool             g_bUseCM93;
 
-extern double           g_COGAvg;               // only needed for debug....
+double           g_COGAvg;               // only needed for debug....
 
 extern int              g_click_stop;
 extern double           g_ownship_predictor_minutes;
@@ -199,7 +199,7 @@ extern bool             g_bFullScreenQuilt;
 
 extern bool             g_bsmoothpanzoom;
 
-bool                    g_bDebugOGL;
+extern bool                    g_bDebugOGL;
 
 extern bool             g_b_assume_azerty;
 
@@ -212,10 +212,7 @@ extern bool              g_btouch;
 extern bool              g_bresponsive;
 
 extern QString         g_toolbarConfigSecondary;
-
-#ifdef ocpnUSE_GL
 extern zchxGLOptions g_GLOptions;
-#endif
 
 extern bool              g_bShowFPS;
 extern double            g_gl_ms_per_frame;
@@ -240,14 +237,14 @@ int gamma_state;
 bool g_brightness_init;
 int   last_brightness;
 
-int                     g_cog_predictor_width;
+extern int                     g_cog_predictor_width;
 extern double           g_display_size_mm;
 
 
 // LIVE ETA OPTION
-bool                    g_bShowLiveETA;
-double                  g_defaultBoatSpeed;
-double                  g_defaultBoatSpeedUserUnit;
+extern bool                    g_bShowLiveETA;
+extern double                  g_defaultBoatSpeed;
+extern double                  g_defaultBoatSpeedUserUnit;
 
 extern int              g_nAIS_activity_timer;
 extern bool             g_bskew_comp;
@@ -948,7 +945,7 @@ void ChartCanvas::canvasChartsRefresh( int dbi_hint )
     if( !ChartData )
         return;
     
-    OCPNPlatform::ShowBusySpinner();
+    g_Platform->ShowBusySpinner();
     
     double old_scale = GetVPScale();
     InvalidateQuilt();
@@ -1014,8 +1011,6 @@ void ChartCanvas::canvasChartsRefresh( int dbi_hint )
     UpdateGPSCompassStatusBox( true );
     
     SetCursor( Qt::ArrowCursor );
-    
-    OCPNPlatform::HideBusySpinner();
 }
 
 

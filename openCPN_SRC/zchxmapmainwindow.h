@@ -31,18 +31,12 @@ public:
 
     void setApplicationName(const QString& name);
     QString applicationName() const {return mApplicationName;}
-
-    quint64 proceeId() const {return mProcessedID;}
-    void    setProcessID(quint64 id) {mProcessedID = id;}
-    quint64 getProcessIDFromSystem();
-    int     GetApplicationMemoryUse(void);
-    void    getMemoryStatus(int* total = 0, int* used = 0);
     void    setActionCheckSts(const QString& action, bool check);
     void    setActionEnableSts(const QString& action, bool check);
-    zchxConfig*     getConfigObj() {return mConfigObj;}
     bool    ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray );
     bool    UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName );
     void    startFrameTimer1();
+    ColorScheme GetColorScheme();
 
     void DoStackDown( ChartCanvas *cc );
     void DoStackUp( ChartCanvas *cc );
@@ -59,7 +53,6 @@ public:
 
 public slots:
     //工具
-    void    slotMemoryMonitor() {getMemoryStatus();}
     void    slotOpenSettingDlg();
     void    slotMeasureDistance();
     //导航
@@ -112,8 +105,6 @@ private:
     QMap<QString, QAction*>     mActionMap;
     //配置对话框
     zchxOptionsDlg*             mOptionDlg;
-    //配置文件
-    zchxConfig*                 mConfigObj;
     //定时事件
     QTimer                     *FrameTimer1;
     //地图数据库

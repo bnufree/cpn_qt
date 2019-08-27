@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -35,8 +35,8 @@ extern QString g_locale;
 extern OCPNPlatform     *g_Platform;
 extern bool g_bresponsive;
 
-QString s_locale;
-int g_default_font_size;
+extern QString s_locale;
+extern int g_default_font_size;
 
 FontMgr * FontMgr::instance = NULL;
 

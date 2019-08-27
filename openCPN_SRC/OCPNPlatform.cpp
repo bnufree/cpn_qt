@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  OpenCPN Platform specific support utilities
@@ -25,7 +25,7 @@
 #include "config.h"
 #include "dychart.h"
 #include "OCPNPlatform.h"
-#include "chart1.h"
+//#include "chart1.h"
 #include "cutil.h"
 #include "styles.h"
 //#include "navutil.h"
@@ -72,8 +72,6 @@ extern bool                      g_bUpgradeInProcess;
 
 extern int                       quitflag;
 extern zchxMapMainWindow                   *gFrame;
-
-extern zchxConfig                  *pConfig;
 
 extern ocpnStyle::StyleManager* g_StyleManager;
 
@@ -212,7 +210,7 @@ extern int                       options_lastPage;
 
 //  OCPN Platform implementation
 
-OCPNPlatform::OCPNPlatform() : mConfigObj(0)
+OCPNPlatform::OCPNPlatform() : mOldShape(Qt::ArrowCursor)
 {
     m_pt_per_pixel = 0;                 // cached value
     m_bdisableWindowsDisplayEnum = false;
@@ -220,7 +218,6 @@ OCPNPlatform::OCPNPlatform() : mConfigObj(0)
     m_displaySizeMM = QSize(0,0);
     m_displaySizeMMOverride = 0;
     initSystemInfo();
-    GetConfigObject();
 }
 
 OCPNPlatform::~OCPNPlatform()
@@ -404,12 +401,10 @@ bool OCPNPlatform::IsGLCapable()
 
 //      Setup default global options when config file is unavailable,
 //      as on initial startup after new install
-//      The global config object (pConfig) is available, so direct updates are also allowed
+//      The global config object (ZCHX_CFG_INS) is available, so direct updates are also allowed
 
 void OCPNPlatform::SetDefaultOptions( void )
 {
-    mConfigObj->setDefault(COMMON_SEC, SHOW_CHART_OUTLINES, true);
-#if 0
     //  General options, applied to all platforms
     g_bShowOutlines = true;
     
@@ -436,54 +431,33 @@ void OCPNPlatform::SetDefaultOptions( void )
     g_bPreserveScaleOnX = true;
     g_nAWDefault = 50;
     g_nAWMax = 1852;
-    gps_watchdog_timeout_ticks = GPS_TIMEOUT_SECONDS;
+    gps_watchdog_timeout_ticks = 6;
     
     
     // Initial S52/S57 options
-    if(pConfig)
-    {
-        pConfig->beginGroup("Settings/GlobalState");
-        pConfig->setValue("bShowS57Text", true );
-        pConfig->setValue("bShowS57ImportantTextOnly", false );
-        pConfig->setValue("nDisplayCategory", (int)(_DisCat)STANDARD );
-        pConfig->setValue("nSymbolStyle", (int)(_LUPname)PAPER_CHART );
-        pConfig->setValue("nBoundaryStyle", (int)(_LUPname)PLAIN_BOUNDARIES );
-        
-        pConfig->setValue("bShowSoundg", false );
-        pConfig->setValue("bShowMeta", false );
-        pConfig->setValue("bUseSCAMIN", true );
-        pConfig->setValue("bShowAtonText", false );
-        pConfig->setValue("bShowLightDescription", false );
-        pConfig->setValue("bExtendLightSectors", true );
-        pConfig->setValue("bDeClutterText", true );
-        pConfig->setValue("bShowNationalText", true );
-        
-        pConfig->setValue("S52_MAR_SAFETY_CONTOUR", 3 );
-        pConfig->setValue("S52_MAR_SHALLOW_CONTOUR", 2 );
-        pConfig->setValue("S52_MAR_DEEP_CONTOUR", 6 );
-        pConfig->setValue("S52_MAR_TWO_SHADES", 0  );
-        pConfig->setValue("S52_DEPTH_UNIT_SHOW", 1 );
-        pConfig->setValue("ZoomDetailFactorVector", 3 );
-        pConfig->endGroup();
-        
-     }
-    if(pConfig){
-        pConfig->beginGroup("PlugIns/chartdldr_pi.dll" );
-        pConfig->setValue("bEnabled", true );
-        pConfig->endGroup();
+    ZCHX_CFG_INS->beginGroup("Settings/GlobalState");
+    ZCHX_CFG_INS->WriteDefault("bShowS57Text", true );
+    ZCHX_CFG_INS->WriteDefault("bShowS57ImportantTextOnly", false );
+    ZCHX_CFG_INS->WriteDefault("nDisplayCategory", (int)(_DisCat)STANDARD );
+    ZCHX_CFG_INS->WriteDefault("nSymbolStyle", (int)(_LUPname)PAPER_CHART );
+    ZCHX_CFG_INS->WriteDefault("nBoundaryStyle", (int)(_LUPname)PLAIN_BOUNDARIES );
 
-        pConfig->beginGroup("/PlugIns/wmm_pi.dll"  );
-        pConfig->setValue("bEnabled", true );
-        pConfig->endGroup();
+    ZCHX_CFG_INS->WriteDefault("bShowSoundg", false );
+    ZCHX_CFG_INS->WriteDefault("bShowMeta", false );
+    ZCHX_CFG_INS->WriteDefault("bUseSCAMIN", true );
+    ZCHX_CFG_INS->WriteDefault("bShowAtonText", false );
+    ZCHX_CFG_INS->WriteDefault("bShowLightDescription", false );
+    ZCHX_CFG_INS->WriteDefault("bExtendLightSectors", true );
+    ZCHX_CFG_INS->WriteDefault("bDeClutterText", true );
+    ZCHX_CFG_INS->WriteDefault("bShowNationalText", true );
 
-        pConfig->beginGroup("/Settings/WMM"  );
-        pConfig->setValue ("ShowIcon", true );
-        pConfig->setValue ("ShowLiveIcon", true );
-        pConfig->endGroup();
-        
-    }
-#endif
-    
+    ZCHX_CFG_INS->WriteDefault("S52_MAR_SAFETY_CONTOUR", 3 );
+    ZCHX_CFG_INS->WriteDefault("S52_MAR_SHALLOW_CONTOUR", 2 );
+    ZCHX_CFG_INS->WriteDefault("S52_MAR_DEEP_CONTOUR", 6 );
+    ZCHX_CFG_INS->WriteDefault("S52_MAR_TWO_SHADES", 0  );
+    ZCHX_CFG_INS->WriteDefault("S52_DEPTH_UNIT_SHOW", 1 );
+    ZCHX_CFG_INS->WriteDefault("ZoomDetailFactorVector", 3 );
+    ZCHX_CFG_INS->endGroup();
 }
 
 
@@ -592,29 +566,19 @@ int OCPNPlatform::DoDirSelectorDialog( QWidget *parent, QString *file_spec, QStr
 }
 
 
-zchxConfig *OCPNPlatform::GetConfigObject()
-{
-    if(mConfigObj == 0)
-    {
-        mConfigObj = new zchxConfig( GetConfigFileName() );
-    }
-
-    return mConfigObj;
-}
-
-
 //--------------------------------------------------------------------------
 //      Platform Display Support
 //--------------------------------------------------------------------------
 
-QCursor OCPNPlatform::ShowBusySpinner( void )
+QCursor OCPNPlatform::ShowBusySpinner(  Qt::CursorShape old )
 {
+    mOldShape = old;
     return QCursor(Qt::BusyCursor);
 }
 
 QCursor OCPNPlatform::HideBusySpinner( void )
 {
-    return QCursor(Qt::ArrowCursor);
+    return QCursor(mOldShape);
 }
 
 double OCPNPlatform::GetDisplayDensityFactor()
@@ -629,7 +593,7 @@ double OCPNPlatform::GetDisplayDensityFactor()
 
 int OCPNPlatform::GetStatusBarFieldCount()
 {
-    return STAT_FIELD_COUNT;            // default
+    return 5;            // default
 
 }
 

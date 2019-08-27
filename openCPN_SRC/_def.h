@@ -403,18 +403,28 @@ public:
     static bool IsRightMouseDown(QMouseEvent* e);
     static bool IsRightMouseUp(QMouseEvent* e);
     static bool IsMouseUp(QMouseEvent* e);
-    static double toUsrDistance( double nm_distance, int unit  );
+    static double toUsrDistance( double nm_distance, int unit = -1 );
     static QString getUsrDistanceUnit( int unit = -1);
-    static double fromUsrDistance( double usr_distance, int unit );
-    static double toUsrSpeed( double kts_speed, int unit = -1 );
-    static double fromUsrSpeed( double usr_speed, int unit = -1 );
-    static QString getUsrSpeedUnit( int unit = -1 );
+    static double fromUsrDistance( double usr_distance, int unit = -1 );
+    static double toUsrSpeed( double kts_speed, int unit = -1  );
+    static double fromUsrSpeed( double usr_speed, int unit = -1  );
+    static QString getUsrSpeedUnit( int unit = -1  );
     static QString toSDMM(int NEflag, double a, bool hi_precision = true);
     static QString FormatDistanceAdaptive( double distance );
-    static QString formatAngle(double angle);
+    static QString formatAngle(double angle, double mag, bool show_mag, bool show_true);
     static double  fromDMM(QString sdms);
     static void AlphaBlending(int x, int y, int size_x, int size_y, float radius,
                               QColor color, unsigned char transparency );
+    static  qint64 getProcessIDFromSystem();
+    static  qint64 getApplicationMemoryUse();
+    static  void    getMemoryStatus(int* total = 0, int* used = 0);
+
+    static QString getAppDir();
+    static QString getDataDir();
+    static QString getPathSeparator();
+    static QString getPluginDir();
+    static QString getConfigFileName();
+    static float getChartScaleFactorExp( float scale_linear );
 
 
 };

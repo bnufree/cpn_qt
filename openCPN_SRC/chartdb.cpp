@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  Chart Database Object
@@ -340,7 +340,7 @@ void ChartDB::PurgeCacheUnusedCharts( double factor)
     {
         //    Check memory status to see if above limit
         int mem_used;
-        if(gFrame) gFrame->getMemoryStatus(0, &mem_used);
+        zchxFuncUtil::getMemoryStatus(0, &mem_used);
         int mem_limit = g_memCacheLimit * factor;
 
         int nl = pChartCache->count();       // max loop count, by definition
@@ -364,7 +364,7 @@ void ChartDB::PurgeCacheUnusedCharts( double factor)
                 break;
             }
 
-            if(gFrame) gFrame->getMemoryStatus(0, &mem_used);
+            zchxFuncUtil::getMemoryStatus(0, &mem_used);
             nl--;
         }
     }
@@ -1200,7 +1200,7 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
                 {
                     //    Check memory status to see if enough room to open another chart
                     int mem_used;
-                    if(gFrame) gFrame->getMemoryStatus(0, &mem_used);
+                    zchxFuncUtil::getMemoryStatus(0, &mem_used);
 
                     qDebug("OpenChartUsingCache, NOT in cache:   cache size: %d",  (int)pChartCache->count());
                     qDebug("   OpenChartUsingCache:  type %d  %s ", chart_type, ChartFullPath.toUtf8().data());
@@ -1216,7 +1216,7 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
                             // purge texture cache, really need memory here
                             DeleteCacheEntry(pce, true, msg);
 
-                            if(gFrame) gFrame->getMemoryStatus(0, &mem_used);
+                            zchxFuncUtil::getMemoryStatus(0, &mem_used);
                             if((mem_used < g_memCacheLimit * 8 / 10) || (pChartCache->count() <= 2))
                                 break;
 

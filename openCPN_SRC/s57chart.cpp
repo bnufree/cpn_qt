@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -105,7 +105,7 @@ extern SENCThreadManager *g_SencThreadManager;
 extern ColorScheme       global_color_scheme;
 extern int               g_nCPUCount;
 
-int                      g_SENC_LOD_pixels;
+extern int                      g_SENC_LOD_pixels;
 
 
 static jmp_buf env_ogrf;                    // the context saved by setjmp();
@@ -3815,11 +3815,11 @@ int s57chart::BuildSENCFile( const QString& FullPath000, const QString& SENCFile
         senc.setRefLocn(ref_lat, ref_lon);
         senc.SetLODMeters(m_LOD_meters);
 
-        OCPNPlatform::ShowBusySpinner();
+//        OCPNPlatform::ShowBusySpinner();
 
         int ret = senc.createSenc200( FullPath000, SENCFileName, b_progress );
 
-        OCPNPlatform::HideBusySpinner();
+//        OCPNPlatform::HideBusySpinner();
         
         if(ret == ERROR_INGESTING000)
             return BUILD_SENC_NOK_PERMANENT;

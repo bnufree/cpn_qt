@@ -1,5 +1,4 @@
-﻿#include "zchxmapmainwindow.h"
-#include <QApplication>
+﻿#include <QApplication>
 #include <QSharedMemory>
 #include <QMutex>
 #include <QFile>
@@ -9,8 +8,28 @@
 #include <iostream>
 #include <QTextCodec>
 #include <QMessageBox>
+#include <QDebug>
+#include "_def.h"
+#include "zchxmapmainwindow.h"
 
-zchxMapMainWindow* gFrame = 0;
+
+#undef QT_MESSAGELOG_FILE
+#undef QT_MESSAGELOG_LINE
+#undef QT_MESSAGELOG_FUNC
+#undef qDebug
+#undef qInfo
+#undef qWarning
+#undef qCritical
+#undef qFatal
+
+#define QT_MESSAGELOG_FILE __FILE__
+#define QT_MESSAGELOG_LINE __LINE__
+#define QT_MESSAGELOG_FUNC Q_FUNC_INFO
+#define qDebug QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE, QT_MESSAGELOG_FUNC).debug
+#define qInfo QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE, QT_MESSAGELOG_FUNC).info
+#define qWarning QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE, QT_MESSAGELOG_FUNC).warning
+#define qCritical QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE, QT_MESSAGELOG_FUNC).critical
+#define qFatal QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE, QT_MESSAGELOG_FUNC).fatal
 
 void logMessageOutputQt5(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
@@ -36,8 +55,13 @@ void logMessageOutputQt5(QtMsgType type, const QMessageLogContext &context, cons
     default:
         break;
     }
-    QString message = QString("[%1] %2 [%3] [%4] %5").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"))
-            .arg(text).arg(context.file).arg(context.line).arg(msg);
+    QString message = QString("[%1] %2 [%3] [%4] [%5] %6")
+            .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"))
+            .arg(text)
+            .arg(context.file)
+            .arg(context.function)
+            .arg(context.line)
+            .arg(msg);
 
     QDir dir(QApplication::applicationDirPath() + QString("/log"));
     if(!dir.exists())
@@ -84,6 +108,11 @@ int main(int argc, char *argv[])
         a.exit(1);
         return 0;
     }
+    QDateTime now = QDateTime::currentDateTime();
+    qDebug()<<"start ecids now at:"<<now.toString("yyyy-MM-dd hh:mm:ss");
+    int mem_used =0, mem_total = 0;
+    zchxFuncUtil::getMemoryStatus(& mem_total, &mem_used);
+    qDebug()<<"memory total:"<<mem_total<<"  app used:"<<mem_used;
 
 
     //make size as 9:16

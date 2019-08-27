@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  * Authors:  David Register
@@ -980,7 +980,7 @@ bool glTextureManager::ScheduleJob(glTexFactory* client, const QRect &rect, int 
         todo_list.insert(0, pt); // push to front as a stack
         if(bthread_debug){
             int mem_used;
-            gFrame->getMemoryStatus(0, &mem_used);
+            zchxFuncUtil::getMemoryStatus(0, &mem_used);
             qDebug( "Adding job: %08X  Job Count: %lu  mem_used %d\n", pt->ident, (unsigned long)todo_list.count(), mem_used);
         }
  
@@ -1222,7 +1222,7 @@ bool glTextureManager::FactoryCrunch(double factor)
     }
 
     int mem_used, mem_start;
-    gFrame->getMemoryStatus(0, &mem_used);
+    zchxFuncUtil::getMemoryStatus(0, &mem_used);
     double hysteresis = 0.90;
     mem_start = mem_used;
     ChartPathHashTexfactType::iterator it0;
@@ -1283,7 +1283,7 @@ bool glTextureManager::FactoryCrunch(double factor)
 
     ptf_oldest->FreeSome( g_memCacheLimit * factor * hysteresis);
 
-    gFrame->getMemoryStatus(0, &mem_used);
+    zchxFuncUtil::getMemoryStatus(0, &mem_used);
 
     bMemCrunch = ( g_memCacheLimit && ( (mem_used > (double)(g_memCacheLimit) * factor *hysteresis && 
                             mem_used > (double)(m_prevMemUsed) * factor *hysteresis)

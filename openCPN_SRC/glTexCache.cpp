@@ -516,7 +516,7 @@ bool glTexFactory::BuildTexture(glTextureDescriptor *ptd, int base_level, const 
     } else { // COMPRESSED_BUFFER_OK == status
         if (m_newCatalog) {
             // it's an empty catalog or it's not used, odds it's going to be slow
-            OCPNPlatform::ShowBusySpinner();
+//            OCPNPlatform::ShowBusySpinner();
             busy_shown = true;
             m_newCatalog = false;
         }
@@ -564,7 +564,7 @@ bool glTexFactory::BuildTexture(glTextureDescriptor *ptd, int base_level, const 
     }
 
     if(busy_shown)
-        OCPNPlatform::HideBusySpinner();
+//        OCPNPlatform::HideBusySpinner();
     
     return true;
 }

@@ -4,6 +4,10 @@
 #include <QSettings>
 #include "_def.h"
 
+#define START_LAT               33.358               //  Georgetown, SC (Ver 1.2.4)
+#define START_LON               -79.282
+
+
 //配置文件定义
 #define         COMMON_SEC                          "Settings"
 #define         USE_MODERN_UI5                      "UseModernUI5"
@@ -167,6 +171,7 @@
 #define         WMM_SEC                             "Settings/WMM"
 #define         SHOW_ICON                           "ShowIcon"
 #define         SHOW_LIVE_ICON                      "ShowLiveIcon"
+#define         CHART_NOT_RENDER_SCALE_FACTOR       "ChartNotRenderScaleFactor"
 
 
 //#define         OBJECT_FILTER_SEC                   "Settings/ObjectFilter"
@@ -432,17 +437,38 @@
 //canvasSizeX=1326
 //canvasSizeY=663
 
+#define     ZCHX_CFG_INS            zchxConfig::instance()
+#define CM93_ZOOM_FACTOR_MAX_RANGE 5
+
+class s52plib;
+
+enum ParamType
+{
+    PARAM_INT = 0,
+    PARAM_BOOL,
+    PARAM_DOUBLE,
+    PARAM_FLOAT,
+    PARAM_STRING,
+    PARAM_STRINGLIST,
+
+};
+
 class zchxConfig : public QSettings
 {
     Q_OBJECT
 public:
-    zchxConfig(const QString &LocalFileName);
+    ~zchxConfig();
+    static zchxConfig *instance();
     void setDefault(const QString & prefix,const QString &key, const QVariant &value);
     void setCustomValue(const QString & prefix,const QString & key, const QVariant & value);
     QVariant getCustomValue(const QString& prefix,const QString &keys, const QVariant &defaultValue = QVariant());
     int  getChildCount(const QString& prefix);
     QStringList getChildKeys(const QString& prefix);
     void LoadS57Config();
+    QVariant Read(const QString& key, ParamType type,  void* ret, const QVariant& val = QVariant());
+    void     Write(const QString& key, const QVariant& val){setValue(key, val);}
+    void     WriteDefault(const QString& key, const QVariant& val);
+    void     DeleteGroup(const QString& group);
 
 
     //    int LoadMyConfig();
@@ -453,15 +479,33 @@ public:
     //    virtual void SaveCanvasConfigs( );
     //    virtual void SaveConfigCanvas( canvasConfig *cc );
 
-    //    virtual bool UpdateChartDirs(ArrayOfCDI &dirarray);
-    //    virtual bool LoadChartDirArray(ArrayOfCDI &ChartDirArray);
-    //    virtual void UpdateSettings();
+        virtual bool UpdateChartDirs(ArrayOfCDI &dirarray);
+        virtual bool LoadChartDirArray(ArrayOfCDI &ChartDirArray);
+        virtual void UpdateSettings();
     //    bool LoadLayers(QString &path);
-    //    int LoadMyConfigRaw( bool bAsTemplate = false );
+        int LoadMyConfigRaw( bool bAsTemplate = false );
     //    virtual void UpdateNavObj();
+    int                    loadMyConfig();
+
 private:
-    void                    initDefaultValue();
     bool                    m_bSkipChangeSetUpdate;
+    QString                 mPreFix;
+    zchxConfig(const QString &LocalFileName);
+    QString                m_sNavObjSetFile;
+    QString                m_sNavObjSetChangesFile;
+private:
+    static zchxConfig     *minstance;
+
+    class MGarbage // 它的唯一工作就是在析构函数中删除CSingleton的实例
+    {
+    public:
+        ~MGarbage()
+        {
+            if (zchxConfig::minstance)
+                delete zchxConfig::minstance;
+        }
+    };
+    static MGarbage Garbage; // 定义一个静态成员，在程序结束时，系统会调用它的析构函数
 };
 
 #endif // ZCHXCONFIG_H

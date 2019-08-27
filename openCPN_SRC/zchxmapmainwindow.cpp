@@ -18,131 +18,128 @@
 #include "styles.h"
 #include <QVBoxLayout>
 
-ChartDB                   *ChartData = NULL;
+
+extern      ChartDB                     *ChartData;
+extern      QThread                     *g_Main_thread;
 arrayofCanvasPtr            g_canvasArray;
-ColorScheme               global_color_scheme = GLOBAL_COLOR_SCHEME_DAY;
-static int                Usercolortable_index;
-static wxArrayPtrVoid     *UserColorTableArray;
-static wxArrayPtrVoid     *UserColourHashTableArray;
-static QColorHashMap     *pcurrent_user_color_hash;
-SENCThreadManager *g_SencThreadManager;
-s52plib                   *ps52plib;
-QString                  g_csv_locn;
-OCPNPlatform                *g_Platform;
-QString                  g_SENCPrefix;
-QString                  g_UserPresLibData;
-S57ClassRegistrar         *g_poRegistrar;
-s57RegistrarMgr           *m_pRegistrarMan;
-zchxConfig                *pConfig;
+extern      float                       g_compass_scalefactor;
+extern      int                         g_GUIScaleFactor;
+extern      OCPNPlatform                *g_Platform;
+extern      ColorScheme                 global_color_scheme;
+
+
+static wxArrayPtrVoid       *UserColorTableArray;
+static wxArrayPtrVoid       *UserColourHashTableArray;
+static QColorHashMap        *pcurrent_user_color_hash;
+SENCThreadManager           *g_SencThreadManager;
+extern s52plib                   *ps52plib;
+extern QString                  g_csv_locn;
+
+extern QString                  g_SENCPrefix;
+extern QString                  g_UserPresLibData;
+extern S57ClassRegistrar         *g_poRegistrar;
+s57RegistrarMgr           *m_pRegistrarMan = 0;
 extern zchxMapMainWindow*  gFrame;
-int                       g_nDepthUnitDisplay;
+extern int                       g_nDepthUnitDisplay;
 
-int                       g_nCacheLimit;
-int                       g_memCacheLimit;
-ThumbWin                  *pthumbwin;
-bool                      g_bopengl;
-bool                      g_fog_overzoom;
-double                    g_overzoom_emphasis_base;
-bool                      g_oz_vector_scale;
+extern int                       g_nCacheLimit;
+extern int                       g_memCacheLimit;
+extern ThumbWin                  *pthumbwin;
+extern bool                      g_bopengl;
+extern bool                      g_fog_overzoom;
+extern double                    g_overzoom_emphasis_base;
+extern bool                      g_oz_vector_scale;
 
-QString                  ChartListFileName;
-QString                  AISTargetNameFileName;
-QString                  gWorldMapLocation, gDefaultWorldMapLocation;
-QString                  *pInit_Chart_Dir;
-QString                  g_VisibleLayers;
-QString                  g_InvisibleLayers;
-QString                  g_VisiNameinLayers;
-QString                  g_InVisiNameinLayers;
+extern QString                  ChartListFileName;
+extern QString                  AISTargetNameFileName;
+extern QString                  gWorldMapLocation, gDefaultWorldMapLocation;
+extern bool            g_bShowStatusBar;
+extern bool            g_bShowMenuBar;
+extern bool            g_bShowCompassWin;
+extern bool            g_bShowChartBar;
+extern double          g_display_size_mm;
+extern double          g_config_display_size_mm;
+extern bool            g_config_display_size_manual;
+extern bool            g_bskew_comp;
+extern bool            g_bresponsive;
+extern bool            g_bAutoHideToolbar;
+extern int             g_nAutoHideToolbar;
+extern bool            g_bsmoothpanzoom;
+extern bool            g_bShowTrue;
+extern bool            g_bShowMag;
+extern int             g_iSDMMFormat;
+extern int             g_iDistanceFormat;
+extern int             g_iSpeedFormat;
+extern bool            g_bEnableZoomToCursor;
+extern int             g_chart_zoom_modifier;
+extern int             g_chart_zoom_modifier_vector;
 
-bool            g_bShowStatusBar;
-bool            g_bShowMenuBar;
-bool            g_bShowCompassWin;
-bool            g_bShowChartBar;
-double          g_display_size_mm;
-double          g_config_display_size_mm;
-bool            g_config_display_size_manual;
-bool            g_bskew_comp;
-bool            g_bresponsive;
-bool            g_bAutoHideToolbar;
-int             g_nAutoHideToolbar;
-bool            g_bsmoothpanzoom;
-bool            g_bShowTrue;
-bool            g_bShowMag;
-int             g_iSDMMFormat;
-int             g_iDistanceFormat;
-int             g_iSpeedFormat;
-bool            g_bEnableZoomToCursor;
-int             g_chart_zoom_modifier;
-int             g_chart_zoom_modifier_vector;
-int             g_GUIScaleFactor;
-float                     g_compass_scalefactor;
-int             g_ChartScaleFactor;
-int             g_ShipScaleFactor;
-float           g_ChartScaleFactorExp;
-float           g_ShipScaleFactorExp;
-int             g_cm93_zoom_factor;
-bool                      g_bInlandEcdis;
+
+extern int             g_ChartScaleFactor;
+extern int             g_ShipScaleFactor;
+extern float           g_ChartScaleFactorExp;
+extern float           g_ShipScaleFactorExp;
+extern int             g_cm93_zoom_factor;
+extern bool                      g_bInlandEcdis;
 bool                      g_b_assume_azerty;
-bool                      g_benable_rotate;
-bool                      g_b_overzoom_x = true; // Allow high overzoom
-ChartDummy                *pDummyChart;
+extern bool                      g_benable_rotate;
+extern bool                      g_b_overzoom_x; // Allow high overzoom
+ChartDummy                *pDummyChart = 0;
 int               g_sticky_chart;
-double                    gLat, gLon, gCog, gSog, gHdt, gHdm, gVar;
-double                    g_UserVar;
-double                    vLat, vLon;
-double                    initial_scale_ppm, initial_rotation;
-zchxConfig*      g_config;
-bool                      g_bDebugS57;
-bool                      g_bGDAL_Debug;
-double                    g_VPRotate; // Viewport rotation angle, used on "Course Up" mode
-bool                      g_bCourseUp;
-int                       g_COGAvgSec = 15; // COG average period (sec.) for Course Up Mode
-double                    g_COGAvg;
-bool                      g_bLookAhead;
-bool                      g_bFirstRun;
-bool                      g_bUpgradeInProcess;
-float                     g_selection_radius_mm = 2.0;
-float                     g_selection_radius_touch_mm = 10.0;
+extern double                    gLat, gLon, gCog, gHdt, gHdm;
+double gSog, gVar;
+extern double                    g_UserVar;
+extern double                    vLat, vLon;
+extern double                    initial_scale_ppm, initial_rotation;
+extern bool                      g_bDebugS57;
+extern bool                      g_bGDAL_Debug;
+extern double                    g_VPRotate; // Viewport rotation angle, used on "Course Up" mode
+extern bool                      g_bCourseUp;
+extern int                       g_COGAvgSec; // COG average period (sec.) for Course Up Mode
+extern double                    g_COGAvg;
+extern bool                      g_bLookAhead;
+extern bool                      g_bFirstRun;
+extern bool                      g_bUpgradeInProcess;
+extern float                     g_selection_radius_mm;
+extern float                     g_selection_radius_touch_mm;
 
-int                       g_maintoolbar_x;
-int                       g_maintoolbar_y;
-long                      g_maintoolbar_orient;
-float                     g_toolbar_scalefactor;
-QThread                   *g_Main_thread = 0;
-int                     g_nCPUCount;
-bool                        g_bSoftwareGL;
-bool                        g_bGLexpert;
-ChartCanvas      *g_focusCanvas;
-ChartCanvas      *g_overlayCanvas;
+extern int                       g_maintoolbar_x;
+extern int                       g_maintoolbar_y;
+extern long                      g_maintoolbar_orient;
+extern float                     g_toolbar_scalefactor;
+
+extern int                     g_nCPUCount;
+extern bool                        g_bSoftwareGL;
+extern bool                        g_bGLexpert;
+extern ChartCanvas      *g_focusCanvas;
+extern ChartCanvas      *g_overlayCanvas;
 bool             b_inCompressAllCharts;
-unsigned int     g_canvasConfig;
-bool                      g_bcompression_wait;
-QString                  g_locale;
-QString                  g_localeOverride;
-bool             g_btouch;
-bool                      g_bdisable_opengl;
+extern unsigned int     g_canvasConfig;
+extern bool                      g_bcompression_wait;
+extern QString                  g_locale;
+extern QString                  g_localeOverride;
+extern bool             g_btouch;
+extern bool                      g_bdisable_opengl;
 
-ChartGroupArray           *g_pGroupArray;
-int                       g_GroupIndex;
-bool                      g_bNeedDBUpdate;
-bool                      g_bPreserveScaleOnX;
-bool                      g_bFullscreen;
-bool                      g_bFullScreenQuilt = true;
-bool                      g_bQuiltEnable;
-bool                      g_bQuiltStart;
-bool                      g_bquiting;
-ocpnStyle::StyleManager*  g_StyleManager;
-double                    g_ChartNotRenderScaleFactor;
+extern ChartGroupArray           *g_pGroupArray;
+extern int                       g_GroupIndex;
+extern bool                      g_bNeedDBUpdate;
+extern bool                      g_bPreserveScaleOnX;
+extern bool                      g_bFullscreen;
+extern bool                      g_bFullScreenQuilt;
+extern bool                      g_bQuiltEnable;
+extern bool                      g_bQuiltStart;
+extern bool                      g_bquiting;
+extern ocpnStyle::StyleManager*  g_StyleManager;
+extern double                    g_ChartNotRenderScaleFactor;
 std::vector<int>               g_quilt_noshow_index_array;
-int                       g_nbrightness = 100;
-bool                      bDBUpdateInProgress;
-bool                      bGPSValid;
-int                       g_SatsInView;
-bool                      g_bSatValid;
-
-bool              g_bSpaceDropMark;
-
-
+extern int                       g_nbrightness;
+extern bool                      bDBUpdateInProgress;
+extern bool                      bGPSValid;
+extern int                       g_SatsInView;
+extern bool                      g_bSatValid;
+extern bool                        g_bSpaceDropMark;
+ThumbWin     *pthumbwin = 0;
 
 
 
@@ -152,15 +149,13 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent) :
     mChartDB(/*new ChartDB()*/0),
     mOptionDlg(0),
     FrameTimer1(0),
-    mPlatForm(/*new OCPNPlatform*/0),
-    mConfigObj(0)
+    mPlatForm(/*new OCPNPlatform*/0)
 {
 
     ui->setupUi(this);
     ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
     mDisplayWidget = new ChartCanvas(this, 0);
     ui->centralwidget->layout()->addWidget(mDisplayWidget);
-    if(mPlatForm)mConfigObj = mPlatForm->GetConfigObject();
     ChartData = mChartDB;
     g_Main_thread = QThread::currentThread();
     //工具
@@ -227,86 +222,6 @@ void zchxMapMainWindow::setApplicationName(const QString &name)
     mApplicationName = name;
 }
 
-quint64 zchxMapMainWindow::getProcessIDFromSystem()
-{
-#if 1
-    return GetCurrentProcessId();
-#else
-    quint64 id = 0;
-    HANDLE    hToolHelp32Snapshot;
-    hToolHelp32Snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    PROCESSENTRY32    pe = { sizeof(PROCESSENTRY32) };
-    BOOL  isSuccess = Process32First(hToolHelp32Snapshot, &pe);
-    while (isSuccess)
-    {
-        size_t len = WideCharToMultiByte(CP_ACP, 0, pe.szExeFile, wcslen(pe.szExeFile), NULL, 0, NULL, NULL);
-        char *des = (char *)malloc(sizeof(char) * (len + 1));
-        WideCharToMultiByte(CP_ACP, 0, pe.szExeFile, wcslen(pe.szExeFile), des, len, NULL, NULL);
-        des[len] = '\0';
-        if (!strcmp(des, mApplicationName.toStdString().c_str()))
-        {
-            free(des);
-            id = pe.th32ProcessID;
-            break;
-        }
-        free(des);
-        isSuccess = Process32Next(hToolHelp32Snapshot, &pe);
-    }
-    CloseHandle(hToolHelp32Snapshot);
-    return id;
-#endif
-}
-
-int zchxMapMainWindow::GetApplicationMemoryUse( void )
-{
-    int memsize = -1;
-#if 0
-    if(mApplicationName.size() == 0 && mProcessedID == 0)
-    {
-        qDebug()<<"application memsize cannot get for name not set yet.";
-        return memsize;
-    }
-    if(mProcessedID == 0)
-    {
-        //先获取当前的进程号
-        qDebug()<<"now start to get process id of application name:"<<mApplicationName;
-        quint64 id = getProcessIDFromSystem();
-        qDebug()<<"get process id from system is:"<<id;
-        if(id <= 0) return memsize;
-        mProcessedID = id;
-    }
-
-
-    HANDLE hProcess/* = GetCurrentProcess()*/;
-    hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, processID );
-#else
-    HANDLE hProcess = GetCurrentProcess();
-#endif
-    if( NULL == hProcess ) return 0;
-    PROCESS_MEMORY_COUNTERS pmc;
-
-    if( GetProcessMemoryInfo( hProcess, &pmc, sizeof( pmc ) ) ) {
-        memsize = pmc.WorkingSetSize / 1024;
-    }
-
-    CloseHandle( hProcess );
-    return memsize;
-}
-
-void  zchxMapMainWindow::getMemoryStatus(int* total, int* used)
-{
-    mMemUsed = GetApplicationMemoryUse();
-    if(mMemTotal == 0)
-    {
-        MEMORYSTATUSEX statex;
-        statex.dwLength = sizeof( statex );
-        GlobalMemoryStatusEx( &statex );
-        mMemTotal = statex.ullTotalPhys / 1024;
-    }
-    if(total) *total = mMemTotal;
-    if(used) *used = mMemUsed;
-    qDebug()<<"memory total:"<<mMemTotal<<"  app used:"<<mMemUsed;
-}
 
 void zchxMapMainWindow::slotOpenSettingDlg()
 {
@@ -1456,7 +1371,7 @@ void LoadS57()
             if( !strncmp( pOLE->OBJLName, "COALNE", 6 ) ) pOLE->nViz = 1;
         }
 
-        pConfig->LoadS57Config();
+        ZCHX_CFG_INS->LoadS57Config();
         ps52plib->SetPLIBColorScheme( global_color_scheme );
 
         if(gFrame->GetPrimaryCanvas() )
@@ -1494,5 +1409,10 @@ void zchxMapMainWindow::InvalidateAllGL()
             cc->Refresh();
         }
     }
+}
+
+ColorScheme zchxMapMainWindow::GetColorScheme()
+{
+    return global_color_scheme;
 }
 
