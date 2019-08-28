@@ -1,4 +1,4 @@
-﻿#include "zchxopengloptiondlg.h"
+#include "zchxopengloptiondlg.h"
 #include "ui_zchxopengloptiondlg.h"
 #include "_def.h"
 #include <QDir>
@@ -7,6 +7,7 @@
 //#include "glTextureManager.h"
 #include "GL/gl.h"
 #include "OCPNPlatform.h"
+#include <QDebug>
 
 
 extern      zchxGLOptions                       g_GLOptions;
@@ -14,17 +15,18 @@ extern      bool                                g_bGlExpert;
 extern      bool                                g_bOpenGL;
 /*extern*/      GLuint                              g_raster_format = GL_RGB;
 extern      bool                                g_bShowFPS;
+extern      zchxMapMainWindow                   *gFrame;
 //extern      glTextureManager                    *g_glTextureManager;
 
-zchxOpenGlOptionDlg::zchxOpenGlOptionDlg(zchxMapMainWindow* frame, QWidget *parent) :
+zchxOpenGlOptionDlg::zchxOpenGlOptionDlg(QWidget *parent) :
     QDialog(parent),
-    mMainWindow(frame),
     m_brebuild_cache(false),
     ui(new Ui::zchxOpenGlOptionDlg)
 {
     ui->setupUi(this);
+//    setAttribute(Qt::WA_DeleteOnClose);
     this->setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
-    Q_ASSERT(mMainWindow);
+    qDebug()<<"frame:"<<gFrame;
 
     if(g_bGlExpert)
     {
@@ -197,6 +199,7 @@ QString zchxOpenGlOptionDlg::getCachePath() const
 zchxOpenGlOptionDlg::~zchxOpenGlOptionDlg()
 {
     delete ui;
+    qDebug()<<"!!";
 }
 
 void zchxOpenGlOptionDlg::on_OK_clicked()

@@ -24,7 +24,6 @@
 #ifndef __CHINFOWIN_H__
 #define __CHINFOWIN_H__
 
-#include "chart1.h"
 #include <QWidget>
 #include "_def.h"
 #include <QLabel>

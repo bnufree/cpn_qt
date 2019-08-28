@@ -77,7 +77,7 @@ extern bool GetDoubleAttr( S57Obj *obj, const char *AttrName, double &val );
 void PLIBDrawGLThickLine( float x1, float y1, float x2, float y2, QPen pen, bool b_hiqual );
 
 void LoadS57Config();
-extern QColor GetGlobalColor( QString str);
+extern QColor GetGlobalColor(const QString& str);
 
 
 //  S52_TextC Implementation

@@ -28,15 +28,8 @@
 #define __CHCANV_H__
 
 #include "bbox.h"
-
-//#include "chart1.h"                 // for enum types
 #include "ocpndc.h"
-//#include "undo.h"
-
 #include "ocpCursor.h"
-//#include "GoToPositionDialog.h"
-#include "DetailSlider.h"
-//#include "RolloverWin.h"
 #include "timers.h"
 #include "emboss_data.h"
 #include "S57Sector.h"
@@ -45,11 +38,13 @@
 #include <QPainter>.
 #include <QResizeEvent>
 #include "bitmap.h"
+#include <QWidget>
+#include <QMenu>
 
 
-//class wxGLContext;
+
 class GSHHSChart;
-class IDX_entry;
+//class IDX_entry;
 class ocpnCompass;
 
 //    Useful static routines
@@ -75,7 +70,6 @@ int SetScreenBrightness(int brightness);
       class wxBoundingBox;
       class ocpnBitmap;
       class WVSChart;
-//      class MyFrame;
       class ChartBaseBSB;
       class ChartBase;
       class S57ObjectTree;
@@ -85,7 +79,6 @@ int SetScreenBrightness(int brightness);
       class PixelCache;
       class ChInfoWin;
       class glChartCanvas;
-//      class CanvasMenuHandler;
       class ChartStack;
       class Piano;
       class canvasConfig;
@@ -619,17 +612,13 @@ private:
 
 
       ColorScheme m_cs;
-      
-//      TimedPopupWin *m_pBrightPopup;
+
       
       ViewPort    m_cache_vp;
       wxBitmap    *m_prot_bm;
       QPoint     m_roffset;
 
       bool        m_b_rot_hidef;
-
-      SelectItem  *m_pRolloverRouteSeg;
-      SelectItem  *m_pRolloverTrackSeg;
 
       double      m_wheel_lat, m_wheel_lon;
       int         m_wheel_x,m_wheel_y;
@@ -642,11 +631,9 @@ private:
       int         m_brightmod;
 
       bool        m_bzooming, m_bzooming_to_cursor;
-      IDX_entry   *m_pIDXCandidate;
-
-//#ifdef ocpnUSE_GL
+//      IDX_entry   *m_pIDXCandidate;
       glChartCanvas *m_glcc;
-//#endif
+
 
       //Smooth movement member variables
       zchxPoint      m_pan_drag;
@@ -714,7 +701,7 @@ private:
       QString      m_alertString;
 };
 
-typedef QList<ChartCanvas*> arrayofCanvasPtr;
+//typedef QList<ChartCanvas*> arrayofCanvasPtr;
 
 // CUSTOMIZATION - FORMAT MINUTES
 

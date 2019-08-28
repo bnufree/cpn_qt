@@ -8,6 +8,8 @@
 #include <QPolygonF>
 #include <QImage>
 #include <QMouseEvent>
+#include <QDebug>
+#include <QDateTime>
 /*  menu and toolbar item kinds */
 enum wxItemKind
 {

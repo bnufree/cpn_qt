@@ -10,16 +10,19 @@
 namespace Ui {
 class zchxMapMainWindow;
 }
+class ChartCanvas;
+class ChartBase;
+#if 0
 class QTimer;
 class zchxOptionsDlg;
 class zchxConfig;
 class ChartCanvas;
-class ChartBase;
 class ChartDB;
 class OCPNPlatform;
+#endif
 
 
-QColor GetGlobalColor(QString colorName);
+QColor GetGlobalColor(const QString& colorName);
 
 class zchxMapMainWindow : public QMainWindow
 {
@@ -33,17 +36,13 @@ public:
     bool    ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray );
     bool    UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName );
     ColorScheme GetColorScheme();
-
-    void DoStackDown( ChartCanvas *cc );
-    void DoStackUp( ChartCanvas *cc );
-    void DoStackDelta( ChartCanvas *cc, int direction );
     void ToggleColorScheme();
     bool DoChartUpdate( void );
     void UpdateRotationState( double rotation );
     void SetChartUpdatePeriod();
     ChartCanvas *GetPrimaryCanvas();
 //    QWidget* getGlChartCanvas();
-    double GetBestVPScale( ChartBase *pchart );
+//    double GetBestVPScale( ChartBase *pchart );
 
 public slots:
     //工具
@@ -81,6 +80,7 @@ public slots:
 
 private:
     QAction* addCustomAction(QMenu* menu, const QString &text, const QObject *receiver, const char* slot, bool check = false, const QVariant& data = QVariant());
+    void     initEcdis();
 private slots:
     void    slotOnFrameTimer1Out();
 

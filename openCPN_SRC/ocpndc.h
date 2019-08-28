@@ -91,7 +91,7 @@ public:
 
      void DrawBitmap(const wxBitmap &bitmap, int x, int y, bool usemask);
 
-     void DrawText(const QString &text, int x, int y);
+     void drawText(const QString &text, int x, int y);
      void GetTextExtent(const QString &string, int *w, int *h, int *descent = NULL,
                         int *externalLeading = NULL, QFont *font = NULL);
 

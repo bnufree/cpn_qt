@@ -53,6 +53,7 @@
 #include "chcanv.h"
 #include "SencManager.h"
 #include <QDebug>
+#include "chcanv.h"
 
 #ifdef __MSVC__
 #define _CRTDBG_MAP_ALLOC
@@ -106,6 +107,7 @@ extern ColorScheme       global_color_scheme;
 extern int               g_nCPUCount;
 
 extern int                      g_SENC_LOD_pixels;
+extern ChartCanvas                 *gMainCanvas;
 
 
 static jmp_buf env_ogrf;                    // the context saved by setjmp();
@@ -3870,7 +3872,7 @@ int s57chart::BuildRAZFromSENCFile( const QString& FullPath )
     //    Create a hash map of VE_Element pointers as a chart class member
     int n_ve_elements = VEs.size();
 
-    double scale = gFrame->GetBestVPScale(this);
+    double scale = gMainCanvas->GetBestVPScale(this);
     int nativescale = GetNativeScale();
 
     for( int i = 0; i < n_ve_elements; i++ ) {

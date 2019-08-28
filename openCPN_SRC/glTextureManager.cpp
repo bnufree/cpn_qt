@@ -52,9 +52,9 @@
 #include <QProgressDialog>
 
 
-typedef QList<ChartCanvas*>    arrayofCanvasPtr;
+//typedef         QList<ChartCanvas*>     arrayofCanvasPtr;
 
-extern double           gLat, gLon, gCog, gSog, gHdt;
+extern double                   gLat, gLon, gCog, gSog, gHdt;
 
 extern int g_mipmap_max_level;
 extern GLuint g_raster_format;
@@ -69,7 +69,7 @@ extern int              g_nCPUCount;
 
 extern bool             b_inCompressAllCharts;
 extern zchxMapMainWindow         *gFrame;
-extern arrayofCanvasPtr  g_canvasArray;
+//extern arrayofCanvasPtr  g_canvasArray;
 
 extern OCPNPlatform *g_Platform;
 extern ColorScheme global_color_scheme;
@@ -81,7 +81,7 @@ extern QThread*         g_Main_thread;
 bool bthread_debug;
 bool g_throttle_squish;
 
-glTextureManager   *g_glTextureManager;
+glTextureManager   *g_glTextureManager = 0;
 
 #include "ssl/sha1.h"
 
@@ -1189,8 +1189,8 @@ bool glTextureManager::TextureCrunch(double factor)
         if(!bGLMemCrunch) break;
 
                // For each canvas
-        for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
-            ChartCanvas *cc = g_canvasArray.at(i);
+//        for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
+            ChartCanvas *cc = /*g_canvasArray.at(i)*/gFrame->GetPrimaryCanvas();
             if(cc){ 
                 if( cc->GetVP().b_quilt )          // quilted
                 {
@@ -1207,7 +1207,7 @@ bool glTextureManager::TextureCrunch(double factor)
                     }
                 }
             }
-        }
+//        }
     }
     
     return true;
@@ -1249,8 +1249,8 @@ bool glTextureManager::FactoryCrunch(double factor)
         // and ocpn will eventually run out of file descriptors
         
         // For each canvas
-        for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
-            ChartCanvas *cc = g_canvasArray.at(i);
+//        for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
+            ChartCanvas *cc = /*g_canvasArray.at(i);*/gFrame->GetPrimaryCanvas();
             if(cc){
                 
                 if( cc->GetVP().b_quilt )          // quilted
@@ -1274,7 +1274,7 @@ bool glTextureManager::FactoryCrunch(double factor)
                     }
                 }
             }
-        }
+//        }
     }
                     
     //      Found one?

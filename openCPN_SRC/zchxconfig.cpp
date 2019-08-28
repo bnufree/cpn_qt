@@ -374,11 +374,13 @@ zchxConfig *zchxConfig::instance()
     return minstance;
 }
 
-zchxConfig::zchxConfig( const QString &LocalFileName ) : QSettings(LocalFileName)
+zchxConfig::zchxConfig( const QString &LocalFileName ) : QSettings(LocalFileName, QSettings::IniFormat)
 {
+    mInitFlag = false;
     this->setIniCodec(QTextCodec::codecForName("UTF-8"));
     m_bSkipChangeSetUpdate = false;
     loadMyConfig();
+
 }
 
 /*-------------------------------------------
@@ -386,7 +388,7 @@ zchxConfig::zchxConfig( const QString &LocalFileName ) : QSettings(LocalFileName
 ---------------------------------------------*/
 void zchxConfig::setDefault(const QString & prefix,const QString &key, const QVariant &def)
 {
-    beginGroup(prefix);
+    BeginGroup(prefix);
     if(value(key).toString().isEmpty())
     {
         setValue(key, def);
@@ -407,7 +409,7 @@ void zchxConfig::WriteDefault(const QString &key, const QVariant &def)
 ---------------------------------------------*/
 void zchxConfig::setCustomValue(const QString & prefix,const QString & key, const QVariant & value)
 {
-    beginGroup(prefix);
+    BeginGroup(prefix);
     {
         setValue(key, value);
     }
@@ -429,7 +431,7 @@ int  zchxConfig::getChildCount(const QString& prefix)
 QStringList zchxConfig::getChildKeys(const QString& prefix)
 {
     QStringList keys;
-    beginGroup(prefix);
+    BeginGroup(prefix);
     keys = childKeys();
     endGroup();
     return keys;
@@ -452,6 +454,9 @@ QStringList zchxConfig::getChildKeys(const QString& prefix)
 
 int zchxConfig::loadMyConfig()
 {
+    {
+        qDebug()<<"all keys:"<<endl<<allKeys();
+    }
     g_useMUI = true;
     g_TalkerIdText = ("EC");
     g_maxWPNameLength = 6;
@@ -606,6 +611,7 @@ int zchxConfig::loadMyConfig()
             global_color_scheme = GLOBAL_COLOR_SCHEME_DUSK; //startup in duskmode if inlandEcdis
     }
 
+    if(!mInitFlag) mInitFlag = true;
     return ret_Val;
 }
 
@@ -628,8 +634,12 @@ QVariant zchxConfig::Read(const QString &key, ParamType type, void *ret, const Q
             *(float*)ret = val.toFloat();
             break;
         case PARAM_STRING:
-            *(QString*)ret = val.toString();
+        {
+            QString res = val.toString();
+            res.replace("\\", "/");
+            *(QString*)ret = res;
             break;
+        }
         case PARAM_STRINGLIST:
             *(QStringList*)ret = val.toStringList();
             break;
@@ -647,7 +657,7 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     int read_int;
     QString val;
 
-    beginGroup("Settings" );
+    BeginGroup("Settings" );
 
     Read("LastAppliedTemplate", PARAM_STRING, &g_lastAppliedTemplateGUID );
     // Some undocumented values
@@ -890,7 +900,7 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
 
     endGroup();
 
-    beginGroup("Settings/GlobalState"  );
+    BeginGroup("Settings/GlobalState"  );
 
     Read("FrameWinX", PARAM_INT, &g_nframewin_x );
     Read("FrameWinY", PARAM_INT, &g_nframewin_y );
@@ -920,7 +930,7 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
 
     //    AIS
     QString s;
-    beginGroup("Settings/AIS"  );
+    BeginGroup("Settings/AIS"  );
 
     g_bUseOnlyConfirmedAISName = false;
     Read("UseOnlyConfirmedAISName",  PARAM_BOOL, &g_bUseOnlyConfirmedAISName, false );
@@ -999,7 +1009,7 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
 
     QString strpres("PresentationLibraryData");
     QString valpres;
-    beginGroup("Directories");
+    BeginGroup("Directories");
     Read( strpres, PARAM_STRING, &valpres );       // Get the File name
     if(!valpres.isEmpty())
         g_UserPresLibData = valpres;
@@ -1014,8 +1024,9 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     Read("InitChartDir", PARAM_STRING, &vald );    // Get the Directory name
 
     QString dirnamed( vald );
+    if(!pInit_Chart_Dir) pInit_Chart_Dir = new QString();
     if( !dirnamed.isEmpty() ) {
-        if( pInit_Chart_Dir->isEmpty() )   // on second pass, don't overwrite
+        if(pInit_Chart_Dir &&  pInit_Chart_Dir->isEmpty() )   // on second pass, don't overwrite
         {
             pInit_Chart_Dir->clear();
             pInit_Chart_Dir->append(vald );
@@ -1028,7 +1039,7 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     endGroup();
 
 
-    beginGroup("Settings/GlobalState");
+    BeginGroup("Settings/GlobalState");
 
     Read("nColorScheme", PARAM_INT, &read_int, 1 );
     global_color_scheme = (ColorScheme) read_int;
@@ -1102,7 +1113,7 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     //    Fonts
 
     //  Load the persistent Auxiliary Font descriptor Keys
-    beginGroup("Settings/AuxFontKeys" );
+    BeginGroup("Settings/AuxFontKeys" );
     QStringList list = childKeys();
     for( int i=0; i<list.size(); i++ ) {
         QString strk = list[i];
@@ -1116,7 +1127,7 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     }
     endGroup();;
 
-    beginGroup("Settings/QTFonts" );
+    BeginGroup("Settings/QTFonts" );
 
     QString str;
     QStringList deleteList;
@@ -1150,7 +1161,7 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     deleteList.clear();
 
     //  Tide/Current Data Sources
-    beginGroup("TideCurrentDataSources" );
+    BeginGroup("TideCurrentDataSources" );
     list = childKeys();
     if( list.size() > 0 ) {
         TideCurrentDataSet.clear();
@@ -1168,7 +1179,7 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     //     //    Multicanvas Settings
     //     LoadCanvasConfigs();
 
-    beginGroup("Settings/Others");
+    BeginGroup("Settings/Others");
 
     // Radar rings
     Read("RadarRingsNumberVisible", PARAM_STRING, &val );
@@ -1255,7 +1266,7 @@ void zchxConfig::LoadS57Config()
 {
 #if 0
     if( !ps52plib )  return;
-    beginGroup("Settings/GlobalState");
+    BeginGroup("Settings/GlobalState");
     ps52plib->SetShowS57Text( Read("bShowS57Text", PARAM_BOOL, 0, 0).toBool() );
     ps52plib->SetShowS57ImportantTextOnly(Read("bShowS57ImportantTextOnly", PARAM_BOOL, 0, 0).toBool() );
     ps52plib->SetShowLdisText(Read("bShowLightDescription", PARAM_BOOL, 0, 0).toBool());
@@ -1297,7 +1308,7 @@ void zchxConfig::LoadS57Config()
     int iOBJMax = getChildCount(section);
     if( iOBJMax ) {
         QStringList keys = getChildKeys(section);
-        beginGroup(section);
+        BeginGroup(section);
         foreach (QString key, keys) {
             long val = Read(key, PARAM_INT,0).toLongLong();
             bool bNeedNew = false;
@@ -1416,8 +1427,9 @@ bool zchxConfig::LoadLayers(QString &path)
 bool zchxConfig::LoadChartDirArray( ArrayOfCDI &ChartDirArray )
 {
     //    Chart Directories
-    beginGroup("ChartDirectories" );
-    QStringList keys = childKeys();
+    BeginGroup("ChartDirectories" );
+    QStringList keys = allKeys();
+    qDebug()<<"sub keys:"<<keys;
     int iDirMax = keys.size();
     if(iDirMax > 0) ChartDirArray.clear();
     int nAdjustChartDirs = 0;
@@ -1474,7 +1486,7 @@ bool zchxConfig::UpdateChartDirs( ArrayOfCDI& dir_array )
 {
     QString str_buf;
 
-    beginGroup("ChartDirectories" );
+    BeginGroup("ChartDirectories" );
     int iDirMax = childKeys().size();
     if( iDirMax ) {
         QStringList keys = childKeys();
@@ -1864,7 +1876,7 @@ void zchxConfig::SaveConfigCanvas( canvasConfig *cConfig )
 
 void zchxConfig::DeleteGroup(const QString &group)
 {
-    beginGroup(group);
+    BeginGroup(group);
     QStringList keys = childKeys();
     foreach (QString key, keys) {
         remove(key);
@@ -1872,10 +1884,16 @@ void zchxConfig::DeleteGroup(const QString &group)
     endGroup();
 }
 
+void zchxConfig::BeginGroup(const QString &g)
+{
+    if(!group().isEmpty()) endGroup();
+    beginGroup(g);
+}
+
 void zchxConfig::UpdateSettings()
 {
     //    Global options and settings
-    beginGroup("Settings");
+    BeginGroup("Settings");
 
     Write("LastAppliedTemplate", g_lastAppliedTemplateGUID );
     Write("ConfigVersionString", g_config_version_string );
@@ -2054,7 +2072,7 @@ void zchxConfig::UpdateSettings()
     //    S57 Object Filter Settings
     endGroup();
 #if 0
-    beginGroup("Settings/ObjectFilter");
+    BeginGroup("Settings/ObjectFilter");
 
     if(  ps52plib ) {
         for( unsigned int iPtr = 0; iPtr <  ps52plib->pOBJLArray->count(); iPtr++ ) {
@@ -2073,7 +2091,7 @@ void zchxConfig::UpdateSettings()
 
     //    Global State
 
-    beginGroup("Settings/GlobalState");
+    BeginGroup("Settings/GlobalState");
 
     QString st1;
 
@@ -2115,7 +2133,7 @@ void zchxConfig::UpdateSettings()
     endGroup();
 
     //    AIS
-    beginGroup("Settings/AIS");
+    BeginGroup("Settings/AIS");
 
     Write("bNoCPAMax", g_bCPAMax );
     Write("NoCPAMaxNMi", g_CPAMax_NM );
@@ -2181,7 +2199,7 @@ void zchxConfig::UpdateSettings()
     Write("AlertAckTimeoutMinutes", g_AckTimeout_Mins );
 
     endGroup();
-    beginGroup("Settings/GlobalState");
+    BeginGroup("Settings/GlobalState");
 #if 0
     if(  ps52plib ) {
         Write("bShowS57Text",  ps52plib->GetShowS57Text() );
@@ -2207,19 +2225,19 @@ void zchxConfig::UpdateSettings()
     }
 #endif
     endGroup();
-    beginGroup("Directories");
+    BeginGroup("Directories");
     Write("S57DataLocation", ("") );
     Write("InitChartDir", *pInit_Chart_Dir );
     Write("GPXIODir", g_gpx_path );
     Write("TCDataDir", g_TCData_Dir );
-//    Write("BasemapDir", g_Platform->NormalizePath(gWorldMapLocation) );
+    Write("BasemapDir", gWorldMapLocation );
     endGroup();
 
 
     //    Fonts
 
     //  Store the persistent Auxiliary Font descriptor Keys
-    beginGroup("Settings/AuxFontKeys" );
+    BeginGroup("Settings/AuxFontKeys" );
 
     QStringList keyArray = FontMgr::Get().GetAuxKeyArray();
     for(unsigned int i=0 ; i <  keyArray.count() ; i++){
@@ -2233,7 +2251,7 @@ void zchxConfig::UpdateSettings()
     QString font_path;
     font_path = ("Settings/QTFonts" );
     DeleteGroup(font_path);
-    beginGroup(font_path );
+    BeginGroup(font_path );
 
     int nFonts = FontMgr::Get().GetNumFonts();
 
@@ -2246,7 +2264,7 @@ void zchxConfig::UpdateSettings()
 
     //  Tide/Current Data Sources
     DeleteGroup("TideCurrentDataSources" );
-    beginGroup("TideCurrentDataSources" );
+    BeginGroup("TideCurrentDataSources" );
     unsigned int iDirMax = TideCurrentDataSet.count();
     for( unsigned int id = 0 ; id < iDirMax ; id++ ) {
         QString key;
@@ -2255,7 +2273,7 @@ void zchxConfig::UpdateSettings()
     }
     endGroup();
 
-    beginGroup("Settings/Others" );
+    BeginGroup("Settings/Others" );
 
     // Radar rings
     Write("ShowRadarRings", (bool)(g_iNavAidRadarRingsNumberVisible > 0) );  //3.0.0 config support

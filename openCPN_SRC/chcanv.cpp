@@ -22,6 +22,11 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
  **************************************************************************/
+#include "config.h"
+#include "chcanv.h"
+#include "chartdbs.h"
+#include "zchxconfig.h"
+#include "chartdb.h"
 
 #include "config.h"
 #include "dychart.h"
@@ -36,19 +41,12 @@
 #include "geodesic.h"
 #include "styles.h"
 #include "piano.h"
-//#include "navutil.h"
-//#include "kml.h"
-//#include "concanv.h"
 #include "thumbwin.h"
 #include "chartdb.h"
 #include "chartimg.h"
-//#include "chart1.h"
 #include "cutil.h"
-#include "tcmgr.h"
 #include "ocpn_pixel.h"
 #include "ocpndc.h"
-//#include "undo.h"
-//#include "toolbar.h"
 #include "timers.h"
 #include "glTextureDescriptor.h"
 #include "ChInfoWin.h"
@@ -65,7 +63,6 @@
 #include "CanvasOptions.h"
 #include "mbtiles.h"
 #include "glChartCanvas.h"
-//#include "S57QueryDialog.h"
 #include "zchxmapmainwindow.h"
 
 #include "cm93.h"                   // for chart outline draw
@@ -77,6 +74,7 @@
 #include <QJsonValue>
 #include <QJsonArray>
 #include <QMenu>
+#include <QMessageBox>
 
 
 extern float  g_ChartScaleFactorExp;
@@ -118,13 +116,13 @@ extern int              g_nbrightness;
 //extern ConsoleCanvas    *console;
 extern OCPNPlatform     *g_Platform;
 
-extern zchxConfig         *pConfig;
-extern Select           *pSelect;
-extern ThumbWin         *pthumbwin;
-extern TCMgr            *ptcmgr;
+//extern zchxConfig         *pConfig;
+//extern Select           *pSelect;
+//extern ThumbWin         *pthumbwin;
+//extern TCMgr            *ptcmgr;
 extern bool             g_bConfirmObjectDelete;
 
-extern IDX_entry        *gpIDX;
+//extern IDX_entry        *gpIDX;
 extern int               gpIDXn;
 extern int              g_iDistanceFormat;
 
@@ -162,7 +160,7 @@ extern bool             g_bDarkDecorations;
 
 extern int              g_S57_dialog_sx, g_S57_dialog_sy;
 
-extern PopUpDSlide       *pPopupDetailSlider;
+//extern PopUpDSlide       *pPopupDetailSlider;
 extern bool             g_bShowDetailSlider;
 extern int              g_detailslider_dialog_x, g_detailslider_dialog_y;
 extern int              g_cm93_zoom_factor;
@@ -261,7 +259,10 @@ extern ChartCanvas      *g_focusCanvas;
 extern ChartCanvas      *g_overlayCanvas;
 
 extern float            g_toolbar_scalefactor;
-extern SENCThreadManager *g_SencThreadManager;
+/*extern*/ SENCThreadManager *g_SencThreadManager;
+
+ChartCanvas                 *gMainCanvas = 0;
+s57RegistrarMgr          *m_pRegistrarMan = 0;
 
 // "Curtain" mode parameters
 QDialog                *g_pcurtain;
@@ -301,8 +302,40 @@ QDialog                *g_pcurtain;
 // Define a constructor for my canvas
 ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
 {
+#if 0
+    /开始初始化地图数据
+        qDebug()<<"start init db data now";
+        pInit_Chart_Dir = new QString(zchxFuncUtil::getDataDir());
+        qDebug()<<"init chart dir:"<<pInit_Chart_Dir;
+        g_pGroupArray = new ChartGroupArray;
+        //获取数据文件
+        ChartListFileName = QString("%1/CHRTLIST.DAT").arg(zchxFuncUtil::getDataDir());
+        qDebug()<<"chart list file name:"<<ChartListFileName;
+        //      Establish the GSHHS Dataset location
+        gDefaultWorldMapLocation = QString("%1/gshhs/").arg(zchxFuncUtil::getDataDir());
+        qDebug()<<"default world map location:"<<gDefaultWorldMapLocation;
+        if( gWorldMapLocation.isEmpty() ) {
+            qDebug()<<"word map location is empty, reset to default.";
+            gWorldMapLocation = gDefaultWorldMapLocation;
+        }
+        qDebug()<<"world map location:"<<gWorldMapLocation;
+        //   Build the initial chart dir array
+        ArrayOfCDI ChartDirArray;
+        ZCHX_CFG_INS->LoadChartDirArray( ChartDirArray );
+
+        if( !ChartDirArray.count() )
+        {
+            if(QFile::exists(ChartListFileName )) QFile::remove(ChartListFileName );
+        }
+
+        ChartData = new ChartDB( );
+        if (!ChartData->LoadBinary(ChartListFileName, ChartDirArray)) {
+            g_bNeedDBUpdate = true;
+        }
+#endif
     parent_frame = ( zchxMapMainWindow * ) frame;       // save a pointer to parent
     m_canvasIndex = canvasIndex;
+    gMainCanvas = this;
     
     pscratch_bm = NULL;
     //    SetBackgroundColour ( QColor(0,0,0) );
@@ -345,9 +378,6 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     m_pFoundPoint                 = NULL;
     m_FinishRouteOnKillFocus = true;
 
-
-    m_pRolloverRouteSeg           = NULL;
-    m_pRolloverTrackSeg           = NULL;
     m_bsectors_shown              = false;
     
     m_bbrightdir = false;
@@ -618,9 +648,9 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
 
     m_bShowCompassWin = g_bShowCompassWin;
 
-    m_Compass = new ocpnCompass(this);
-    m_Compass->SetScaleFactor(g_compass_scalefactor);
-    m_Compass->Show(m_bShowCompassWin);
+//    m_Compass = new ocpnCompass(this);
+//    m_Compass->SetScaleFactor(g_compass_scalefactor);
+//    m_Compass->Show(m_bShowCompassWin);
 }
 
 ChartCanvas::~ChartCanvas()
@@ -677,23 +707,20 @@ void ChartCanvas::CanvasApplyLocale()
 
 void ChartCanvas::SetupGlCanvas( )
 {
-    if ( !g_bdisable_opengl )
-    {
-        if(g_bopengl){
-            qDebug("Creating glChartCanvas");
-            m_glcc = new glChartCanvas(0, this);
+    if(g_bopengl){
+        qDebug("Creating glChartCanvas");
+//        m_glcc = new glChartCanvas(0, this);
 
-            // We use one context for all GL windows, so that textures etc will be automatically shared
-            if(IsPrimaryCanvas()){
-                QGLFormat format;
-                QGLContext *pctx = new QGLContext(format);
-                m_glcc->setContext(pctx);
-                g_pGLcontext = pctx;                // Save a copy of the common context
-            }
-            else{
-                m_glcc->setContext(g_pGLcontext);   // If not primary canvas, use the saved common context
-            }
-        }
+//        // We use one context for all GL windows, so that textures etc will be automatically shared
+//        if(IsPrimaryCanvas()){
+//            QGLFormat format;
+//            QGLContext *pctx = new QGLContext(format);
+//            m_glcc->setContext(pctx);
+//            g_pGLcontext = pctx;                // Save a copy of the common context
+//        }
+//        else{
+//            m_glcc->setContext(g_pGLcontext);   // If not primary canvas, use the saved common context
+//        }
     }
 }
 
@@ -740,11 +767,11 @@ void ChartCanvas::ApplyGlobalSettings()
 {
     // GPS compas window
     m_bShowCompassWin = g_bShowCompassWin;
-    if(m_Compass){
-        m_Compass->Show(m_bShowCompassWin);
-        if(m_bShowCompassWin)
-            m_Compass->UpdateStatus();
-    }
+//    if(m_Compass){
+//        m_Compass->Show(m_bShowCompassWin);
+//        if(m_bShowCompassWin)
+//            m_Compass->UpdateStatus();
+//    }
 }
 
 
@@ -810,7 +837,7 @@ void ChartCanvas::ConfigureChartBar()
 //TODO
 //extern bool     g_bLookAhead;
 extern bool     g_bPreserveScaleOnX;
-extern ChartDummy *pDummyChart;
+/*extern*/ ChartDummy *pDummyChart;
 extern int      g_sticky_chart;
 
 void ChartCanvas::canvasRefreshGroupIndex( void )
@@ -1481,7 +1508,7 @@ double ChartCanvas::GetBestVPScale( ChartBase *pchart )
 {
     if( pchart ) {
         double proposed_scale_onscreen = GetCanvasScaleFactor() / GetVPScale();
-        
+
         if( ( g_bPreserveScaleOnX ) || ( CHART_TYPE_CM93COMP == pchart->GetChartType() ) ) {
             double new_scale_ppm = GetVPScale();
             proposed_scale_onscreen = GetCanvasScaleFactor() / new_scale_ppm;
@@ -1492,24 +1519,24 @@ double ChartCanvas::GetBestVPScale( ChartBase *pchart )
             double new_scale_ppm = pchart->GetNearestPreferredScalePPM( equivalent_vp_scale );
             proposed_scale_onscreen = GetCanvasScaleFactor() / new_scale_ppm;
         }
-        
+
         // Do not allow excessive underzoom, even if the g_bPreserveScaleOnX flag is set.
         // Otherwise, we get severe performance problems on all platforms
-        
+
         double max_underzoom_multiplier = 2.0;
         if(GetVP().b_quilt){
             double scale_max = m_pQuilt->GetNomScaleMin(pchart->GetNativeScale(), pchart->GetChartType(), pchart->GetChartFamily());
             max_underzoom_multiplier = scale_max / pchart->GetNativeScale();
         }
-        
+
         proposed_scale_onscreen =
                 fmin(proposed_scale_onscreen,
                      pchart->GetNormalScaleMax(GetCanvasScaleFactor(), GetCanvasWidth()) * max_underzoom_multiplier);
-        
+
         //  And, do not allow excessive overzoom either
         proposed_scale_onscreen =
                 fmax(proposed_scale_onscreen, pchart->GetNormalScaleMin(GetCanvasScaleFactor(), false));
-        
+
         return GetCanvasScaleFactor() / proposed_scale_onscreen;
     } else
         return 1.0;
@@ -1727,8 +1754,8 @@ void ChartCanvas::SetDisplaySizeMM( double size )
 void ChartCanvas::InvalidateGL()
 {
     if(!m_glcc)  return;
-    if(g_bopengl)  m_glcc->Invalidate();
-    if(m_Compass)   m_Compass->UpdateStatus( true );
+//    if(g_bopengl)  m_glcc->Invalidate();
+//    if(m_Compass)   m_Compass->UpdateStatus( true );
 }
 
 int ChartCanvas::GetCanvasChartNativeScale()
@@ -2000,7 +2027,7 @@ void ChartCanvas::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Left:
         if( m_modkeys & Qt::ControlModifier )
         {
-            parent_frame->DoStackDown( this );
+            this->DoCanvasStackDelta(-1);
         } else if(g_bsmoothpanzoom)
         {
             StartTimedMovement();
@@ -2021,7 +2048,7 @@ void ChartCanvas::keyPressEvent(QKeyEvent *event)
         break;
 
     case Qt::Key_Right:
-        if(  m_modkeys & Qt::ControlModifier ) parent_frame->DoStackUp( this );
+        if(  m_modkeys & Qt::ControlModifier ) this->DoCanvasStackDelta(1);
         else if(g_bsmoothpanzoom) {
             StartTimedMovement();
             m_panx = 1;
@@ -2103,11 +2130,11 @@ void ChartCanvas::keyPressEvent(QKeyEvent *event)
     }
 
     case Qt::Key_F7:
-        parent_frame->DoStackDown( this );
+        this->DoCanvasStackDelta(-1);
         break;
 
     case Qt::Key_F8:
-        parent_frame->DoStackUp( this );
+        this->DoCanvasStackDelta(1);
         break;
     case Qt::Key_F9:
         ToggleCanvasQuiltMode();
@@ -2777,7 +2804,7 @@ void ChartCanvas::SetColorScheme( ColorScheme cs )
     
     m_Piano->SetColorScheme( cs );
     
-    m_Compass->SetColorScheme( cs );
+//    m_Compass->SetColorScheme( cs );
 
     //    if(m_muiBar)
     //        m_muiBar->SetColorScheme( cs );
@@ -4897,7 +4924,7 @@ void ChartCanvas::GridDraw( ocpnDC& dc )
         QString st = CalcGridText( lat, gridlatMajor, true ); // get text for grid line
         GetCanvasPointPix( lat, ( elon + wlon ) / 2, r );
         dc.DrawLine( 0, r.y, w, r.y, false );                             // draw grid line
-        dc.DrawText( st, 0, r.y ); // draw text
+        dc.drawText( st, 0, r.y ); // draw text
         lat = lat + gridlatMajor;
 
         if( fabs( lat - qRound( lat ) ) < 1e-5 ) lat = qRound( lat );
@@ -4927,7 +4954,7 @@ void ChartCanvas::GridDraw( ocpnDC& dc )
         QString st = CalcGridText( lon, gridlonMajor, false );
         GetCanvasPointPix( ( nlat + slat ) / 2, lon, r );
         dc.DrawLine( r.x, 0, r.x, h, false );
-        dc.DrawText( st, r.x, 0 );
+        dc.drawText( st, r.x, 0 );
         lon = lon + gridlonMajor;
         if( lon > 180.0 ) {
             lon = lon - 360.0;
@@ -5050,7 +5077,7 @@ void ChartCanvas::ScaleBarDraw( ocpnDC& dc )
         dc.SetTextForeground( black );
         int w, h;
         dc.GetTextExtent(s, &w, &h);
-        dc.DrawText( s, x_origin + l1/2 - w/2, y_origin - h - 1 );
+        dc.drawText( s, x_origin + l1/2 - w/2, y_origin - h - 1 );
     }
 }
 
@@ -7754,9 +7781,9 @@ static void RouteLegInfo( ocpnDC &dc, zchxPoint ref_point, const QString &first,
     
     dc.SetPen( QPen( GetGlobalColor( ( "UBLCK" ) ) ) );
     dc.SetTextForeground( FontMgr::Get().GetFontColor( ("RouteLegInfoRollover") ) );
-    dc.DrawText( first, xp, yp );
+    dc.drawText( first, xp, yp );
     if(second.length())
-        dc.DrawText( second, xp, yp + h1 );
+        dc.drawText( second, xp, yp + h1 );
 }
 
 
@@ -8209,13 +8236,13 @@ emboss_data *ChartCanvas::EmbossDepthScale()
 
     ped->x = ( GetVP().pix_width - ped->width );
 
-    if(m_Compass && m_bShowCompassWin){
-        QRect r = m_Compass->GetRect();
-        ped->y = r.y() + r.height();
-    }
-    else{
-        ped->y = 40;
-    }
+//    if(m_Compass && m_bShowCompassWin){
+//        QRect r = m_Compass->GetRect();
+//        ped->y = r.y() + r.height();
+//    }
+//    else{
+//        ped->y = 40;
+//    }
     return ped;
 }
 
@@ -8626,23 +8653,23 @@ extern bool    g_bAllowShowScaled;
 
 void ChartCanvas::UpdateGPSCompassStatusBox( bool b_force_new )
 {
-    //    Look for change in overlap or positions
-    bool b_update = false;
-    int cc1_edge_comp = 2;
-    QRect rect = m_Compass->GetRect();
-    QSize parent_size = size();
+//    //    Look for change in overlap or positions
+//    bool b_update = false;
+//    int cc1_edge_comp = 2;
+//    QRect rect = m_Compass->GetRect();
+//    QSize parent_size = size();
 
-    // check to see if it would overlap if it was in its home position (upper right)
-    zchxPoint tentative_pt(parent_size.width() - rect.width() - cc1_edge_comp, g_StyleManager->GetCurrentStyle()->GetCompassYOffset());
-    QRect tentative_rect( tentative_pt.toPoint(), rect.size());
+//    // check to see if it would overlap if it was in its home position (upper right)
+//    zchxPoint tentative_pt(parent_size.width() - rect.width() - cc1_edge_comp, g_StyleManager->GetCurrentStyle()->GetCompassYOffset());
+//    QRect tentative_rect( tentative_pt.toPoint(), rect.size());
     
-    // No toolbar, so just place compass in upper right.
-    m_Compass->Move( tentative_pt );
-    if( m_Compass && m_Compass->IsShown())
-        m_Compass->UpdateStatus( b_force_new | b_update );
+//    // No toolbar, so just place compass in upper right.
+//    m_Compass->Move( tentative_pt );
+//    if( m_Compass && m_Compass->IsShown())
+//        m_Compass->UpdateStatus( b_force_new | b_update );
     
-    if( b_force_new | b_update )
-        Refresh();
+//    if( b_force_new | b_update )
+//        Refresh();
 
 }
 

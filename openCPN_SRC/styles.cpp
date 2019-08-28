@@ -33,7 +33,7 @@
 #include <QPainter>
 
 extern OCPNPlatform     *g_Platform;
-extern QColor GetGlobalColor(QString colorName);
+extern QColor GetGlobalColor(const QString& colorName);
 
 using namespace ocpnStyle;
 

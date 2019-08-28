@@ -26,20 +26,19 @@
 #include "dychart.h"
 #include "OCPNPlatform.h"
 //#include "chart1.h"
-#include "cutil.h"
-#include "styles.h"
+//#include "cutil.h"
+//#include "styles.h"
 //#include "navutil.h"
 #include "FontMgr.h"
-#include "s52s57.h"
-#include "Select.h"
+//#include "s52s57.h"
+//#include "Select.h"
 #include "_def.h"
 #include <QDesktopWidget>
 #include "GL/gl_private.h"
 #include "zchxconfig.h"
+#include <QDebug>
 
-#ifdef ocpnUSE_GL
-#include "glChartCanvas.h"
-#endif
+//#include "glChartCanvas.h"
 
 
 #ifdef __MSVC__
@@ -73,7 +72,7 @@ extern bool                      g_bUpgradeInProcess;
 extern int                       quitflag;
 extern zchxMapMainWindow                   *gFrame;
 
-extern ocpnStyle::StyleManager* g_StyleManager;
+//extern ocpnStyle::StyleManager* g_StyleManager;
 
 extern bool                      g_bshowToolbar;
 extern bool                      g_bBasicMenus;
@@ -194,9 +193,9 @@ extern int                      g_nTrackPrecision;
 extern QString                 g_toolbarConfig;
 extern bool                     g_bPreserveScaleOnX;
 
-extern Select                    *pSelect;
-extern Select                    *pSelectTC;
-extern Select                    *pSelectAIS;
+//extern Select                    *pSelect;
+//extern Select                    *pSelectTC;
+//extern Select                    *pSelectAIS;
 
 #ifdef ocpnUSE_GL
 extern zchxGLOptions            g_GLOptions;
@@ -309,6 +308,7 @@ void OCPNPlatform::OnExit_2( void ){
 
 bool OCPNPlatform::BuildGLCaps( void *pbuf )
 {
+#if 0
     // Investigate OpenGL capabilities
     gFrame->show();
     QOpenGLWindow *tcanvas = new QOpenGLWindow(new QOpenGLContext);
@@ -380,12 +380,14 @@ bool OCPNPlatform::BuildGLCaps( void *pbuf )
 
 
     delete tcanvas;
+#endif
     
     return true;
 }
 
 bool OCPNPlatform::IsGLCapable()
 {
+#if 0
     OCPN_GLCaps *pcaps = new OCPN_GLCaps;
     
     BuildGLCaps(pcaps);
@@ -394,7 +396,8 @@ bool OCPNPlatform::IsGLCapable()
     
     // We insist on FBO support, since otherwise DC mode is always faster on canvas panning..
     if(!pcaps->bCanDoFBO)
-        return false;    
+        return false;
+#endif
     
     return true;
 }
@@ -405,6 +408,7 @@ bool OCPNPlatform::IsGLCapable()
 
 void OCPNPlatform::SetDefaultOptions( void )
 {
+#if 0
     //  General options, applied to all platforms
     g_bShowOutlines = true;
     
@@ -458,6 +462,7 @@ void OCPNPlatform::SetDefaultOptions( void )
     ZCHX_CFG_INS->WriteDefault("S52_DEPTH_UNIT_SHOW", 1 );
     ZCHX_CFG_INS->WriteDefault("ZoomDetailFactorVector", 3 );
     ZCHX_CFG_INS->endGroup();
+#endif
 }
 
 
@@ -676,7 +681,7 @@ double OCPNPlatform::GetToolbarScaleFactor( int GUIScaleFactor )
 {
     double rv = 1.0;
     double premult = 1.0;
-
+#if 0
     if(g_bresponsive){
     //  Get the basic size of a tool icon
         ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
@@ -690,6 +695,7 @@ double OCPNPlatform::GetToolbarScaleFactor( int GUIScaleFactor )
         double basic_tool_size_mm = tool_size / GetDisplayDPmm();
         premult = target_size / basic_tool_size_mm;
     }
+#endif
 
     //Adjust the scale factor using the global GUI scale parameter
     double postmult =  exp( GUIScaleFactor * (0.693 / 5.0) );       //  exp(2)
@@ -705,6 +711,7 @@ double OCPNPlatform::GetCompassScaleFactor( int GUIScaleFactor )
 {
     double rv = 1.0;
     double premult = 1.0;
+#if 0
     if(g_bresponsive ){
         
         ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
@@ -717,6 +724,7 @@ double OCPNPlatform::GetCompassScaleFactor( int GUIScaleFactor )
         double basic_tool_size_mm = compass_size / GetDisplayDPmm();
         premult = target_size / basic_tool_size_mm;
     }
+#endif
         
     double postmult =  exp( GUIScaleFactor * (0.693 / 5.0) );       //  exp(2)
 
@@ -751,6 +759,7 @@ void OCPNPlatform::initSystemInfo()
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
     mCpuCoreNum = sysInfo.dwNumberOfProcessors;
+    qDebug()<<"total Cpu Number is:"<<mCpuCoreNum;
 #if 0
 
     m_pageSize->setText(QString("分页大小:\t%1").arg(sysInfo.dwPageSize));

@@ -469,6 +469,8 @@ public:
     void     Write(const QString& key, const QVariant& val){setValue(key, val);}
     void     WriteDefault(const QString& key, const QVariant& val);
     void     DeleteGroup(const QString& group);
+    void     BeginGroup(const QString& group);
+    bool     hasLoadConfig() const {return mInitFlag;}
 
 
     //    int LoadMyConfig();
@@ -493,6 +495,7 @@ private:
     zchxConfig(const QString &LocalFileName);
     QString                m_sNavObjSetFile;
     QString                m_sNavObjSetChangesFile;
+    bool                    mInitFlag;
 private:
     static zchxConfig     *minstance;
 

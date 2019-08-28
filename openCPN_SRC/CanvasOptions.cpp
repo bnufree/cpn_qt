@@ -32,9 +32,7 @@
 #include "CanvasOptions.h"
 #include "OCPNPlatform.h"
 
-#ifdef ocpnUSE_SVG
-#include "wxSVG/svg.h"
-#endif // ocpnUSE_SVG
+#include <QtSvg>
 
 #ifdef __OCPN__ANDROID__
 #include "androidUTIL.h"
@@ -230,12 +228,12 @@ void CanvasOptions::RefreshControlValues( void )
     pSDepthUnits->setChecked(parentCanvas->GetShowDepthUnits());
  
     // AIS Options
-    pCBShowAIS->setChecked(parentCanvas->GetShowAIS());
-    pCBAttenAIS->setChecked(parentCanvas->GetAttenAIS());
+//    pCBShowAIS->setChecked(parentCanvas->GetShowAIS());
+//    pCBAttenAIS->setChecked(parentCanvas->GetAttenAIS());
     
-    // Tide/Current
-    pCDOTides->setChecked(parentCanvas->GetbShowTide());
-    pCDOCurrents->setChecked(parentCanvas->GetbShowCurrent());;
+//    // Tide/Current
+//    pCDOTides->setChecked(parentCanvas->GetbShowTide());
+//    pCDOCurrents->setChecked(parentCanvas->GetbShowCurrent());;
     
     //ENC Options
     pCDOENCText->setChecked(parentCanvas->GetShowENCText());
@@ -329,24 +327,24 @@ void CanvasOptions::UpdateCanvasOptions( void )
         b_needRefresh = true;
     }
 
-    if(pCBShowAIS->isChecked() != parentCanvas->GetShowAIS()){
-        parentCanvas->SetShowAIS(pCBShowAIS->isChecked());
-        b_needRefresh = true;
-    }
+//    if(pCBShowAIS->isChecked() != parentCanvas->GetShowAIS()){
+//        parentCanvas->SetShowAIS(pCBShowAIS->isChecked());
+//        b_needRefresh = true;
+//    }
     
-    if(pCBAttenAIS->isChecked() != parentCanvas->GetAttenAIS()){
-        parentCanvas->SetAttenAIS(pCBAttenAIS->isChecked());
-        b_needRefresh = true;
-    }
+//    if(pCBAttenAIS->isChecked() != parentCanvas->GetAttenAIS()){
+//        parentCanvas->SetAttenAIS(pCBAttenAIS->isChecked());
+//        b_needRefresh = true;
+//    }
     
-    if(pCDOTides->isChecked() != parentCanvas->GetbShowTide()){
-        parentCanvas->ShowTides(pCDOTides->isChecked());
-        b_needRefresh = true;
-    }
-    if(pCDOCurrents->isChecked() != parentCanvas->GetbShowCurrent()){
-        parentCanvas->ShowCurrents(pCDOCurrents->isChecked());
-        b_needRefresh = true;
-    }
+//    if(pCDOTides->isChecked() != parentCanvas->GetbShowTide()){
+//        parentCanvas->ShowTides(pCDOTides->isChecked());
+//        b_needRefresh = true;
+//    }
+//    if(pCDOCurrents->isChecked() != parentCanvas->GetbShowCurrent()){
+//        parentCanvas->ShowCurrents(pCDOCurrents->isChecked());
+//        b_needRefresh = true;
+//    }
 
     //  ENC Options
     if(pCDOENCText->isChecked() != parentCanvas->GetShowENCText()){

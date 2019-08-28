@@ -1,4 +1,4 @@
-﻿#include "zchxoptionsdlg.h"
+#include "zchxoptionsdlg.h"
 #include "ui_zchxoptionsdlg.h"
 #include "zchxchecklistwidget.h"
 #include "zchxopengloptiondlg.h"
@@ -78,29 +78,31 @@ extern bool g_bSoftwareGL;
 
 void zchxOptionsDlg::on_bOpenGL_clicked()
 {
-    zchxOpenGlOptionDlg dlg(gFrame);
+    zchxOpenGlOptionDlg *dlg = new zchxOpenGlOptionDlg;
 
-    if (dlg.exec() == QDialog::Accepted) {
+    if (dlg->exec() == QDialog::Accepted) {
+#if 0
         if(gFrame->GetPrimaryCanvas()->GetglCanvas()){
             g_GLOptions.m_bUseAcceleratedPanning =
                     g_bGLexpert ? dlg.GetAcceleratedPanning()
                                 : gFrame->GetPrimaryCanvas()->GetglCanvas()->CanAcceleratePanning();
         }
+#endif
 
-        g_bShowFPS = dlg.GetShowFPS();
-        g_bSoftwareGL = dlg.GetSoftwareGL();
+        g_bShowFPS = dlg->GetShowFPS();
+        g_bSoftwareGL = dlg->GetSoftwareGL();
 
-        g_GLOptions.m_GLPolygonSmoothing = dlg.GetPolygonSmoothing();
-        g_GLOptions.m_GLLineSmoothing = dlg.GetLineSmoothing();
+        g_GLOptions.m_GLPolygonSmoothing = dlg->GetPolygonSmoothing();
+        g_GLOptions.m_GLLineSmoothing = dlg->GetLineSmoothing();
 
         if (g_bGLexpert) {
             // user defined
             g_GLOptions.m_bTextureCompressionCaching =
-                    dlg.GetTextureCompressionCaching();
-            g_GLOptions.m_iTextureMemorySize = dlg.GetTextureMemorySize();
+                    dlg->GetTextureCompressionCaching();
+            g_GLOptions.m_iTextureMemorySize = dlg->GetTextureMemorySize();
         } else {
             // caching is on if textures are compressed
-            g_GLOptions.m_bTextureCompressionCaching = dlg.GetTextureCompression();
+            g_GLOptions.m_bTextureCompressionCaching = dlg->GetTextureCompression();
         }
 #if 0
         if (g_bopengl && g_glTextureManager && g_GLOptions.m_bTextureCompression != dlg.GetTextureCompression()) {
@@ -121,9 +123,11 @@ void zchxOptionsDlg::on_bOpenGL_clicked()
 
     }
 
-    if (dlg.GetRebuildCache()) {
+    if (dlg->GetRebuildCache()) {
         m_returnChanges = REBUILD_RASTER_CACHE;
     }
+
+    delete dlg;
 }
 
 void zchxOptionsDlg::on_OK_clicked()

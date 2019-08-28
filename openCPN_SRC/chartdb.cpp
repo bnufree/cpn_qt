@@ -27,7 +27,7 @@
 #include "chartdb.h"
 #include "chartimg.h"
 //#include "chart1.h"
-#include "thumbwin.h"
+//#include "thumbwin.h"
 #include "mbtiles.h"
 
 #ifdef ocpnUSE_GL
@@ -48,16 +48,18 @@
 #include "zchxmapmainwindow.h"
 
 extern ColorScheme GetColorScheme();
+extern void         LoadS57();
 
 class s52plib;
 
-extern ThumbWin     *pthumbwin;
+//extern ThumbWin     *pthumbwin;
 extern int          g_nCacheLimit;
 extern int          g_memCacheLimit;
 extern bool         g_bopengl;
 extern s52plib      *ps52plib;
 extern ChartDB      *ChartData;
 extern zchxMapMainWindow          *gFrame;
+
 
 
 bool G_FloatPtInPolygon(MyFlPoint *rgpts, int wnumpts, float x, float y) ;
@@ -258,10 +260,10 @@ void ChartDB::DeleteCacheEntry(CacheEntry *pce, bool bDelTexture, const QString 
      }
 
      // If this chart should happen to be in the thumbnail window....
-     if(pthumbwin)
-     {
-         if (pthumbwin->pThumbChart == ch)  pthumbwin->pThumbChart = NULL;
-     }
+//     if(pthumbwin)
+//     {
+//         if (pthumbwin->pThumbChart == ch)  pthumbwin->pThumbChart = NULL;
+//     }
 
 #ifdef ocpnUSE_GL
      // The glCanvas may be cacheing some information for this chart     
@@ -1171,8 +1173,8 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
                 }
                 else
                 {
-                    if(pthumbwin && pthumbwin->pThumbChart == Ch)
-                        pthumbwin->pThumbChart = NULL;
+//                    if(pthumbwin && pthumbwin->pThumbChart == Ch)
+//                        pthumbwin->pThumbChart = NULL;
                     delete Ch;                                  // chart is not useable
                     old_lock = pce->n_lock;
                     pChartCache->removeOne(pce);                   // so remove it
@@ -1572,13 +1574,18 @@ void ChartDB::createDomTagAndNode(QDomElement *root, QDomDocument& doc, const QS
     root->appendChild(node);
 }
 
-extern arrayofCanvasPtr  g_canvasArray;
+//extern arrayofCanvasPtr  g_canvasArray;
 
 bool ChartDB::isSingleChart(ChartBase *chart)
 {
    if (chart == nullptr)
        return false;
 
+   ChartCanvas * cc = gFrame->GetPrimaryCanvas();
+   if(cc && cc->m_singleChart == chart){
+      return true;
+   }
+#if 0
    // ..For each canvas...
    for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
       ChartCanvas *cc = g_canvasArray.at(i);
@@ -1586,6 +1593,7 @@ bool ChartDB::isSingleChart(ChartBase *chart)
          return true;
       }
    }
+#endif
    return false;
 }
 

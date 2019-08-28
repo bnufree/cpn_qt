@@ -9,3 +9,71 @@
 [2019-08-26 13:30:12] Debug: [] [] [0] memory total: 16713572   app used: 13292
 [2019-08-26 13:34:25] Debug: [../../openCPN_SRC/main.cpp] [int qMain(int, char**)] [113] start ecids now at: "2019-08-26 13:34:25"
 [2019-08-26 13:34:25] Debug: [../../openCPN_SRC/main.cpp] [int qMain(int, char**)] [116] memory total: 16713572   app used: 13212
+[2019-08-28 09:23:10] Debug: [../../openCPN_SRC/main.cpp] [int qMain(int, char**)] [112] start ecids now at: "2019-08-28 09:23:10"
+[2019-08-28 09:23:10] Debug: [../../openCPN_SRC/main.cpp] [int qMain(int, char**)] [115] memory total: 16713572   app used: 13596
+[2019-08-28 09:23:13] Debug: [] [] [0] open settings windows now
+[2019-08-28 09:23:55] Debug: [] [] [0] frame: zchxMapMainWindow(0x65fd30, name="zchxMapMainWindow")
+[2019-08-28 09:23:57] Debug: [] [] [0] !!
+[2019-08-28 09:24:06] Debug: [../../openCPN_SRC/main.cpp] [int qMain(int, char**)] [112] start ecids now at: "2019-08-28 09:24:06"
+[2019-08-28 09:24:06] Debug: [../../openCPN_SRC/main.cpp] [int qMain(int, char**)] [115] memory total: 16713572   app used: 13172
+[2019-08-28 09:33:57] Debug: [../../openCPN_SRC/main.cpp] [int qMain(int, char**)] [112] start ecids now at: "2019-08-28 09:33:57"
+[2019-08-28 09:33:57] Debug: [../../openCPN_SRC/main.cpp] [int qMain(int, char**)] [115] memory total: 16713572   app used: 13524
+[2019-08-28 09:33:57] Debug: [] [] [0] total Cpu Number is: 8
+[2019-08-28 09:41:26] Debug: [../../openCPN_SRC/main.cpp] [int qMain(int, char**)] [112] start ecids now at: "2019-08-28 09:41:26"
+[2019-08-28 09:41:26] Debug: [../../openCPN_SRC/main.cpp] [int qMain(int, char**)] [115] memory total: 16713572   app used: 13504
+[2019-08-28 09:41:26] Debug: [] [] [0] total Cpu Number is: 8
+[2019-08-28 09:41:26] Debug: [] [] [0]  currernt version is: 5.0.0+  date: 2020 ?07-19
+[2019-08-28 09:48:49] Debug: [] [] [0] start ecids now at: "2019-08-28 09:48:49"
+[2019-08-28 09:48:49] Debug: [] [] [0] memory total(M): 16713572   app used(M): 14944
+[2019-08-28 09:48:49] Debug: [] [] [0] total Cpu Number is: 8
+[2019-08-28 09:48:49] Debug: [] [] [0]  currernt version is: 5.0.0+  date: 2019-07-20
+[2019-08-28 09:48:49] Debug: [] [] [0] local data dir is: "D:/workspace/cpn_qt/out/Release/map_data"
+[2019-08-28 10:49:29] Debug: [] [] [0] start ecids now at: "2019-08-28 10:49:29"
+[2019-08-28 10:49:29] Debug: [] [] [0] memory total(M): 16713572   app used(M): 14176
+[2019-08-28 10:49:29] Debug: [] [] [0] total Cpu Number is: 8
+[2019-08-28 10:49:29] Debug: [] [] [0]  currernt version is: 5.0.0+  date: 2019-07-20
+[2019-08-28 10:49:29] Debug: [] [] [0] local data dir is: "D:/workspace/cpn_qt/out/Release/map_data"
+[2019-08-28 10:58:09] Debug: [] [] [0] start ecids now at: "2019-08-28 10:58:09"
+[2019-08-28 10:58:09] Debug: [] [] [0] memory total(M): 16713572   app used(M): 14452
+[2019-08-28 10:58:09] Debug: [] [] [0] total Cpu Number is: 8
+[2019-08-28 10:58:09] Debug: [] [] [0]  currernt version is: 5.0.0+  date: 2019-07-20
+[2019-08-28 10:58:09] Debug: [] [] [0] local data dir is: "D:/workspace/cpn_qt/out/Release/map_data"
+[2019-08-28 11:03:26] Debug: [] [] [0] start ecids now at: "2019-08-28 11:03:26"
+[2019-08-28 11:03:26] Debug: [] [] [0] memory total(M): 16713572   app used(M): 14444
+[2019-08-28 11:03:26] Debug: [] [] [0] total Cpu Number is: 8
+[2019-08-28 11:03:26] Debug: [] [] [0]  currernt version is: 5.0.0+  date: 2019-07-20
+[2019-08-28 11:03:26] Debug: [] [] [0] local data dir is: "D:/workspace/cpn_qt/out/Release/map_data"
+[2019-08-28 11:23:49] Debug: [] [] [0] start ecids now at: "2019-08-28 11:23:49"
+[2019-08-28 11:23:49] Debug: [] [] [0] memory total(M): 16713572   app used(M): 14444
+[2019-08-28 11:23:49] Debug: [] [] [0] total Cpu Number is: 8
+[2019-08-28 11:23:49] Debug: [] [] [0]  currernt version is: 5.0.0+  date: 2019-07-20
+[2019-08-28 11:23:49] Debug: [] [] [0] local data dir is: "D:/workspace/cpn_qt/out/Release/map_data"
+[2019-08-28 11:23:49] Debug: [] [] [0] start init db data now
+[2019-08-28 11:23:49] Debug: [] [] [0] init chart dir: 0x314cea0
+[2019-08-28 11:23:49] Debug: [] [] [0] chart list file name: "D:/workspace/cpn_qt/out/Release/map_data/CHRTLIST.DAT"
+[2019-08-28 11:23:49] Debug: [] [] [0] default world map location: "D:/workspace/cpn_qt/out/Release/map_data/gshhs/"
+[2019-08-28 11:23:49] Debug: [] [] [0] world map location: "D:/workspace/cpn_qt/out/Release/map_data/gshhs/"
+[2019-08-28 11:25:42] Debug: [] [] [0] start ecids now at: "2019-08-28 11:25:42"
+[2019-08-28 11:25:42] Debug: [] [] [0] memory total(M): 16713572   app used(M): 19732
+[2019-08-28 11:25:42] Debug: [] [] [0] total Cpu Number is: 8
+[2019-08-28 11:25:42] Debug: [] [] [0]  currernt version is: 5.0.0+  date: 2019-07-20
+[2019-08-28 11:25:42] Debug: [] [] [0] local data dir is: "D:/workspace/cpn_qt/out/Release/map_data"
+[2019-08-28 11:25:42] Debug: [] [] [0] start init db data now
+[2019-08-28 11:25:42] Debug: [] [] [0] init chart dir: 0x5984f40
+[2019-08-28 11:25:42] Debug: [] [] [0] chart list file name: "D:/workspace/cpn_qt/out/Release/map_data/CHRTLIST.DAT"
+[2019-08-28 11:25:42] Debug: [] [] [0] default world map location: "D:/workspace/cpn_qt/out/Release/map_data/gshhs/"
+[2019-08-28 11:25:42] Debug: [] [] [0] word map location is empty, reset to default.
+[2019-08-28 11:25:42] Debug: [] [] [0] world map location: "D:/workspace/cpn_qt/out/Release/map_data/gshhs/"
+[2019-08-28 11:28:47] Debug: [] [] [0] now destruct here
+[2019-08-28 11:29:34] Debug: [] [] [0] start ecids now at: "2019-08-28 11:29:34"
+[2019-08-28 11:29:34] Debug: [] [] [0] memory total(M): 16713572   app used(M): 19784
+[2019-08-28 11:29:34] Debug: [] [] [0] total Cpu Number is: 8
+[2019-08-28 11:29:34] Debug: [] [] [0]  currernt version is: 5.0.0+  date: 2019-07-20
+[2019-08-28 11:29:34] Debug: [] [] [0] local data dir is: "D:/workspace/cpn_qt/out/Release/map_data"
+[2019-08-28 11:29:34] Debug: [] [] [0] start init db data now
+[2019-08-28 11:29:34] Debug: [] [] [0] init chart dir: 0x5930b80
+[2019-08-28 11:29:34] Debug: [] [] [0] chart list file name: "D:/workspace/cpn_qt/out/Release/map_data/CHRTLIST.DAT"
+[2019-08-28 11:29:34] Debug: [] [] [0] default world map location: "D:/workspace/cpn_qt/out/Release/map_data/gshhs/"
+[2019-08-28 11:29:34] Debug: [] [] [0] word map location is empty, reset to default.
+[2019-08-28 11:29:34] Debug: [] [] [0] world map location: "D:/workspace/cpn_qt/out/Release/map_data/gshhs/"
+[2019-08-28 11:29:42] Debug: [] [] [0] now destruct here

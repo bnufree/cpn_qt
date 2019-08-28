@@ -9,6 +9,8 @@
 #include "chcanv.h"
 #include "CanvasConfig.h"
 #include "FontMgr.h"
+#include "OCPNPlatform.h"
+#include "chartdb.h"
 
  OCPNPlatform                   *g_Platform = NULL;
  zchxMapMainWindow              *gFrame = NULL;
@@ -32,7 +34,7 @@
  QString         g_csv_locn;
  QString         g_SENCPrefix;
  QString         g_UserPresLibData;
- QString         *pInit_Chart_Dir;
+ QString         *pInit_Chart_Dir = 0;
  QString         gWorldMapLocation;
  bool             s_bSetSystemTime;
  bool             g_bDisplayGrid;         //Flag indicating if grid is to be displayed

@@ -39,6 +39,8 @@ int g_SatsInView;
 extern zchxMapMainWindow *gFrame;
 extern bool g_bopengl;
 
+extern QColor GetGlobalColor(const QString& str);
+
 ocpnCompass::ocpnCompass( ChartCanvas *parent, bool bShowGPS)
 {
     m_parent = parent;

@@ -967,7 +967,7 @@ void ocpnDC::DrawBitmap( const wxBitmap &bitmap, int x, int y, bool usemask )
         }
 }
 
-void ocpnDC::DrawText( const QString &text, int x, int y )
+void ocpnDC::drawText( const QString &text, int x, int y )
 {
 
         int w = 0;

@@ -30,7 +30,6 @@
 #include "chcanv.h"
 #include "piano.h"
 #include "chartdb.h"
-//#include "chart1.h"
 #include "chartbase.h"
 #include "styles.h"
 #include "ocpndc.h"
@@ -52,6 +51,8 @@ extern int  g_GUIScaleFactor;
 
 extern Piano                     *g_Piano;
 extern OCPNPlatform              *g_Platform;
+
+extern QColor GetGlobalColor(const QString& str);
 
 // Define a constructor
 Piano::Piano(ChartCanvas *parent) : QObject(parent)

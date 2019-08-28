@@ -127,7 +127,8 @@ SOURCES += \
 #    ogrs57datasource.cpp \
 #    s57reader.cpp \
 #    s57featuredefns.cpp \
-#    ogrs57layer.cpp
+#    ogrs57layer.cpp \
+#    CanvasOptions.cpp
 
 
 
@@ -189,7 +190,8 @@ HEADERS += \
 #    compass.h \
 #    ChInfoWin.h \
 #    Osenc.h \
-#    S57ClassRegistrar.h
+#    S57ClassRegistrar.h \
+#    CanvasOptions.h
 
 FORMS += \
     zchxoptionsdlg.ui \

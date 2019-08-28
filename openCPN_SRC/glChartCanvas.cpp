@@ -120,7 +120,7 @@ extern bool g_bShowFPS;
 extern bool g_bSoftwareGL;
 extern bool g_btouch;
 extern OCPNPlatform *g_Platform;
-extern ocpnFloatingToolbarDialog *g_MainToolbar;
+//extern ocpnFloatingToolbarDialog *g_MainToolbar;
 extern ocpnStyle::StyleManager* g_StyleManager;
 extern bool             g_bShowChartBar;
 extern Piano           *g_Piano;
@@ -194,7 +194,7 @@ PFNGLBUFFERDATAPROC                 s_glBufferData;
 PFNGLDELETEBUFFERSPROC              s_glDeleteBuffers;
 
 
-GLuint g_raster_format = GL_RGB;
+extern GLuint g_raster_format/* = GL_RGB*/;
 long g_tex_mem_used;
 
 bool            b_timeGL;

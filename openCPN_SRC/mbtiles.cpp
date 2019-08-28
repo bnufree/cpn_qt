@@ -47,6 +47,7 @@
 #include "chcanv.h"
 #include "glChartCanvas.h"
 #include <QDebug>
+#include <QMessageBox>
 
 //  Missing from MSW include files
 #ifdef _MSC_VER
@@ -145,7 +146,7 @@ static const double OSM_zoomMPP[] = { 156412,
                             
                             
 static const double eps = 6e-6;  // about 1cm on earth's surface at equator
-extern MyFrame *gFrame;
+//extern MyFrame *gFrame;
 
 #if defined( __UNIX__ ) && !defined(__WXOSX__)  // high resolution stopwatch for profiling
 class OCPNStopWatch

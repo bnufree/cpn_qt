@@ -22,7 +22,6 @@
  ***************************************************************************
  */
 #include "ChInfoWin.h"
-//#include "chart1.h"
 #include "OCPNPlatform.h"
 #include "FontMgr.h"
 #include <QPainter>
@@ -31,6 +30,8 @@
 
 extern bool g_btouch;
 extern OCPNPlatform  *g_Platform;
+
+extern QColor GetGlobalColor(const QString& str);
 
 // Define a constructor
 ChInfoWin::ChInfoWin( QWidget *parent ):QWidget(parent)

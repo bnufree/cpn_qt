@@ -108,11 +108,6 @@ int main(int argc, char *argv[])
         a.exit(1);
         return 0;
     }
-    QDateTime now = QDateTime::currentDateTime();
-    qDebug()<<"start ecids now at:"<<now.toString("yyyy-MM-dd hh:mm:ss");
-    int mem_used =0, mem_total = 0;
-    zchxFuncUtil::getMemoryStatus(& mem_total, &mem_used);
-    qDebug()<<"memory total:"<<mem_total<<"  app used:"<<mem_used;
 
 
     //make size as 9:16
