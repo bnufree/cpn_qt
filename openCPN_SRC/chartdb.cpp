@@ -1280,7 +1280,7 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
             ext.SLAT = cte.GetLatMin();
             ext.WLON = cte.GetLonMin();
             ext.ELON = cte.GetLonMax();
-//            Chs57->SetFullExtent(ext);
+            Chs57->SetFullExtent(ext);
         }
 #if 0
         else if(chart_type == CHART_TYPE_CM93)

@@ -2,12 +2,15 @@
 
 zchxS57ListCtrlBox::zchxS57ListCtrlBox(QWidget *parent) : QListWidget(parent)
 {
+//    setStyleSheet("background-color:black;color:white;");
     mIDs.clear();
 }
 
 int zchxS57ListCtrlBox::append(const QString &label, bool checked)
 {
     QListWidgetItem* item = new QListWidgetItem(this);
+    item->setText(label);
+//    item->setForeground(Qt::black);
     item->setCheckState(checked == true ? Qt::Checked : Qt::Unchecked);
     addItem(item);
     int index = count() - 1;

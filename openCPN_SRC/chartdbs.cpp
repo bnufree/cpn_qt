@@ -362,6 +362,7 @@ ChartTableEntry::ChartTableEntry(ChartBase &theChart)
 
 ChartTableEntry::~ChartTableEntry()
 {
+    qDebug()<<"delete chart entry now!!!!";
     free(pFullPath);
     free(pPlyTable);
     
@@ -386,15 +387,17 @@ ChartTableEntry::~ChartTableEntry()
 
 ///////////////////////////////////////////////////////////////////////
 
-bool ChartTableEntry::IsEarlierThan(const ChartTableEntry &cte) const {
+bool ChartTableEntry::IsEarlierThan(const ChartTableEntry *cte) const {
+    if(!cte) return true;
     QDateTime mine = QDateTime::fromTime_t(edition_date);
-    QDateTime theirs = QDateTime::fromTime_t(cte.edition_date);
+    QDateTime theirs = QDateTime::fromTime_t(cte->edition_date);
     return ( mine < theirs );
 }
 
-bool ChartTableEntry::IsEqualTo(const ChartTableEntry &cte) const {
+bool ChartTableEntry::IsEqualTo(const ChartTableEntry *cte) const {
+    if(!cte) return true;
     QDateTime mine = QDateTime::fromTime_t(edition_date);
-    QDateTime theirs = QDateTime::fromTime_t(cte.edition_date);
+    QDateTime theirs = QDateTime::fromTime_t(cte->edition_date);
     return ( mine == theirs );
 }
 
@@ -1104,7 +1107,7 @@ void ChartDatabase::UpdateChartClassDescriptorArray(void)
 const ChartTableEntry &ChartDatabase::GetChartTableEntry(int index) const
 {
     if(index < m_nentries)
-        return active_chartTable[index];
+        return *(active_chartTable[index]);
     else
         return m_ChartTableEntryDummy;
 }
@@ -1112,7 +1115,7 @@ const ChartTableEntry &ChartDatabase::GetChartTableEntry(int index) const
 ChartTableEntry *ChartDatabase::GetpChartTableEntry(int index) const
 {
     if(index < m_nentries)
-        return const_cast<ChartTableEntry*>(&active_chartTable[index]);
+        return const_cast<ChartTableEntry*>(active_chartTable[index]);
     else
         return (ChartTableEntry *)&m_ChartTableEntryDummy;
 }
@@ -1163,7 +1166,6 @@ QString ChartDatabase::GetMagicNumberCached(QString dir)
 
 bool ChartDatabase::Read(const QString &filePath)
 {
-    ChartTableEntry entry;
     int entries;
 
     bValid = false;
@@ -1204,22 +1206,25 @@ bool ChartDatabase::Read(const QString &filePath)
             dirlen -= alen;
             dir.append(QString::fromUtf8(dirbuf));
         }
-        qDebug("  Chart directory #%d: ", iDir);
+        qDebug("  Chart directory #%d: %s", iDir, dir.toUtf8().data());
         m_chartDirs.append(dir);
     }
 
     entries = cth.GetTableEntries();
     active_chartTable.reserve(entries);
     active_chartTable_pathindex.clear();
-    while (entries-- && entry.Read(this, ifs)) {
-        active_chartTable_pathindex[QString::fromUtf8(entry.GetpFullPath())] = ind++;
+    while (entries-- /*&& entry.Read(this, ifs)*/) {
+        ChartTableEntry *entry = new ChartTableEntry;
+        if(!entry->Read(this, ifs))
+        {
+            delete entry;
+            break;
+        }
+        entry->SetAvailable(true);
+        active_chartTable_pathindex[QString::fromUtf8(entry->GetpFullPath())] = ind++;
         active_chartTable.append(entry);
     }
-
-    entry.Clear();
     bValid = true;
-    entry.SetAvailable(true);
-    
     m_nentries = active_chartTable.count();
     return true;
 
@@ -1256,7 +1261,9 @@ bool ChartDatabase::Write(const QString &filePath)
     }
 
     for (UINT32 iTable = 0; iTable < active_chartTable.size(); iTable++)
-        active_chartTable[iTable].Write(this, ofs);
+    {
+        active_chartTable[iTable]->Write(this, ofs);
+    }
 
     //      Explicitly set the version
     m_dbversion = DB_VERSION_CURRENT;
@@ -1511,7 +1518,7 @@ bool ChartDatabase::Update(ArrayOfCDI& dir_array, bool bForce, QProgressDialog *
 
     //  Mark all charts provisionally invalid
     for(unsigned int i=0 ; i<active_chartTable.count() ; i++)
-        active_chartTable[i].SetValid(false);
+        active_chartTable[i]->SetValid(false);
 
     m_chartDirs.clear();
 
@@ -1557,7 +1564,7 @@ bool ChartDatabase::Update(ArrayOfCDI& dir_array, bool bForce, QProgressDialog *
 
     for(unsigned int i=0 ; i<active_chartTable.count() ; i++)
     {
-        if(!active_chartTable[i].GetbValid())
+        if(!active_chartTable[i]->GetbValid())
         {
             active_chartTable.removeAt(i);
             i--;                 // entry is gone, recheck this index for next entry
@@ -1567,8 +1574,8 @@ bool ChartDatabase::Update(ArrayOfCDI& dir_array, bool bForce, QProgressDialog *
     //    And once more, setting the Entry index field
     active_chartTable_pathindex.clear();
     for(unsigned int i=0 ; i<active_chartTable.count() ; i++) {
-        active_chartTable_pathindex[QString::fromUtf8(active_chartTable[i].GetpFullPath())] = i;
-        active_chartTable[i].SetEntryOffset( i );
+        active_chartTable_pathindex[QString::fromUtf8(active_chartTable[i]->GetpFullPath())] = i;
+        active_chartTable[i]->SetEntryOffset( i );
     }
 
     m_nentries = active_chartTable.count();
@@ -1611,7 +1618,7 @@ int ChartDatabase::DisableChart(QString& PathToDisable)
 {
     int index = FinddbIndex(PathToDisable);
     if( index != -1 ) {
-        ChartTableEntry *pentry = &active_chartTable[index];
+        ChartTableEntry *pentry = active_chartTable[index];
         pentry->Disable();
         return 1;
     }
@@ -1670,13 +1677,13 @@ int ChartDatabase::TraverseDirAndAddCharts(ChartDirInfo& dir_info, QProgressDial
         for(int ic=0 ; ic<nEntries ; ic++)
         {
 
-            QFileInfo fn(QString::fromUtf8(active_chartTable[ic].GetpFullPath()));
+            QFileInfo fn(QString::fromUtf8(active_chartTable[ic]->GetpFullPath()));
             QString tmp_path = fn.absolutePath();
             while(tmp_path.split(QDir::separator()).size() >= dir_path_count)
             {
                 if(tmp_path == dir_path)
                 {
-                    active_chartTable[ic].SetValid(true);
+                    active_chartTable[ic]->SetValid(true);
                     //                             if(pprog)
                     //                                  pprog->Update((ic * 100) /nEntries, fn.GetFullPath());
 
@@ -1770,7 +1777,7 @@ bool ChartDatabase::IsChartDirUsed(const QString &theDir)
 
     dir.append("*");
     for (UINT32 i = 0; i < active_chartTable.count(); i++) {
-        if (QRegExp(dir).exactMatch(*(active_chartTable[i].GetpsFullPath())))
+        if (QRegExp(dir).exactMatch(*(active_chartTable[i]->GetpsFullPath())))
             return true;
     }
     return false;
@@ -2024,7 +2031,7 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
     ChartCollisionsHashMap collision_map;
     int nEntry = active_chartTable.count();
     for(int i=0 ; i<nEntry ; i++) {
-        QString table_file_name = QString::fromUtf8(active_chartTable[i].GetpFullPath());
+        QString table_file_name = QString::fromUtf8(active_chartTable[i]->GetpFullPath());
         QFileInfo table_file(table_file_name);
         collision_map[table_file.fileName()] = i;
     }
@@ -2066,7 +2073,7 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
         QString table_file_name;
 
         if( collision ) {
-            pEntry = &active_chartTable[collision_ptr.value()];
+            pEntry = active_chartTable[collision_ptr.value()];
             table_file_name = QString::fromUtf8(pEntry->GetpFullPath());
             file_path_is_same = bthis_dir_in_dB && (full_name == table_file_name);
 
@@ -2121,7 +2128,7 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
             //  and one may be newer than the other.
             b_add_msg++;
 
-            if( pnewChart->IsEarlierThan(*pEntry) )
+            if( pnewChart->IsEarlierThan(pEntry) )
             {
                 QFileInfo table_file(table_file_name);
                 //    Make sure the compare file actually exists
@@ -2133,7 +2140,7 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
 
                 }
             }
-            else if( pnewChart->IsEqualTo(*pEntry) )
+            else if( pnewChart->IsEqualTo(pEntry) )
             {
                 //    The file names (without dir prefix) are identical,
                 //    and the mod times are identical
@@ -2158,9 +2165,9 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
                 qDebug("   Adding chart file: %s", msg_fn.toUtf8().data());
             }
             collision_map[file_name] = active_chartTable.count();
-            active_chartTable.append(*pnewChart);
+            active_chartTable.append(pnewChart);
             nDirEntry++;
-            delete pnewChart;
+//            delete pnewChart;
         }
         else
         {
@@ -2214,7 +2221,7 @@ bool ChartDatabase::AddChart( QString &chartfilename, ChartClassDescriptor &char
         int nEntry = active_chartTable.count();
         for(int i=0 ; i<nEntry ; i++)
         {
-            QString *ptable_file_name = active_chartTable[isearch].GetpsFullPath();
+            QString *ptable_file_name = active_chartTable[isearch]->GetpsFullPath();
 
             //    If the chart full file paths are exactly the same, select the newer one
             if(bthis_dir_in_dB && full_name == *ptable_file_name)
@@ -2222,18 +2229,18 @@ bool ChartDatabase::AddChart( QString &chartfilename, ChartClassDescriptor &char
                 b_add_msg++;
 
                 //    Check the file modification time
-                time_t t_oldFile = active_chartTable[isearch].GetFileTime();
+                time_t t_oldFile = active_chartTable[isearch]->GetFileTime();
                 time_t t_newFile = file.lastModified().toTime_t();
 
                 if( t_newFile <= t_oldFile )
                 {
                     bAddFinal = false;
-                    active_chartTable[isearch].SetValid(true);
+                    active_chartTable[isearch]->SetValid(true);
                 }
                 else
                 {
                     bAddFinal = true;
-                    active_chartTable[isearch].SetValid(false);
+                    active_chartTable[isearch]->SetValid(false);
                     qDebug("   Replacing older chart file of same path: %s", msg_fn.toUtf8().data());
                 }
 
@@ -2255,7 +2262,7 @@ bool ChartDatabase::AddChart( QString &chartfilename, ChartClassDescriptor &char
                     //    Make sure the compare file actually exists
                     if(table_file.isReadable())
                     {
-                        active_chartTable[isearch].SetValid(true);
+                        active_chartTable[isearch]->SetValid(true);
                         bAddFinal = false;
                         qDebug("   Retaining newer chart file of same name: %s", msg_fn.toUtf8().data());
 
@@ -2273,7 +2280,7 @@ bool ChartDatabase::AddChart( QString &chartfilename, ChartClassDescriptor &char
 
                 else
                 {
-                    active_chartTable[isearch].SetValid(false);
+                    active_chartTable[isearch]->SetValid(false);
                     bAddFinal = true;
                     qDebug("   Replacing older chart file of same name: %s", msg_fn.toUtf8().data());
                 }
@@ -2298,8 +2305,8 @@ bool ChartDatabase::AddChart( QString &chartfilename, ChartClassDescriptor &char
             qDebug("   Adding chart file: %s", msg_fn.toUtf8().data());
         }
 
-        active_chartTable.append(*pnewChart);
-        delete pnewChart;
+        active_chartTable.append(pnewChart);
+//        delete pnewChart;
         rv = true;
     }
     else
@@ -2358,7 +2365,7 @@ bool ChartDatabase::AddSingleChart( QString &ChartFullPath, bool b_force_full_se
 
     for(unsigned int i=0 ; i<active_chartTable.count() ; i++)
     {
-        if(!active_chartTable[i].GetbValid())
+        if(!active_chartTable[i]->GetbValid())
         {
             active_chartTable.removeAt(i);
             i--;                 // entry is gone, recheck this index for next entry
@@ -2367,7 +2374,7 @@ bool ChartDatabase::AddSingleChart( QString &ChartFullPath, bool b_force_full_se
     
     //    Update the Entry index fields
     for(unsigned int i=0 ; i<active_chartTable.count() ; i++)
-        active_chartTable[i].SetEntryOffset( i );
+        active_chartTable[i]->SetEntryOffset( i );
 
     //  Get a new magic number
     QString new_magic;
@@ -2529,11 +2536,11 @@ bool ChartDatabase::GetCentroidOfLargestScaleChart(double *clat, double *clon, C
 
     for(int i=0 ; i<nEntry ; i++)
     {
-        if(GetChartFamily(active_chartTable[i].GetChartType()) == family)
+        if(GetChartFamily(active_chartTable[i]->GetChartType()) == family)
         {
-            if(active_chartTable[i].GetScale() > cur_max_scale)
+            if(active_chartTable[i]->GetScale() > cur_max_scale)
             {
-                cur_max_scale = active_chartTable[i].GetScale();
+                cur_max_scale = active_chartTable[i]->GetScale();
                 cur_max_i = i;
             }
         }
@@ -2543,8 +2550,8 @@ bool ChartDatabase::GetCentroidOfLargestScaleChart(double *clat, double *clon, C
         return false;                             // nothing found
     else
     {
-        *clat = (active_chartTable[cur_max_i].GetLatMax() + active_chartTable[cur_max_i].GetLatMin()) / 2.;
-        *clon = (active_chartTable[cur_max_i].GetLonMin() + active_chartTable[cur_max_i].GetLonMax()) /2.;
+        *clat = (active_chartTable[cur_max_i]->GetLatMax() + active_chartTable[cur_max_i]->GetLatMin()) / 2.;
+        *clon = (active_chartTable[cur_max_i]->GetLonMin() + active_chartTable[cur_max_i]->GetLonMax()) /2.;
     }
     return true;
 }
@@ -2555,7 +2562,7 @@ bool ChartDatabase::GetCentroidOfLargestScaleChart(double *clat, double *clon, C
 int ChartDatabase::GetDBChartProj(int dbIndex)
 {
     if((bValid) && (dbIndex >= 0) && (dbIndex < (int)active_chartTable.size()))
-        return active_chartTable[dbIndex].GetChartProjectionType();
+        return active_chartTable[dbIndex]->GetChartProjectionType();
     else
         return PROJECTION_UNKNOWN;
 }
@@ -2566,7 +2573,7 @@ int ChartDatabase::GetDBChartProj(int dbIndex)
 int ChartDatabase::GetDBChartFamily(int dbIndex)
 {
     if((bValid) && (dbIndex >= 0) && (dbIndex < (int)active_chartTable.size()))
-        return active_chartTable[dbIndex].GetChartFamily();
+        return active_chartTable[dbIndex]->GetChartFamily();
     else
         return CHART_FAMILY_UNKNOWN;
 }
@@ -2578,7 +2585,7 @@ QString ChartDatabase::GetDBChartFileName(int dbIndex)
 {
     if((bValid) && (dbIndex >= 0) && (dbIndex < (int)active_chartTable.size()))
     {
-        return QString::fromUtf8(active_chartTable[dbIndex].GetpFullPath());
+        return QString::fromUtf8(active_chartTable[dbIndex]->GetpFullPath());
     }
     else
         return ("");
@@ -2591,7 +2598,7 @@ QString ChartDatabase::GetDBChartFileName(int dbIndex)
 int ChartDatabase::GetDBChartType(int dbIndex)
 {
     if((bValid) && (dbIndex >= 0) && (dbIndex < (int)active_chartTable.size()))
-        return active_chartTable[dbIndex].GetChartType();
+        return active_chartTable[dbIndex]->GetChartType();
     else
         return 0;
 }
@@ -2602,7 +2609,7 @@ int ChartDatabase::GetDBChartType(int dbIndex)
 float ChartDatabase::GetDBChartSkew(int dbIndex)
 {
     if((bValid) && (dbIndex >= 0) && (dbIndex < (int)active_chartTable.size()))
-        return active_chartTable[dbIndex].GetChartSkew();
+        return active_chartTable[dbIndex]->GetChartSkew();
     else
         return 0.;
 }
@@ -2613,7 +2620,7 @@ float ChartDatabase::GetDBChartSkew(int dbIndex)
 int ChartDatabase::GetDBChartScale(int dbIndex)
 {
     if((bValid) && (dbIndex >= 0) && (dbIndex < (int)active_chartTable.size()))
-        return active_chartTable[dbIndex].GetScale();
+        return active_chartTable[dbIndex]->GetScale();
     else
         return 1;
 }
@@ -2787,7 +2794,7 @@ void ChartDatabase::ApplyGroupArray(ChartGroupArray *pGroupArray)
     QString separator(QDir::separator());
     for(unsigned int ic=0 ; ic < active_chartTable.count(); ic++)
     {
-        ChartTableEntry *pcte = &active_chartTable[ic];
+        ChartTableEntry *pcte = active_chartTable[ic];
 
         pcte->ClearGroupArray();
 

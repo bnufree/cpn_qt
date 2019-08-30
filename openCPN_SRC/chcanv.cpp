@@ -711,14 +711,20 @@ void ChartCanvas::SetupGlCanvas( )
     {
         if(g_bopengl){
             qDebug("Creating glChartCanvas");
-            m_glcc = new glChartCanvas(0, this);
+            m_glcc = new glChartCanvas( this);
 
             // We use one context for all GL windows, so that textures etc will be automatically shared
             if(IsPrimaryCanvas()){
                 QGLFormat format;
-                QGLContext *pctx = new QGLContext(format);
-                m_glcc->setContext(pctx);
+//                QGLContext *pctx = new QGLContext(format);
+//                m_glcc->setContext(pctx);
+                QGLContext *pctx = m_glcc->context();
                 g_pGLcontext = pctx;                // Save a copy of the common context
+                qDebug()<<"Gl contxt:"<<pctx;
+                if(pctx)
+                {
+                    qDebug()<<pctx->format();
+                }
             }
             else{
                 m_glcc->setContext(g_pGLcontext);   // If not primary canvas, use the saved common context
@@ -7875,7 +7881,6 @@ void ChartCanvas::paintEvent(QPaintEvent *event)
     if(!m_b_paint_enable){
         return;
     }
-
     
     //  If necessary, reconfigure the S52 PLIB
     UpdateCanvasS52PLIBConfig();

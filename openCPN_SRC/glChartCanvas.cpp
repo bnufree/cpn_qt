@@ -480,11 +480,11 @@ static void GetglEntryPoints( void )
     
 }
 
-glChartCanvas::glChartCanvas(QGLContext* ctx, ChartCanvas* parentCavas) : QGLWidget(ctx, parentCavas)
+glChartCanvas::glChartCanvas(ChartCanvas* parentCavas) : QGLWidget(QGLFormat(QGL::DoubleBuffer | QGL:: StereoBuffers), parentCavas)
     , m_bsetup( false )
     , m_pParentCanvas(parentCavas)
-    , m_pcontext(ctx)
 {
+    m_pcontext = this->context();
 //    m_pParentCanvas = dynamic_cast<ChartCanvas *>( GetParent() );
     
 //    SetBackgroundStyle ( wxBG_STYLE_CUSTOM );  // on WXMSW, this prevents flashing

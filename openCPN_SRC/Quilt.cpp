@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -52,7 +52,7 @@ extern bool g_bopengl;
 //      So it is probably better to confine the macro use to one module, and scrub carefully.
 //      Anyway, makes a significant difference with Windows MSVC compiler builds.
 
-#define GetChartTableEntry(i) GetChartTable()[i]
+//#define GetChartTableEntry(i) GetChartTable()[i]
 
 //  Calculating the chart coverage region with extremely complicated shape is very expensive,
 //  put a limit on the complefity of "not covered" areas to prevent the application from slowing

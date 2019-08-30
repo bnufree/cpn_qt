@@ -43,9 +43,11 @@ extern  bool            g_bopengl;
 extern  int             g_cm93_zoom_factor;
 extern  int             g_nDepthUnitDisplay;
 //extern OCPNPlatform     *g_Platform;
-//extern s52plib          *ps52plib;
+extern s52plib          *ps52plib;
 extern  zchxMapMainWindow   *gFrame;
 extern  zchxGLOptions    g_GLOptions;
+
+extern void LoadS57();
 
 zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
     QDialog(parent),
@@ -88,6 +90,11 @@ zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
         item->setData(Qt::UserRole, QVariant::fromValue(ChartDirArray[i]));
     }
     ui->pOpenGL->setChecked(g_bopengl);
+
+    //更新S52显示的obj对象
+    if(!ps52plib) LoadS57();
+    resetMarStdList(true, false);
+
 }
 
 zchxOptionsDlg::~zchxOptionsDlg()
@@ -269,7 +276,6 @@ void zchxOptionsDlg::processApply(bool apply)
     //  Process the UserStandard display list, noting if any changes were made
     bool bUserStdChange = false;
     int nOBJL = ui->ps57CtlListBox->count();
-#if 0
     for (int iPtr = 0; iPtr < nOBJL; iPtr++) {
         int itemIndex = -1;
         for (size_t i = 0; i < marinersStdXref.size(); i++) {
@@ -352,7 +358,6 @@ void zchxOptionsDlg::processApply(bool apply)
             m_returnChanges |= S52_CHANGED;
         }
     }
-#endif
 
 
     m_returnChanges |= GENERIC_CHANGED | VISIT_CHARTS/* | k_vectorcharts | k_charts | m_groups_changed */;
@@ -413,7 +418,6 @@ void zchxOptionsDlg::resetMarStdList(bool bsetConfig, bool bsetStd)
 {
     ui->ps57CtlListBox->clear();
     marinersStdXref.clear();
-#if 0
     for (unsigned int iPtr = 0; iPtr < ps52plib->pOBJLArray->count(); iPtr++)
     {
         OBJLElement* pOLE = (OBJLElement*)(ps52plib->pOBJLArray->at(iPtr));
@@ -458,7 +462,6 @@ void zchxOptionsDlg::resetMarStdList(bool bsetConfig, bool bsetStd)
         if(bsetStd && cat == STANDARD) bviz = true;
         ui->ps57CtlListBox->setChecked(newpos, bviz);
     }
-#endif
 }
 
 

@@ -148,6 +148,7 @@ extern ChartGroupArray            *g_pGroupArray;
 bool                                g_bNeedDBUpdate;
 QString                             ChartListFileName;
 QString                             gDefaultWorldMapLocation;
+extern bool                         g_useMUI;
 
 
 
@@ -217,15 +218,28 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
     qDebug()<<"local data dir is:"<<zchxFuncUtil::getDataDir();
     //加载默认的配置文件
     if(!ZCHX_CFG_INS->hasLoadConfig()) ZCHX_CFG_INS->loadMyConfig();
+    //
+    if(!g_StyleManager)g_StyleManager = new ocpnStyle::StyleManager();
+    g_StyleManager->SetStyle(("MUI_flat") );
+    if( !g_StyleManager->IsOK() ) {
+        qDebug()<<"failed to load style";
+    }
+
+    if(g_useMUI){
+        ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
+        style->chartStatusWindowTransparent = true;
+    }
+
+
     //添加显示控件,地图数据在显示控件进行初始化,MainWindow只是提供外部操作的接口
-//    mEcdisWidget = new ChartCanvas(this, 0);
-//    if(!ui->centralwidget->layout())
-//    {
-//        ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
-//    }
-//    ui->centralwidget->layout()->addWidget(mEcdisWidget);
 #endif
     initEcdis();
+    mEcdisWidget = new ChartCanvas(this, 0);
+    if(!ui->centralwidget->layout())
+    {
+        ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
+    }
+    ui->centralwidget->layout()->addWidget(mEcdisWidget);
 }
 
 zchxMapMainWindow::~zchxMapMainWindow()
@@ -407,13 +421,8 @@ bool zchxMapMainWindow::ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray )
             b_need_refresh = true;
         }
     }
+    ZCHX_CFG_INS->UpdateSettings();
 #if 0
-
-    if(  rr & STYLE_CHANGED  ) {
-        OCPNMessageBox(NULL, _("Please restart OpenCPN to activate language or style changes."),
-                _("OpenCPN Info"), wxOK | wxICON_INFORMATION );
-    }
-
     bool b_groupchange = false;
     if( ( ( rr & VISIT_CHARTS )
             && ( ( rr & CHANGE_CHARTS ) || ( rr & FORCE_UPDATE ) || ( rr & SCAN_UPDATE ) ) )
@@ -495,9 +504,9 @@ bool zchxMapMainWindow::ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray )
 #ifdef ocpnUSE_GL
     if(rr & REBUILD_RASTER_CACHE){
         if(g_glTextureManager) {
-            GetPrimaryCanvas()->Disable();
+            GetPrimaryCanvas()->setEnabled(false);
             g_glTextureManager->BuildCompressedCache();
-            GetPrimaryCanvas()->Enable();
+            GetPrimaryCanvas()->setEnabled(true);
         }
     }
 #endif

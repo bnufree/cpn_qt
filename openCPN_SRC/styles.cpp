@@ -928,6 +928,7 @@ void StyleManager::Init(const QString & fromPath)
                                     tag->QueryIntAttribute( "y", &y );
                                     icon->size = QSize( x, y );
                                 }
+                                qDebug()<<"load icon :"<<icon->name<<icon->iconLoc<<icon->size;
                             }
                         }
                     }

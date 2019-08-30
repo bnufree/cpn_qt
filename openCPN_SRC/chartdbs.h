@@ -182,8 +182,8 @@ struct ChartTableEntry
     ChartTableEntry(ChartBase &theChart);
     ~ChartTableEntry();
 
-    bool IsEqualTo(const ChartTableEntry &cte) const;
-    bool IsEarlierThan(const ChartTableEntry &cte) const;
+    bool IsEqualTo(const ChartTableEntry *cte) const;
+    bool IsEarlierThan(const ChartTableEntry *cte) const;
     bool Read(const ChartDatabase *pDb, FileReadWrite& is);
     bool Write(const ChartDatabase *pDb, FileReadWrite& os);
     void Clear();
@@ -298,7 +298,7 @@ public:
 // Chart Database
 ///////////////////////////////////////////////////////////////////////
 
-typedef QList<ChartTableEntry> ChartTable;
+typedef QList<ChartTableEntry*> ChartTable;
 typedef QList<ChartClassDescriptor*> ArrayOfChartClassDescriptor;
 
 class ChartDatabase

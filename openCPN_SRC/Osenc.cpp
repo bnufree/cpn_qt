@@ -1037,7 +1037,7 @@ int Osenc::ingestCell( OGRS57DataSource *poS57DS, const QString &FullPath000, co
     //      Alternatively, we can explicitely find and apply updates from any source directory.
     //      We need to keep track of the last sequential update applied, to look out for new updates
     
-    QString LastUpdateDate = m_date000.toString("%Y%m%d");
+    QString LastUpdateDate = m_date000.toString("yyyyMMdd");
     
     int available_updates = ValidateAndCountUpdates( FullPath000, working_dir, LastUpdateDate, true );
     m_LastUpdateDate = LastUpdateDate;          // tentative, adjusted later on failure of update
@@ -1119,7 +1119,7 @@ int Osenc::ingestCell( OGRS57DataSource *poS57DS, const QString &FullPath000, co
             DDFModule oUpdateModule;
             QString LastGoodUpdateDate;
             QDateTime now = QDateTime::currentDateTime();
-            LastGoodUpdateDate = now.toString("%Y%m%d");
+            LastGoodUpdateDate = now.toString("yyyyMMdd");
             
             bSuccess = !( oUpdateModule.Open( last_successful_update_file.toUtf8().data(), TRUE ) == 0 );
             
@@ -1338,7 +1338,7 @@ int Osenc::ValidateAndCountUpdates( const QFileInfo& file000, const QString Copy
                 }
             } else {
                 QDateTime now = QDateTime::currentDateTime();
-                LastUpdateDate = now.toString( ("%Y%m%d") );
+                LastUpdateDate = now.toString( ("yyyyMMdd") );
             }
         }
     }
@@ -1378,8 +1378,8 @@ bool Osenc::GetBaseFileAttr( const QString &FullPath000 )
         errorMessage =  ("GetBaseFileAttr:  DDFRecord 0 does not contain DSID:ISDT ");
         date000 = ("20000101");             // backstop, very early, so any new files will update?
     }
-    m_date000 = QDateTime::fromString(date000, ("%Y%m%d") );
-    if( !m_date000.isValid() ) m_date000 = QDateTime::fromString("20000101", ("%Y%m%d") );
+    m_date000 = QDateTime::fromString(date000, ("yyyyMMdd") );
+    if( !m_date000.isValid() ) m_date000 = QDateTime::fromString("20000101", ("yyyyMMdd") );
     
 //    m_date000.ResetTime();
     
@@ -1545,7 +1545,7 @@ int Osenc::createSenc200(const QString& FullPath000, const QString& SENCFileName
         return ERROR_SENCFILE_ABORT;
     }
     
-    QString date000 = m_date000.toString( "%Y%m%d" );
+    QString date000 = m_date000.toString( "yyyyMMdd" );
     string sdata = date000.toStdString();
     if( !WriteHeaderRecord200( stream, HEADER_CELL_PUBLISHDATE, sdata) ){
         stream->Close();
@@ -1582,7 +1582,7 @@ int Osenc::createSenc200(const QString& FullPath000, const QString& SENCFileName
     }
     
     QDateTime now = QDateTime::currentDateTime();
-    QString dateNow = now.toString("%Y%m%d");
+    QString dateNow = now.toString("yyyyMMdd");
     sdata = dateNow.toStdString();
     if( !WriteHeaderRecord200( stream, HEADER_CELL_SENCCREATEDATE, sdata) ){
         stream->Close();

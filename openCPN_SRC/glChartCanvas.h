@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  OpenCPN
  *
@@ -89,7 +89,7 @@ class glChartCanvas : public QGLWidget
 {
     Q_OBJECT
 public:
-    glChartCanvas(QGLContext *ctx, ChartCanvas *parentCavas);
+    glChartCanvas(/*QGLContext *ctx,*/ ChartCanvas *parentCavas);
     static bool CanClipViewport(const ViewPort &vp);
     static ViewPort ClippedViewport(const ViewPort &vp, const LLRegion &region);
 

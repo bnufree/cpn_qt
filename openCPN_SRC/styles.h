@@ -93,6 +93,7 @@ public:
 
       void Unload(void) {
             loaded = false;
+            size = QSize(0, 0);
       }
 
       Icon(void) { Unload(); }

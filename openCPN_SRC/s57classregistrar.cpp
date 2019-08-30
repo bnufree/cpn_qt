@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * Project:  S-57 Translator
  * Purpose:  Implements S57ClassRegistrar class for keeping track of
@@ -347,7 +347,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
         if( CSLCount(papszTokens) < 5 )
         {
             CSLDestroy( papszTokens );
-            CPLAssert( false );
+//            CPLAssert( false );
             continue;
         }
 
@@ -356,7 +356,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
             || papszAttrNames[iAttr] != NULL )
         {
             CSLDestroy( papszTokens );
-            CPLAssert( false );
+//            CPLAssert( false );
             continue;
         }
 

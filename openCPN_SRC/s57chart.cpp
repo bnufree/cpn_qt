@@ -2568,7 +2568,7 @@ int s57chart::FindOrCreateSenc( const QString& name, bool b_progress )
                 int last_update = senc.getSENCReadLastUpdate();
 
                 QString str = senc.getSENCFileCreateDate();
-                QDateTime SENCCreateDate = QDateTime::fromString(str, ("%Y%m%d"));
+                QDateTime SENCCreateDate = QDateTime::fromString(str, ("yyyyMMdd"));
 
                 /*if( SENCCreateDate.isValid() )
                     SENCCreateDate.setTime(QTime(0));   */                // to midnight
@@ -3229,7 +3229,7 @@ bool s57chart::CreateHeaderDataFromoSENC( void )
     int last_update = senc.getSENCReadLastUpdate();
 
     QString str = senc.getSENCFileCreateDate();
-    QDateTime SENCCreateDate = QDateTime::fromString(str, ("%Y%m%d"));
+    QDateTime SENCCreateDate = QDateTime::fromString(str, ("yyyyMMdd"));
 
     //    if( SENCCreateDate.IsValid() )
     //        SENCCreateDate.ResetTime();                   // to midnight
@@ -3528,8 +3528,8 @@ int s57chart::GetUpdateFileArray( const QFileInfo& file000, QStringList *UpFiles
                         sumdate = ("20000101");           // backstop, very early, so wont be used
                     }
                     
-                    umdate = QDateTime::fromString(sumdate, ("%Y%m%d") );
-                    if( !umdate.isValid() ) umdate  = QDateTime::fromString( "20000101", "%Y%m%d" );
+                    umdate = QDateTime::fromString(sumdate, ("yyyyMMdd") );
+                    if( !umdate.isValid() ) umdate  = QDateTime::fromString( "20000101", "yyyyMMdd" );
 
                     //                                     umdate.ResetTime();
                     
@@ -3684,7 +3684,7 @@ int s57chart::ValidateAndCountUpdates( const QFileInfo& file000, const QString C
                 }
             } else {
                 QDateTime now = QDateTime::currentDateTime();
-                LastUpdateDate = now.toString("%Y%m%d") ;
+                LastUpdateDate = now.toString("yyyyMMdd") ;
             }
         }
     }
@@ -3696,7 +3696,7 @@ int s57chart::ValidateAndCountUpdates( const QFileInfo& file000, const QString C
 
 QString s57chart::GetISDT( void )
 {
-    if( m_date000.isValid() ) return m_date000.toString("%Y%m%d" );
+    if( m_date000.isValid() ) return m_date000.toString("yyyyMMdd" );
     else
         return ("Unknown");
 }
@@ -3742,8 +3742,8 @@ bool s57chart::GetBaseFileAttr( const QString& file000 )
 
         date000 = ("20000101");             // backstop, very early, so any new files will update?
     }
-    m_date000 = QDateTime::fromString( date000, ("%Y%m%d") );
-    if( !m_date000.isValid() ) m_date000 = QDateTime::fromString(("20000101"), ("%Y%m%d") );
+    m_date000 = QDateTime::fromString( date000, ("yyyyMMdd") );
+    if( !m_date000.isValid() ) m_date000 = QDateTime::fromString(("20000101"), ("yyyyMMdd") );
 
     //    m_date000.ResetTime();
 
@@ -4028,13 +4028,13 @@ int s57chart::BuildRAZFromSENCFile( const QString& FullPath )
 
     //   Decide on pub date to show
 
-    QDateTime d000 = QDateTime::fromString(sencfile.getBaseDate(), ("%Y%m%d") );
+    QDateTime d000 = QDateTime::fromString(sencfile.getBaseDate(), ("yyyyMMdd") );
     if( !d000.isValid() )
-        d000= QDateTime::fromString(("20000101"), ("%Y%m%d") );
+        d000= QDateTime::fromString(("20000101"), ("yyyyMMdd") );
 
-    QDateTime updt = QDateTime::fromString( sencfile.getUpdateDate(), ("%Y%m%d") );
+    QDateTime updt = QDateTime::fromString( sencfile.getUpdateDate(), ("yyyyMMdd") );
     if( !updt.isValid() )
-        updt = QDateTime::fromString( ("20000101"), ("%Y%m%d") );
+        updt = QDateTime::fromString( ("20000101"), ("yyyyMMdd") );
 
     if(updt < d000)
         m_PubYear.sprintf("%4d", updt.date().year());
@@ -4046,7 +4046,7 @@ int s57chart::BuildRAZFromSENCFile( const QString& FullPath )
     //    Set some base class values
     QDateTime upd = updt;
     if( !upd.isValid() )
-        upd = QDateTime::fromString( "20000101", ("%Y%m%d") );
+        upd = QDateTime::fromString( "20000101", ("yyyyMMdd") );
 
     //    upd.ResetTime();
     m_EdDate = upd;
