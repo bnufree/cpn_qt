@@ -369,6 +369,9 @@ QString s_locale;
 ChartCanvas      *g_focusCanvas = 0;
  ChartCanvas      *g_overlayCanvas = 0;
 
+  bool g_b_EnableVBO = false;
+  GLenum  g_texture_rectangle_format;
+
 
 double zchxFuncUtil::m_pt_per_pixel = 0.0;
 

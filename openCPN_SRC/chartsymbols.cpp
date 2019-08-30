@@ -28,6 +28,7 @@
 #include <stdlib.h>
 
 #include "chartsymbols.h"
+#include <QBitmap>
 //#ifdef ocpnUSE_GL
 //#include <wx/glcanvas.h>
 //#endif
@@ -44,18 +45,20 @@ extern GLenum       g_texture_rectangle_format;
 // needs some methods from ChartSymbol. So s52plib only calls static methods in
 // order to resolve circular include file dependencies.
 
-wxArrayPtrVoid* colorTables;
+wxArrayPtrVoid* colorTables = 0;
 unsigned int rasterSymbolsTexture;
 QSize rasterSymbolsTextureSize;
-QBitmap rasterSymbols;
+QBitmap *rasterSymbols = 0;
 int rasterSymbolsLoadedColorMapNumber;
 QString configFileDirectory;
 int ColorTableIndex;
 
 typedef QMap<QString, QRect> symbolGraphicsHashMap;
 
-symbolGraphicsHashMap* symbolGraphicLocations;
+symbolGraphicsHashMap* symbolGraphicLocations = 0;
+
 //--------------------------------------------------------------------------------------
+
 
 ChartSymbols::ChartSymbols( void )
 {
@@ -71,6 +74,7 @@ void ChartSymbols::InitializeGlobals( void )
     if( !symbolGraphicLocations ) symbolGraphicLocations = new symbolGraphicsHashMap;
     rasterSymbolsLoadedColorMapNumber = -1;
     ColorTableIndex = 0;
+    rasterSymbols = new QBitmap;
 }
 
 void ChartSymbols::DeleteGlobals( void )
@@ -652,7 +656,7 @@ void ChartSymbols::BuildLookup( Lookup &lookup )
     // Search the LUPArray to see if there is already a LUP with this RCID
     // If found, replace it with the new LUP
     // This provides a facility for updating the LUP tables after loading a basic set
-
+#if 0
     unsigned int index = 0;
     wxArrayOfLUPrec *pLUPARRAYtyped = plib->SelectLUPARRAY( LUP->TNAM );
 
@@ -667,6 +671,8 @@ void ChartSymbols::BuildLookup( Lookup &lookup )
     }
 
     pLUPARRAYtyped->append( LUP );
+#endif
+
 }
 
 void ChartSymbols::ProcessVectorTag( TiXmlElement* vectorNode, SymbolSizeInfo_t &vectorSize )
@@ -926,7 +932,7 @@ void ChartSymbols::BuildPattern( OCPNPattern &pattern )
     ( *symbolGraphicLocations )[pattern.name] = graphicsLocation;
 
     // check if key already there
-
+#if 0
     pattmp = ( *plib->_patt_sym )[pattern.name];
 
     if( NULL == pattmp ) {
@@ -939,6 +945,7 @@ void ChartSymbols::BuildPattern( OCPNPattern &pattern )
             // the node itself is destroyed as part of pAlloc
         }
     }
+#endif
 }
 
 void ChartSymbols::ProcessSymbols( TiXmlElement* symbolNodes )
@@ -1197,6 +1204,7 @@ bool ChartSymbols::LoadConfigFile(s52plib* plibArg, const QString & s52ilePath)
 
     return true;
 }
+
 void ChartSymbols::SetColorTableIndex( int index )
 {
     ColorTableIndex = index;
@@ -1212,11 +1220,11 @@ int ChartSymbols::LoadRasterFileForColorTable( int tableNo, bool flush )
             if(rasterSymbolsTexture)
                 return true;
 #ifdef ocpnUSE_GL            
-            else if( !g_texture_rectangle_format && !rasterSymbols.isNull())
+            else if( !g_texture_rectangle_format && !rasterSymbols->isNull())
                 return true;
 #endif            
         }
-        if( !rasterSymbols.isNull())
+        if( !rasterSymbols->isNull())
             return true;
     }
         
@@ -1272,7 +1280,7 @@ int ChartSymbols::LoadRasterFileForColorTable( int tableNo, bool flush )
         } 
 #endif
         {
-            rasterSymbols = QBitmap::fromImage(rasterFileImg);
+            *rasterSymbols = QBitmap::fromImage(rasterFileImg);
         }
 
         rasterSymbolsLoadedColorMapNumber = tableNo;
@@ -1333,8 +1341,8 @@ QString ChartSymbols::HashKey( const char* symbolName )
 QImage ChartSymbols::GetImage( const char* symbolName )
 {
     QRect bmArea = ( *symbolGraphicLocations )[HashKey( symbolName )];
-    if(!rasterSymbols.isNull()){
-        return rasterSymbols.copy(bmArea).toImage();
+    if(!rasterSymbols->isNull()){
+        return rasterSymbols->copy(bmArea).toImage();
     }
     else
         return QImage(1,1, QImage::Format_RGB32);
@@ -1350,3 +1358,4 @@ QSize ChartSymbols::GLTextureSize()
 {
     return rasterSymbolsTextureSize;
 }
+

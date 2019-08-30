@@ -259,10 +259,10 @@ extern ChartCanvas      *g_focusCanvas;
 extern ChartCanvas      *g_overlayCanvas;
 
 extern float            g_toolbar_scalefactor;
-/*extern*/ SENCThreadManager *g_SencThreadManager;
+extern SENCThreadManager *g_SencThreadManager;
 
 ChartCanvas                 *gMainCanvas = 0;
-s57RegistrarMgr          *m_pRegistrarMan = 0;
+extern s57RegistrarMgr          *m_pRegistrarMan;
 
 // "Curtain" mode parameters
 QDialog                *g_pcurtain;
@@ -648,9 +648,9 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
 
     m_bShowCompassWin = g_bShowCompassWin;
 
-//    m_Compass = new ocpnCompass(this);
-//    m_Compass->SetScaleFactor(g_compass_scalefactor);
-//    m_Compass->Show(m_bShowCompassWin);
+    m_Compass = new ocpnCompass(this);
+    m_Compass->SetScaleFactor(g_compass_scalefactor);
+    m_Compass->Show(m_bShowCompassWin);
 }
 
 ChartCanvas::~ChartCanvas()
@@ -707,20 +707,23 @@ void ChartCanvas::CanvasApplyLocale()
 
 void ChartCanvas::SetupGlCanvas( )
 {
-    if(g_bopengl){
-        qDebug("Creating glChartCanvas");
-//        m_glcc = new glChartCanvas(0, this);
+    if ( !g_bdisable_opengl )
+    {
+        if(g_bopengl){
+            qDebug("Creating glChartCanvas");
+            m_glcc = new glChartCanvas(0, this);
 
-//        // We use one context for all GL windows, so that textures etc will be automatically shared
-//        if(IsPrimaryCanvas()){
-//            QGLFormat format;
-//            QGLContext *pctx = new QGLContext(format);
-//            m_glcc->setContext(pctx);
-//            g_pGLcontext = pctx;                // Save a copy of the common context
-//        }
-//        else{
-//            m_glcc->setContext(g_pGLcontext);   // If not primary canvas, use the saved common context
-//        }
+            // We use one context for all GL windows, so that textures etc will be automatically shared
+            if(IsPrimaryCanvas()){
+                QGLFormat format;
+                QGLContext *pctx = new QGLContext(format);
+                m_glcc->setContext(pctx);
+                g_pGLcontext = pctx;                // Save a copy of the common context
+            }
+            else{
+                m_glcc->setContext(g_pGLcontext);   // If not primary canvas, use the saved common context
+            }
+        }
     }
 }
 
@@ -767,11 +770,11 @@ void ChartCanvas::ApplyGlobalSettings()
 {
     // GPS compas window
     m_bShowCompassWin = g_bShowCompassWin;
-//    if(m_Compass){
-//        m_Compass->Show(m_bShowCompassWin);
-//        if(m_bShowCompassWin)
-//            m_Compass->UpdateStatus();
-//    }
+    if(m_Compass){
+        m_Compass->Show(m_bShowCompassWin);
+        if(m_bShowCompassWin)
+            m_Compass->UpdateStatus();
+    }
 }
 
 
@@ -1754,8 +1757,8 @@ void ChartCanvas::SetDisplaySizeMM( double size )
 void ChartCanvas::InvalidateGL()
 {
     if(!m_glcc)  return;
-//    if(g_bopengl)  m_glcc->Invalidate();
-//    if(m_Compass)   m_Compass->UpdateStatus( true );
+    if(g_bopengl)  m_glcc->Invalidate();
+    if(m_Compass)   m_Compass->UpdateStatus( true );
 }
 
 int ChartCanvas::GetCanvasChartNativeScale()
@@ -2804,7 +2807,7 @@ void ChartCanvas::SetColorScheme( ColorScheme cs )
     
     m_Piano->SetColorScheme( cs );
     
-//    m_Compass->SetColorScheme( cs );
+    m_Compass->SetColorScheme( cs );
 
     //    if(m_muiBar)
     //        m_muiBar->SetColorScheme( cs );
@@ -8236,13 +8239,13 @@ emboss_data *ChartCanvas::EmbossDepthScale()
 
     ped->x = ( GetVP().pix_width - ped->width );
 
-//    if(m_Compass && m_bShowCompassWin){
-//        QRect r = m_Compass->GetRect();
-//        ped->y = r.y() + r.height();
-//    }
-//    else{
-//        ped->y = 40;
-//    }
+    if(m_Compass && m_bShowCompassWin){
+        QRect r = m_Compass->GetRect();
+        ped->y = r.y() + r.height();
+    }
+    else{
+        ped->y = 40;
+    }
     return ped;
 }
 
@@ -8653,23 +8656,23 @@ extern bool    g_bAllowShowScaled;
 
 void ChartCanvas::UpdateGPSCompassStatusBox( bool b_force_new )
 {
-//    //    Look for change in overlap or positions
-//    bool b_update = false;
-//    int cc1_edge_comp = 2;
-//    QRect rect = m_Compass->GetRect();
-//    QSize parent_size = size();
+    //    Look for change in overlap or positions
+    bool b_update = false;
+    int cc1_edge_comp = 2;
+    QRect rect = m_Compass->GetRect();
+    QSize parent_size = size();
 
-//    // check to see if it would overlap if it was in its home position (upper right)
-//    zchxPoint tentative_pt(parent_size.width() - rect.width() - cc1_edge_comp, g_StyleManager->GetCurrentStyle()->GetCompassYOffset());
-//    QRect tentative_rect( tentative_pt.toPoint(), rect.size());
+    // check to see if it would overlap if it was in its home position (upper right)
+    zchxPoint tentative_pt(parent_size.width() - rect.width() - cc1_edge_comp, g_StyleManager->GetCurrentStyle()->GetCompassYOffset());
+    QRect tentative_rect( tentative_pt.toPoint(), rect.size());
     
-//    // No toolbar, so just place compass in upper right.
-//    m_Compass->Move( tentative_pt );
-//    if( m_Compass && m_Compass->IsShown())
-//        m_Compass->UpdateStatus( b_force_new | b_update );
+    // No toolbar, so just place compass in upper right.
+    m_Compass->Move( tentative_pt );
+    if( m_Compass && m_Compass->IsShown())
+        m_Compass->UpdateStatus( b_force_new | b_update );
     
-//    if( b_force_new | b_update )
-//        Refresh();
+    if( b_force_new | b_update )
+        Refresh();
 
 }
 

@@ -11,6 +11,7 @@
 #include <QDebug>
 #include "_def.h"
 #include "zchxmapmainwindow.h"
+#include <QPixmapCache>
 
 
 #undef QT_MESSAGELOG_FILE
@@ -113,6 +114,7 @@ int main(int argc, char *argv[])
     //make size as 9:16
 //    gFrame = new zchxMapMainWindow();
 //    gFrame->showMaximized();
+    QPixmapCache::setCacheLimit(1);
     zchxMapMainWindow w;
     w.show();
 

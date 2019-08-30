@@ -106,7 +106,6 @@ public:
 
       bool LoadBinary(const QString & filename, ArrayOfCDI& dir_array_check);
       bool SaveBinary(const QString & filename) { return ChartDatabase::Write(filename); }
-
       int  BuildChartStack(ChartStack * cstk, float lat, float lon, int groupIndex);
       int  BuildChartStack(ChartStack * cstk, float lat, float lon, int db_add, int groupIndex );
       bool EqualStacks(ChartStack *, ChartStack *);

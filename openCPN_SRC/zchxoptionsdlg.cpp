@@ -1,4 +1,4 @@
-#include "zchxoptionsdlg.h"
+﻿#include "zchxoptionsdlg.h"
 #include "ui_zchxoptionsdlg.h"
 #include "zchxchecklistwidget.h"
 #include "zchxopengloptiondlg.h"
@@ -50,7 +50,7 @@ extern  zchxGLOptions    g_GLOptions;
 zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::zchxOptionsDlg),
-    m_pWorkDirList(0)
+    m_pWorkDirList(new ArrayOfCDI)
 {
     ui->setupUi(this);
     this->setAttribute(Qt::WA_DeleteOnClose);
@@ -65,6 +65,29 @@ zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
     ui->pDispCat->setItemData(1, STANDARD);
     ui->pDispCat->setItemData(2, OTHER);
     ui->pDispCat->setItemData(3, MARINERS_STANDARD);
+
+    //获取当前指定的数据目录
+    ui->pActiveChartsList->setColumnCount(1);
+    ui->pActiveChartsList->setColumnWidth(0, ui->pActiveChartsList->width()-1);
+    ArrayOfCDI ChartDirArray;
+    ZCHX_CFG_INS->LoadChartDirArray( ChartDirArray );
+    ui->pActiveChartsList->setRowCount(ChartDirArray.size());
+    for(int i=0; i<ChartDirArray.size(); i++)
+    {
+        m_CurrentDirList.append(ChartDirArray[i]);
+        QString dir = ChartDirArray[i].fullpath;
+        QTableWidgetItem* item = ui->pActiveChartsList->item(i, 0);
+        if(!item)
+        {
+            item = new QTableWidgetItem(dir);
+            ui->pActiveChartsList->setItem(i, 0, item);
+        } else
+        {
+            item->setText(dir);
+        }
+        item->setData(Qt::UserRole, QVariant::fromValue(ChartDirArray[i]));
+    }
+    ui->pOpenGL->setChecked(g_bopengl);
 }
 
 zchxOptionsDlg::~zchxOptionsDlg()
@@ -132,8 +155,11 @@ void zchxOptionsDlg::on_bOpenGL_clicked()
 
 void zchxOptionsDlg::on_OK_clicked()
 {
+    hide();
     processApply(false);
+
     close();
+
 }
 
 void zchxOptionsDlg::on_CANCEL_clicked()
@@ -148,11 +174,43 @@ void zchxOptionsDlg::on_APPLY_clicked()
 
 void zchxOptionsDlg::processApply(bool apply)
 {
+    m_returnChanges = 0;
     Qt::CursorShape cursor_type = cursor().shape();
     setCursor(QCursor(Qt::BusyCursor));
 
     // Handle Chart Tab
     UpdateWorkArrayFromTextCtl();
+    //检测数据目录是否发生了变化
+    ArrayOfCDI old_chart_list;
+    ZCHX_CFG_INS->LoadChartDirArray( old_chart_list );
+    if(m_pWorkDirList->size() == 0)
+    {
+        m_returnChanges |= CHANGE_CHARTS;
+    } else
+    {
+        //如果两次的目录完全一样
+        if(m_pWorkDirList->size() != old_chart_list.size())
+        {
+            m_returnChanges |= CHANGE_CHARTS;
+        } else
+        {
+            bool found = true;
+            for(int i=0; i<m_pWorkDirList->size(); i++)
+            {
+                ChartDirInfo info = m_pWorkDirList->at(i);
+                if(old_chart_list.indexOf(info) < 0)
+                {
+                    found = false;
+                    break;
+                }
+            }
+            if(!found)
+            {
+                m_returnChanges |= CHANGE_CHARTS;
+            }
+        }
+    }
+
     int k_force = FORCE_UPDATE;
     if (!ui->pUpdateCheckBox->isChecked()) k_force = 0;
     ui->pUpdateCheckBox->setEnabled(true);
@@ -297,9 +355,9 @@ void zchxOptionsDlg::processApply(bool apply)
 #endif
 
 
-    m_returnChanges |= GENERIC_CHANGED | k_vectorcharts | k_charts | m_groups_changed ;
+    m_returnChanges |= GENERIC_CHANGED | VISIT_CHARTS/* | k_vectorcharts | k_charts | m_groups_changed */;
 
-    if (apply && gFrame) {
+    if (/*apply &&*/ gFrame) {
         gFrame->ProcessOptionsDialog(m_returnChanges, m_pWorkDirList);
         m_CurrentDirList = *m_pWorkDirList; // Perform a deep copy back to main database.
 
@@ -313,10 +371,17 @@ void zchxOptionsDlg::processApply(bool apply)
     setCursor(QCursor(cursor_type));
 }
 
-
-void zchxOptionsDlg::UpdateWorkArrayFromTextCtl(void)
+void zchxOptionsDlg::resizeEvent(QResizeEvent *e)
 {
-    if(!m_pWorkDirList) return;
+    QDialog::resizeEvent(e);
+    ui->pActiveChartsList->setColumnWidth(0, ui->pActiveChartsList->width()-2);
+}
+
+
+bool zchxOptionsDlg::UpdateWorkArrayFromTextCtl(void)
+{
+    if(!m_pWorkDirList) return false;
+    bool chart_change = false;
     int n = ui->pActiveChartsList->rowCount();
     m_pWorkDirList->clear();
     for (int i = 0; i < n; i++)
@@ -338,8 +403,10 @@ void zchxOptionsDlg::UpdateWorkArrayFromTextCtl(void)
         } else
         {
             m_pWorkDirList->append(ChartDirInfo(dirname));
+            chart_change = true;
         }
     }
+    return chart_change;
 }
 
 void zchxOptionsDlg::resetMarStdList(bool bsetConfig, bool bsetStd)
@@ -394,3 +461,26 @@ void zchxOptionsDlg::resetMarStdList(bool bsetConfig, bool bsetStd)
 #endif
 }
 
+
+void zchxOptionsDlg::on_addBtn_clicked()
+{
+    QString path = QFileDialog::getExistingDirectory(0, "Select a chart directory");
+    if(path.size() > 0)
+    {
+        ui->pActiveChartsList->insertRow(ui->pActiveChartsList->rowCount());
+        QTableWidgetItem *item = new QTableWidgetItem(path);
+        ChartDirInfo info;
+        info.fullpath = path;
+        item->setData(Qt::UserRole, QVariant::fromValue(info));
+        ui->pActiveChartsList->setItem(ui->pActiveChartsList->rowCount()-1, 0, item);
+    }
+}
+
+void zchxOptionsDlg::on_m_removeBtn_clicked()
+{
+    if(ui->pActiveChartsList->selectedItems().size() == 0) return;
+    QTableWidgetItem *item = ui->pActiveChartsList->selectedItems().first();
+    m_CurrentDirList.removeOne(item->data(Qt::UserRole).value<ChartDirInfo>());
+    int row = item->row();
+    ui->pActiveChartsList->removeRow(row);
+}

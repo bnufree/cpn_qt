@@ -128,7 +128,7 @@ extern glTextureManager   *g_glTextureManager;
 extern bool             b_inCompressAllCharts;
 extern std::vector<int> g_quilt_noshow_index_array;
 
-GLenum       g_texture_rectangle_format;
+extern GLenum       g_texture_rectangle_format;
 
 extern int g_memCacheLimit;
 extern ColorScheme global_color_scheme;
@@ -169,7 +169,7 @@ extern ChartCanvas      *g_overlayCanvas;
 extern zchxGLOptions g_GLOptions;
 
 //    For VBO(s)
-bool         g_b_EnableVBO;
+extern bool         g_b_EnableVBO;
 bool         g_b_needFinish;  //Need glFinish() call on each frame?
 
 

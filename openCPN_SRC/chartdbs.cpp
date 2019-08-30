@@ -1712,7 +1712,7 @@ bool ChartDatabase::DetectDirChange(const QString & dir_path, const QString & ma
 
     //    Get an arraystring of all files
     QDir dir(dir_path);
-    QFileInfoList FileList = dir.entryInfoList(QDir::NoFilter, QDir::Name);
+    QFileInfoList FileList = dir.entryInfoList(QDir::Files, QDir::Name);
     int n_files = FileList.size();
 
     FlexHash hash( sizeof(nacc) );
@@ -1750,7 +1750,8 @@ bool ChartDatabase::DetectDirChange(const QString & dir_path, const QString & ma
     hash.Receive( &nacc );
 
     //    Return the calculated magic number
-    new_magic.sprintf("%ul", nacc);
+//    new_magic.sprintf("%ul", nacc);
+    new_magic.setNum(nacc);
 
     //    And do the test
     if(new_magic != magic)
@@ -1965,7 +1966,7 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
     QString filename;
 
     //    Count the files
-    QStringList FileList;
+    QFileInfoList FileList;
 //    int gaf_flags = QDir_DEFAULT;                  // as default, recurse into subdirs
 
 
@@ -1990,14 +1991,16 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
     {
         // Note that `QDir::GetAllFiles()` appends to the list rather than replaces existing contents.
         QDir dir(dir_name);
-        FileList =  dir.entryList(QStringList()<<filespec);
-        FileList =  dir.entryList(QStringList()<<filespecXZ);
-        qSort(FileList.begin(), FileList.end()); // Sorted processing order makes the progress bar more meaningful to the user.
+        FileList.append(dir.entryInfoList(QStringList()<<filespec<<filespecXZ, QDir::Files, QDir::Name));
+//        FileList.append(dir.entryList(QStringList()<<filespecXZ));
+//        qSort(FileList.begin(), FileList.end()); // Sorted processing order makes the progress bar more meaningful to the user.
     }
     else {                            // This is a cm93 dataset, specified as yada/yada/cm93
-        QString dir_plus = dir_name;
-        dir_plus += QString(QDir::separator());
-        FileList.append(dir_plus);
+        //cm93的情况不处理
+//        QString dir_plus = dir_name;
+//        dir_plus += QString(QDir::separator());
+//        FileList.append(dir_plus);
+
     }
 
     int nFile = FileList.count();
@@ -2032,16 +2035,17 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
     for(int ifile=0 ; ifile < nFile ; ifile++)
     {
         QFileInfo file(FileList[ifile]);
-        QString full_name = file.filePath();
+        QString full_name = file.absoluteFilePath();
         QString file_name = file.fileName();
         //    Validate the file name again, considering MSW's semi-random treatment of case....
         // TODO...something fishy here - may need to normalize saved name?
-        if(!QRegExp(lowerFileSpec).exactMatch(filename) && !QRegExp(filespec).exactMatch(filename) &&
-                !QRegExp(lowerFileSpecXZ).exactMatch(filename) && !QRegExp(filespecXZ).exactMatch(filename) &&
-                !b_found_cm93) {
-            qDebug("FileSpec test failed for:%s", file_name.toUtf8().data());
-            continue;
-        }
+        //本身过滤的时候就进行了文件过滤,又不处理cm93,所以去掉正则表达式
+//        if(!QRegExp(lowerFileSpec).exactMatch(filename) && !QRegExp(filespec).exactMatch(filename) &&
+//                !QRegExp(lowerFileSpecXZ).exactMatch(filename) && !QRegExp(filespecXZ).exactMatch(filename) &&
+//                !b_found_cm93) {
+//            qDebug("FileSpec test failed for:%s", file_name.toUtf8().data());
+//            continue;
+//        }
 
         if( pprog && ( ( ifile % nFileProgressQuantum ) == 0 ) )
         {

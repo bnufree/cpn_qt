@@ -265,11 +265,8 @@ void ChartDB::DeleteCacheEntry(CacheEntry *pce, bool bDelTexture, const QString 
 //         if (pthumbwin->pThumbChart == ch)  pthumbwin->pThumbChart = NULL;
 //     }
 
-#ifdef ocpnUSE_GL
      // The glCanvas may be cacheing some information for this chart     
-     if (g_glTextureManager)
-         g_glTextureManager->PurgeChartTextures(ch, bDelTexture);
-#endif
+     if (g_glTextureManager)  g_glTextureManager->PurgeChartTextures(ch, bDelTexture);
 
      pChartCache->removeOne(pce);
      delete ch;
@@ -427,6 +424,15 @@ ChartBase *ChartDB::GetChart(const char *theFilePath, ChartClassDescriptor &char
     ChartBase *pch = NULL;
     QString chartExt = QFileInfo(fn).suffix().toUpper();
 
+    //现在只处理S57的.000数据
+#if 1
+    if(chartExt == "000" || chartExt == "S57")
+    {
+        LoadS57();
+        pch = new s57chart;
+        return pch;
+    }
+#else
     if (chartExt == "XZ") {
         QString npath = fileName;
         npath = npath.left(npath.length()-3); //去掉.xz
@@ -440,9 +446,7 @@ ChartBase *ChartDB::GetChart(const char *theFilePath, ChartClassDescriptor &char
         pch = new ChartGEO;
     }
     else if (chartExt == "MBTILES") {
-#if 0
         pch = new ChartMBTiles;
-#endif
     }
     else if (chartExt == "000" || chartExt == "S57") {
         LoadS57();
@@ -450,15 +454,12 @@ ChartBase *ChartDB::GetChart(const char *theFilePath, ChartClassDescriptor &char
     }
     else if (chart_desc.m_descriptor_type == PLUGIN_DESCRIPTOR) {
         qDebug()<<"chart plugin not supported yet";
-#if 0
         LoadS57();
         ChartPlugInWrapper *cpiw = new ChartPlugInWrapper(chart_desc.m_class_name);
         pch = (ChartBase *)cpiw;
-#endif
     }
     else
     {
-#if 0
         QRegularExpression rxName("[0-9]+");
         QRegularExpression rxExt("[A-G]");
         if (rxName.match(QFileInfo(fn).fileName()).hasMatch() && rxExt.match(chartExt).hasMatch())
@@ -469,8 +470,8 @@ ChartBase *ChartDB::GetChart(const char *theFilePath, ChartClassDescriptor &char
             if( QDir(fileName).exists() )
                 pch = new cm93compchart;
         }
-#endif
     }
+#endif
 
     return pch;
 }
@@ -1121,7 +1122,6 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
         return NULL;
 
     //      printf("Opening chart %d   lock: %d\n", dbindex, m_b_locked);
-
     const ChartTableEntry &cte = GetChartTableEntry(dbindex);
     QString ChartFullPath = QString::fromUtf8(cte.GetpFullPath());
     ChartTypeEnum chart_type = (ChartTypeEnum)cte.GetChartType();
@@ -1253,6 +1253,8 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
     {
         qDebug("Creating new chart");
 
+#if 0
+
         if(chart_type == CHART_TYPE_KAP)
             Ch = new ChartKAP();
 
@@ -1263,12 +1265,13 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
             Ch = new ChartMBTiles();
 
         else if(chart_type == CHART_TYPE_S57)
-        {
+#endif
+        if(chart_type == CHART_TYPE_S57){
             LoadS57();
             Ch = new s57chart();
             s57chart *Chs57 = static_cast<s57chart*>(Ch);
 
-            Chs57->SetNativeScale(cte.GetScale());
+//            Chs57->SetNativeScale(cte.GetScale());
 
             //    Explicitely set the chart extents from the database to
             //    support the case wherein the SENC file has not yet been built
@@ -1277,12 +1280,11 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
             ext.SLAT = cte.GetLatMin();
             ext.WLON = cte.GetLonMin();
             ext.ELON = cte.GetLonMax();
-            Chs57->SetFullExtent(ext);
+//            Chs57->SetFullExtent(ext);
         }
-
+#if 0
         else if(chart_type == CHART_TYPE_CM93)
         {
-#if 0
             LoadS57();
             Ch = new cm93chart();
             cm93chart *Chcm93 = static_cast<cm93chart*>(Ch);
@@ -1297,12 +1299,10 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
             ext.WLON = cte.GetLonMin();
             ext.ELON = cte.GetLonMax();
             Chcm93->SetFullExtent(ext);
-#endif
         }
 
         else if(chart_type == CHART_TYPE_CM93COMP)
         {
-#if 0
             LoadS57();
             Ch = new cm93compchart();
 
@@ -1318,7 +1318,6 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
             ext.WLON = cte.GetLonMin();
             ext.ELON = cte.GetLonMax();
             Chcm93->SetFullExtent(ext);
-#endif
         }
 
         else if(chart_type == CHART_TYPE_PLUGIN)
@@ -1359,14 +1358,13 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
             if(chart_class_name.length())
             {
                 qDebug()<<"chart plugin not supported yet."<<chart_class_name;
-#if 0
                 ChartPlugInWrapper *cpiw = new ChartPlugInWrapper(chart_class_name);
                 Ch = (ChartBase *)cpiw;
                 if(chart_family == CHART_FAMILY_VECTOR)
                     LoadS57();
-#endif
             }
         }
+#endif
 
 
         else{
@@ -1602,7 +1600,7 @@ QDomDocument ChartDB::GetXMLDescription(int dbIndex, bool b_getGeom)
     QDomDocument doc;
     if(!IsValid() || (dbIndex >= GetChartTableEntries()))
         return doc;
-
+#if 0
     bool b_remove = !IsChartInCache(dbIndex);
 
     QDomElement pcell_node;
@@ -1753,7 +1751,7 @@ QDomDocument ChartDB::GetXMLDescription(int dbIndex, bool b_getGeom)
 //    doc.SetRoot(pcell_node);
 
     if(b_remove) DeleteCacheChart(pc);
-
+#endif
     return doc;
 }
 

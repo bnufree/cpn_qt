@@ -25,7 +25,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>0</y>
+          <y>-365</y>
           <width>611</width>
           <height>1656</height>
          </rect>
@@ -387,7 +387,20 @@
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_7">
             <item>
-             <widget class="QTableWidget" name="pActiveChartsList"/>
+             <widget class="QTableWidget" name="pActiveChartsList">
+              <property name="selectionMode">
+               <enum>QAbstractItemView::SingleSelection</enum>
+              </property>
+              <property name="selectionBehavior">
+               <enum>QAbstractItemView::SelectRows</enum>
+              </property>
+              <attribute name="horizontalHeaderVisible">
+               <bool>false</bool>
+              </attribute>
+              <attribute name="verticalHeaderVisible">
+               <bool>false</bool>
+              </attribute>
+             </widget>
             </item>
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_5">

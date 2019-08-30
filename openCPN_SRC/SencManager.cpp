@@ -34,7 +34,7 @@
 
 
 extern zchxMapMainWindow*          gFrame;
-//extern SENCThreadManager *g_SencThreadManager;
+extern SENCThreadManager *g_SencThreadManager;
 extern ColorScheme       global_color_scheme;
 extern int               g_nCPUCount;
 S57ClassRegistrar *g_poRegistrar = 0;

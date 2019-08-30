@@ -242,6 +242,8 @@ public:
     }
 };
 
+Q_DECLARE_METATYPE(ChartDirInfo)
+
 typedef QList<ChartDirInfo> ArrayOfCDI;
 
 

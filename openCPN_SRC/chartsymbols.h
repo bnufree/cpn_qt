@@ -109,6 +109,7 @@ public:
 	~ChartSymbols(void);
 	bool LoadConfigFile(s52plib* plibArg, const QString & path);
 
+
 	static void InitializeGlobals( void );
 	static void DeleteGlobals( void );
 	static int LoadRasterFileForColorTable( int tableNo, bool flush=false );
@@ -117,11 +118,12 @@ public:
 	static S52color* GetColor( const char *colorName, int fromTable );
     static QColor GetQColor( const QString &colorName, int fromTable );
     static QColor GetQColor( const char *colorName, int fromTable );
-	static QString HashKey( const char* symbolName );
+    static QString HashKey( const char* symbolName );
     static QImage GetImage( const char* symbolName );
-        static unsigned int GetGLTextureRect( QRect &rect, const char* symbolName );
-        static QSize GLTextureSize();
-        static void SetColorTableIndex( int index );
+    static unsigned int GetGLTextureRect( QRect &rect, const char* symbolName );
+    static QSize GLTextureSize();
+    static void SetColorTableIndex( int index );
+
 private:
       void ProcessVectorTag( TiXmlElement* subNodes, SymbolSizeInfo_t &vectorSize );
       void ProcessColorTables( TiXmlElement* colortableodes );

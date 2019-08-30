@@ -9,16 +9,19 @@
 #include "zchxconfig.h"
 #include "chartdb.h"
 #include "chcanv.h"
-//#include "s52plib.h"
+#include "s52plib.h"
 #include "OCPNPlatform.h"
-//#include "S57ClassRegistrar.h"
-//#include "s57RegistrarMgr.h"
-//#include "glChartCanvas.h"
+#include "S57ClassRegistrar.h"
+#include "s57RegistrarMgr.h"
+#include "glChartCanvas.h"
+#include "SencManager.h"
 //#include "thumbwin.h"
-//#include "styles.h"
+#include "styles.h"
 #include <QVBoxLayout>
 #include <QThread>
 #include "config.h"
+#include <QProgressDialog>
+#include <QLabel>
 
 
 extern      ChartDB                     *ChartData;
@@ -33,14 +36,14 @@ extern      ColorScheme                 global_color_scheme;
 static wxArrayPtrVoid       *UserColorTableArray;
 static wxArrayPtrVoid       *UserColourHashTableArray;
 static QColorHashMap        *pcurrent_user_color_hash;
-//SENCThreadManager           *g_SencThreadManager;
+SENCThreadManager           *g_SencThreadManager = 0;
 extern s52plib                   *ps52plib;
 extern QString                  g_csv_locn;
 
 extern QString                  g_SENCPrefix;
 extern QString                  g_UserPresLibData;
-//extern S57ClassRegistrar         *g_poRegistrar;
-//s57RegistrarMgr           *m_pRegistrarMan = 0;
+extern S57ClassRegistrar         *g_poRegistrar;
+s57RegistrarMgr           *m_pRegistrarMan = 0;
 extern zchxMapMainWindow*  gFrame;
 extern int                       g_nDepthUnitDisplay;
 
@@ -122,8 +125,7 @@ extern QString                  g_locale;
 extern QString                  g_localeOverride;
 extern bool             g_btouch;
 extern bool                      g_bdisable_opengl;
-
-//extern ChartGroupArray           *g_pGroupArray;
+extern ChartGroupArray           *g_pGroupArray;
 extern int                       g_GroupIndex;
 extern bool                      g_bNeedDBUpdate;
 extern bool                      g_bPreserveScaleOnX;
@@ -132,7 +134,7 @@ extern bool                      g_bFullScreenQuilt;
 extern bool                      g_bQuiltEnable;
 extern bool                      g_bQuiltStart;
 extern bool                      g_bquiting;
-//extern ocpnStyle::StyleManager*  g_StyleManager;
+extern ocpnStyle::StyleManager*  g_StyleManager;
 extern double                    g_ChartNotRenderScaleFactor;
 std::vector<int>               g_quilt_noshow_index_array;
 extern int                       g_nbrightness;
@@ -395,18 +397,17 @@ void zchxMapMainWindow::setActionEnableSts(const QString &action, bool check)
 
 bool zchxMapMainWindow::ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray )
 {
-#if 0
     bool b_need_refresh = false;                // Do we need a full reload?
 
     if( ( rr & VISIT_CHARTS )
             && ( ( rr & CHANGE_CHARTS ) || ( rr & FORCE_UPDATE ) || ( rr & SCAN_UPDATE ) ) ) {
         if(pNewDirArray){
-            UpdateChartDatabaseInplace( *pNewDirArray, ( ( rr & FORCE_UPDATE ) == FORCE_UPDATE ),
-                true, ChartListFileName );
+            UpdateChartDatabaseInplace( *pNewDirArray, ( ( rr & FORCE_UPDATE ) == FORCE_UPDATE ),  true, ChartListFileName );
 
             b_need_refresh = true;
         }
     }
+#if 0
 
     if(  rr & STYLE_CHANGED  ) {
         OCPNMessageBox(NULL, _("Please restart OpenCPN to activate language or style changes."),
@@ -1016,14 +1017,17 @@ void zchxMapMainWindow::slotOnFrameTimer1Out()
 
 bool zchxMapMainWindow::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName )
 {
-#if 0
+
     bool b_run = false;
+#if 0
     if(FrameTimer1)
     {
         b_run = FrameTimer1->isActive();
         FrameTimer1->stop();                  // stop other asynchronous activity
     }
+#endif
 
+#if 0
     // ..For each canvas...
     for(unsigned int i=0 ; i < g_canvasArray.GetCount() ; i++){
         ChartCanvas *cc = g_canvasArray.Item(i);
@@ -1033,63 +1037,50 @@ bool zchxMapMainWindow::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b
             cc->m_singleChart = NULL;
         }
     }
+#endif
     if(ChartData)   ChartData->PurgeCache();
 
 //TODO
 //     delete pCurrentStack;
 //     pCurrentStack = NULL;
 
-    OCPNPlatform::ShowBusySpinner();
+    setCursor(g_Platform->ShowBusySpinner());
 
-    wxGenericProgressDialog *pprog = nullptr;
+    QProgressDialog *pprog = nullptr;
     if( b_prog ) {
-        QString longmsg = _("OpenCPN Chart Update");
-        longmsg += _T("..........................................................................");
-
-        pprog = new wxGenericProgressDialog();
-
-        wxFont *qFont = GetOCPNScaledFont(_("Dialog"));
-        pprog->SetFont( *qFont );
-
-        pprog->Create( _("OpenCPN Chart Update"), longmsg, 100,
-                                          gFrame, wxPD_SMOOTH | wxPD_ELAPSED_TIME | wxPD_ESTIMATED_TIME | wxPD_REMAINING_TIME );
-
-
-        DimeControl( pprog );
-        pprog->Show();
+        pprog = new QProgressDialog(0);
+        pprog->setAttribute(Qt::WA_DeleteOnClose);
+        pprog->setWindowTitle("OpenCPN Chart Update");
+        pprog->setLabel(new QLabel(QString("%1\n%2").arg("OpenCPN Chart Update").arg("..........................................................................")));
+        pprog->show();
     }
-
-    ZCHX_LOGMSG( _T("   ") );
-    ZCHX_LOGMSG( _T("Starting chart database Update...") );
+    qDebug("Starting chart database Update...");
     QString gshhg_chart_loc = gWorldMapLocation;
-    gWorldMapLocation = wxEmptyString;
+    gWorldMapLocation.clear();
     ChartData->Update( DirArray, b_force, pprog );
     ChartData->SaveBinary(ChartListFileName);
-    ZCHX_LOGMSG( _T("Finished chart database Update") );
-    ZCHX_LOGMSG( _T("   ") );
-    if( gWorldMapLocation.empty() ) { //Last resort. User might have deleted all GSHHG data, but we still might have the default dataset distributed with OpenCPN or from the package repository...
+    qDebug("Finished chart database Update");
+    if( gWorldMapLocation.isEmpty() ) { //Last resort. User might have deleted all GSHHG data, but we still might have the default dataset distributed with OpenCPN or from the package repository...
        gWorldMapLocation = gDefaultWorldMapLocation;
-       gshhg_chart_loc = wxEmptyString;
+       gshhg_chart_loc.clear();
     }
 
-    if( gWorldMapLocation != gshhg_chart_loc ){
-    // ..For each canvas...
-        for(unsigned int i=0 ; i < g_canvasArray.GetCount() ; i++){
-            ChartCanvas *cc = g_canvasArray.Item(i);
-            if( cc )
-                cc->ResetWorldBackgroundChart();
-        }
-    }
+//    if( gWorldMapLocation != gshhg_chart_loc ){
+//    // ..For each canvas...
+//        for(unsigned int i=0 ; i < g_canvasArray.GetCount() ; i++){
+//            ChartCanvas *cc = g_canvasArray.Item(i);
+//            if( cc )
+//                cc->ResetWorldBackgroundChart();
+//        }
+//    }
 
 
-    delete pprog;
+//    delete pprog;
 
-    OCPNPlatform::HideBusySpinner();
+    setCursor(g_Platform->HideBusySpinner());
+    ZCHX_CFG_INS->UpdateChartDirs( DirArray );
 
-    pConfig->UpdateChartDirs( DirArray );
-
-    if( b_run ) FrameTimer1.Start( TIMER_GFRAME_1, wxTIMER_CONTINUOUS );
-#endif
+//    if( b_run ) FrameTimer1.Start( TIMER_GFRAME_1, wxTIMER_CONTINUOUS );
 
     return true;
 }
@@ -1247,7 +1238,6 @@ QColor GetGlobalColor(const QString& colorName)
 
 void LoadS57()
 {
-#if 0
     if(ps52plib) // already loaded?
         return;
 
@@ -1362,7 +1352,7 @@ void LoadS57()
 
         // Setup PLIB OpenGL options, if enabled
         extern bool g_b_EnableVBO;
-        extern GLenum  g_texture_rectangle_format;\
+        extern GLenum  g_texture_rectangle_format;
         ps52plib->SetGLOptions(glChartCanvas::s_b_useStencil,
                                glChartCanvas::s_b_useStencilAP,
                                glChartCanvas::s_b_useScissorTest,
@@ -1377,7 +1367,6 @@ void LoadS57()
         delete ps52plib;
         ps52plib = NULL;
     }
-#endif
 }
 
 
@@ -1421,10 +1410,10 @@ void zchxMapMainWindow::initEcdis()
         if(QFile::exists(ChartListFileName )) QFile::remove(ChartListFileName );
     }
 
-//    ChartData = new ChartDB( );
-//    if (!ChartData->LoadBinary(ChartListFileName, ChartDirArray)) {
-//        g_bNeedDBUpdate = true;
-//    }
+    if(!ChartData)  ChartData = new ChartDB( );
+    if (!ChartData->LoadBinary(ChartListFileName, ChartDirArray)) {
+        g_bNeedDBUpdate = true;
+    }
 
 #if 0
     gFrame = this;

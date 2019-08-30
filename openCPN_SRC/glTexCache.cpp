@@ -157,8 +157,7 @@ glTexFactory::glTexFactory(ChartBase *chart, int raster_format)
     //  Initialize the TextureDescriptor array
     ChartBaseBSB *pBSBChart = dynamic_cast<ChartBaseBSB*>( chart );
     
-    if( !pBSBChart )
-        return;
+    if( !pBSBChart )  return;
     
     m_size_X = pBSBChart->GetSize_X();
     m_size_Y = pBSBChart->GetSize_Y();

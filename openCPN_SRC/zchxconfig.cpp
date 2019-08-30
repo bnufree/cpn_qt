@@ -454,9 +454,9 @@ QStringList zchxConfig::getChildKeys(const QString& prefix)
 
 int zchxConfig::loadMyConfig()
 {
-    {
-        qDebug()<<"all keys:"<<endl<<allKeys();
-    }
+//    {
+//        qDebug()<<"all keys:"<<endl<<allKeys();
+//    }
     g_useMUI = true;
     g_TalkerIdText = ("EC");
     g_maxWPNameLength = 6;

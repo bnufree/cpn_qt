@@ -41,7 +41,8 @@ public:
 
 private:
     void processApply(bool apply);
-    void UpdateWorkArrayFromTextCtl(void);  //更新地图文件列表
+    bool UpdateWorkArrayFromTextCtl(void);  //更新地图文件列表
+    void resizeEvent(QResizeEvent* e);
 
 private slots:
     void on_bOpenGL_clicked();
@@ -51,6 +52,10 @@ private slots:
     void on_CANCEL_clicked();
 
     void on_APPLY_clicked();
+
+    void on_addBtn_clicked();
+
+    void on_m_removeBtn_clicked();
 
 public:
     Ui::zchxOptionsDlg          *ui;

@@ -1,10 +1,10 @@
-#include "zchxopengloptiondlg.h"
+﻿#include "zchxopengloptiondlg.h"
 #include "ui_zchxopengloptiondlg.h"
 #include "_def.h"
 #include <QDir>
 #include "zchxmapmainwindow.h"
 #include "zchxconfig.h"
-//#include "glTextureManager.h"
+#include "glTextureManager.h"
 #include "GL/gl.h"
 #include "OCPNPlatform.h"
 #include <QDebug>
@@ -16,7 +16,7 @@ extern      bool                                g_bOpenGL;
 /*extern*/      GLuint                              g_raster_format = GL_RGB;
 extern      bool                                g_bShowFPS;
 extern      zchxMapMainWindow                   *gFrame;
-//extern      glTextureManager                    *g_glTextureManager;
+extern      glTextureManager                    *g_glTextureManager;
 
 zchxOpenGlOptionDlg::zchxOpenGlOptionDlg(QWidget *parent) :
     QDialog(parent),
@@ -92,7 +92,6 @@ int zchxOpenGlOptionDlg::GetTextureMemorySize(void) const
 
 void zchxOpenGlOptionDlg::Populate(void)
 {
-#if 0
     extern PFNGLCOMPRESSEDTEXIMAGE2DPROC s_glCompressedTexImage2D;
     extern bool b_glEntryPointsSet;
     ui->m_cbTextureCompression->setChecked(g_GLOptions.m_bTextureCompression);
@@ -102,7 +101,6 @@ void zchxOpenGlOptionDlg::Populate(void)
         ui->m_cbTextureCompression->setEnabled(false);
         ui->m_cbTextureCompression->setChecked(false);
     }
-#endif
 
     ui->m_cbTextureCompressionCaching->setVisible(g_bGlExpert);
     ui->m_memorySize->setVisible(g_bGlExpert);
@@ -146,7 +144,6 @@ void zchxOpenGlOptionDlg::OnButtonRebuild()
 
 void zchxOpenGlOptionDlg::OnButtonClear()
 {
-#if 0
   if (g_bOpenGL && g_glTextureManager)
   {
       Qt::CursorShape old_shape = cursor().shape();
@@ -169,7 +166,6 @@ void zchxOpenGlOptionDlg::OnButtonClear()
       QCursor old_cursor(old_shape);
       setCursor(old_cursor);
   }
-#endif
 }
 
 QString zchxOpenGlOptionDlg::GetTextureCacheSize(void) const
