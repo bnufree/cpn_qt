@@ -31,6 +31,7 @@
 //#include "wx28compat.h"
 #include <QtSvg>
 #include <QPainter>
+#include <QPixmap>
 
 extern OCPNPlatform     *g_Platform;
 extern QColor GetGlobalColor(const QString& colorName);
@@ -260,6 +261,10 @@ wxBitmap Style::GetIcon(const QString & name, int width, int height, bool bforce
     {
 #endif // ocpnUSE_SVG
         QRect location( icon->iconLoc, icon->size );
+        graphics->SaveFile("zchxTest.png", "png");
+        qDebug()<<"graphics img size:"<<graphics->GetWidth()<<graphics->GetHeight();
+        QPixmap res = graphics->GetHandle()->copy(/*QRect(540,100, 32,32)*/location);
+        res.save("copy.png", "png");
         bm = graphics->GetSubBitmap( location );
         if(retSize != icon->size){
             QImage scaled_image = bm.ConvertToImage();

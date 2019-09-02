@@ -199,7 +199,7 @@ private:
     void CreateRects( const OCPNRegion& r );
 
     size_t   m_current;
-    OCPNRegion m_region;
+//    OCPNRegion m_region;
 
     QRect *m_rects;
     size_t  m_numRects;

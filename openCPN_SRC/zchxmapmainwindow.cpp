@@ -240,6 +240,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
         ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
     }
     ui->centralwidget->layout()->addWidget(mEcdisWidget);
+    mEcdisWidget->DoCanvasUpdate();
 }
 
 zchxMapMainWindow::~zchxMapMainWindow()
@@ -1408,6 +1409,14 @@ void zchxMapMainWindow::initEcdis()
     if( gWorldMapLocation.isEmpty() ) {
         qDebug()<<"word map location is empty, reset to default.";
         gWorldMapLocation = gDefaultWorldMapLocation;
+    } else
+    {
+        QDir dir(gWorldMapLocation);
+        if(!dir.exists())
+        {
+            qDebug()<<"word map location is not exist, reset to default.";
+            gWorldMapLocation = gDefaultWorldMapLocation;
+        }
     }
     qDebug()<<"world map location:"<<gWorldMapLocation;
     //   Build the initial chart dir array

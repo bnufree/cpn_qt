@@ -745,7 +745,7 @@ void OCPNRegionIterator::CreateRects( const OCPNRegion& region )
 
 void OCPNRegionIterator::Reset( const OCPNRegion& region )
 {
-    m_region = region;
+//    m_region = region;
     CreateRects(region);
     Reset();
 }

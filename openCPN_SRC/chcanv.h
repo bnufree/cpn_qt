@@ -699,6 +699,7 @@ private:
       QRect       m_scaleBarRect;
       bool         m_bShowCompassWin;
       QString      m_alertString;
+      QTimer        *mDisplsyTimer;
 };
 
 //typedef QList<ChartCanvas*> arrayofCanvasPtr;

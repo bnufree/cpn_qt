@@ -1,4 +1,4 @@
-/////////////////////////////////////////////////////////////////////////////
+﻿/////////////////////////////////////////////////////////////////////////////
 // Name:        wx/qt/bitmap.h
 // Author:      Peter Most, Javier Torres, Mariano Reingart
 // Copyright:   (c) 2010 wxWidgets dev team
@@ -20,7 +20,7 @@ class wxBitmap
 {
 public:
     wxBitmap();
-    wxBitmap(QPixmap pix);
+    wxBitmap(const QPixmap& pix);
     wxBitmap(const wxBitmap& bmp);
     wxBitmap(const char bits[], int width, int height, int depth = 1);
     wxBitmap(int width, int height, int depth = -1);
@@ -28,6 +28,8 @@ public:
     wxBitmap(const char* const* bits);
     wxBitmap(const QString &filename);
     wxBitmap(const QImage& image, int depth = -1, double scale = 1.0);
+    wxBitmap& operator =(const wxBitmap& otehr);
+
     
     // Convert from wxIcon / wxCursor
 //    wxBitmap(const wxIcon& icon) { CopyFromIcon(icon); }

@@ -151,6 +151,7 @@ public slots:
     void OnActivate ();
 //    void OnSize (QSize size);
     void MouseEvent(QMouseEvent* event);
+    void updateMe() {paintGL();}
 
 protected:
     void paintGL();

@@ -111,7 +111,7 @@ wxBitmap::~wxBitmap()
 }
 
 
-wxBitmap::wxBitmap(QPixmap pix)
+wxBitmap::wxBitmap(const QPixmap& pix)
 {
     m_qtPixmap = new QPixmap(pix);
     m_mask = NULL;
@@ -121,8 +121,16 @@ wxBitmap::wxBitmap(const wxBitmap& bmp)
 {
     m_mask = NULL;
     m_qtPixmap = NULL;
-    if(bmp.m_qtPixmap)      m_qtPixmap = new QPixmap(*(bmp.m_qtPixmap));
+    if(bmp.m_qtPixmap)      m_qtPixmap = new QPixmap(bmp.m_qtPixmap->copy());
     if(bmp.m_mask)          m_mask = new wxMask(*(bmp.m_mask));
+}
+
+wxBitmap& wxBitmap::operator =(const wxBitmap& other)
+{
+    if(this->m_mask) delete this->m_mask;
+    if(this->m_qtPixmap) delete this->m_qtPixmap;
+    if(other.m_qtPixmap)      m_qtPixmap = new QPixmap(other.m_qtPixmap->copy());
+    if(other.m_mask)          m_mask = new wxMask(*(other.m_mask));
 }
 
 wxBitmap::wxBitmap(const char bits[], int width, int height, int depth )
@@ -230,6 +238,7 @@ void wxBitmap::SetMask(wxMask *mask)
 wxBitmap wxBitmap::GetSubBitmap(const QRect& rect) const
 {
     Q_ASSERT(m_qtPixmap != NULL);
+    QPixmap res = m_qtPixmap->copy(rect);
     return wxBitmap(m_qtPixmap->copy(rect));
 }
 

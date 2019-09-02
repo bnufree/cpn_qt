@@ -371,8 +371,8 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     m_singleChart = NULL;
     m_bCourseUp = false;
     
-    m_vLat = 0.;
-    m_vLon = 0.;
+    m_vLat = 35.7421999999;
+    m_vLon = 127.52430000;
     
     m_pCIWin = NULL;
     m_pFoundPoint                 = NULL;
@@ -644,13 +644,18 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
 
     m_pgridFont = FontMgr::Get().FindOrCreateFont( 8, "Arial", QFont::StyleNormal, QFont::Weight::Normal, false);
     
-    //    m_Piano = new Piano(this);
+    m_Piano = new Piano(this);
 
     m_bShowCompassWin = g_bShowCompassWin;
 
     m_Compass = new ocpnCompass(this);
     m_Compass->SetScaleFactor(g_compass_scalefactor);
     m_Compass->Show(m_bShowCompassWin);
+
+    mDisplsyTimer = new QTimer(this);
+    mDisplsyTimer->setInterval(5000);
+    connect(mDisplsyTimer, SIGNAL(timeout()), this, SLOT(update()));
+    mDisplsyTimer->start();
 }
 
 ChartCanvas::~ChartCanvas()
@@ -7890,7 +7895,7 @@ void ChartCanvas::paintEvent(QPaintEvent *event)
     if( m_glcc && g_bopengl ) {
         if( !s_in_update ) {          // no recursion allowed, seen on lo-spec Mac
             s_in_update++;
-            m_glcc->update();
+            m_glcc->updateMe();
             s_in_update--;
         }
 

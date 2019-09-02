@@ -550,12 +550,12 @@ void glChartCanvas::OnActivate( /*wxActivateEvent& event*/ )
 
 void glChartCanvas::initializeGL()
 {
-
+    qDebug()<<"now initialized...";
 }
 
 void glChartCanvas::resizeGL(int w, int h)
 {
-
+    qDebug()<<"now resized with:"<<w<<h;
 }
 
 //void glChartCanvas::OnSize( QSize& event )
@@ -1121,6 +1121,7 @@ no_compression:
 
 void glChartCanvas::paintGL()
 {
+    qDebug()<<"now update .....";
     if(!m_pcontext) return;
     if(!g_bopengl) return;
     makeCurrent();
@@ -1128,8 +1129,8 @@ void glChartCanvas::paintGL()
     if( !m_bsetup ) {
         SetupOpenGL();
         
-        if( ps52plib )
-            ps52plib->FlushSymbolCaches();
+//        if( ps52plib )
+//            ps52plib->FlushSymbolCaches();
         
         m_bsetup = true;
 //        g_bDebugOGL = true;
