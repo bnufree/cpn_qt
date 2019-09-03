@@ -240,7 +240,9 @@ wxBitmap Style::GetIcon(const QString & name, int width, int height, bool bforce
 
     int index = iconIndex[name]; // FIXME: this operation is not const but should be, use 'find'
 
-    Icon* icon = (Icon*) icons[index];
+
+    Icon* icon = icons[index];
+    qDebug()<<"icon:"<<icon<<icon->name<<icon->iconLoc<<icon->size;
 
     if( icon->loaded && !bforceReload)
         return icon->icon;
@@ -708,7 +710,7 @@ void Style::Unload()
     }
 
     for( unsigned int i = 0; i < icons.count(); i++ ) {
-        Icon* icon = (Icon*) icons[i];
+        Icon* icon = icons[i];
         icon->Unload();
     }
 }
@@ -749,7 +751,7 @@ Style::~Style( void )
     tools.clear();
 
     for( unsigned int i = 0; i < icons.count(); i++ ) {
-        delete (Icon*) ( icons[i] );
+        delete ( icons[i] );
     }
     icons.clear();
 
@@ -933,7 +935,10 @@ void StyleManager::Init(const QString & fromPath)
                                     tag->QueryIntAttribute( "y", &y );
                                     icon->size = QSize( x, y );
                                 }
-                                qDebug()<<"load icon :"<<icon->name<<icon->iconLoc<<icon->size;
+//                                qDebug()<<"load icon :"<<icon<<icon->name<<icon->iconLoc<<icon->size;
+//                                int index = style->iconIndex[icon->name];
+//                                Icon* test = (style->icons[index]);
+//                                 qDebug()<<"load test :"<<test<<test->name<<test->iconLoc<<test->size;
                             }
                         }
                     }
@@ -1118,6 +1123,13 @@ void StyleManager::Init(const QString & fromPath)
             }
         }
     }
+
+//    foreach (Style* style, styles) {
+//        qDebug()<<"style name:"<<style->name;
+//        foreach (Icon* icon, style->icons) {
+//            qDebug()<<icon<<icon->name<<icon->iconLoc<<icon->size;
+//        }
+//    }
 }
 
 void StyleManager::SetStyle(QString name)
@@ -1196,6 +1208,14 @@ void StyleManager::SetStyle(QString name)
 
     if(currentStyle)
         nextInvocationStyle = currentStyle->name;
+
+    if(currentStyle)
+    {
+        qDebug()<<"style name:"<<currentStyle->name;
+        foreach (Icon* icon, currentStyle->icons) {
+            qDebug()<<icon<<icon->name<<icon->iconLoc<<icon->size;
+        }
+    }
     
     return;
 }

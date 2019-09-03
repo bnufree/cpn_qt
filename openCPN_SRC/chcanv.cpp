@@ -75,6 +75,8 @@
 #include <QJsonArray>
 #include <QMenu>
 #include <QMessageBox>
+#include "glwidget.h"
+#include <QVBoxLayout>
 
 
 extern float  g_ChartScaleFactorExp;
@@ -651,6 +653,7 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     m_Compass = new ocpnCompass(this);
     m_Compass->SetScaleFactor(g_compass_scalefactor);
     m_Compass->Show(m_bShowCompassWin);
+    ConfigureChartBar();
 
     mDisplsyTimer = new QTimer(this);
     mDisplsyTimer->setInterval(5000);
@@ -712,11 +715,20 @@ void ChartCanvas::CanvasApplyLocale()
 
 void ChartCanvas::SetupGlCanvas( )
 {
+    QLayout *lay = this->layout();
+    if(!lay)
+    {
+        lay = new QVBoxLayout(this);
+        this->setLayout(lay);
+    }
     if ( !g_bdisable_opengl )
     {
         if(g_bopengl){
             qDebug("Creating glChartCanvas");
             m_glcc = new glChartCanvas( this);
+            lay->addWidget(m_glcc);
+
+
 
             // We use one context for all GL windows, so that textures etc will be automatically shared
             if(IsPrimaryCanvas()){
@@ -7883,19 +7895,24 @@ void ChartCanvas::paintEvent(QPaintEvent *event)
     //  Otherwise, the paint message may not be removed from the message queue, esp on Windows. (FS#1213)
     //  This would lead to a deadlock condition in ::wxYield()
 
+    qDebug()<<"???????????????????????";
     if(!m_b_paint_enable){
         return;
     }
+
+    qDebug()<<"!!!!!!!!!!!!!!!!!!!!";
     
     //  If necessary, reconfigure the S52 PLIB
     UpdateCanvasS52PLIBConfig();
     if( !g_bdisable_opengl && m_glcc )
         m_glcc->setVisible( g_bopengl );
 
+    qDebug()<<"glcc visible:"<<m_glcc->isVisible();
     if( m_glcc && g_bopengl ) {
         if( !s_in_update ) {          // no recursion allowed, seen on lo-spec Mac
+            qDebug()<<"$$$$$$$$$$$$$$$$$$$$$";
             s_in_update++;
-            m_glcc->updateMe();
+            m_glcc->update();
             s_in_update--;
         }
 

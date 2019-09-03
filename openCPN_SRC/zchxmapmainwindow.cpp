@@ -22,6 +22,7 @@
 #include "config.h"
 #include <QProgressDialog>
 #include <QLabel>
+//#include "glwidget.h"
 
 
 extern      ChartDB                     *ChartData;
@@ -240,6 +241,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
         ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
     }
     ui->centralwidget->layout()->addWidget(mEcdisWidget);
+
     mEcdisWidget->DoCanvasUpdate();
 }
 

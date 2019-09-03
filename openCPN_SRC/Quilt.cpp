@@ -423,21 +423,29 @@ ChartBase *Quilt::GetNextChart()
     m_bbusy = true;
     ChartBase *pret = NULL;
     if( cnode && cnode_index >= 0 ) {
+        qDebug()<<"cnode:"<<cnode<<" index:"<<cnode_index<<" totsl size:"<<m_PatchList.size();
         int i = cnode_index + 1;
-        while (i < m_PatchList.size()) {
-            cnode = m_PatchList[i];
-            if(!cnode->b_Valid)
-            {
-                i++;
-                continue;
-            } else
-            {
-                cnode_index = i;
-                break;
+        if( i < m_PatchList.size())
+        {
+            while (i < m_PatchList.size()) {
+                cnode = m_PatchList[i];
+                if(!cnode->b_Valid)
+                {
+                    i++;
+                    continue;
+                } else
+                {
+                    cnode_index = i;
+                    break;
+                }
             }
+            if( cnode && cnode->b_Valid )
+                pret = ChartData->OpenChartFromDB(cnode->dbIndex, FULL_INIT );
+        } else
+        {
+            cnode = NULL;
+            cnode_index = -1;
         }
-        if( cnode && cnode->b_Valid )
-            pret = ChartData->OpenChartFromDB(cnode->dbIndex, FULL_INIT );
     }
 
     m_bbusy = false;

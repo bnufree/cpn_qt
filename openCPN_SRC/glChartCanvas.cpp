@@ -209,6 +209,9 @@ bool glChartCanvas::s_b_useStencil;
 bool glChartCanvas::s_b_useStencilAP;
 bool glChartCanvas::s_b_useFBO;
 
+//#define     GL_TEST
+
+
 //static int s_nquickbind;
 
 
@@ -480,7 +483,7 @@ static void GetglEntryPoints( void )
     
 }
 
-glChartCanvas::glChartCanvas(ChartCanvas* parentCavas) : QGLWidget(QGLFormat(QGL::DoubleBuffer | QGL:: StereoBuffers), parentCavas)
+glChartCanvas::glChartCanvas(ChartCanvas* parentCavas) : QGLWidget(/*QGLFormat(QGL::DoubleBuffer | QGL:: StereoBuffers), */parentCavas)
     , m_bsetup( false )
     , m_pParentCanvas(parentCavas)
 {
@@ -551,11 +554,27 @@ void glChartCanvas::OnActivate( /*wxActivateEvent& event*/ )
 void glChartCanvas::initializeGL()
 {
     qDebug()<<"now initialized...";
+#ifdef GL_TEST
+    glClearColor(0.0, 0.2, 0.3, 1.0);
+    glShadeModel(GL_SMOOTH);
+    glEnable(GL_DEPTH);
+#endif
 }
 
 void glChartCanvas::resizeGL(int w, int h)
 {
     qDebug()<<"now resized with:"<<w<<h;
+#ifdef GL_TEST
+    int side = qMin(w, h);
+    glViewport((width() - side) / 2, (height() - side) / 2, side, side);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glFrustum(-1.2, 1.2, -1.2, 1.2, 5.0, 60.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glTranslatef(0.0, 0.0, -40.0);
+#endif
 }
 
 //void glChartCanvas::OnSize( QSize& event )
@@ -757,7 +776,7 @@ void glChartCanvas::SetupOpenGL()
     
     const GLubyte *ext_str = glGetString(GL_EXTENSIONS);
     m_extensions = QString::fromUtf8((const char *)ext_str );
-    qDebug("OpenGL extensions available: %s", m_extensions.toUtf8().data() );
+//    qDebug("OpenGL extensions available: %s", m_extensions.toUtf8().data() );
 
     bool b_oldIntel = false;
     if( GetRendererString().toUpper().indexOf("INTEL")  != -1 ){
@@ -1122,6 +1141,13 @@ no_compression:
 void glChartCanvas::paintGL()
 {
     qDebug()<<"now update .....";
+#ifdef GL_TEST
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glPushMatrix();
+    drawTestTrianlge();
+    glPopMatrix();
+#else
     if(!m_pcontext) return;
     if(!g_bopengl) return;
     makeCurrent();
@@ -1160,6 +1186,7 @@ void glChartCanvas::paintGL()
     m_in_glpaint++;
     Render();
     m_in_glpaint--;
+#endif
 
 }
 
@@ -4009,4 +4036,44 @@ void glChartCanvas::onGestureTimerEvent(wxTimerEvent &event)
 
 
 #endif
+
+
+void glChartCanvas::drawTestTrianlge()
+{
+    int     xRot = 0;
+    int    yRot = 0;
+    int    zRot = 0;
+    QColor faceColors[4];
+    faceColors[0] = Qt::red;
+    faceColors[1] = Qt::green;
+    faceColors[2] = Qt::blue;
+    faceColors[3] = Qt::yellow;
+
+    static const GLfloat P1[3] = { 0.0, -1.0, +2.0 };
+    static const GLfloat P2[3] = { +1.73205081, -1.0, -1.0 };
+    static const GLfloat P3[3] = { -1.73205081, -1.0, -1.0 };
+    static const GLfloat P4[3] = { 0.0, +2.0, 0.0 };
+
+    static const GLfloat * const coords[4][3] = {
+        { P1, P2, P3 }, { P1, P3, P4 }, { P1, P4, P2 }, { P2, P4, P3 }
+    };
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glTranslatef(0.0, 0.0, -10.0);
+    glRotatef(xRot, 1.0, 0.0, 0.0);
+    glRotatef(yRot, 0.0, 1.0, 0.0);
+    glRotatef(zRot, 0.0, 0.0, 1.0);
+
+    for (int i = 0; i != 4; ++i) {
+        //glLoadName(i);
+        glBegin(GL_TRIANGLES);
+        qglColor(faceColors[i]);
+        for (int j = 0; j < 3; ++j) {
+            glVertex3f(coords[i][j][0], coords[i][j][1],
+                    coords[i][j][2]);
+        }
+        glEnd();
+    }
+}
 

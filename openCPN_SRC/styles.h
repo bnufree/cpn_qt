@@ -75,6 +75,7 @@ public:
             disabledLoaded = false;
             activeLoaded =false;
             toggledLoaded =false;
+            if(customSize.width() == 0 && customSize.height() == 0)
             customSize = QSize( 32, 32 );
       }
 
@@ -93,7 +94,12 @@ public:
 
       void Unload(void) {
             loaded = false;
-            size = QSize(0, 0);
+//            size = QSize(0, 0);
+      }
+
+      bool operator ==(const Icon& other) const
+      {
+          return other.name == this->name;
       }
 
       Icon(void) { Unload(); }
@@ -180,7 +186,7 @@ public:
       QSize verticalIconOffset;
       wxArrayPtrVoid tools;
       intHash toolIndex;
-      wxArrayPtrVoid icons;
+      QList<Icon*> icons;
       intHash iconIndex;
       wxBitmap* graphics;
 
@@ -223,11 +229,11 @@ public:
       void SetStyleNextInvocation(const QString & name) { nextInvocationStyle = name; }
       const QString & GetStyleNextInvocation() const { return nextInvocationStyle; }
       Style* GetCurrentStyle();
-      wxArrayPtrVoid GetArrayOfStyles() { return styles; }
+      QList<Style*> GetArrayOfStyles() { return styles; }
 
 private:
       bool isOK;
-      wxArrayPtrVoid styles;
+      QList<Style*> styles;
       Style* currentStyle;
       QString nextInvocationStyle;
 };

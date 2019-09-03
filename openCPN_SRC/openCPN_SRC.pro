@@ -128,7 +128,8 @@ SOURCES += \
     s57reader.cpp \
     s57featuredefns.cpp \
     ogrs57layer.cpp \
-    CanvasOptions.cpp
+    CanvasOptions.cpp \
+    glwidget.cpp
 
 
 
@@ -191,7 +192,8 @@ HEADERS += \
     ChInfoWin.h \
     Osenc.h \
     S57ClassRegistrar.h \
-    CanvasOptions.h
+    CanvasOptions.h \
+    glwidget.h
 
 FORMS += \
     zchxoptionsdlg.ui \

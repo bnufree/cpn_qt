@@ -123,7 +123,7 @@ void GSHHSChart::RenderViewOnDC( ocpnDC& dc, ViewPort& vp )
         if( reader->GetPolyVersion() < 210 || reader->GetPolyVersion() > 240 ) {
             qDebug("GSHHS World chart files have wrong version. Found %d, expected 210-220.", reader->GetPolyVersion() );
         } else {
-            qDebug("Background world map loaded from GSHHS datafiles found in:%S ", gWorldMapLocation.toUtf8().data());
+            qDebug("Background world map loaded from GSHHS datafiles found in:%s ", gWorldMapLocation.toUtf8().data());
         }
     }
 
