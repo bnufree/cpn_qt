@@ -574,6 +574,7 @@ int Osenc::ingest200(const QString &senc_file_name,
     int dun = 0;
     
     while( !dun ) {
+        qDebug()<<"read record here";
         
         //      Read a record Header
         OSENC_Record_Base record;

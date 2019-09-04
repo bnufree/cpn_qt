@@ -442,6 +442,10 @@ void Piano::BuildGLTexture()
     dc.end();
 
     QImage image = bmp.ConvertToImage();
+    if(image.format() != QImage::Format_RGB888)
+    {
+        image = image.convertToFormat(QImage::Format_RGB888);
+    }
 
     unsigned char *data = new unsigned char[4*m_texw*m_texh], *d = data, *e = image.bits(), *a = image.alphaChannel().bits();
     for(unsigned int i=0; i<m_texw*m_texh; i++) {
