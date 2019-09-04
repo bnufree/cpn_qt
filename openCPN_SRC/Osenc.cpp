@@ -1529,7 +1529,7 @@ int Osenc::createSenc200(const QString& FullPath000, const QString& SENCFileName
     s57chart::GetChartNameFromTXT( FullPath000, nice_name );
     
     string sname = "UTF8Error";
-    QByteArray buffer= QString::fromStdString(sname).toUtf8();
+    QByteArray buffer= nice_name.toUtf8();
     if(buffer.data())
         sname = buffer.data();
 

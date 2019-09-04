@@ -253,7 +253,7 @@ s57chart::s57chart()
     m_SENCthreadStatus = THREAD_INACTIVE;
     bReadyToRender = false;
     m_RAZBuilt = false;
-    m_disableBackgroundSENC = false;
+    m_disableBackgroundSENC = true;
 }
 
 s57chart::~s57chart()
@@ -2498,7 +2498,7 @@ QString s57chart::buildSENCName( const QString& name)
 #endif    
     
     QString  target = SENCdir;
-    target.append(".").append(file_name);
+    target.append(file_name);
     QFileInfo tsfn( target );
     
     return tsfn.absoluteFilePath();

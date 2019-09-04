@@ -34,8 +34,8 @@ extern      OCPNPlatform                *g_Platform;
 extern      ColorScheme                 global_color_scheme;
 
 
-static wxArrayPtrVoid       *UserColorTableArray;
-static wxArrayPtrVoid       *UserColourHashTableArray;
+static QList<colTable*>       *UserColorTableArray = 0;
+static QList<QColorHashMap*>       *UserColourHashTableArray = 0;
 static QColorHashMap        *pcurrent_user_color_hash;
 SENCThreadManager           *g_SencThreadManager = 0;
 extern s52plib                   *ps52plib;
@@ -160,6 +160,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
 {
 
     ui->setupUi(this);
+    InitializeUserColors();
     gFrame = this;
     g_Main_thread = QThread::currentThread();
     //工具
@@ -1228,7 +1229,6 @@ ColorScheme GetColorScheme()
 QColor GetGlobalColor(const QString& colorName)
 {
     QColor ret_color;
-#if 0
     //    Use the S52 Presentation library if present
     if( ps52plib ) ret_color = ps52plib->getQColor( colorName );
     if( !ret_color.isValid() && pcurrent_user_color_hash )
@@ -1242,10 +1242,307 @@ QColor GetGlobalColor(const QString& colorName)
         if (pcurrent_user_color_hash)
             ( *pcurrent_user_color_hash )[colorName] = ret_color;
     }
-#endif
 
     return ret_color;
 }
+
+static const char *usercolors[] = { "Table:DAY", "GREEN1;120;255;120;", "GREEN2; 45;150; 45;",
+        "GREEN3;200;220;200;", "GREEN4;  0;255;  0;", "BLUE1; 170;170;255;", "BLUE2;  45; 45;170;",
+        "BLUE3;   0;  0;255;", "GREY1; 200;200;200;", "GREY2; 230;230;230;", "RED1;  220;200;200;",
+        "UBLCK;   0;  0;  0;", "UWHIT; 255;255;255;", "URED;  255;  0;  0;", "UGREN;   0;255;  0;",
+        "YELO1; 243;229; 47;", "YELO2; 128; 80;  0;", "TEAL1;   0;128;128;", "GREEN5;170;254;  0;",
+        "COMPT; 245;247;244",
+#ifdef __WXOSX__
+        "DILG0; 255;255;255;",              // Dialog Background white
+#else
+        "DILG0; 238;239;242;",              // Dialog Background white
+#endif
+        "DILG1; 212;208;200;",              // Dialog Background
+        "DILG2; 255;255;255;",              // Control Background
+        "DILG3;   0;  0;  0;",              // Text
+        "UITX1;   0;  0;  0;",              // Menu Text, derived from UINFF
+
+        "CHGRF; 163; 180; 183;",
+        "UINFM; 197;  69; 195;",
+        "UINFG; 104; 228;  86;",
+        "UINFF; 125; 137; 140;",
+        "UINFR; 241;  84; 105;",
+        "SHIPS;   7;   7;   7;",
+        "CHYLW; 244; 218;  72;",
+        "CHWHT; 212; 234; 238;",
+
+        "UDKRD; 124; 16;  0;",
+        "UARTE; 200;  0;  0;",              // Active Route, Grey on Dusk/Night
+
+        "NODTA; 163; 180; 183;",
+        "CHBLK;   7;   7;   7;",
+        "SNDG1; 125; 137; 140;",
+        "SNDG2;   7;   7;   7;",
+        "SCLBR; 235; 125;  54;",
+        "UIBDR; 125; 137; 140;",
+        "UINFB;  58; 120; 240;",
+        "UINFD;   7;   7;   7;",
+        "UINFO; 235; 125;  54;",
+        "PLRTE; 220;  64;  37;",
+        "CHMGD; 197; 69; 195;",
+        "UIBCK; 212; 234; 238;",
+
+        "DASHB; 255;255;255;",              // Dashboard Instr background
+        "DASHL; 190;190;190;",              // Dashboard Instr Label
+        "DASHF;  50; 50; 50;",              // Dashboard Foreground
+        "DASHR; 200;  0;  0;",              // Dashboard Red
+        "DASHG;   0;200;  0;",              // Dashboard Green
+        "DASHN; 200;120;  0;",              // Dashboard Needle
+        "DASH1; 204;204;255;",              // Dashboard Illustrations
+        "DASH2; 122;131;172;",              // Dashboard Illustrations
+        "COMP1; 211;211;211;",              // Compass Window Background
+
+        "GREY3;  40; 40; 40;",              // MUIBar/TB background
+        "BLUE4; 100;100;200;",              // Canvas Focus Bar
+        "VIO01; 171; 33;141;",
+        "VIO02; 209;115;213;",
+
+
+
+        "Table:DUSK", "GREEN1; 60;128; 60;", "GREEN2; 22; 75; 22;", "GREEN3; 80;100; 80;",
+        "GREEN4;  0;128;  0;", "BLUE1;  80; 80;160;", "BLUE2;  30; 30;120;", "BLUE3;   0;  0;128;",
+        "GREY1; 100;100;100;", "GREY2; 128;128;128;", "RED1;  150;100;100;", "UBLCK;   0;  0;  0;",
+        "UWHIT; 255;255;255;", "URED;  120; 54; 11;", "UGREN;  35;110; 20;", "YELO1; 120;115; 24;",
+        "YELO2;  64; 40;  0;", "TEAL1;   0; 64; 64;", "GREEN5; 85;128; 0;",
+        "COMPT; 124;126;121",
+
+        "CHGRF;  41; 46; 46;",
+        "UINFM;  58; 20; 57;",
+        "UINFG;  35; 76; 29;",
+        "UINFF;  41; 46; 46;",
+        "UINFR;  80; 28; 35;",
+        "SHIPS;  71; 78; 79;",
+        "CHYLW;  81; 73; 24;",
+        "CHWHT;  71; 78; 79;",
+
+        "DILG0; 110;110;110;",              // Dialog Background
+        "DILG1; 110;110;110;",              // Dialog Background
+        "DILG2;   0;  0;  0;",              // Control Background
+        "DILG3; 130;130;130;",              // Text
+        "UITX1;  41; 46; 46;",              // Menu Text, derived from UINFF
+        "UDKRD;  80;  0;  0;",
+        "UARTE;  64; 64; 64;",              // Active Route, Grey on Dusk/Night
+
+        "NODTA;  41;  46;  46;",
+        "CHBLK;  54;  60;  61;",
+        "SNDG1;  41;  46;  46;",
+        "SNDG2;  71;  78;  79;",
+        "SCLBR;  75;  38;  19;",
+        "UIBDR;  54;  60;  61;",
+        "UINFB;  19;  40;  80;",
+        "UINFD;  71;  78;  79;",
+        "UINFO;  75;  38;  19;",
+        "PLRTE;  73;  21;  12;",
+        "CHMGD; 74; 58; 81;",
+        "UIBCK; 7; 7; 7;",
+
+        "DASHB;  77; 77; 77;",              // Dashboard Instr background
+        "DASHL;  54; 54; 54;",              // Dashboard Instr Label
+        "DASHF;   0;  0;  0;",              // Dashboard Foreground
+        "DASHR;  58; 21; 21;",              // Dashboard Red
+        "DASHG;  21; 58; 21;",              // Dashboard Green
+        "DASHN; 100; 50;  0;",              // Dashboard Needle
+        "DASH1;  76; 76;113;",              // Dashboard Illustrations
+        "DASH2;  48; 52; 72;",              // Dashboard Illustrations
+        "COMP1; 107;107;107;",              // Compass Window Background
+
+        "GREY3;  20; 20; 20;",              // MUIBar/TB background
+        "BLUE4;  80; 80;160;",              // Canvas Focus Bar
+        "VIO01; 128; 25;108;",
+        "VIO02; 171; 33;141;",
+
+        "Table:NIGHT", "GREEN1; 30; 80; 30;", "GREEN2; 15; 60; 15;", "GREEN3; 12; 23;  9;",
+        "GREEN4;  0; 64;  0;", "BLUE1;  60; 60;100;", "BLUE2;  22; 22; 85;", "BLUE3;   0;  0; 40;",
+        "GREY1;  48; 48; 48;", "GREY2;  32; 32; 32;", "RED1;  100; 50; 50;", "UWHIT; 255;255;255;",
+        "UBLCK;   0;  0;  0;", "URED;   60; 27;  5;", "UGREN;  17; 55; 10;", "YELO1;  60; 65; 12;",
+        "YELO2;  32; 20;  0;", "TEAL1;   0; 32; 32;", "GREEN5; 44; 64; 0;",
+        "COMPT;  48; 49; 51",
+        "DILG0;  80; 80; 80;",              // Dialog Background
+        "DILG1;  80; 80; 80;",              // Dialog Background
+        "DILG2;   0;  0;  0;",              // Control Background
+        "DILG3;  65; 65; 65;",              // Text
+        "UITX1;  31; 34; 35;",              // Menu Text, derived from UINFF
+        "UDKRD;  50;  0;  0;",
+        "UARTE;  64; 64; 64;",              // Active Route, Grey on Dusk/Night
+
+        "CHGRF;  16; 18; 18;",
+        "UINFM;  52; 18; 52;",
+        "UINFG;  22; 24;  7;",
+        "UINFF;  31; 34; 35;",
+        "UINFR;  59; 17; 10;",
+        "SHIPS;  37; 41; 41;",
+        "CHYLW;  31; 33; 10;",
+        "CHWHT;  37; 41; 41;",
+
+        "NODTA;   7;   7;   7;",
+        "CHBLK;  31;  34;  35;",
+        "SNDG1;  31;  34;  35;",
+        "SNDG2;  43;  48;  48;",
+        "SCLBR;  52;  28;  12;",
+        "UIBDR;  31;  34;  35;",
+        "UINFB;  21;  29;  69;",
+        "UINFD;  43;  48;  58;",
+        "UINFO;  52;  28;  12;",
+        "PLRTE;  66;  19;  11;",
+        "CHMGD; 52; 18; 52;",
+        "UIBCK; 7; 7; 7;",
+
+        "DASHB;   0;  0;  0;",              // Dashboard Instr background
+        "DASHL;  20; 20; 20;",              // Dashboard Instr Label
+        "DASHF;  64; 64; 64;",              // Dashboard Foreground
+        "DASHR;  70; 15; 15;",              // Dashboard Red
+        "DASHG;  15; 70; 15;",              // Dashboard Green
+        "DASHN;  17; 80; 56;",              // Dashboard Needle
+        "DASH1;  48; 52; 72;",              // Dashboard Illustrations
+        "DASH2;  36; 36; 53;",              // Dashboard Illustrations
+        "COMP1;  24; 24; 24;",              // Compass Window Background
+
+        "GREY3;  10; 10; 10;",              // MUIBar/TB background
+        "BLUE4;  70; 70;140;",              // Canvas Focus Bar
+        "VIO01;  85; 16; 72;",
+        "VIO02; 128; 25;108;",
+
+        "*****" };
+
+int get_static_line( char *d, const char **p, int index, int n )
+{
+    if( !strcmp( p[index], "*****" ) ) return 0;
+
+    strncpy( d, p[index], n );
+    return strlen( d );
+}
+
+
+void InitializeUserColors( void )
+{
+    const char **p = usercolors;
+    char buf[81];
+    int index = 0;
+    char TableName[20];
+    colTable *ctp = 0;
+    colTable *ct = 0;
+    int colIdx = 0;
+    int R, G, B;
+
+    UserColorTableArray = new QList<colTable*>;
+    UserColourHashTableArray = new QList<QColorHashMap*>;
+
+    //    Create 3 color table entries
+    ct = new colTable;
+    ct->tableName = "DAY";
+    ct->color = new QList<S52color*>;
+    UserColorTableArray->append(ct );
+
+    ct = new colTable;
+    ct->tableName = "DUSK";
+    ct->color = new QList<S52color*>;
+    UserColorTableArray->append( ct );
+
+    ct = new colTable;
+    ct->tableName = "NIGHT";
+    ct->color = new QList<S52color*>;
+    UserColorTableArray->append( ct );
+
+    while( ( get_static_line( buf, p, index, sizeof(buf) - 1 ) ) ) {
+        if( !strncmp( buf, "Table", 5 ) ) {
+            sscanf( buf, "Table:%s", TableName );
+
+            for( unsigned int it = 0; it < UserColorTableArray->count(); it++ ) {
+                ctp =  UserColorTableArray->at( it ) ;
+                if( !strcmp( TableName, ctp->tableName.toUtf8().data() ) ) {
+                    ct = ctp;
+                    colIdx = 0;
+                    break;
+                }
+            }
+
+        } else {
+            char name[21];
+            int j = 0;
+            while( buf[j] != ';' && j < 20 ) {
+                name[j] = buf[j];
+                j++;
+            }
+            name[j] = 0;
+
+            S52color *c = new S52color;
+            strcpy( c->colName, name );
+
+            sscanf( &buf[j], ";%i;%i;%i", &R, &G, &B );
+            c->R = (char) R;
+            c->G = (char) G;
+            c->B = (char) B;
+
+            ct->color->append( c );
+
+        }
+
+        index++;
+    }
+
+    //    Now create the Hash tables
+
+    for( unsigned int its = 0; its < UserColorTableArray->count(); its++ ) {
+        QColorHashMap *phash = new QColorHashMap;
+        UserColourHashTableArray->append( phash );
+        colTable *ctp = UserColorTableArray->at( its );
+        for( unsigned int ic = 0; ic < ctp->color->count(); ic++ ) {
+            S52color *c2 = ctp->color->at( ic );
+            QColor c( c2->R, c2->G, c2->B );
+            QString key = QString::fromUtf8(c2->colName);
+            phash->insert(key, c);
+        }
+    }
+
+    //    Establish a default hash table pointer
+    //    in case a color is needed before ColorScheme is set
+    if(UserColourHashTableArray->size() > 0)
+    {
+        pcurrent_user_color_hash = UserColourHashTableArray->at( 0 );
+    } else
+    {
+        pcurrent_user_color_hash = 0;
+    }
+}
+
+void DeInitializeUserColors( void )
+{
+    unsigned int i;
+    if(UserColorTableArray)
+    {
+        for( i = 0; i < UserColorTableArray->count(); i++ ) {
+            colTable *ct = UserColorTableArray->at( i );
+            for( unsigned int j = 0; j < ct->color->count(); j++ ) {
+                S52color *c = ct->color->at( j );
+                delete c;                     //color
+            }
+
+            //        delete ct->tableName;               // wxString
+            delete ct->color;                   // wxArrayPtrVoid
+
+            delete ct;                          // colTable
+        }
+
+        delete UserColorTableArray;
+    }
+    if(UserColourHashTableArray)
+    {
+
+        for( i = 0; i < UserColourHashTableArray->count(); i++ ) {
+            QColorHashMap *phash = UserColourHashTableArray->at( i );
+            delete phash;
+        }
+
+        delete UserColourHashTableArray;
+    }
+
+}
+
 
 
 void LoadS57()

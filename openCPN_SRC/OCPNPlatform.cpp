@@ -629,15 +629,8 @@ QSize OCPNPlatform::getDisplaySize()
 
 double  OCPNPlatform::GetDisplaySizeMM()
 {
-    int w,h;
-    if( !m_bdisableWindowsDisplayEnum){
-        if(GetWindowsMonitorSize( w, h) && (w > 100) ){             // sanity check
-            m_displaySizeMM == QSize(w, h);
-        }
-        else
-            m_bdisableWindowsDisplayEnum = true;        // disable permanently
-    }
-    return w*1.0;
+    int width = QApplication::desktop()->screen()->widthMM();
+    return width * 1.0;
 }
 
 void OCPNPlatform::SetDisplaySizeMM( double sizeMM)

@@ -812,7 +812,7 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     Read("CM93DetailZoomPosY", PARAM_INT, &g_detailslider_dialog_y );
     Read("ShowCM93DetailSlider", PARAM_BOOL, &g_bShowDetailSlider );
 
-    Read("SENC_LOD_Pixels", PARAM_INT, &g_SENC_LOD_pixels );
+    Read("SENC_LOD_Pixels", PARAM_INT, &g_SENC_LOD_pixels, 2 );
 
     Read("SkewCompUpdatePeriod", PARAM_INT, &g_SkewCompUpdatePeriod );
 

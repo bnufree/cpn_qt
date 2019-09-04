@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  texture OpenGL text rendering built from QFont
@@ -32,6 +32,7 @@
 #include <QFontMetrics>
 #include "bitmap.h"
 #include <QPainter>
+#include <QDebug>
 
 typedef struct {
     QFont  *key;
@@ -155,6 +156,7 @@ void TexFont::Build( QFont &font, bool blur )
     dc.end();
     
     QImage image = tbmp.ConvertToImage();
+    if(image.format() != QImage::Format_RGB32) image = image.convertToFormat(QImage::Format_RGB32);
     GLuint format, internalformat;
     int stride;
 
@@ -165,7 +167,6 @@ void TexFont::Build( QFont &font, bool blur )
 //    if( m_blur ) image = image.Blur(1);
 
     unsigned char *imgdata = image.bits();
-    
     if(imgdata){
         unsigned char *teximage = (unsigned char *) malloc( stride * tex_w * tex_h );
 

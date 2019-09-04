@@ -419,6 +419,7 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     m_encShowDataQual = false;
     m_bShowGPS = true;
     m_pQuilt = new Quilt( this );
+    m_restore_dbindex = 0;
     SetQuiltMode(true);
     
     SetupGlCanvas( );
@@ -7894,23 +7895,18 @@ void ChartCanvas::paintEvent(QPaintEvent *event)
     //  It is important that the wxPaintDC is built, even if we elect to not process this paint message.
     //  Otherwise, the paint message may not be removed from the message queue, esp on Windows. (FS#1213)
     //  This would lead to a deadlock condition in ::wxYield()
-
-    qDebug()<<"???????????????????????";
     if(!m_b_paint_enable){
         return;
     }
 
-    qDebug()<<"!!!!!!!!!!!!!!!!!!!!";
     
     //  If necessary, reconfigure the S52 PLIB
     UpdateCanvasS52PLIBConfig();
     if( !g_bdisable_opengl && m_glcc )
         m_glcc->setVisible( g_bopengl );
 
-    qDebug()<<"glcc visible:"<<m_glcc->isVisible();
     if( m_glcc && g_bopengl ) {
         if( !s_in_update ) {          // no recursion allowed, seen on lo-spec Mac
-            qDebug()<<"$$$$$$$$$$$$$$$$$$$$$";
             s_in_update++;
             m_glcc->update();
             s_in_update--;

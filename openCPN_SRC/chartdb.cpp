@@ -1271,7 +1271,7 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
             Ch = new s57chart();
             s57chart *Chs57 = static_cast<s57chart*>(Ch);
 
-//            Chs57->SetNativeScale(cte.GetScale());
+            Chs57->SetNativeScale(cte.GetScale());
 
             //    Explicitely set the chart extents from the database to
             //    support the case wherein the SENC file has not yet been built

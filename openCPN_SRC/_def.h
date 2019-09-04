@@ -89,7 +89,7 @@ typedef         QList<void*>                    wxArrayPtrVoid;
 typedef struct _colTable {
     QString tableName;
     QString rasterFileName;
-//    wxArrayPtrVoid *color;
+    QList<S52color*> *color;
     S52ColorHashMap S52Colors;
     QColorHashMap QColors;
 } colTable;

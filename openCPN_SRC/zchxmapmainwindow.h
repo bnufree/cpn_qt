@@ -23,6 +23,8 @@ class OCPNPlatform;
 
 
 QColor GetGlobalColor(const QString& colorName);
+void InitializeUserColors( void );
+void DeInitializeUserColors( void );
 
 class zchxMapMainWindow : public QMainWindow
 {
