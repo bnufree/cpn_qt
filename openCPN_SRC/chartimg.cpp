@@ -265,7 +265,7 @@ bool ChartDummy::GetChartExtent(Extent *pext)
     return true;
 }
 
-bool ChartDummy::RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint, const OCPNRegion &RectRegion, const LLRegion &Region)
+bool ChartDummy::RenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint, const OCPNRegion &RectRegion, const LLRegion &Region)
 {
     return true;
 }
@@ -3388,7 +3388,7 @@ bool ChartBaseBSB::RenderViewOnDC(QPainter* dc, const ViewPort& VPoint)
 
 
 
-bool ChartBaseBSB::RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint, const OCPNRegion &RectRegion, const LLRegion &Region)
+bool ChartBaseBSB::RenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint, const OCPNRegion &RectRegion, const LLRegion &Region)
 {
     return true;
 }

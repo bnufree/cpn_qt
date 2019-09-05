@@ -195,7 +195,8 @@ HEADERS += \
     S57ClassRegistrar.h \
     CanvasOptions.h \
     glwidget.h \
-    CanvasConfig.h
+    CanvasConfig.h \
+    chartbase.h
 
 FORMS += \
     zchxoptionsdlg.ui \

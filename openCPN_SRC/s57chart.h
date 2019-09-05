@@ -179,13 +179,13 @@ public:
       
       double GetCalculatedSafetyContour(void){ return m_next_safe_cnt; }
 
-      virtual bool RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint,
                                         const OCPNRegion &RectRegion, const LLRegion &Region);
-      virtual bool RenderOverlayRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
+      virtual bool RenderOverlayRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint,
                                                const OCPNRegion &RectRegion, const LLRegion &Region);
-      virtual bool RenderRegionViewOnGLNoText(const QGLContext &glc, const ViewPort& VPoint,
+      virtual bool RenderRegionViewOnGLNoText(QGLContext *glc, const ViewPort& VPoint,
                                         const OCPNRegion &RectRegion, const LLRegion &Region);
-      virtual bool RenderViewOnGLTextOnly(const QGLContext &glc, const ViewPort& VPoint);
+      virtual bool RenderViewOnGLTextOnly(QGLContext *glc, const ViewPort& VPoint);
       
 // Public data
 //Todo Accessors here
@@ -274,9 +274,9 @@ private:
       void FreeObjectsAndRules();
       const char *getName(OGRFeature *feature);
 
-      bool DoRenderOnGL(const QGLContext &glc, const ViewPort& VPoint);
-      bool DoRenderOnGLText(const QGLContext &glc, const ViewPort& VPoint);
-      bool DoRenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint,
+      bool DoRenderOnGL(QGLContext *glc, const ViewPort& VPoint);
+      bool DoRenderOnGLText(QGLContext *glc, const ViewPort& VPoint);
+      bool DoRenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint,
                                   const OCPNRegion &RectRegion, const LLRegion &Region, bool b_overlay);
 
       void BuildLineVBO( void );

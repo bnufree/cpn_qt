@@ -203,9 +203,9 @@ public:
     static void DestroyRulesChain( Rules *top );
     
     //    For OpenGL
-    int RenderObjectToGL( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
-    int RenderAreaToGL( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
-    int RenderObjectToGLText( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp );
+    int RenderObjectToGL(QGLContext *glcc, ObjRazRules *rzRules, ViewPort *vp );
+    int RenderAreaToGL(QGLContext *glcc, ObjRazRules *rzRules, ViewPort *vp );
+    int RenderObjectToGLText(QGLContext *glcc, ObjRazRules *rzRules, ViewPort *vp );
     
     void RenderPolytessGL( ObjRazRules *rzRules, ViewPort *vp,double z_clip_geom, zchxPoint *ptp );
     

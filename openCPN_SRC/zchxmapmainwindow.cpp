@@ -297,7 +297,6 @@ void zchxMapMainWindow::CreateCanvasLayout()
         ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
     }
     ui->centralwidget->layout()->addWidget(mEcdisWidget);
-//    ui->centralwidget->layout()->addWidget(new GLWidget);
 
     //更新视窗的配置
     canvasConfig *config = new canvasConfig();
@@ -321,6 +320,12 @@ void zchxMapMainWindow::CreateCanvasLayout()
     mEcdisWidget->SetColorScheme( global_color_scheme );
     mEcdisWidget->GetCompass()->SetScaleFactor(g_compass_scalefactor);
     mEcdisWidget->SetShowGPS( true );
+}
+
+void zchxMapMainWindow::resizeEvent(QResizeEvent *e)
+{
+    QMainWindow::resizeEvent(e);
+
 }
 
 

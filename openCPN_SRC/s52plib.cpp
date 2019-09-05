@@ -4702,9 +4702,9 @@ int s52plib::RenderObjectToDC(ObjRazRules *rzRules, ViewPort *vp )
 }
 
 
-int s52plib::RenderObjectToGL( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp )
+int s52plib::RenderObjectToGL(QGLContext* glcc, ObjRazRules *rzRules, ViewPort *vp )
 {
-    m_glcc = (QGLContext *) &glcc;
+    m_glcc = glcc;
     return DoRenderObject(rzRules, vp );
 }
 
@@ -4713,9 +4713,9 @@ int s52plib::RenderObjectToDCText(ObjRazRules *rzRules, ViewPort *vp )
     return DoRenderObjectTextOnly(rzRules, vp );
 }
 
-int s52plib::RenderObjectToGLText( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp )
+int s52plib::RenderObjectToGLText(QGLContext *glcc, ObjRazRules *rzRules, ViewPort *vp )
 {
-    m_glcc = (QGLContext *) &glcc;
+    m_glcc = glcc;
     return DoRenderObjectTextOnly(rzRules, vp );
 }
 
@@ -7059,7 +7059,7 @@ void s52plib::RenderPolytessGL(ObjRazRules *rzRules, ViewPort *vp, double z_clip
 
 #ifdef ocpnUSE_GL
 
-int s52plib::RenderAreaToGL( const QGLContext &glcc, ObjRazRules *rzRules, ViewPort *vp )
+int s52plib::RenderAreaToGL(QGLContext *glcc, ObjRazRules *rzRules, ViewPort *vp )
 {
     if( !ObjectRenderCheckRules( rzRules, vp, true ) )
         return 0;

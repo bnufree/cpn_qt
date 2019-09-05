@@ -995,7 +995,7 @@ bool ChartMBTiles::RenderTile( mbTileDescriptor *tile, int zoomLevel, const View
 }
 
 
-bool ChartMBTiles::RenderRegionViewOnGL(const QGLContext &glc, const ViewPort& VPoint, const OCPNRegion &RectRegion, const LLRegion &Region)
+bool ChartMBTiles::RenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint, const OCPNRegion &RectRegion, const LLRegion &Region)
 {
     // Do not render if significantly underzoomed
     if( VPoint.chart_scale > (20 * OSM_zoomScale[m_minZoom])){

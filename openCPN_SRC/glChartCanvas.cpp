@@ -2392,7 +2392,7 @@ void glChartCanvas::RenderQuiltViewGL( ViewPort &vp, const OCPNRegion &rect_regi
                         }
                         else if(chart->GetChartType() == CHART_TYPE_MBTILES){
                             SetClipRegion(vp, pqp->ActiveRegion/*pqp->quilt_region*/);
-                            chart->RenderRegionViewOnGL( *m_pcontext, vp, rect_region, get_region );
+                            chart->RenderRegionViewOnGL( m_pcontext, vp, rect_region, get_region );
                             DisableClipRegion();
                         }
                         
@@ -2400,14 +2400,14 @@ void glChartCanvas::RenderQuiltViewGL( ViewPort &vp, const OCPNRegion &rect_regi
 
                         if(chart->GetChartType() == CHART_TYPE_CM93COMP){
                            RenderNoDTA(vp, get_region);
-                           chart->RenderRegionViewOnGL( *m_pcontext, vp, rect_region, get_region );
+                           chart->RenderRegionViewOnGL( m_pcontext, vp, rect_region, get_region );
                         }
                         else{
                             s57chart *Chs57 = dynamic_cast<s57chart*>( chart );
                             if(Chs57){
                                 if(Chs57->m_RAZBuilt){
                                     RenderNoDTA(vp, get_region);
-                                    Chs57->RenderRegionViewOnGLNoText( *m_pcontext, vp, rect_region, get_region );
+                                    Chs57->RenderRegionViewOnGLNoText(m_pcontext, vp, rect_region, get_region );
                                     DisableClipRegion();
                                 }
                                 else{
@@ -2439,11 +2439,11 @@ void glChartCanvas::RenderQuiltViewGL( ViewPort &vp, const OCPNRegion &rect_regi
                                 ChartPlugInWrapper *ChPI = dynamic_cast<ChartPlugInWrapper*>( chart );
                                 if(ChPI){
                                     RenderNoDTA(vp, get_region);
-                                    ChPI->RenderRegionViewOnGLNoText( *m_pcontext, vp, rect_region, get_region );
+                                    ChPI->RenderRegionViewOnGLNoText(m_pcontext, vp, rect_region, get_region );
                                 }
                                 else{    
                                     RenderNoDTA(vp, get_region);
-                                    chart->RenderRegionViewOnGL( *m_pcontext, vp, rect_region, get_region );
+                                    chart->RenderRegionViewOnGL(m_pcontext, vp, rect_region, get_region );
                                 }
                             }
                         }
@@ -2474,11 +2474,11 @@ void glChartCanvas::RenderQuiltViewGL( ViewPort &vp, const OCPNRegion &rect_regi
                 if( !get_region.Empty()  ) {
                     s57chart *Chs57 = dynamic_cast<s57chart*>( pch );
                     if( Chs57 )
-                        Chs57->RenderOverlayRegionViewOnGL( *m_pcontext, vp, rect_region, get_region );
+                        Chs57->RenderOverlayRegionViewOnGL(m_pcontext, vp, rect_region, get_region );
                     else{
                         ChartPlugInWrapper *ChPI = dynamic_cast<ChartPlugInWrapper*>( pch );
                         if(ChPI){
-                            ChPI->RenderRegionViewOnGL( *m_pcontext, vp, rect_region, get_region );
+                            ChPI->RenderRegionViewOnGL(m_pcontext, vp, rect_region, get_region );
                         }
                     }
 
@@ -2628,12 +2628,12 @@ void glChartCanvas::RenderQuiltViewGLText( ViewPort &vp, const OCPNRegion &rect_
                         
                         s57chart *Chs57 = dynamic_cast<s57chart*>( chart );
                         if(Chs57){
-                            Chs57->RenderViewOnGLTextOnly( *m_pcontext, vp);
+                            Chs57->RenderViewOnGLTextOnly(m_pcontext, vp);
                         }
                         else{
                             ChartPlugInWrapper *ChPI = dynamic_cast<ChartPlugInWrapper*>( chart );
                             if(ChPI){
-                                ChPI->RenderRegionViewOnGLTextOnly( *m_pcontext, vp, rect_region);
+                                ChPI->RenderRegionViewOnGLTextOnly(m_pcontext, vp, rect_region);
                             }
                         }
                     }    
@@ -2738,14 +2738,14 @@ void glChartCanvas::RenderCharts(ocpnDC &dc, const OCPNRegion &rect_region)
         LLRegion region = vp.GetLLRegion(rect_region);
         if( m_pParentCanvas->m_singleChart->GetChartFamily() == CHART_FAMILY_RASTER ){
             if(m_pParentCanvas->m_singleChart->GetChartType() == CHART_TYPE_MBTILES)
-                m_pParentCanvas->m_singleChart->RenderRegionViewOnGL( *m_pcontext, vp, rect_region, region );
+                m_pParentCanvas->m_singleChart->RenderRegionViewOnGL(m_pcontext, vp, rect_region, region );
             else
                 RenderRasterChartRegionGL( m_pParentCanvas->m_singleChart, vp, region );
         }
         else if( m_pParentCanvas->m_singleChart->GetChartFamily() == CHART_FAMILY_VECTOR ) {
             chart_region.Intersect(region);
             RenderNoDTA(vp, chart_region);
-            m_pParentCanvas->m_singleChart->RenderRegionViewOnGL( *m_pcontext, vp, rect_region, region );
+            m_pParentCanvas->m_singleChart->RenderRegionViewOnGL(m_pcontext, vp, rect_region, region );
         } 
     }
         
@@ -3323,7 +3323,7 @@ void glChartCanvas::Render()
             ChartBase *chart = ChartData->OpenChartFromDBAndLock(*rit, FULL_INIT);
             ChartMBTiles *pcmbt = dynamic_cast<ChartMBTiles*>( chart );
             if(pcmbt){
-                pcmbt->RenderRegionViewOnGL(*m_pcontext, vp, screen_region, screenLLRegion);
+                pcmbt->RenderRegionViewOnGL(m_pcontext, vp, screen_region, screenLLRegion);
                 
                 //Light up the piano key if the chart was rendered
                 std::vector<int>  piano_active_array_tiles = m_pParentCanvas->m_Piano->GetActiveKeyArray();
@@ -3468,7 +3468,7 @@ void glChartCanvas::Render()
     if(g_b_needFinish)
         glFinish();
     
-    swapBuffers();
+//    swapBuffers();
     if(b_timeGL && g_bShowFPS){
         if(n_render % 10){
             glFinish();

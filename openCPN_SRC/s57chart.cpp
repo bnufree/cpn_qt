@@ -1446,7 +1446,7 @@ void s57chart::BuildLineVBO( void )
  *              So, Actual rendering area onscreen should be clipped to the intersection of the two regions.
  */
 
-bool s57chart::RenderRegionViewOnGL( const QGLContext &glc, const ViewPort& VPoint,
+bool s57chart::RenderRegionViewOnGL( QGLContext* glc, const ViewPort& VPoint,
                                      const OCPNRegion &RectRegion, const LLRegion &Region )
 {
     if(!m_RAZBuilt) return false;
@@ -1454,7 +1454,7 @@ bool s57chart::RenderRegionViewOnGL( const QGLContext &glc, const ViewPort& VPoi
     return DoRenderRegionViewOnGL( glc, VPoint, RectRegion, Region, false );
 }
 
-bool s57chart::RenderOverlayRegionViewOnGL( const QGLContext &glc, const ViewPort& VPoint,
+bool s57chart::RenderOverlayRegionViewOnGL( QGLContext *glc, const ViewPort& VPoint,
                                             const OCPNRegion &RectRegion, const LLRegion &Region )
 {
     if(!m_RAZBuilt) return false;
@@ -1462,7 +1462,7 @@ bool s57chart::RenderOverlayRegionViewOnGL( const QGLContext &glc, const ViewPor
     return DoRenderRegionViewOnGL( glc, VPoint, RectRegion, Region, true );
 }
 
-bool s57chart::RenderRegionViewOnGLNoText( const QGLContext &glc, const ViewPort& VPoint,
+bool s57chart::RenderRegionViewOnGLNoText( QGLContext *glc, const ViewPort& VPoint,
                                            const OCPNRegion &RectRegion, const LLRegion &Region )
 {
     if(!m_RAZBuilt) return false;
@@ -1475,7 +1475,7 @@ bool s57chart::RenderRegionViewOnGLNoText( const QGLContext &glc, const ViewPort
     return b_ret;
 }
 
-bool s57chart::RenderViewOnGLTextOnly( const QGLContext &glc, const ViewPort& VPoint)
+bool s57chart::RenderViewOnGLTextOnly(QGLContext *glc, const ViewPort& VPoint)
 {
     if(!m_RAZBuilt) return false;
 
@@ -1498,7 +1498,7 @@ bool s57chart::RenderViewOnGLTextOnly( const QGLContext &glc, const ViewPort& VP
     return true;
 }
 
-bool s57chart::DoRenderRegionViewOnGL( const QGLContext &glc, const ViewPort& VPoint,
+bool s57chart::DoRenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint,
                                        const OCPNRegion &RectRegion, const LLRegion &Region, bool b_overlay )
 {
     if(!m_RAZBuilt) return false;
@@ -1575,7 +1575,7 @@ bool s57chart::DoRenderRegionViewOnGL( const QGLContext &glc, const ViewPort& VP
     return true;
 }
 
-bool s57chart::DoRenderOnGL( const QGLContext &glc, const ViewPort& VPoint )
+bool s57chart::DoRenderOnGL(QGLContext *glc, const ViewPort& VPoint )
 {
 #ifdef ocpnUSE_GL
 
@@ -1639,7 +1639,7 @@ bool s57chart::DoRenderOnGL( const QGLContext &glc, const ViewPort& VPoint )
     return true;
 }
 
-bool s57chart::DoRenderOnGLText( const QGLContext &glc, const ViewPort& VPoint )
+bool s57chart::DoRenderOnGLText( QGLContext *glc, const ViewPort& VPoint )
 {
 #ifdef ocpnUSE_GL
     

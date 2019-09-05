@@ -1129,7 +1129,7 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
 
     QString msg1;
     msg1.sprintf("OpenChartUsingCache:  type %d  ", chart_type);
-    //      ZCHX_LOGMSG(msg1 + ChartFullPath);
+    qDebug()<<(msg1 + ChartFullPath);
 
     if(cte.GetLatMax() > 90.0)          // Chart has been disabled...
         return NULL;
