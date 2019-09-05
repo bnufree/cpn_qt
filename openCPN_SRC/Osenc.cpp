@@ -117,6 +117,12 @@ Osenc_instream &Osenc_instreamFile::Read(void *buffer, size_t size)
     return *this;
 }
 
+qint64 Osenc_instreamFile::pos()
+{
+    if(m_instream)  return m_instream->TellI();
+    return 0;
+}
+
 
 bool Osenc_instreamFile::IsOk()
 {
@@ -562,6 +568,9 @@ int Osenc::ingest200(const QString &senc_file_name,
     //     }
     //     wxBufferedInputStream fpx( fpx_u );
 
+    QFile file(senc_file_name);
+    qDebug()<<"file size:"<<file.size();
+
     //    Sanity check for existence of file
     Osenc_instreamFile fpx;
     fpx.Open( senc_file_name );
@@ -574,7 +583,6 @@ int Osenc::ingest200(const QString &senc_file_name,
     int dun = 0;
     
     while( !dun ) {
-        qDebug()<<"read record here";
         
         //      Read a record Header
         OSENC_Record_Base record;
@@ -586,6 +594,7 @@ int Osenc::ingest200(const QString &senc_file_name,
             dun = 1;
             break;
         }
+//        qDebug()<<"record:"<<record.record_type<<record.record_length<<fpx.pos();
         
         // Process Records
         switch( record.record_type){
@@ -1067,8 +1076,8 @@ int Osenc::ingestCell( OGRS57DataSource *poS57DS, const QString &FullPath000, co
     
     // Form the .000 filename
     QString s0_file = working_dir;
-    if( s0_file.right(1) != QDir::separator() )
-        s0_file.append(QDir::separator());
+    if( s0_file.right(1) != zchxFuncUtil::separator() )
+        s0_file.append(zchxFuncUtil::separator());
     QFileInfo f000(FullPath000);
     
     s0_file.append( f000.fileName() );
@@ -1251,7 +1260,7 @@ int Osenc::ValidateAndCountUpdates( const QFileInfo& file000, const QString Copy
                 
                 //      Create the target update file name
                 QString cp_ufile = CopyDir;
-                if( cp_ufile.right(1) != QDir::separator() ) cp_ufile.append(QDir::separator());
+                if( cp_ufile.right(1) != zchxFuncUtil::separator() ) cp_ufile.append(zchxFuncUtil::separator());
                 cp_ufile.append( ufile.fileName() );
                 
                 QString tfile = ufile.absolutePath();

@@ -654,12 +654,21 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     m_Compass = new ocpnCompass(this);
     m_Compass->SetScaleFactor(g_compass_scalefactor);
     m_Compass->Show(m_bShowCompassWin);
-    ConfigureChartBar();
 
     mDisplsyTimer = new QTimer(this);
     mDisplsyTimer->setInterval(5000);
     connect(mDisplsyTimer, SIGNAL(timeout()), this, SLOT(update()));
-    mDisplsyTimer->start();
+//    mDisplsyTimer->start();
+}
+
+void ChartCanvas::startUpdate()
+{
+    if(mDisplsyTimer) mDisplsyTimer->start();
+}
+
+void ChartCanvas::stopUpdate()
+{
+    if(mDisplsyTimer) mDisplsyTimer->stop();
 }
 
 ChartCanvas::~ChartCanvas()

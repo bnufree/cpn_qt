@@ -486,6 +486,7 @@ static void GetglEntryPoints( void )
 glChartCanvas::glChartCanvas(ChartCanvas* parentCavas) : QGLWidget(/*QGLFormat(QGL::DoubleBuffer | QGL:: StereoBuffers), */parentCavas)
     , m_bsetup( false )
     , m_pParentCanvas(parentCavas)
+    , mIsUpdateAvailable(false)
 {
     m_pcontext = this->context();
 //    m_pParentCanvas = dynamic_cast<ChartCanvas *>( GetParent() );
@@ -1150,6 +1151,7 @@ void glChartCanvas::paintGL()
 #else
     if(!m_pcontext) return;
     if(!g_bopengl) return;
+    if(!mIsUpdateAvailable) return;
     makeCurrent();
     
     if( !m_bsetup ) {

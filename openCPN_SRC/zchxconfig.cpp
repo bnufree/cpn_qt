@@ -379,8 +379,6 @@ zchxConfig::zchxConfig( const QString &LocalFileName ) : QSettings(LocalFileName
     mInitFlag = false;
     this->setIniCodec(QTextCodec::codecForName("UTF-8"));
     m_bSkipChangeSetUpdate = false;
-    loadMyConfig();
-
 }
 
 /*-------------------------------------------

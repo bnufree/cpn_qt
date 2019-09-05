@@ -36,6 +36,16 @@
 //------------------------------------------------------------------------------
 // canvasConfig Implementation
 //------------------------------------------------------------------------------
+canvasConfig::canvasConfig( )
+{
+    configIndex = -1;
+    canvas = NULL;
+    GroupID = 0;
+    iLat = 0.;
+    iLon = 0.;
+    iScale = .0003;        // decent initial value
+    iRotation = 0.;
+}
 
 canvasConfig::canvasConfig( int index )
 {
@@ -98,7 +108,7 @@ void canvasConfig::LoadFromLegacyConfig( QSettings *conf )
     DBindex = conf->value("InitialdBIndex", -1 ).toInt();
     conf->endGroup();
 
-    conf->beginGroup("ettings/GlobalState" );
+    conf->beginGroup("settings/GlobalState" );
     if(conf->contains("VPScale"))
     {
         double st_view_scale = conf->value("VPScale").toDouble();

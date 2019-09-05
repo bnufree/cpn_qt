@@ -129,7 +129,8 @@ SOURCES += \
     s57featuredefns.cpp \
     ogrs57layer.cpp \
     CanvasOptions.cpp \
-    glwidget.cpp
+    glwidget.cpp \
+    CanvasConfig.cpp
 
 
 
@@ -193,7 +194,8 @@ HEADERS += \
     Osenc.h \
     S57ClassRegistrar.h \
     CanvasOptions.h \
-    glwidget.h
+    glwidget.h \
+    CanvasConfig.h
 
 FORMS += \
     zchxoptionsdlg.ui \

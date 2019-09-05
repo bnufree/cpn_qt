@@ -145,6 +145,8 @@ protected:
       void focusOutEvent(QFocusEvent *){}
       void resizeEvent(QResizeEvent * event );
 public slots:
+      void startUpdate();
+      void stopUpdate();
 //      void OnToolLeftClick();
       bool MouseEventOverlayWindows( QMouseEvent* event );
       bool MouseEventChartBar( QMouseEvent* event );

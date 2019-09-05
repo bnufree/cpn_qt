@@ -199,7 +199,7 @@ ChartBase::~ChartBase()
 QString ChartBase::GetHashKey() const
 {
     QString key = GetFullPath();
-    QChar separator = QDir::separator();
+    QString separator = zchxFuncUtil::separator();
     for(unsigned int pos = 0; pos < key.size(); pos = key.indexOf(separator, pos))
         key.replace(pos, 1, ("!"));
     return key;

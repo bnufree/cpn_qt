@@ -255,7 +255,7 @@ wxBitmap Style::GetIcon(const QString & name, int width, int height, bool bforce
     
     wxBitmap bm;
 #ifdef ocpnUSE_SVG
-    QString fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + name + (".svg");
+    QString fullFilePath = myConfigFileDir + this->sysname + zchxFuncUtil::separator() + name + (".svg");
     if( QFile::exists(fullFilePath ) )
     {
         bm = LoadSVG( fullFilePath, retSize.width(), retSize.height());
@@ -326,11 +326,11 @@ wxBitmap Style::GetToolIcon(const QString & toolname, int iconType, bool rollove
             QString fullFilePath;
             if( rollover )
             {
-                fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + ("_rollover.svg");
-                if( !QFile::exists( fullFilePath ) ) fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + (".svg");
+                fullFilePath = myConfigFileDir + this->sysname + zchxFuncUtil::separator() + toolname + ("_rollover.svg");
+                if( !QFile::exists( fullFilePath ) ) fullFilePath = myConfigFileDir + this->sysname + zchxFuncUtil::separator() + toolname + (".svg");
             } else
             {
-                fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + (".svg");
+                fullFilePath = myConfigFileDir + this->sysname + zchxFuncUtil::separator() + toolname + (".svg");
             }
             if( QFile::exists(fullFilePath ) )
                 bm = LoadSVG( fullFilePath, retSize.width(), retSize.height() );
@@ -400,18 +400,18 @@ wxBitmap Style::GetToolIcon(const QString & toolname, int iconType, bool rollove
 #ifdef ocpnUSE_SVG
             QString fullFilePath;
             if( rollover )
-                fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + ("_rollover_toggled.svg");
+                fullFilePath = myConfigFileDir + this->sysname + zchxFuncUtil::separator() + toolname + ("_rollover_toggled.svg");
             else
-                fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + ("_toggled.svg");
+                fullFilePath = myConfigFileDir + this->sysname + zchxFuncUtil::separator() + toolname + ("_toggled.svg");
             if( QFile::exists( fullFilePath ) )
                 bm = LoadSVG( fullFilePath, retSize.width(), retSize.height() );
             else
             {
                 // Could not find a toggled SVG, so try to make one
                 if( rollover )
-                    fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + ("_rollover.svg");
+                    fullFilePath = myConfigFileDir + this->sysname + zchxFuncUtil::separator() + toolname + ("_rollover.svg");
                 else
-                    fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + (".svg");
+                    fullFilePath = myConfigFileDir + this->sysname + zchxFuncUtil::separator() + toolname + (".svg");
 
                 if( QFile::exists( fullFilePath ) ){
                     bm = LoadSVG( fullFilePath, retSize.width(), retSize.height() );
@@ -452,7 +452,7 @@ wxBitmap Style::GetToolIcon(const QString & toolname, int iconType, bool rollove
 
             wxBitmap bm;
 #ifdef ocpnUSE_SVG
-            QString fullFilePath = myConfigFileDir + this->sysname + QDir::separator() + toolname + ("_disabled.svg");
+            QString fullFilePath = myConfigFileDir + this->sysname + zchxFuncUtil::separator() + toolname + ("_disabled.svg");
             if( QFile::exists(fullFilePath ) )
                 bm = LoadSVG( fullFilePath, retSize.width(), retSize.height());
             else
@@ -765,9 +765,9 @@ StyleManager::StyleManager(void)
 {
     isOK = false;
     currentStyle = NULL;
-    Init( g_Platform->GetDataDir() + QDir::separator() + ("uidata") + QDir::separator() );
+    Init( g_Platform->GetDataDir() + zchxFuncUtil::separator() + ("uidata") + zchxFuncUtil::separator() );
     Init( g_Platform->GetDataDir() );
-    Init( g_Platform->GetDataDir() + QDir::separator() + ("/.opencpn") + QDir::separator() );
+    Init( g_Platform->GetDataDir() + zchxFuncUtil::separator() + ("/.opencpn") + zchxFuncUtil::separator() );
     SetStyle( ("") );
 #ifdef ocpnUSE_SVG
     qDebug()<<(("Using SVG Icons"));
@@ -1165,7 +1165,7 @@ void StyleManager::SetStyle(QString name)
                 break;
             }
 
-            QString fullFilePath = style->myConfigFileDir + QDir::separator() + style->graphicsFile;
+            QString fullFilePath = style->myConfigFileDir + zchxFuncUtil::separator() + style->graphicsFile;
 
             if( !QFile::exists( fullFilePath ) ) {
                 QString msg(("Styles Graphics File not found: ") );

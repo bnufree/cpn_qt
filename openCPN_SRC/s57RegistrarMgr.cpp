@@ -28,6 +28,7 @@
 #include "S57ClassRegistrar.h"
 #include <QDir>
 #include <QDebug>
+#include "_def.h"
 
 extern S57ClassRegistrar *g_poRegistrar;
 
@@ -68,7 +69,7 @@ bool s57RegistrarMgr::s57_attr_init( const QString& csv_dir ){
     
     //  Find, open, and read the file {csv_dir}/s57attributes.csv
     QString csv_t = csv_dir;
-    QChar sep = QDir::separator();
+    QString sep = zchxFuncUtil::separator();
     if( csv_t.right(1) != sep ) csv_t.append( sep );
 
     QString targetFile = csv_t + ("s57attributes.csv");
@@ -111,7 +112,7 @@ bool s57RegistrarMgr::s57_feature_init( const QString& csv_dir ){
     
     //  Find, open, and read the file {csv_dir}/s57objectclasses.csv
     QString csv_t = csv_dir;
-    QChar sep = QDir::separator();
+    QString sep = zchxFuncUtil::separator();
     if( csv_t.right(1) != sep ) csv_t.append( sep );
 
     QString targetFile = csv_t + ("s57objectclasses.csv");

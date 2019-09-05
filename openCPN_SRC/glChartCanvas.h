@@ -90,6 +90,7 @@ class glChartCanvas : public QGLWidget
     Q_OBJECT
 public:
     glChartCanvas(/*QGLContext *ctx,*/ ChartCanvas *parentCavas);
+    void setUpdateAvailable(bool sts) {mIsUpdateAvailable = sts;}
     static bool CanClipViewport(const ViewPort &vp);
     static ViewPort ClippedViewport(const ViewPort &vp, const LLRegion &region);
 
@@ -245,6 +246,7 @@ protected:
 //    int          m_currentTexHeight;
     
     ChartCanvas *m_pParentCanvas;
+    bool            mIsUpdateAvailable;
 };
 
 extern void BuildCompressedCache();

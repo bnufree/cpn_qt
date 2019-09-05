@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 SENC File Object
@@ -367,6 +367,7 @@ public:
     bool IsOk();
     bool isAvailable();
     void Shutdown();
+    qint64  pos();
 
     
 private:

@@ -22,7 +22,10 @@
 #include "config.h"
 #include <QProgressDialog>
 #include <QLabel>
-//#include "glwidget.h"
+#include <QMessageBox>
+#include "CanvasConfig.h"
+#include "compass.h"
+#include "glwidget.h"
 
 
 extern      ChartDB                     *ChartData;
@@ -145,11 +148,14 @@ extern int                       g_SatsInView;
 extern bool                      g_bSatValid;
 extern bool                        g_bSpaceDropMark;
 extern QString                  *pInit_Chart_Dir;
-extern ChartGroupArray            *g_pGroupArray;
+//extern ChartGroupArray            *g_pGroupArray;
 bool                                g_bNeedDBUpdate;
 QString                             ChartListFileName;
 QString                             gDefaultWorldMapLocation;
 extern bool                         g_useMUI;
+extern bool                         g_bUIexpert;
+int                       g_mem_total, g_mem_used, g_mem_initial;
+extern int                       g_restore_dbindex;
 
 
 
@@ -160,9 +166,6 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
 {
 
     ui->setupUi(this);
-    InitializeUserColors();
-    gFrame = this;
-    g_Main_thread = QThread::currentThread();
     //工具
     QMenu* tools = this->menuBar()->addMenu(tr("Tools"));
     addCustomAction(tools,tr("Options"),this, SLOT(slotOpenSettingDlg()));
@@ -204,51 +207,158 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
     addCustomAction(display, tr("Base"), this, SLOT(slotShowDisplayCategory()), false, ColorScheme::GLOBAL_COLOR_SCHEME_DAY);
     addCustomAction(display, tr("Standard"), this, SLOT(slotShowDisplayCategory()), false, ColorScheme::GLOBAL_COLOR_SCHEME_DUSK);
     addCustomAction(display, tr("All"), this, SLOT(slotShowDisplayCategory()), false, ColorScheme::GLOBAL_COLOR_SCHEME_NIGHT);
-#if 1  //如果使用海图S7
-    //开始初始化平台的相关信息
-    QDateTime now = QDateTime::currentDateTime();
-    qDebug()<<"start ecids now at:"<<now.toString("yyyy-MM-dd hh:mm:ss");
-    int mem_used =0, mem_total = 0;
-    zchxFuncUtil::getMemoryStatus(& mem_total, &mem_used);
-    qDebug()<<"memory total(M):"<<mem_total<<"  app used(M):"<<mem_used;
-    g_Platform = new OCPNPlatform;
-    //设定标题
-    this->setWindowTitle("ZCHX Ecdis");
-    //获取当前版本
-    qDebug()<<" currernt version is:"<<VERSION_FULL<<" date:"<<VERSION_DATE;
-    //获取本地数据的范围
-    qDebug()<<"local data dir is:"<<zchxFuncUtil::getDataDir();
-    //加载默认的配置文件
-    if(!ZCHX_CFG_INS->hasLoadConfig()) ZCHX_CFG_INS->loadMyConfig();
-    //
-    if(!g_StyleManager)g_StyleManager = new ocpnStyle::StyleManager();
-    g_StyleManager->SetStyle(("MUI_flat") );
-    if( !g_StyleManager->IsOK() ) {
-        qDebug()<<"failed to load style";
-    }
 
+    //添加窗口时的初始化
+    initBeforeCreateCanvas();
+    //添加窗口
+    CreateCanvasLayout();
+    //窗口添加完成延时加载地图数据
+    QTimer::singleShot(1000, this, SLOT(slotInitEcidsAsDelayed()));
+}
+
+zchxMapMainWindow::~zchxMapMainWindow()
+{
+    delete ui;
+}
+
+void zchxMapMainWindow::initBeforeCreateCanvas()
+{
+    gFrame = this;
+    g_Main_thread = QThread::currentThread();
+    g_Platform = new OCPNPlatform;
+    this->setWindowTitle("ZCHX Ecdis");
+    pInit_Chart_Dir = new QString();
+    g_pGroupArray = new ChartGroupArray;
+    ZCHX_CFG_INS->loadMyConfig();
+    g_Platform->applyExpertMode(g_bUIexpert);
+    g_StyleManager = new ocpnStyle::StyleManager();
+    g_StyleManager->SetStyle("MUI_flat");
+    if( !g_StyleManager->IsOK() ) {
+        QString logFile = QApplication::applicationDirPath() + QString("/log/opencpn.log");
+        QString msg = ("Failed to initialize the user interface. ");
+        msg.append("OpenCPN cannot start. ");
+        msg.append("The necessary configuration files were not found. ");
+        msg.append("See the log file at ").append(logFile).append(" for details.").append("\n\n");
+        QMessageBox::warning(0, "Failed to initialize the user interface. ", msg);
+        exit( EXIT_FAILURE );
+    }
     if(g_useMUI){
         ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
         style->chartStatusWindowTransparent = true;
     }
 
+    g_display_size_mm = fmax(100.0, g_Platform->GetDisplaySizeMM());
+    qDebug("Detected display size (horizontal): %d mm", (int) g_display_size_mm);
+    // User override....
+    if((g_config_display_size_mm > 0) &&(g_config_display_size_manual)){
+        g_display_size_mm = g_config_display_size_mm;
+        qDebug("Display size (horizontal) config override: %d mm", (int) g_display_size_mm);
+        g_Platform->SetDisplaySizeMM(g_display_size_mm);
+    }
 
-    //添加显示控件,地图数据在显示控件进行初始化,MainWindow只是提供外部操作的接口
-#endif
-    initEcdis();
+    // Instantiate and initialize the Config Manager
+//    ConfigMgr::Get();
+
+    //  Validate OpenGL functionality, if selected
+    g_bdisable_opengl = false;
+    if(g_bdisable_opengl) g_bopengl = false;
+    zchxFuncUtil::getMemoryStatus(&g_mem_total, &g_mem_initial);
+    if( 0 == g_memCacheLimit ) g_memCacheLimit = (int) ( g_mem_total * 0.5 );
+    g_memCacheLimit = fmin(g_memCacheLimit, 1024 * 1024); // math in kBytes, Max is 1 GB
+
+//      Establish location and name of chart database
+    ChartListFileName = ChartListFileName = QString("%1/CHRTLIST.DAT").arg(zchxFuncUtil::getDataDir());
+//      Establish guessed location of chart tree
+    if( pInit_Chart_Dir->isEmpty() )
+    {
+        pInit_Chart_Dir->append(zchxFuncUtil::getDataDir());
+    }
+
+//      Establish the GSHHS Dataset location
+    gDefaultWorldMapLocation = "gshhs";
+    gDefaultWorldMapLocation.insert(0, QString("%1/").arg(zchxFuncUtil::getDataDir()));
+//    gDefaultWorldMapLocation.Append( wxFileName::GetPathSeparator() );
+    if( gWorldMapLocation.isEmpty() || !(QDir(gWorldMapLocation).exists()) ) {
+        gWorldMapLocation = gDefaultWorldMapLocation;
+    }
+    g_Platform->Initialize_2();
+    InitializeUserColors();
+    //  Do those platform specific initialization things that need gFrame
+    g_Platform->Initialize_3();
+}
+
+void zchxMapMainWindow::CreateCanvasLayout()
+{
+    //  Clear the cache, and thus close all charts to avoid memory leaks
+    if(ChartData) ChartData->PurgeCache();
     mEcdisWidget = new ChartCanvas(this, 0);
     if(!ui->centralwidget->layout())
     {
         ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
     }
     ui->centralwidget->layout()->addWidget(mEcdisWidget);
+//    ui->centralwidget->layout()->addWidget(new GLWidget);
 
-    mEcdisWidget->DoCanvasUpdate();
+    //更新视窗的配置
+    canvasConfig *config = new canvasConfig();
+    config->LoadFromLegacyConfig(ZCHX_CFG_INS);
+    config->canvas = mEcdisWidget;
+
+    // Verify that glCanvas is ready, if necessary
+    if(g_bopengl){
+        if(!mEcdisWidget->GetglCanvas())
+            mEcdisWidget->SetupGlCanvas();
+    }
+    config->iLat = 35.123456;
+    config->iLon = 127.123456;
+
+    mEcdisWidget->SetDisplaySizeMM(g_display_size_mm);
+
+    mEcdisWidget->ApplyCanvasConfig(config);
+
+    //            cc->SetToolbarPosition(wxPoint( g_maintoolbar_x, g_maintoolbar_y ));
+    mEcdisWidget->ConfigureChartBar();
+    mEcdisWidget->SetColorScheme( global_color_scheme );
+    mEcdisWidget->GetCompass()->SetScaleFactor(g_compass_scalefactor);
+    mEcdisWidget->SetShowGPS( true );
 }
 
-zchxMapMainWindow::~zchxMapMainWindow()
+
+void zchxMapMainWindow::slotInitEcidsAsDelayed()
 {
-    delete ui;
+    //   Build the initial chart dir array
+    ArrayOfCDI ChartDirArray;
+    ZCHX_CFG_INS->LoadChartDirArray( ChartDirArray );
+
+    if( !ChartDirArray.count() )
+    {
+        if(QFile::exists(ChartListFileName )) QFile::remove(ChartListFileName );
+    }
+
+    if(!ChartData)  ChartData = new ChartDB( );
+    if (!ChartData->LoadBinary(ChartListFileName, ChartDirArray))
+    {
+        g_bNeedDBUpdate = true;
+    }
+    //  Verify any saved chart database startup index
+    if(g_restore_dbindex >= 0)
+    {
+        if(ChartData->GetChartTableEntries() == 0)
+        {
+            g_restore_dbindex = -1;
+        } else if(g_restore_dbindex > (ChartData->GetChartTableEntries()-1))
+        {
+            g_restore_dbindex = 0;
+        }
+    }
+
+    //  Apply the inital Group Array structure to the chart data base
+    ChartData->ApplyGroupArray( g_pGroupArray );
+    DoChartUpdate();
+    mEcdisWidget->ReloadVP();                  // once more, and good to go
+    OCPNPlatform::Initialize_4( );
+    mEcdisWidget->GetglCanvas()->setUpdateAvailable(true);
+    mEcdisWidget->startUpdate();
 }
 
 void zchxMapMainWindow::slotOpenSettingDlg()
@@ -1114,7 +1224,7 @@ void zchxMapMainWindow::ToggleColorScheme()
 bool zchxMapMainWindow::DoChartUpdate( void )
 {
     bool return_val = false;
-//    if(mEcdisWidget) return_val = mEcdisWidget->DoCanvasUpdate();
+    if(mEcdisWidget) return_val = mEcdisWidget->DoCanvasUpdate();
     return return_val;
 
 }
@@ -1558,12 +1668,12 @@ void LoadS57()
 
 //      Init the s57 chart object, specifying the location of the required csv files
     g_csv_locn = g_Platform->GetDataDir();
-    g_csv_locn.append(QDir::separator()).append("s57data");
+    g_csv_locn.append(zchxFuncUtil::separator()).append("s57data");
 //      If the config file contains an entry for SENC file prefix, use it.
 //      Otherwise, default to PrivateDataDir
     if( g_SENCPrefix.isEmpty() ) {
         g_SENCPrefix = g_Platform->GetDataDir();
-        g_SENCPrefix.append(QDir::separator());
+        g_SENCPrefix.append(zchxFuncUtil::separator());
         g_SENCPrefix.append("SENC");
     }
 
@@ -1574,7 +1684,7 @@ void LoadS57()
 
     if( g_UserPresLibData.isEmpty() ) {
         plib_data = g_csv_locn;
-        plib_data.append(QDir::separator());
+        plib_data.append(zchxFuncUtil::separator());
         plib_data.append("S52RAZDS.RLE");
     } else {
         plib_data = g_UserPresLibData;
@@ -1600,12 +1710,12 @@ void LoadS57()
         delete ps52plib;
         QString look_data_dir;
         look_data_dir.append( g_Platform->GetAppDir());
-        look_data_dir.append(QDir::separator());
+        look_data_dir.append(zchxFuncUtil::separator());
         QString tentative_SData_Locn = look_data_dir;
         look_data_dir.append("s57data");
 
         plib_data = look_data_dir;
-        plib_data.append(QDir::separator());
+        plib_data.append(zchxFuncUtil::separator());
         plib_data.append("S52RAZDS.RLE");
 
         qDebug("Looking for s57data in %s", look_data_dir.toUtf8().data() );
@@ -1624,11 +1734,11 @@ void LoadS57()
 
         QString look_data_dir;
         look_data_dir = g_Platform->GetDataDir();
-        look_data_dir.append(QDir::separator());
+        look_data_dir.append(zchxFuncUtil::separator());
         look_data_dir.append("s57data" );
 
         plib_data = look_data_dir;
-        plib_data.append(QDir::separator());
+        plib_data.append(zchxFuncUtil::separator());
         plib_data.append( ("S52RAZDS.RLE") );
 
         qDebug("Looking for s57data in %s", look_data_dir.toUtf8().data() );

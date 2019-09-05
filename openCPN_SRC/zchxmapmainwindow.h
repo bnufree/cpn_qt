@@ -79,10 +79,14 @@ public slots:
     void    SetGPSCompassScale();
     double  GetMag(double a);
     void    InvalidateAllGL();
+private slots:
+    void    slotInitEcidsAsDelayed();
 
 private:
     QAction* addCustomAction(QMenu* menu, const QString &text, const QObject *receiver, const char* slot, bool check = false, const QVariant& data = QVariant());
     void     initEcdis();
+    void     initBeforeCreateCanvas();
+    void     CreateCanvasLayout();
 private slots:
     void    slotOnFrameTimer1Out();
 

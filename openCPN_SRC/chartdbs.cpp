@@ -1550,7 +1550,7 @@ bool ChartDatabase::Update(ArrayOfCDI& dir_array, bool bForce, QProgressDialog *
         if( file_list.size() > 0 ) {
             //If some polygons exist in the directory, set it as the one to use for GSHHG
             //TODO: We should probably compare the version and maybe resolutions available with what is currently used...
-            gWorldMapLocation = dir_info.fullpath + QDir::separator();
+            gWorldMapLocation = dir_info.fullpath + zchxFuncUtil::separator();
         }
         TraverseDirAndAddCharts(dir_info, pprog, dir_magic, lbForce);
 
@@ -1670,7 +1670,7 @@ int ChartDatabase::TraverseDirAndAddCharts(ChartDirInfo& dir_info, QProgressDial
         //    or anywhere in its tree
 
         QFileInfo fn_dir(dir_path, ("stuff"));
-        unsigned int dir_path_count = fn_dir.absolutePath().split(QDir::separator()).size();
+        unsigned int dir_path_count = fn_dir.absolutePath().split(zchxFuncUtil::separator()).size();
         if(pprog) pprog->setWindowTitle("OpenCPN Chart Scan....");
         int nEntries = active_chartTable.count();
 
@@ -1679,7 +1679,7 @@ int ChartDatabase::TraverseDirAndAddCharts(ChartDirInfo& dir_info, QProgressDial
 
             QFileInfo fn(QString::fromUtf8(active_chartTable[ic]->GetpFullPath()));
             QString tmp_path = fn.absolutePath();
-            while(tmp_path.split(QDir::separator()).size() >= dir_path_count)
+            while(tmp_path.split(zchxFuncUtil::separator()).size() >= dir_path_count)
             {
                 if(tmp_path == dir_path)
                 {
@@ -1689,7 +1689,7 @@ int ChartDatabase::TraverseDirAndAddCharts(ChartDirInfo& dir_info, QProgressDial
 
                     break;
                 }
-                int last_index = tmp_path.lastIndexOf(QDir::separator());
+                int last_index = tmp_path.lastIndexOf(zchxFuncUtil::separator());
                 tmp_path.remove(last_index, tmp_path.length() - last_index);
             }
         }
@@ -1773,7 +1773,7 @@ bool ChartDatabase::DetectDirChange(const QString & dir_path, const QString & ma
 bool ChartDatabase::IsChartDirUsed(const QString &theDir)
 {
     QString dir(theDir);
-    if (dir.endsWith(QDir::separator())) dir.remove(dir.size()-1, 1);
+    if (dir.endsWith(zchxFuncUtil::separator())) dir.remove(dir.size()-1, 1);
 
     dir.append("*");
     for (UINT32 i = 0; i < active_chartTable.count(); i++) {
@@ -2005,7 +2005,7 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
     else {                            // This is a cm93 dataset, specified as yada/yada/cm93
         //cm93的情况不处理
 //        QString dir_plus = dir_name;
-//        dir_plus += QString(QDir::separator());
+//        dir_plus += QString(zchxFuncUtil::separator());
 //        FileList.append(dir_plus);
 
     }
@@ -2791,7 +2791,7 @@ bool  ChartDatabase::IsChartAvailable(int dbIndex)
 
 void ChartDatabase::ApplyGroupArray(ChartGroupArray *pGroupArray)
 {
-    QString separator(QDir::separator());
+    QString separator(zchxFuncUtil::separator());
     for(unsigned int ic=0 ; ic < active_chartTable.count(); ic++)
     {
         ChartTableEntry *pcte = active_chartTable[ic];

@@ -457,7 +457,7 @@ QString zchxFuncUtil::getFileExt(const QString& fullname)
 QString zchxFuncUtil::getTempDir()
 {
     QString path = QApplication::applicationDirPath();
-    if(path.right(1) != QDir::separator()) path.append(QDir::separator());
+    if(path.right(1) != zchxFuncUtil::separator()) path.append(zchxFuncUtil::separator());
     QString temp_path = QString("%1__temp").arg(path);
     QDir dir(temp_path);
     if(!dir.exists()) dir.mkpath(temp_path);
@@ -949,9 +949,9 @@ QString zchxFuncUtil::getDataDir()
     return data_dir;
 }
 
-QString zchxFuncUtil::getPathSeparator()
+QString zchxFuncUtil::separator()
 {
-    return QDir::separator();
+    return "/";
 }
 
 

@@ -648,7 +648,7 @@ void  s57chart::LoadThumb()
     QFileInfo fn( m_FullPath );
     QString SENCdir = g_SENCPrefix;
 
-    if( SENCdir.right(1) != QDir::separator() ) SENCdir.append( QDir::separator() );
+    if( SENCdir.right(1) != zchxFuncUtil::separator() ) SENCdir.append( zchxFuncUtil::separator() );
 
     QString tsfn( SENCdir );
     tsfn.append(fn.fileName() );
@@ -2360,7 +2360,7 @@ InitReturn s57chart::Init( const QString& name, ChartInitFlag flags )
         QString file_name_no_ext = zchxFuncUtil::getFileName( QFileInfo(file_name).fileName());
         
         // decompress to temp file to allow seeking
-        m_TempFilePath = zchxFuncUtil::getTempDir() + QDir::separator() + file_name_no_ext;
+        m_TempFilePath = zchxFuncUtil::getTempDir() + zchxFuncUtil::separator() + file_name_no_ext;
 
         if(/*!wxFileExists(m_TempFilePath) && */!DecompressXZFile(name, m_TempFilePath)) {
             QFile::remove(m_TempFilePath);
@@ -2478,8 +2478,8 @@ QString s57chart::buildSENCName( const QString& name)
     //      Set the proper directory for the SENC files
     QString SENCdir = g_SENCPrefix;
     
-    if( SENCdir.right(1) != QDir::separator() )
-        SENCdir.append( QDir::separator() );
+    if( SENCdir.right(1) != zchxFuncUtil::separator() )
+        SENCdir.append( zchxFuncUtil::separator() );
     
 #if 1
     QString source_dir = fn.absolutePath();
@@ -2517,7 +2517,7 @@ int s57chart::FindOrCreateSenc( const QString& name, bool b_progress )
         ext = zchxFuncUtil::getFileExt(QFileInfo(file_name).fileName());
         
         // decompress to temp file to allow seeking
-        m_TempFilePath = zchxFuncUtil::getTempDir() + QDir::separator() +
+        m_TempFilePath = zchxFuncUtil::getTempDir() + zchxFuncUtil::separator() +
                 zchxFuncUtil::getFileName(QFileInfo(file_name).fileName());
         
         if(/*!wxFileExists(m_TempFilePath) &&*/ !DecompressXZFile(name, m_TempFilePath)) {
@@ -2621,7 +2621,7 @@ int s57chart::FindOrCreateSenc( const QString& name, bool b_progress )
                     QDateTime OModTime000 = FileName000.lastModified();
                     //                    OModTime000.setTime(QTime(0));                      // to midnight
                     if( SENCCreateDate.isValid() ){
-                        if( OModTime000 <  SENCCreateDate  ){
+                        if( OModTime000 >  SENCCreateDate  ){
                             qDebug("    Rebuilding SENC due to Senc vs cell file time check.");
                             bbuild_new_senc = true;
                         }
@@ -2682,8 +2682,8 @@ InitReturn s57chart::PostInit( ChartInitFlag flags, ColorScheme cs )
     //      Going to be in the global (user) SENC file directory
 #if 1
     QString SENCdir = g_SENCPrefix;
-    if( SENCdir.right(1) != QDir::separator() )
-        SENCdir.append( QDir::separator() );
+    if( SENCdir.right(1) != zchxFuncUtil::separator() )
+        SENCdir.append( zchxFuncUtil::separator() );
     
     QFileInfo s57File(m_SENCFileName);
     QString file_name_part = zchxFuncUtil::getFileName(s57File.fileName());
@@ -3432,7 +3432,7 @@ int s57chart::GetUpdateFileArray( const QFileInfo& file000, QStringList *UpFiles
     QString DirName000 = file000.absolutePath();
     QDir dir( DirName000 );
     if(!dir.exists()){
-        DirName000.insert(0, QDir::separator());
+        DirName000.insert(0, zchxFuncUtil::separator());
         DirName000.insert(0, ".");
         dir.setPath(DirName000);
         if(!dir.exists()){
@@ -3452,11 +3452,11 @@ int s57chart::GetUpdateFileArray( const QFileInfo& file000, QStringList *UpFiles
     //    wxFileName fnTest(sdir);
     //    QString sname = fnTest.GetName();
     QString sdir = DirName000;
-    if(sdir.right(1) == QDir::separator())
+    if(sdir.right(1) == zchxFuncUtil::separator())
     {
         sdir.remove(sdir.size() - 1, 1);
     }
-    int last_index = sdir.lastIndexOf(QDir::separator());
+    int last_index = sdir.lastIndexOf("/");
     if(last_index >= 0) sdir.remove(last_index, sdir.size() - last_index);
     QDir fnTest(sdir);
     QString sname = fnTest.dirName();
@@ -3480,7 +3480,7 @@ int s57chart::GetUpdateFileArray( const QFileInfo& file000, QStringList *UpFiles
         dummy_array = UpFiles;
     
     //这里需要获取的带路径的全名
-    QFileInfoList possibleFiles = dir.entryInfoList(/*flags*/);
+    QFileInfoList possibleFiles = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
     for(unsigned int i=0 ; i < possibleFiles.count() ; i++){
         QFileInfo file(possibleFiles[i]);
         QString filename = file.absoluteFilePath();
@@ -3607,7 +3607,7 @@ int s57chart::ValidateAndCountUpdates( const QFileInfo& file000, const QString C
 
                 //      Create the target update file name
                 QString cp_ufile = CopyDir;
-                if( cp_ufile.right(1) != QDir::separator() ) cp_ufile.append(QDir::separator());
+                if( cp_ufile.right(1) != zchxFuncUtil::separator() ) cp_ufile.append(zchxFuncUtil::separator());
                 cp_ufile.append( ufile.fileName() );
 
                 //      Explicit check for a short update file, possibly left over from a crash...
@@ -3872,6 +3872,7 @@ int s57chart::BuildRAZFromSENCFile( const QString& FullPath )
     //    Create a hash map of VE_Element pointers as a chart class member
     int n_ve_elements = VEs.size();
 
+    qDebug()<<"vc size:"<<VCs.size()<<" ve size:"<<VEs.size();
     double scale = gMainCanvas->GetBestVPScale(this);
     int nativescale = GetNativeScale();
 

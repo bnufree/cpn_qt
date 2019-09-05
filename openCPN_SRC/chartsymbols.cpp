@@ -1138,7 +1138,7 @@ bool ChartSymbols::LoadConfigFile(s52plib* plibArg, const QString & s52ilePath)
     configFileDirectory = info.absolutePath();
     name = info.fileName();
     extension = info.suffix();
-    QString fullFilePath = configFileDirectory + QDir::separator() + xmlFileName;
+    QString fullFilePath = configFileDirectory + zchxFuncUtil::separator() + xmlFileName;
 
     if( QFile::exists(xmlFileName )) {
         fullFilePath = xmlFileName;
@@ -1231,7 +1231,7 @@ int ChartSymbols::LoadRasterFileForColorTable( int tableNo, bool flush )
     
     colTable* coltab = (colTable *) colorTables->at( tableNo );
 
-    QString filename = configFileDirectory + QDir::separator() + coltab->rasterFileName;
+    QString filename = configFileDirectory + zchxFuncUtil::separator() + coltab->rasterFileName;
 
     QImage rasterFileImg;
     if( rasterFileImg.load(filename, /*QBitmap_TYPE_PNG*/"PNG" ) ) {
@@ -1245,18 +1245,19 @@ int ChartSymbols::LoadRasterFileForColorTable( int tableNo, bool flush )
             //    Get the glRGBA format data from the wxImage
             unsigned char *d = rasterFileImg.bits();
             unsigned char *a = rasterFileImg.alphaChannel().bits();
+            QImage::Format fm = rasterFileImg.format();
 
             /* combine rgb with alpha */
             unsigned char *e = (unsigned char *) malloc( w * h * 4 );
-            if(d && a){
+            if(d /*&& a*/){
                 for( int y = 0; y < h; y++ )
                     for( int x = 0; x < w; x++ ) {
                         int off = ( y * w + x );
 
-                        e[off * 4 + 0] = d[off * 3 + 0];
-                        e[off * 4 + 1] = d[off * 3 + 1];
-                        e[off * 4 + 2] = d[off * 3 + 2];
-                        e[off * 4 + 3] = a[off];
+                        e[off * 4 + 0] = d[off * 3 + 1];
+                        e[off * 4 + 1] = d[off * 3 + 2];
+                        e[off * 4 + 2] = d[off * 3 + 3];
+                        e[off * 4 + 3] = d[off * 3 + 0];
                     }
             }
             if(!rasterSymbolsTexture)

@@ -279,10 +279,11 @@ public:
     ~FileReadWrite() {if(fp) fclose(fp);}
     virtual bool IsOK() const
     {
-        return fp != NULL;
+        if(!fp) return false;
+        return !HasError();
     }
 
-    bool HasError() {return isError;}
+    bool HasError() const {return isError;}
 
     int Read(void* buf, int size)
     {
@@ -292,8 +293,8 @@ public:
             return 0;
         }
         int res = fread(buf, size, 1, fp);
-        mLastRead += res;
-        isError = (res == size);
+        mLastRead = res * size;
+        isError = (res != 1);
         return res;
     }
 
@@ -305,7 +306,7 @@ public:
             return 0;
         }
         int res = fwrite(buf, size, 1, fp);
-        isError = (res == size);;
+        isError = (res != 1);;
         return res;
     }
 
@@ -425,7 +426,7 @@ public:
 
     static QString getAppDir();
     static QString getDataDir();
-    static QString getPathSeparator();
+    static QString separator();
     static QString getPluginDir();
     static QString getConfigFileName();
     static float getChartScaleFactorExp( float scale_linear );

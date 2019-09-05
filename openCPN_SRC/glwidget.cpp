@@ -32,7 +32,6 @@ void GLWidget::initializeGL()
 
 void GLWidget::paintGL()
 {
-    qDebug()<<"!!!!!!!!!!!!!!!!!!!";
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glPushMatrix();

@@ -629,8 +629,12 @@ QSize OCPNPlatform::getDisplaySize()
 
 double  OCPNPlatform::GetDisplaySizeMM()
 {
-    int width = QApplication::desktop()->screen()->widthMM();
-    return width * 1.0;
+    if(m_displaySizeMMOverride > 0) return m_displaySizeMMOverride;
+
+    if(m_displaySizeMM.width() < 1) m_displaySizeMM = QSize(QApplication::desktop()->screen()->widthMM(), QApplication::desktop()->screen()->heightMM());
+
+    double ret = m_displaySizeMM.width();
+    return ret * 1.0;
 }
 
 void OCPNPlatform::SetDisplaySizeMM( double sizeMM)
