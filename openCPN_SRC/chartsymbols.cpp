@@ -656,7 +656,6 @@ void ChartSymbols::BuildLookup( Lookup &lookup )
     // Search the LUPArray to see if there is already a LUP with this RCID
     // If found, replace it with the new LUP
     // This provides a facility for updating the LUP tables after loading a basic set
-#if 0
     unsigned int index = 0;
     wxArrayOfLUPrec *pLUPARRAYtyped = plib->SelectLUPARRAY( LUP->TNAM );
 
@@ -671,7 +670,6 @@ void ChartSymbols::BuildLookup( Lookup &lookup )
     }
 
     pLUPARRAYtyped->append( LUP );
-#endif
 
 }
 
@@ -932,7 +930,6 @@ void ChartSymbols::BuildPattern( OCPNPattern &pattern )
     ( *symbolGraphicLocations )[pattern.name] = graphicsLocation;
 
     // check if key already there
-#if 0
     pattmp = ( *plib->_patt_sym )[pattern.name];
 
     if( NULL == pattmp ) {
@@ -945,7 +942,6 @@ void ChartSymbols::BuildPattern( OCPNPattern &pattern )
             // the node itself is destroyed as part of pAlloc
         }
     }
-#endif
 }
 
 void ChartSymbols::ProcessSymbols( TiXmlElement* symbolNodes )

@@ -2644,7 +2644,8 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
             int h = Image.height();
             //    Get the glRGBA format data from the wxImage
             unsigned char *d = Image.bits();
-            unsigned char *a = Image.alphaChannel().bits();
+            unsigned char *a = 0;
+            if(Image.hasAlphaChannel()) a = Image.alphaChannel().bits();
 
             //                Image.SetMaskColour( m_unused_QColor.red(), m_unused_QColor.green(),
             //                        m_unused_QColor.blue() );
@@ -2657,7 +2658,7 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
 
             unsigned char *e = (unsigned char *) malloc( w * h * 4 );
             // XXX FIXME a or e ?
-            if( d && a){
+            if( d /*&& a*/){
                 for( int y = 0; y < h; y++ ) {
                     for( int x = 0; x < w; x++ ) {
                         unsigned char r, g, b;

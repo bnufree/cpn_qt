@@ -3967,9 +3967,7 @@ int s57chart::BuildRAZFromSENCFile( const QString& FullPath )
         LUP = ps52plib->S52_LUPLookup( LUP_Name, obj->FeatureName, obj );
 
         if( NULL == LUP ) {
-            if( g_bDebugS57 ) {
-                qDebug("   Could not find LUP for :%s", obj->FeatureName );
-            }
+            qDebug("   Could not find LUP for :%s", obj->FeatureName );
             delete obj;
             obj = NULL;
             Objects[i] = NULL;
