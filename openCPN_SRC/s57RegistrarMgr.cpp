@@ -87,10 +87,10 @@ bool s57RegistrarMgr::s57_attr_init( const QString& csv_dir ){
     //First map: Key is char[] attribute acronym, value is standard ID
     //Second map: Key is standard ID, value is char[] attribute acronym
     
-    while(tFile.atEnd())
+    while(!tFile.atEnd())
     {
         QString str = QString::fromUtf8(tFile.readLine());
-        QStringList tk = str.split(",");
+        QStringList tk = str.split(QRegExp("[,\r\n]"));
         int i = 0;
         QString ident = tk[i++];
         bool ok = false;
@@ -129,10 +129,10 @@ bool s57RegistrarMgr::s57_feature_init( const QString& csv_dir ){
     //First map: Key is char[] feature acronym, value is standard ID
     //Second map: Key is standard ID, value is char[] feature acronym
     
-    while(file.atEnd())
+    while(!file.atEnd())
     {
         QString str = QString::fromUtf8(file.readLine());
-        QStringList tk = str.split(",");
+        QStringList tk = str.split(QRegExp("[,\r\n]"));
         int i = 0;
         QString ident = tk[i++];
         bool ok = false;

@@ -7341,6 +7341,26 @@ void ChartCanvas::mouseMoveEvent(QMouseEvent *e)
     if(m_Piano) m_Piano->MouseEvent(e);
 }
 
+void ChartCanvas::wheelEvent(QWheelEvent * e)
+{
+    qDebug()<<"wheel event now:";
+    static uint time = 0;
+    uint cur = QDateTime::currentDateTime().toTime_t();
+    if(cur - time >= 2)
+    {
+        time = cur;
+        if(e->delta() > 0)
+        {
+            ZoomCanvas(0.5, false);
+        } else
+        {
+            ZoomCanvas(2, false);
+        }
+
+    }
+
+}
+
 
 void ChartCanvas::SetCanvasCursor( QMouseEvent* event )
 {

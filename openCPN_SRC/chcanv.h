@@ -146,6 +146,7 @@ protected:
       void resizeEvent(QResizeEvent * event );
       void mousePressEvent(QMouseEvent *e);
       void mouseMoveEvent(QMouseEvent *e);
+      void wheelEvent(QWheelEvent *);
 public slots:
       void startUpdate();
       void stopUpdate();
