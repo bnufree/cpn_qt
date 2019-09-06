@@ -228,6 +228,7 @@ Quilt::Quilt( ChartCanvas *parent)
     m_bquiltskew = g_bopengl;
     //  Quilting of different projections is allowed for OpenGL only
     m_bquiltanyproj = g_bopengl;
+    m_extended_stack_array.clear();
 }
 
 Quilt::~Quilt()

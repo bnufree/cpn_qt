@@ -1141,7 +1141,8 @@ no_compression:
 
 void glChartCanvas::paintGL()
 {
-    qDebug()<<"now update .....";
+    QTime   t;
+    t.start();
 #ifdef GL_TEST
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1189,6 +1190,7 @@ void glChartCanvas::paintGL()
     Render();
     m_in_glpaint--;
 #endif
+    qDebug()<<"update end elaped:"<<t.elapsed()<<" ms";
 
 }
 

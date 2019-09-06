@@ -815,12 +815,12 @@ bool Piano::MouseEvent( QMouseEvent* event )
     int x = pos.x();
     int y = pos.y();
 
-    if(/*event.Leaving() ||*/ y < m_parentCanvas->GetCanvasHeight() - GetHeight()) {
-        if(m_bleaving)
-            return false;
+    if( y < m_parentCanvas->GetCanvasHeight() - GetHeight()) {
+        if(m_bleaving)   return false;
         m_bleaving = true;
-    } else
+    } else {
         m_bleaving = false;
+    }
 
 //    Check the regions
 

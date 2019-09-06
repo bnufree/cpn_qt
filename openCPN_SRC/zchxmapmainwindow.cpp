@@ -166,6 +166,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
 {
 
     ui->setupUi(this);
+    setMouseTracking(true);
     //工具
     QMenu* tools = this->menuBar()->addMenu(tr("Tools"));
     addCustomAction(tools,tr("Options"),this, SLOT(slotOpenSettingDlg()));
@@ -218,6 +219,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
 
 zchxMapMainWindow::~zchxMapMainWindow()
 {
+    ZCHX_CFG_INS->UpdateSettings();
     delete ui;
 }
 
@@ -281,6 +283,7 @@ void zchxMapMainWindow::initBeforeCreateCanvas()
     if( gWorldMapLocation.isEmpty() || !(QDir(gWorldMapLocation).exists()) ) {
         gWorldMapLocation = gDefaultWorldMapLocation;
     }
+    qDebug()<<gWorldMapLocation<<gDefaultWorldMapLocation;
     g_Platform->Initialize_2();
     InitializeUserColors();
     //  Do those platform specific initialization things that need gFrame
@@ -308,7 +311,7 @@ void zchxMapMainWindow::CreateCanvasLayout()
         if(!mEcdisWidget->GetglCanvas())
             mEcdisWidget->SetupGlCanvas();
     }
-    config->iLat = 35.123456;
+    config->iLat = 37.123456;
     config->iLon = 127.123456;
 
     mEcdisWidget->SetDisplaySizeMM(g_display_size_mm);
@@ -395,12 +398,12 @@ void zchxMapMainWindow::slotLookAheadMode(bool sts)
 
 void zchxMapMainWindow::slotZoomIn()
 {
-
+     if(mEcdisWidget) mEcdisWidget->ZoomCanvas( 2.0, false );
 }
 
 void zchxMapMainWindow::slotZoomOut()
 {
-
+     if(mEcdisWidget) mEcdisWidget->ZoomCanvas( 0.5, false );
 }
 
 void zchxMapMainWindow::slotLargeScaleChart()

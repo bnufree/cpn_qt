@@ -659,6 +659,7 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     mDisplsyTimer->setInterval(5000);
     connect(mDisplsyTimer, SIGNAL(timeout()), this, SLOT(update()));
 //    mDisplsyTimer->start();
+    setMouseTracking(true);
 }
 
 void ChartCanvas::startUpdate()
@@ -1219,7 +1220,8 @@ bool ChartCanvas::DoCanvasUpdate( void )
             int initial_db_index = m_restore_dbindex;
             if( initial_db_index < 0 ) {
                 if( m_pCurrentStack->nEntry ) {
-                    initial_db_index = m_pCurrentStack->GetDBIndex( m_pCurrentStack->nEntry - 1 );
+//                    initial_db_index = m_pCurrentStack->GetDBIndex( m_pCurrentStack->nEntry - 1 );
+                    initial_db_index = m_pCurrentStack->GetDBIndex( 0 );
                 } else
                     m_bautofind = true; //initial_db_index = 0;
             }
@@ -7325,6 +7327,18 @@ void ChartCanvas::MouseEvent( QMouseEvent& event )
     if(!MouseEventProcessObjects( event ))
         MouseEventProcessCanvas( event );
 #endif
+}
+
+void ChartCanvas::mousePressEvent(QMouseEvent *e)
+{
+    qDebug()<<" mouse presss now";
+    if(m_Piano) m_Piano->MouseEvent(e);
+}
+
+void ChartCanvas::mouseMoveEvent(QMouseEvent *e)
+{
+    qDebug()<<" mouse move now"<<hasMouseTracking();
+    if(m_Piano) m_Piano->MouseEvent(e);
 }
 
 

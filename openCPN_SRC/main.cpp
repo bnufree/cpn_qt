@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 //    gFrame->showMaximized();
     QPixmapCache::setCacheLimit(1);
     zchxMapMainWindow w;
-    w.show();
+    w.showMaximized();
 
     return a.exec();
 }

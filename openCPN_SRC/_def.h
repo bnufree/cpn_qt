@@ -431,6 +431,7 @@ public:
     static QString getConfigFileName();
     static float getChartScaleFactorExp( float scale_linear );
     static double getFontPointsperPixel();
+    static bool isFinite(double val);
 
 public:
     static double m_pt_per_pixel;

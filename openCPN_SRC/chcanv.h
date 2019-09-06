@@ -144,6 +144,8 @@ protected:
       void focusInEvent(QFocusEvent *){}
       void focusOutEvent(QFocusEvent *){}
       void resizeEvent(QResizeEvent * event );
+      void mousePressEvent(QMouseEvent *e);
+      void mouseMoveEvent(QMouseEvent *e);
 public slots:
       void startUpdate();
       void stopUpdate();

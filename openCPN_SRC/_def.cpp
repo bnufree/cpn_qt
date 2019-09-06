@@ -1001,6 +1001,11 @@ double zchxFuncUtil::getFontPointsperPixel( void )
 
 }
 
+bool zchxFuncUtil::isFinite(double val)
+{
+    return (!qIsInf(val)) && (!qIsNaN(val));
+}
+
 
 
 

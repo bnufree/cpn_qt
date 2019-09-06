@@ -224,7 +224,7 @@ zchxPointF ViewPort::GetDoublePixFromLL( double lat, double lon )
         printf("unhandled projection\n");
     }
 
-//    if( !wxFinite(easting) || !wxFinite(northing) )
+    if( !zchxFuncUtil::isFinite(easting) || !zchxFuncUtil::isFinite(northing) )
         return zchxPointF( easting, northing );
 
     double epix = easting * view_scale_ppm;

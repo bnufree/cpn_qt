@@ -1122,7 +1122,7 @@ QString GshhsReader::getNameExtension( int quality )
 QString GshhsReader::getFileName_Land( int quality )
 {
     QString ext = GshhsReader::getNameExtension( quality );
-    QString fname = gWorldMapLocation + QString("").sprintf("poly-%c-1.dat", ext[0].toLatin1() );
+    QString fname = gWorldMapLocation + QString("").sprintf("/poly-%c-1.dat", ext[0].toLatin1() );
     return fname;
 }
 
