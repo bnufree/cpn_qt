@@ -3813,7 +3813,7 @@ int s57chart::BuildSENCFile( const QString& FullPath000, const QString& SENCFile
             ticket->m_SENCFileName = SENCFileName;
             ticket->m_chart = this;
             
-            m_SENCthreadStatus = g_SencThreadManager->ScheduleJob(ticket);
+            m_SENCthreadStatus = g_SencThreadManager->appendJob(ticket);
             bReadyToRender = true;
             return BUILD_SENC_PENDING;
 

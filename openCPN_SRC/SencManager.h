@@ -1,4 +1,4 @@
-/***************************************************************************
+﻿/***************************************************************************
  *
  * Project:  OpenCPN
  * Purpose:  S57 Chart Object
@@ -26,8 +26,8 @@
 #ifndef __SENCMGR_H__
 #define __SENCMGR_H__
 
-#include <QEvent>
 #include <QThread>
+#include <QMutex>
 
 // ----------------------------------------------------------------------------
 // Useful Prototypes
@@ -62,8 +62,6 @@ typedef enum{
     SENC_BUILD_DONE_ERROR,
 } EVENTSENCResult;
 
-extern  const QEvent::Type wxEVT_OCPN_BUILDSENCTHREAD;
-
 //----------------------------------------------------------------------------
 // s57 Chart Thread based SENC job ticket
 //----------------------------------------------------------------------------
@@ -86,27 +84,6 @@ public:
 };
 
 
-
-//----------------------------------------------------------------------------
-// s57 Chart Thread based SENC creator status message
-//----------------------------------------------------------------------------
-class OCPN_BUILDSENC_ThreadEvent: public QEvent
-{
-public:
-    OCPN_BUILDSENC_ThreadEvent();
-    ~OCPN_BUILDSENC_ThreadEvent( );
-
-    // required for sending with wxPostEvent()
-    QEvent *Clone() const;
- 
-    int stat;
-    EVENTSENCResult type;
-    SENCJobTicket *m_ticket;
-
-    
-private:
-};
-
 //----------------------------------------------------------------------------
 // s57 Chart Thread based SENC creator
 //----------------------------------------------------------------------------
@@ -117,20 +94,24 @@ public:
     explicit SENCThreadManager(QObject* parent = 0);
     ~SENCThreadManager();
 
-    void OnEvtThread( OCPN_BUILDSENC_ThreadEvent & event );
- 
-    SENCThreadStatus ScheduleJob( SENCJobTicket *ticket);
-    void FinishJob(SENCJobTicket *ticket);
-    void StartTopJob();
+
+    SENCThreadStatus appendJob( SENCJobTicket *ticket);
+    void removeJob(SENCJobTicket *ticket);
+    void startJob();
     bool IsChartInTicketlist(s57chart *chart);
     bool SetChartPointer(s57chart *chart, void *new_ptr);
-    int GetJobCount();
-
+    int  GetJobCount();
     int                 m_max_jobs;
-    
-    std::vector<SENCJobTicket *> ticket_list;
-protected:
-    bool event(QEvent *e);
+    QList<SENCJobTicket *> ticket_list;
+private:
+    bool appendJobWithCheck(SENCJobTicket* ticket);
+    SENCJobTicket* getWorkJob(int& total);
+signals:
+    void signalRefreshAllEcids();
+public slots:
+    void slotRecvSENCThreadFinished();
+private:
+    QMutex mMutex;
 };
 
 
@@ -143,7 +124,7 @@ class SENCBuildThread : public QThread
 public:
     SENCBuildThread( SENCJobTicket *ticket, SENCThreadManager *manager);
     void run();
-
+public:
     QString m_FullPath000;
     QString m_SENCFileName;
     s57chart *m_chart;

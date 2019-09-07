@@ -50,32 +50,6 @@ SENCJobTicket::SENCJobTicket()
     m_status = THREAD_INACTIVE;
 }
 
-const QEvent::Type wxEVT_OCPN_BUILDSENCTHREAD = (QEvent::Type)(QEvent::registerEventType());
- 
-//----------------------------------------------------------------------------------
-//      OCPN_BUILDSENC_ThreadEvent Implementation
-//----------------------------------------------------------------------------------
-OCPN_BUILDSENC_ThreadEvent::OCPN_BUILDSENC_ThreadEvent()
-:QEvent(wxEVT_OCPN_BUILDSENCTHREAD)
-{
-    stat = 0;
-}
-
-OCPN_BUILDSENC_ThreadEvent::~OCPN_BUILDSENC_ThreadEvent()
-{
-}
-
-QEvent* OCPN_BUILDSENC_ThreadEvent::Clone() const
-{
-    OCPN_BUILDSENC_ThreadEvent *newevent = new OCPN_BUILDSENC_ThreadEvent(*this);
-    newevent->stat = this->stat;
-    newevent->type = this->type;
-    newevent->m_ticket = this->m_ticket;
-   
-    return newevent;
-}
-
-
 
 //----------------------------------------------------------------------------------
 //      SENCThreadManager Implementation
@@ -95,9 +69,6 @@ SENCThreadManager::SENCThreadManager(QObject* parent):QObject(parent)
 
 //    if(bthread_debug)
     qDebug(QString("").sprintf(" SENC: nCPU: %d    m_max_jobs :%d\n", nCPU, m_max_jobs).toStdString().data());
-    
-//     m_timer.Connect(wxEVT_TIMER, wxTimerEventHandler( glTextureManager::OnTimer ), NULL, this);
-//     m_timer.Start(500);
 }
 
 SENCThreadManager::~SENCThreadManager()
@@ -105,120 +76,85 @@ SENCThreadManager::~SENCThreadManager()
 //    ClearJobList();
 }
 
-bool SENCThreadManager::event(QEvent *e)
-{
-    if(e->type() == wxEVT_OCPN_BUILDSENCTHREAD)
-    {
-        OCPN_BUILDSENC_ThreadEvent *event = (OCPN_BUILDSENC_ThreadEvent*)(e);
-        if(event)OnEvtThread(*event);
-        return true;
-    }
-
-    return QObject::event(e);
-}
-
-SENCThreadStatus SENCThreadManager::ScheduleJob(SENCJobTicket *ticket)
+bool SENCThreadManager::appendJobWithCheck(SENCJobTicket *ticket)
 {
     //  Do not add a job if there is already a job pending for this chart, by name
+    QMutexLocker locker(&mMutex);
     for(size_t i=0 ; i < ticket_list.size() ; i++){
         if(ticket_list[i]->m_FullPath000 == ticket->m_FullPath000)
-                return THREAD_PENDING;
+            return false;
     }
-    
+
     ticket->m_status = THREAD_PENDING;
     ticket_list.push_back(ticket);
+    return true;
+}
 
-    //printf("Scheduling job:  %s\n", (const char*)ticket->m_FullPath000.mb_str());
-    //printf("Job count:  %d\n", ticket_list.size());
-    StartTopJob();
+SENCThreadStatus SENCThreadManager::appendJob(SENCJobTicket *ticket)
+{
+    if(appendJobWithCheck(ticket))
+    {
+        startJob();
+    }
     return THREAD_PENDING;
 }
 
-void SENCThreadManager::StartTopJob()
+SENCJobTicket* SENCThreadManager::getWorkJob(int& total)
 {
-    SENCJobTicket *startCandidate;
+    QMutexLocker locker(&mMutex);
     // Get the running job count
-    int nRunning = 0;
+    total = 0;
     for(size_t i=0 ; i < ticket_list.size() ; i++){
         if(ticket_list[i]->m_status == THREAD_STARTED)
-            nRunning++;
+            total++;
     }
-    
+    if(total == m_max_jobs) return NULL;
+
+    SENCJobTicket *startCandidate = NULL;
     // OK to start one?
-    if(nRunning < m_max_jobs){
-
-        // Find the first eligible
-        startCandidate = NULL;    
-        for(size_t i=0 ; i < ticket_list.size() ; i++){
-            if(ticket_list[i]->m_status == THREAD_PENDING){
-                startCandidate = ticket_list[i];
-                break;
-            }
+    for(size_t i=0 ; i < ticket_list.size() ; i++){
+        if(ticket_list[i]->m_status == THREAD_PENDING){
+            startCandidate = ticket_list[i];
+            break;
         }
-        
-        // Found one?
-        if(startCandidate){
-            //printf("Starting job:  %s\n", (const char*)startCandidate->m_FullPath000.mb_str());
+    }
+    return startCandidate;
+}
 
-            SENCBuildThread *thread = new SENCBuildThread( startCandidate, this);
-            startCandidate->m_thread = thread;
-            startCandidate->m_status = THREAD_STARTED;
-            thread->setPriority(QThread::NormalPriority);
-            thread->start();
-            nRunning++;
-        }
+void SENCThreadManager::startJob()
+{
+    int nRunning = 0;
+    SENCJobTicket *startCandidate = getWorkJob(nRunning);
+    if(startCandidate)
+    {
+        nRunning++;
+        SENCBuildThread *thread = new SENCBuildThread( startCandidate, this);
+        connect(thread, SIGNAL(finished()), this, SLOT(slotRecvSENCThreadFinished()));
+        startCandidate->m_thread = thread;
+        startCandidate->m_status = THREAD_STARTED;
+        thread->setPriority(QThread::NormalPriority);
+        thread->start();
     }
     
     if(nRunning){
         QString count;
         count.sprintf("  %ld", ticket_list.size());
         gFrame->GetPrimaryCanvas()->SetAlertString( "Preparing vector chart  " + count);
-    }
-}
-
-void SENCThreadManager::FinishJob(SENCJobTicket *ticket)
-{
-    //printf("Finishing job:  %s\n", (const char*)ticket->m_FullPath000.mb_str());
-
-    // Find and remove the ticket from the list
-    for(size_t i=0 ; i < ticket_list.size() ; i++){
-        if(ticket_list[i] == ticket){
-            //printf("   Removing job:  %s\n", (const char*)ticket->m_FullPath000.mb_str());
-
-            ticket_list.erase(ticket_list.begin() + i);
-            //printf("Job count:  %d\n", ticket_list.size());
-
-            break;
-        }
-    }
-
-#if 1
-    int nRunning = 0;
-    for(size_t i=0 ; i < ticket_list.size() ; i++){
-        if(ticket_list[i]->m_status == THREAD_STARTED)
-            nRunning++;
-    }
-
-    
-    if(nRunning){
-        QString count;
-        count.sprintf("  %ld", ticket_list.size());
-        gFrame->GetPrimaryCanvas()->SetAlertString( ("Preparing vector chart  ") + count);
-    }
-    else{
+    }  else{
         gFrame->GetPrimaryCanvas()->SetAlertString( (""));
-    }        
-#endif
-
+    }
 }
+
 
 int SENCThreadManager::GetJobCount()
 {
+    QMutexLocker locker(&mMutex);
     return ticket_list.size();
 }
 
 bool SENCThreadManager::IsChartInTicketlist(s57chart *chart)
 {
+    QMutexLocker locker(&mMutex);
      for(size_t i=0 ; i < ticket_list.size() ; i++){
          if(ticket_list[i]->m_chart == chart)
              return true;
@@ -229,6 +165,7 @@ bool SENCThreadManager::IsChartInTicketlist(s57chart *chart)
 
 bool SENCThreadManager::SetChartPointer(s57chart *chart, void *new_ptr)
 {
+    QMutexLocker locker(&mMutex);
     // Find the ticket
      for(size_t i=0 ; i < ticket_list.size() ; i++){
          if(ticket_list[i]->m_chart == chart){
@@ -239,41 +176,37 @@ bool SENCThreadManager::SetChartPointer(s57chart *chart, void *new_ptr)
     return false;
 }
 
+void SENCThreadManager::removeJob(SENCJobTicket *ticket)
+{
+    QMutexLocker locker(&mMutex);
+    ticket_list.removeOne(ticket);
+    if(ticket)
+    {
+        delete ticket;
+        ticket = 0;
+    }
+}
+
  
 #define NBAR_LENGTH 40
 
-void SENCThreadManager::OnEvtThread( OCPN_BUILDSENC_ThreadEvent & event )
+void SENCThreadManager::slotRecvSENCThreadFinished()
 {
-    OCPN_BUILDSENC_ThreadEvent Sevent;
-    
-    switch(event.type){
-       case SENC_BUILD_STARTED:
-            //printf("SENC build started\n");
-            Sevent.type = SENC_BUILD_STARTED;
-            Sevent.m_ticket = event.m_ticket;
+    SENCBuildThread* thread = qobject_cast<SENCBuildThread*>(sender());
+    if(!thread) return;
 
-            break;
-        case SENC_BUILD_DONE_NOERROR:
-            //printf("SENC build done no error\n");
-            Sevent.type = SENC_BUILD_DONE_NOERROR;
-            Sevent.m_ticket = event.m_ticket;
-            FinishJob(event.m_ticket);
-            StartTopJob();
-
-            break;
-        case SENC_BUILD_DONE_ERROR:
-            //printf("SENC build done ERROR\n");
-            Sevent.type = SENC_BUILD_DONE_ERROR;
-            Sevent.m_ticket = event.m_ticket;
-            FinishJob(event.m_ticket);
-            StartTopJob();
-
-            break;
-        default:
-            break;
+    if(thread->m_ticket->m_SENCResult == SENC_BUILD_DONE_NOERROR)
+    {
+        //通知地图,重新加载地图数据
+        emit signalRefreshAllEcids();
+    } else if(thread->m_chart)
+    {        //有错误的情况,提示错误信息
+        gFrame->GetPrimaryCanvas()->SetAlertString(QString("error occured when prepare chart: %1").arg(thread->m_chart->GetFullPath()));
     }
-//    if(gFrame)        gFrame->GetEventHandler()->AddPendingEvent(Sevent);
-
+    removeJob(thread->m_ticket);
+    delete thread;
+    //遍历任务队列,找到还没有开始的任务,将任务开始
+    startJob();
 }
 
 //----------------------------------------------------------------------------------
@@ -282,81 +215,35 @@ void SENCThreadManager::OnEvtThread( OCPN_BUILDSENC_ThreadEvent & event )
 
 
 SENCBuildThread::SENCBuildThread(SENCJobTicket *ticket, SENCThreadManager *manager)
-:QThread(0)
+:QThread(0),m_chart(0)
 {
     m_FullPath000 = ticket->m_FullPath000;
     m_SENCFileName = ticket->m_SENCFileName;
     m_manager = manager;
     m_ticket = ticket;
+    if(m_ticket) m_chart = m_ticket->m_chart;
 }
 
 void SENCBuildThread::run()
 {
+    // Start the SENC build
+    Osenc senc;
+    senc.setRegistrar( g_poRegistrar );
+    senc.setRefLocn(m_ticket->ref_lat, m_ticket->ref_lon);
+    senc.SetLODMeters(m_ticket->m_LOD_meters);
+    senc.setNoErrDialog( true );
+    m_ticket->m_SENCResult = SENC_BUILD_STARTED;
+    m_ticket->m_status = THREAD_STARTED;
 
-//#ifdef __MSVC__
-  //  _set_se_translator(my_translate);
-
-    //  On Windows, if anything in this thread produces a SEH exception (like access violation)
-    //  we handle the exception locally, and simply alow the thread to exit smoothly with no results.
-    //  Upstream will notice that nothing got done, and maybe try again later.
-    
-    try
-//#endif    
+    int ret = senc.createSenc200( m_FullPath000, m_SENCFileName, false );
+    m_ticket->m_status = THREAD_FINISHED;
+    m_ticket->m_SENCResult = (ret == SENC_NO_ERROR ? SENC_BUILD_DONE_NOERROR : SENC_BUILD_DONE_ERROR);
+    //重新生成规则文件
+    if(ret == SENC_NO_ERROR)
     {
-        // Start the SENC build
-        Osenc senc;
-
-        senc.setRegistrar( g_poRegistrar );
-        senc.setRefLocn(m_ticket->ref_lat, m_ticket->ref_lon);
-        senc.SetLODMeters(m_ticket->m_LOD_meters);
-        senc.setNoErrDialog( true );
-
-        m_ticket->m_SENCResult = SENC_BUILD_STARTED;
-        OCPN_BUILDSENC_ThreadEvent Sevent;
-        Sevent.stat = 0;
-        Sevent.type = SENC_BUILD_STARTED;
-        Sevent.m_ticket = m_ticket;
-//        if(m_manager) m_manager->QueueEvent(Sevent.Clone());
- 
-
-        int ret = senc.createSenc200( m_FullPath000, m_SENCFileName, false );
-
-        OCPN_BUILDSENC_ThreadEvent Nevent;
-        Nevent.stat = ret;
-        Nevent.m_ticket = m_ticket;
-        if(ret == ERROR_INGESTING000)
-            Nevent.type = SENC_BUILD_DONE_ERROR;
-        else
-            Nevent.type = SENC_BUILD_DONE_NOERROR;
-
-        m_ticket->m_SENCResult = Sevent.type;
-//        if(m_manager)     m_manager->QueueEvent(Nevent.Clone());
-
-        //if(ret == ERROR_INGESTING000)
-          //  return BUILD_SENC_NOK_PERMANENT;
-        //else
-          //  return ret;
-
-//        return 0;
-    }           // try
-    
-//#ifdef __MSVC__    
-    catch (const std::exception& e/*SE_Exception e*/)
-    {
-        const char *msg = e.what();
-        if( m_manager ) {
-//             OCPN_CompressionThreadEvent Nevent(wxEVT_OCPN_COMPRESSIONTHREAD, 0);
-//             m_ticket->b_isaborted = true;
-//             Nevent.SetTicket(m_ticket);
-//             Nevent.type = 0;
-//             m_manager->QueueEvent(Nevent.Clone());
-        }
-        
-        
-//        return 0;
+        if(m_chart) m_chart->PostInit(FULL_INIT, global_color_scheme);
     }
-//#endif    
-    
+
 }
 
 
