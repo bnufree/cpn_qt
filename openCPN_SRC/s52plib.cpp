@@ -2663,16 +2663,21 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
                     for( int x = 0; x < w; x++ ) {
                         unsigned char r, g, b;
                         int off = ( y * w + x );
-                        r = d[off * 3 + 0];
-                        g = d[off * 3 + 1];
-                        b = d[off * 3 + 2];
+//                        r = d[off * 3 + 0];
+//                        g = d[off * 3 + 1];
+//                        b = d[off * 3 + 2];
+                        QColor color = Image.pixelColor(x, y);
+                        r = color.red();
+                        g = color.green();
+                        b = color.blue();
+                        int alpha = color.alpha();
 
                         e[off * 4 + 0] = r;
                         e[off * 4 + 1] = g;
                         e[off * 4 + 2] = b;
 
-                        e[off * 4 + 3] =
-                                a ? a[off] : ( ( r == mr ) && ( g == mg ) && ( b == mb ) ? 0 : 255 );
+                        e[off * 4 + 3] = alpha;
+//                                a ? a[off] : ( ( r == mr ) && ( g == mg ) && ( b == mb ) ? 0 : 255 );
                     }
                 }
             }

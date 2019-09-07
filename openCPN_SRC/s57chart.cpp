@@ -1465,13 +1465,19 @@ bool s57chart::RenderOverlayRegionViewOnGL( QGLContext *glc, const ViewPort& VPo
 bool s57chart::RenderRegionViewOnGLNoText( QGLContext *glc, const ViewPort& VPoint,
                                            const OCPNRegion &RectRegion, const LLRegion &Region )
 {
-    if(!m_RAZBuilt) return false;
+    qDebug()<<"start render region view";
+    if(!m_RAZBuilt)
+    {
+        qDebug()<<"end render region view with no raz build";
+        return false;
+    }
 
     bool b_text = ps52plib->GetShowS57Text();
     ps52plib->m_bShowS57Text = false;
     bool b_ret =  DoRenderRegionViewOnGL( glc, VPoint, RectRegion, Region, false );
     ps52plib->m_bShowS57Text = b_text;
     
+    qDebug()<<"start render region end normal";
     return b_ret;
 }
 
@@ -1592,6 +1598,7 @@ bool s57chart::DoRenderOnGL(QGLContext *glc, const ViewPort& VPoint )
             top = razRules[i][3]; // Area Plain Boundaries
 
         while( top != NULL ) {
+//            qDebug()<<"render area:"<<top->obj->FeatureName;
             crnt = top;
             top = top->next;               // next object
             crnt->sm_transform_parms = &vp_transform;
@@ -1606,6 +1613,7 @@ bool s57chart::DoRenderOnGL(QGLContext *glc, const ViewPort& VPoint )
         else
             top = razRules[i][3]; // Area Plain Boundaries
         while( top != NULL ) {
+//            qDebug()<<"rerender area???:"<<top->obj->FeatureName;
             crnt = top;
             top = top->next;               // next object
             crnt->sm_transform_parms = &vp_transform;
@@ -1614,6 +1622,7 @@ bool s57chart::DoRenderOnGL(QGLContext *glc, const ViewPort& VPoint )
 
         top = razRules[i][2];           //LINES
         while( top != NULL ) {
+//            qDebug()<<"render line:"<<top->obj->FeatureName;
             crnt = top;
             top = top->next;
             crnt->sm_transform_parms = &vp_transform;
@@ -1625,11 +1634,14 @@ bool s57chart::DoRenderOnGL(QGLContext *glc, const ViewPort& VPoint )
         else
             top = razRules[i][1];           //Paper Chart Points Points
 
+        int cnt = 0;
         while( top != NULL ) {
+//            qDebug()<<"render point:"<<top->obj->FeatureName;
             crnt = top;
             top = top->next;
             crnt->sm_transform_parms = &vp_transform;
             ps52plib->RenderObjectToGL( glc, crnt, &tvp );
+            cnt++;
         }
 
     }

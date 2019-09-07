@@ -97,7 +97,7 @@ typedef struct _colTable {
 struct zchxPoint{
     int x;
     int y;
-    zchxPoint() {}
+    zchxPoint() {x = 0; y = 0;}
     zchxPoint(int px, int py) {x = px; y=py;}
     zchxPoint(const QPoint& pos) {x = pos.x(); y=pos.y();}
 
@@ -151,6 +151,8 @@ struct zchxPointF{
 struct zchxSize{
     int width;
     int height;
+
+     zchxSize() {width = 0; height = 0;}
 
     QSize toSize() {return QSize(width, height);}
 };

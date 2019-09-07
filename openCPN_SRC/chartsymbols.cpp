@@ -28,7 +28,7 @@
 #include <stdlib.h>
 
 #include "chartsymbols.h"
-#include <QBitmap>
+#include <QPixmap>
 //#ifdef ocpnUSE_GL
 //#include <wx/glcanvas.h>
 //#endif
@@ -48,7 +48,7 @@ extern GLenum       g_texture_rectangle_format;
 wxArrayPtrVoid* colorTables = 0;
 unsigned int rasterSymbolsTexture;
 QSize rasterSymbolsTextureSize;
-QBitmap *rasterSymbols = 0;
+QPixmap *rasterSymbols = 0;
 int rasterSymbolsLoadedColorMapNumber;
 QString configFileDirectory;
 int ColorTableIndex;
@@ -74,7 +74,7 @@ void ChartSymbols::InitializeGlobals( void )
     if( !symbolGraphicLocations ) symbolGraphicLocations = new symbolGraphicsHashMap;
     rasterSymbolsLoadedColorMapNumber = -1;
     ColorTableIndex = 0;
-    rasterSymbols = new QBitmap;
+    rasterSymbols = new QPixmap;
 }
 
 void ChartSymbols::DeleteGlobals( void )
@@ -928,7 +928,7 @@ void ChartSymbols::BuildPattern( OCPNPattern &pattern )
 
     QRect graphicsLocation( pattern.bitmapSize.graphics.toPoint(), pattern.bitmapSize.size.toSize() );
     ( *symbolGraphicLocations )[pattern.name] = graphicsLocation;
-
+    qDebug()<<"symbol graphiclocation:"<<pattern.name<<graphicsLocation;
     // check if key already there
     pattmp = ( *plib->_patt_sym )[pattern.name];
 
@@ -1069,7 +1069,7 @@ void ChartSymbols::BuildSymbol( ChartSymbol& symbol )
     QString SCRF;
 
     symb->RCID = symbol.RCID;
-    memcpy( symb->name.SYNM, symbol.name.toUcs4().data(), 8 );
+    memcpy( symb->name.SYNM, symbol.name.toUtf8().data(), 8 );
 
     symb->exposition.SXPO = new QString( symbol.description );
 
@@ -1105,7 +1105,7 @@ void ChartSymbols::BuildSymbol( ChartSymbol& symbol )
 
     QRect graphicsLocation( symbol.bitmapSize.graphics.toPoint(), symbol.bitmapSize.size.toSize() );
     ( *symbolGraphicLocations )[symbol.name] = graphicsLocation;
-
+    qDebug()<<"symbol graphiclocation:"<<symbol.name<<graphicsLocation;
     // Already something here with same key? Then free its strings, otherwise they leak.
     Rule* symbtmp = ( *plib->_symb_sym )[symbol.name];
     if( symbtmp ) {
@@ -1277,7 +1277,7 @@ int ChartSymbols::LoadRasterFileForColorTable( int tableNo, bool flush )
         } 
 #endif
         {
-            *rasterSymbols = QBitmap::fromImage(rasterFileImg);
+            *rasterSymbols = QPixmap::fromImage(rasterFileImg);
         }
 
         rasterSymbolsLoadedColorMapNumber = tableNo;

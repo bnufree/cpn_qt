@@ -1160,7 +1160,7 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
         {
             QString msg;
             msg.sprintf("OpenChartUsingCache, IN cache: cache size: %d\n", (int)pChartCache->count());
-            //          ZCHX_LOGMSG(msg);
+            qDebug()<<msg;
             if(FULL_INIT == init_flag)                            // asking for full init?
             {
                 if(Ch->IsReadyToRender())

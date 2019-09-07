@@ -54,6 +54,11 @@ typedef struct _SymbolSizeInfo {
     zchxPoint graphics;
 	int minDistance;
 	int maxDistance;
+    _SymbolSizeInfo()
+    {
+        minDistance = 0;
+        maxDistance = 0;
+    }
 } SymbolSizeInfo_t;
 
 
@@ -72,6 +77,16 @@ public:
 	SymbolSizeInfo_t vectorSize;
     QBitmap bitmap;
 	QString HPGL;
+
+    OCPNPattern()
+    {
+        RCID = -1;
+        hasVector = false;
+        hasBitmap = false;
+        preferBitmap = false;
+        fillType = 0;
+        spacing = 0;
+    }
 };
 
 class LineStyle {

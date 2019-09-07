@@ -1702,7 +1702,6 @@ int Osenc::createSenc200(const QString& FullPath000, const QString& SENCFileName
             break;
         
     }
-    
     if( bcont ) {
         //      Create and write the Vector Edge Table
         CreateSENCVectorEdgeTableRecord200( stream, poReader );
