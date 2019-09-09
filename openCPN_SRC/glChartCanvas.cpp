@@ -1971,11 +1971,12 @@ void glChartCanvas::RotateToViewPort(const ViewPort &vp)
 {
     float angle = vp.rotation;
 
+    qDebug()<<"current roate:"<<vp.rotation;
     if( fabs( angle ) > 0.0001 )
     {
         //    Rotations occur around 0,0, so translate to rotate around screen center
         float xt = vp.pix_width / 2.0, yt = vp.pix_height / 2.0;
-        
+        qDebug()<<"dxy:"<<xt<<yt;
         glTranslatef( xt, yt, 0 );
         glRotatef( angle * 180. / PI, 0, 0, 1 );
         glTranslatef( -xt, -yt, 0 );
@@ -2990,6 +2991,7 @@ void glChartCanvas::Render()
     bool useFBO = false;
     int sx = gl_width;
     int sy = gl_height;
+    qDebug()<<"gl size:"<<sx<<sy<<" tex size<<"<<m_cache_tex_x<<m_cache_tex_y;
 
     // Try to use the framebuffer object's cache of the last frame
     // to accelerate drawing this frame (if overlapping)
@@ -3001,6 +3003,7 @@ void glChartCanvas::Render()
 
         // If the view is the same we do no updates, 
         // cached texture to the framebuffer
+        qDebug()<<"vp roate:"<<m_cache_vp.rotation<<VPoint.rotation;
         if(    m_cache_vp.view_scale_ppm == VPoint.view_scale_ppm
                && m_cache_vp.rotation == VPoint.rotation
                && m_cache_vp.clat == VPoint.clat
@@ -3011,6 +3014,7 @@ void glChartCanvas::Render()
             b_newview = false;
         }
 
+        qDebug()<<"new flag = "<<b_newview;
         if( b_newview ) {
 
             bool busy = false;
@@ -3031,6 +3035,7 @@ void glChartCanvas::Render()
                 || VPoint.m_projection_type == PROJECTION_EQUIRECTANGULAR )
                 && m_cache_vp.pix_height == VPoint.pix_height )
             {
+                qDebug()<<"!!!!!!!!!!!!!!";
                 zchxPointF c_old = VPoint.GetDoublePixFromLL( VPoint.clat, VPoint.clon );
                 zchxPointF c_new = m_cache_vp.GetDoublePixFromLL( VPoint.clat, VPoint.clon );
 
@@ -3051,13 +3056,15 @@ void glChartCanvas::Render()
                 bool b_whole_pixel = true;
                 if( ( fabs( deltax - dx ) > 1e-2 ) || ( fabs( deltay - dy ) > 1e-2 ) )
                     b_whole_pixel = false;
-                    
                 accelerated_pan = b_whole_pixel && abs(dx) < m_cache_tex_x && abs(dy) < m_cache_tex_y
                                   && sx == m_cache_tex_x && sy == m_cache_tex_y;
+
+                qDebug()<<b_whole_pixel<<dx<<m_cache_tex_x<<dy<<m_cache_tex_y<<sx<<sy<<accelerated_pan;
             }
 
             // do we allow accelerated panning?  can we perform it here?
             if(accelerated_pan && !g_GLOptions.m_bUseCanvasPanning) {
+                qDebug()<<"???????????????????";
                 if((dx != 0) || (dy != 0)){   // Anything to do?
                     m_cache_page = !m_cache_page; /* page flip */
 
@@ -3120,11 +3127,13 @@ void glChartCanvas::Render()
                 }
 
             } else { // must redraw the entire screen
+                qDebug()<<"***********************";
                     ( s_glFramebufferTexture2D )( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
                                                 g_texture_rectangle_format,
                                                 m_cache_tex[m_cache_page], 0 );
                     
                     if(g_GLOptions.m_bUseCanvasPanning) {
+                        qDebug()<<"$$$$$$$$$$$$$$$$$$";
                         bool b_reset = false;
                         if( (m_fbo_offsetx < 50) ||
                             ((m_cache_tex_x - (m_fbo_offsetx + sx)) < 50) ||
@@ -3163,6 +3172,7 @@ void glChartCanvas::Render()
                         glViewport( 0, 0, (GLint) sx, (GLint) sy );
                     }
                     else{
+                        qDebug()<<"^^^^^^^^^^^^^^^";
 #if 0                        
                         // Should not really need to clear the screen, but consider this case:
                         // A previous installation of OCPN loaded some PlugIn charts, so setting their coverage in the database.
@@ -3184,6 +3194,7 @@ void glChartCanvas::Render()
                         m_fbo_swidth = sx;
                         m_fbo_sheight = sy;
                         QRect rect(m_fbo_offsetx, m_fbo_offsety, (GLint) sx, (GLint) sy);
+                        qDebug()<<"render new chart";
                         RenderCharts(gldc, screen_region);
                     }
                     
@@ -3344,9 +3355,9 @@ void glChartCanvas::Render()
     }
  
 
-    
+
      
-    // Render static overlay objects
+    // Render static overlay objects , 这里就是绿色的外框
     for(OCPNRegionIterator upd ( screen_region ); upd.HaveRects(); upd.NextRect()) {
          LLRegion region = VPoint.GetLLRegion(upd.GetRect());
          ViewPort cvp = ClippedViewport(VPoint, region);

@@ -660,6 +660,7 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     connect(mDisplsyTimer, SIGNAL(timeout()), this, SLOT(update()));
 //    mDisplsyTimer->start();
     setMouseTracking(true);
+    setFocusPolicy(Qt::ClickFocus);
 }
 
 void ChartCanvas::startUpdate()
@@ -3482,6 +3483,7 @@ void ChartCanvas::DoRotateCanvas( double rotation )
         return;
 
     SetVPRotation( rotation );
+    UpdateGPSCompassStatusBox( true );
     parent_frame->UpdateRotationState( VPoint.rotation);
 }
 

@@ -156,7 +156,8 @@ void TexFont::Build( QFont &font, bool blur )
     dc.end();
     
     QImage image = tbmp.ConvertToImage();
-    if(image.format() != QImage::Format_RGB32) image = image.convertToFormat(QImage::Format_RGB32);
+//    tbmp.SaveFile("font.png", "PNG");
+//    if(image.format() != QImage::Format_RGB32) image = image.convertToFormat(QImage::Format_RGB32);
     GLuint format, internalformat;
     int stride;
 
@@ -169,10 +170,19 @@ void TexFont::Build( QFont &font, bool blur )
     unsigned char *imgdata = image.bits();
     if(imgdata){
         unsigned char *teximage = (unsigned char *) malloc( stride * tex_w * tex_h );
-
-        for( int j = 0; j < tex_w*tex_h; j++ )
-            for( int k = 0; k < stride; k++ )
-                teximage[j * stride + k] = imgdata[3*j];
+        for(int i=0; i<tex_w; i++)
+        {
+            for( int j = 0; j <tex_h; j++ )
+            {
+                int index = j*tex_h + i;
+                QColor color = image.pixelColor(i, j);
+                int alpha = color.alpha();
+                for( int k = 0; k < stride; k++ )
+                {
+                    teximage[index * stride + k] = alpha;
+                }
+            }
+        }
 
         Delete();
 

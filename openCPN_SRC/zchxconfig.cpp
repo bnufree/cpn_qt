@@ -888,7 +888,7 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     // Boolean to cater for sailing when not approaching waypoint
     Read("AdvanceRouteWaypointOnArrivalOnly", PARAM_BOOL,&g_bAdvanceRouteWaypointOnArrivalOnly);
 
-    Read("EnableRotateKeys",  PARAM_BOOL, &g_benable_rotate );
+    Read("EnableRotateKeys",  PARAM_BOOL, &g_benable_rotate, true );
     Read("EmailCrashReport",  PARAM_BOOL, &g_bEmailCrashReport );
 
     g_benableAISNameCache = true;
