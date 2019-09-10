@@ -150,12 +150,17 @@ void TexFont::Build( QFont &font, bool blur )
         else
             text.sprintf("%c", i);
 
-        dc.drawText(tgi[i].x, tgi[i].y, text );
+        dc.drawText(QRect(tgi[i].x, tgi[i].y, tgi[i].width, tgi[i].height), Qt::AlignLeft, text );
+//        qDebug()<<"draw text:"<<text<<QPoint(tgi[i].x, tgi[i].y);
         col++;
     }
     dc.end();
     
     QImage image = tbmp.ConvertToImage();
+//    if(image.byteCount() != 4*tex_w*tex_h)
+//    {
+//        image = image.convertToFormat(QImage::Format::Format_RGB32);
+//    }
 //    tbmp.SaveFile("font.png", "PNG");
 //    if(image.format() != QImage::Format_RGB32) image = image.convertToFormat(QImage::Format_RGB32);
     GLuint format, internalformat;
@@ -170,19 +175,22 @@ void TexFont::Build( QFont &font, bool blur )
     unsigned char *imgdata = image.bits();
     if(imgdata){
         unsigned char *teximage = (unsigned char *) malloc( stride * tex_w * tex_h );
-        for(int i=0; i<tex_w; i++)
+        for(int j=0; j<tex_h; j++)
         {
-            for( int j = 0; j <tex_h; j++ )
+            for( int i = 0; i <tex_w; i++ )
             {
                 int index = j*tex_h + i;
                 QColor color = image.pixelColor(i, j);
-                int alpha = color.alpha();
+                int red = color.red();
                 for( int k = 0; k < stride; k++ )
                 {
-                    teximage[index * stride + k] = alpha;
+                    teximage[index * stride + k] = red;
                 }
             }
         }
+
+        wxBitmap bitmap((char*)teximage);
+        bitmap.SaveFile("alpha.png", "png");
 
         Delete();
 

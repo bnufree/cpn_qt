@@ -171,6 +171,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
     QMenu* tools = this->menuBar()->addMenu(tr("Tools"));
     addCustomAction(tools,tr("Options"),this, SLOT(slotOpenSettingDlg()));
     addCustomAction(tools, tr("Measure distance"), this, SLOT(slotMeasureDistance()));
+    addCustomAction(tools, tr("Rotate"), this, SLOT(slotRotate()));
 
     //导航
     QMenu* navigation = this->menuBar()->addMenu(tr("Navigation"));
@@ -1809,6 +1810,29 @@ void zchxMapMainWindow::InvalidateAllGL()
 ColorScheme zchxMapMainWindow::GetColorScheme()
 {
     return global_color_scheme;
+}
+
+void zchxMapMainWindow::slotRotateDegree(double angle)
+{
+    if(mEcdisWidget) mEcdisWidget->DoRotateCanvasWithDegree(angle);
+}
+
+void zchxMapMainWindow::slotRoateRad(double rad)
+{
+    if(mEcdisWidget) mEcdisWidget->DoRotateCanvas(rad);
+}
+
+void zchxMapMainWindow::slotRotate()
+{
+    static double rotate = 60;
+    static double coeff = -1.0;
+    slotRotateDegree(rotate);
+    rotate += coeff * 60.0;
+    if(fabs(rotate) > 60)
+    {
+        coeff *= (-1);
+        rotate = 0;
+    }
 }
 
 void zchxMapMainWindow::initEcdis()

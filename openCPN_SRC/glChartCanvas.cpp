@@ -576,6 +576,11 @@ void glChartCanvas::resizeGL(int w, int h)
     glLoadIdentity();
     glTranslatef(0.0, 0.0, -40.0);
 #endif
+    if(m_bsetup)
+    {
+        BuildFBO();
+    }
+    QGLWidget::resizeGL(w, h);
 }
 
 //void glChartCanvas::OnSize( QSize& event )

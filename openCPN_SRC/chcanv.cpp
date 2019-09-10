@@ -372,6 +372,7 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     m_groupIndex = 0;
     m_singleChart = NULL;
     m_bCourseUp = false;
+    m_MouseDragging = false;
     
     m_vLat = 35.7421999999;
     m_vLon = 127.52430000;
@@ -659,7 +660,7 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     mDisplsyTimer->setInterval(5000);
     connect(mDisplsyTimer, SIGNAL(timeout()), this, SLOT(update()));
 //    mDisplsyTimer->start();
-    setMouseTracking(true);
+//    setMouseTracking(true);
     setFocusPolicy(Qt::ClickFocus);
 }
 
@@ -3485,6 +3486,11 @@ void ChartCanvas::DoRotateCanvas( double rotation )
     SetVPRotation( rotation );
     UpdateGPSCompassStatusBox( true );
     parent_frame->UpdateRotationState( VPoint.rotation);
+}
+
+void ChartCanvas::DoRotateCanvasWithDegree(double rotation)
+{
+    DoRotateCanvas(PI/180 * rotation);
 }
 
 void ChartCanvas::DoTiltCanvas( double tilt )
@@ -7334,13 +7340,33 @@ void ChartCanvas::MouseEvent( QMouseEvent& event )
 void ChartCanvas::mousePressEvent(QMouseEvent *e)
 {
     qDebug()<<" mouse presss now";
-    if(m_Piano) m_Piano->MouseEvent(e);
+    last_drag_point = e->pos();
+
 }
 
 void ChartCanvas::mouseMoveEvent(QMouseEvent *e)
 {
     qDebug()<<" mouse move now"<<hasMouseTracking();
     if(m_Piano) m_Piano->MouseEvent(e);
+    m_MouseDragging = true;
+    //没有拖动的情况,将地图的中心移动到这里
+    QPoint pos = e->pos();
+    int dx  = pos.x() - last_drag_point.x();
+    int dy  =  pos.y() - last_drag_point.y();
+    if(abs(dx) > 10 || abs(dy) > 10)
+    PanCanvas(-dx, -dy);
+    last_drag_point = pos;
+}
+
+void ChartCanvas::mouseReleaseEvent(QMouseEvent *e)
+{
+    if(!m_MouseDragging)
+    {
+        //没有拖动的情况,将地图的中心移动到这里
+        QPoint pos = e->pos();
+        PanCanvas( pos.x() - GetVP().pix_width / 2, pos.y() - GetVP().pix_height / 2 );
+    }
+    m_MouseDragging = false;
 }
 
 void ChartCanvas::wheelEvent(QWheelEvent * e)
@@ -7353,10 +7379,10 @@ void ChartCanvas::wheelEvent(QWheelEvent * e)
         time = cur;
         if(e->delta() > 0)
         {
-            ZoomCanvas(0.5, false);
+            ZoomCanvas(2, false);
         } else
         {
-            ZoomCanvas(2, false);
+            ZoomCanvas(0.5, false);
         }
 
     }

@@ -79,8 +79,12 @@ public slots:
     void    SetGPSCompassScale();
     double  GetMag(double a);
     void    InvalidateAllGL();
+    //用户操作
+    void    slotRotateDegree(double angle);
+    void    slotRoateRad(double rad);
 private slots:
     void    slotInitEcidsAsDelayed();
+    void    slotRotate();
 protected:
     void    resizeEvent(QResizeEvent* e);
 

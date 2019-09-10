@@ -146,6 +146,7 @@ protected:
       void resizeEvent(QResizeEvent * event );
       void mousePressEvent(QMouseEvent *e);
       void mouseMoveEvent(QMouseEvent *e);
+      void mouseReleaseEvent(QMouseEvent* e);
       void wheelEvent(QWheelEvent *);
 public slots:
       void startUpdate();
@@ -272,6 +273,7 @@ public slots:
 
       void RotateCanvas( double dir );
       void DoRotateCanvas( double rotation );
+      void DoRotateCanvasWithDegree(double rotate);
       void DoTiltCanvas( double tilt );
 
 //      void ShowGoToPosition(void);
@@ -701,6 +703,7 @@ private:
       
       double       m_OSoffsetx, m_OSoffsety;
       bool         m_MouseDragging;
+      QPoint       last_drag_point;
       QRect       m_scaleBarRect;
       bool         m_bShowCompassWin;
       QString      m_alertString;
