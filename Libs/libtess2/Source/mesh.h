@@ -1,4 +1,4 @@
-/*
+﻿/*
 ** SGI FREE SOFTWARE LICENSE B (Version 2.0, Sept. 18, 2008) 
 ** Copyright (C) [dates of first publication] Silicon Graphics, Inc.
 ** All Rights Reserved.
@@ -32,7 +32,7 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "../Include/tesselator.h"
+#include "tesselator.h"
 
 typedef struct TESSmesh TESSmesh; 
 typedef struct TESSvertex TESSvertex;

@@ -1,4 +1,4 @@
-
+﻿
 /******************************************************************************
  *
  * Project:  OpenCPN
@@ -30,7 +30,7 @@
 #define __FLEXHASH_H__
 
 #include <vector>
-#include "ssl/sha1.h"
+#include "ssl_sha1/sha1.h"
 
 class FlexHash {
 

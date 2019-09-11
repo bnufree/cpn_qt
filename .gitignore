@@ -26,3 +26,5 @@ NSIS.template.in
 /*.user
 /wxwidget/zchxWxWidgetQt/zchxWxWidgetQt.pro.user
 /cpn_qt.rar
+*.user
+out

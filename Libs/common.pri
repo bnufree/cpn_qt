@@ -1,0 +1,7 @@
+include(../Libs.pri)
+
+TargetRoot = $${PWD}
+BINARIES_PATH = $$TargetRoot/out/$$CONFIG_NAME
+DESTDIR = $$BINARIES_PATH
+
+LIB_INSTALL_PATH = $${OPENCPN_3RD_STATIC_LIB_PATH}/$${CONFIG_NAME}

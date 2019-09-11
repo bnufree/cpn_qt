@@ -70,7 +70,7 @@
 #include <algorithm>          // for std::sort
 #include <map>
 
-#include "ssl/sha1.h"
+#include "ssl_sha1/sha1.h"
 
 #ifdef __MSVC__
 #define strncasecmp(x,y,z) _strnicmp(x,y,z)

@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  FIPS-180-1 compliant SHA-1 implementation
  *
  *  Copyright (C) 2006-2014, Brainspark B.V.
@@ -35,7 +35,7 @@
 #if defined(POLARSSL_SHA1_C)
 
 //#include "polarssl/sha1.h"
-#include "ssl/sha1.h"
+#include "sha1.h"
 
 #if defined(POLARSSL_FS_IO) || defined(POLARSSL_SELF_TEST)
 #include <stdio.h>

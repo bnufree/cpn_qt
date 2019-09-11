@@ -15,3 +15,14 @@ defineReplace(qtLibraryName) {
    isEmpty(RET):RET = $$LIBRARY_NAME
    return($$RET)
 }
+
+#根据不同的编译清空生成不同的输出路径
+CONFIG(release, debug|release) {
+  DEFINES *= RELEASE _RELEASE NDEBUG
+  CONFIG_NAME = Release
+} else {
+  DEFINES *= DEBUG _DEBUG
+  CONFIG_NAME = Debug
+  EXT_NAME = d
+}
+

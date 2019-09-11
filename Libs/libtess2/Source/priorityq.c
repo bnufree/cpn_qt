@@ -1,4 +1,4 @@
-/*
+﻿/*
 ** SGI FREE SOFTWARE LICENSE B (Version 2.0, Sept. 18, 2008) 
 ** Copyright (C) [dates of first publication] Silicon Graphics, Inc.
 ** All Rights Reserved.
@@ -32,7 +32,7 @@
 //#include "tesos.h"
 #include <stddef.h>
 #include <assert.h>
-#include "../Include/tesselator.h"
+#include "tesselator.h"
 #include "priorityq.h"
 
 

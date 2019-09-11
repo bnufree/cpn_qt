@@ -83,7 +83,7 @@ bool g_throttle_squish;
 
 glTextureManager   *g_glTextureManager = 0;
 
-#include "ssl/sha1.h"
+#include "ssl_sha1/sha1.h"
 
 QString CompressedCachePath(const QString& src)
 {
