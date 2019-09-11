@@ -5206,7 +5206,7 @@ void ChartCanvas::resizeEvent(QResizeEvent * event )
     m_absolute_min_scale_ppm = m_canvas_width / ( 1.2 * WGS84_semimajor_axis_meters * PI ); // something like 180 degrees
 
     //  Inform the parent Frame that I am being resized...
-//    gFrame->ProcessCanvasResize();
+    UpdateGPSCompassStatusBox(true);
 
     //  Adjust the toolbar, if necessary
 //    if( m_toolBar ) {
@@ -8152,8 +8152,7 @@ void ChartCanvas::Refresh( bool eraseBackground, const QRect *rect )
     if( m_glcc && g_bopengl ) {
         
         //      We need to invalidate the FBO cache to ensure repaint of "grounded" overlay objects.
-        if( eraseBackground && m_glcc->UsingFBO() )
-            m_glcc->Invalidate();
+        if( eraseBackground && m_glcc->UsingFBO() )    m_glcc->Invalidate();
         
 
 //        m_glcc->Refresh( eraseBackground, NULL ); // We always are going to render the entire screen anyway, so make
