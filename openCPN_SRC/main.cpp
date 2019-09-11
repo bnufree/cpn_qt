@@ -110,7 +110,6 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-
     //make size as 9:16
 //    gFrame = new zchxMapMainWindow();
 //    gFrame->showMaximized();
