@@ -1209,13 +1209,13 @@ void StyleManager::SetStyle(QString name)
     if(currentStyle)
         nextInvocationStyle = currentStyle->name;
 
-    if(currentStyle)
-    {
-        qDebug()<<"style name:"<<currentStyle->name;
-        foreach (Icon* icon, currentStyle->icons) {
-            qDebug()<<icon<<icon->name<<icon->iconLoc<<icon->size;
-        }
-    }
+//    if(currentStyle)
+//    {
+//        qDebug()<<"style name:"<<currentStyle->name;
+//        foreach (Icon* icon, currentStyle->icons) {
+//            qDebug()<<icon<<icon->name<<icon->iconLoc<<icon->size;
+//        }
+//    }
     
     return;
 }

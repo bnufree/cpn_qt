@@ -2024,7 +2024,11 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
     //    and bthis_dir_in_dB is false.
     bool bthis_dir_in_dB = IsChartDirUsed(dir_name);
 
-    if(pprog) pprog->setWindowTitle("OpenCPN Chart Add....");
+    if(pprog)
+    {
+        pprog->setRange(0, nFile);
+        pprog->setWindowTitle("OpenCPN Chart Add....");
+    }
 
     // build a hash table based on filename (without directory prefix) of
     // the chart to fast to detect identical charts
@@ -2056,7 +2060,8 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
 
         if( pprog && ( ( ifile % nFileProgressQuantum ) == 0 ) )
         {
-            pprog->setValue(static_cast<int>( ifile * rFileProgressRatio ));
+//            pprog->setValue(static_cast<int>( ifile * rFileProgressRatio ));
+            pprog->setValue(ifile+1);
             pprog->setLabelText(full_name );
         }
 

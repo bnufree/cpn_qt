@@ -70,7 +70,7 @@ zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
 
     //获取当前指定的数据目录
     ui->pActiveChartsList->setColumnCount(1);
-    ui->pActiveChartsList->setColumnWidth(0, ui->pActiveChartsList->width()-1);
+    ui->pActiveChartsList->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ArrayOfCDI ChartDirArray;
     ZCHX_CFG_INS->LoadChartDirArray( ChartDirArray );
     ui->pActiveChartsList->setRowCount(ChartDirArray.size());
@@ -379,7 +379,6 @@ void zchxOptionsDlg::processApply(bool apply)
 void zchxOptionsDlg::resizeEvent(QResizeEvent *e)
 {
     QDialog::resizeEvent(e);
-    ui->pActiveChartsList->setColumnWidth(0, ui->pActiveChartsList->width()-2);
 }
 
 

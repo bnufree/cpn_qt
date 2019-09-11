@@ -1151,25 +1151,13 @@ bool zchxMapMainWindow::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b
 {
 
     bool b_run = false;
-#if 0
-    if(FrameTimer1)
-    {
-        b_run = FrameTimer1->isActive();
-        FrameTimer1->stop();                  // stop other asynchronous activity
-    }
-#endif
-
-#if 0
     // ..For each canvas...
-    for(unsigned int i=0 ; i < g_canvasArray.GetCount() ; i++){
-        ChartCanvas *cc = g_canvasArray.Item(i);
-        if( cc ) {
-            cc->InvalidateQuilt();
-            cc->SetQuiltRefChart( -1 );
-            cc->m_singleChart = NULL;
-        }
+    if(mEcdisWidget)
+    {
+        mEcdisWidget->InvalidateQuilt();
+        mEcdisWidget->SetQuiltRefChart( -1 );
+        mEcdisWidget->m_singleChart = NULL;
     }
-#endif
     if(ChartData)   ChartData->PurgeCache();
 
 //TODO
@@ -1179,7 +1167,7 @@ bool zchxMapMainWindow::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b
     setCursor(g_Platform->ShowBusySpinner());
 
     QProgressDialog *pprog = nullptr;
-    if( b_prog ) {
+    if( b_prog  && DirArray.count() > 0) {
         pprog = new QProgressDialog(0);
         pprog->setAttribute(Qt::WA_DeleteOnClose);
         pprog->setWindowTitle("OpenCPN Chart Update");
@@ -1197,20 +1185,23 @@ bool zchxMapMainWindow::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b
        gshhg_chart_loc.clear();
     }
 
-//    if( gWorldMapLocation != gshhg_chart_loc ){
-//    // ..For each canvas...
-//        for(unsigned int i=0 ; i < g_canvasArray.GetCount() ; i++){
-//            ChartCanvas *cc = g_canvasArray.Item(i);
-//            if( cc )
-//                cc->ResetWorldBackgroundChart();
-//        }
-//    }
+    if( gWorldMapLocation != gshhg_chart_loc )
+    {
+        if(mEcdisWidget)
+        {
+            mEcdisWidget->ResetWorldBackgroundChart();
+        }
+    }
 
 
 //    delete pprog;
 
     setCursor(g_Platform->HideBusySpinner());
     ZCHX_CFG_INS->UpdateChartDirs( DirArray );
+    if(pprog)
+    {
+        delete pprog;
+    }
 
 //    if( b_run ) FrameTimer1.Start( TIMER_GFRAME_1, wxTIMER_CONTINUOUS );
 
@@ -1302,6 +1293,11 @@ void zchxMapMainWindow::SetChartUpdatePeriod( )
 
 void zchxMapMainWindow::RefreshAllCanvas( bool bErase)
 {
+    if(mEcdisWidget)
+    {
+        mEcdisWidget->DoCanvasUpdate();
+        mEcdisWidget->ReloadVP();                  // once more, and good to go
+    }
     // For each canvas
 //    for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
 //        ChartCanvas *cc = g_canvasArray.at(i);
