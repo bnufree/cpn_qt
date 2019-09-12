@@ -195,6 +195,24 @@ void QuiltCandidate::SetScale( int scale )
        rounding = 5 *pow(10, log10(scale) -2);
 }
 
+class BusyPair
+{
+public:
+    BusyPair(bool* val)
+    {
+        mVal = val;
+        if(mVal) *mVal = true;
+    }
+
+    ~BusyPair()
+    {
+        if(mVal) *mVal = false;
+    }
+
+private:
+    bool *mVal;
+};
+
 Quilt::Quilt( ChartCanvas *parent)
 {
 //      m_bEnableRaster = true;
@@ -384,10 +402,9 @@ ChartBase *Quilt::GetFirstChart()
 
     if( !m_bcomposed ) return NULL;
 
-    if( m_bbusy )
-        return NULL;
+    if( m_bbusy )  return NULL;
 
-    m_bbusy = true;
+    BusyPair chk(&m_bbusy);
     ChartBase *pret = NULL;
     int i=0;
     cnode = 0;
@@ -408,7 +425,6 @@ ChartBase *Quilt::GetFirstChart()
         pret = ChartData->OpenChartFromDB(cnode->dbIndex, FULL_INIT );
     }
 
-    m_bbusy = false;
     return pret;
 }
 
@@ -418,10 +434,9 @@ ChartBase *Quilt::GetNextChart()
 
     if( !ChartData->IsValid() ) return NULL;
 
-    if( m_bbusy )
-        return NULL;
+    if( m_bbusy )  return NULL;
 
-    m_bbusy = true;
+    BusyPair chk(&m_bbusy);
     ChartBase *pret = NULL;
     if( cnode && cnode_index >= 0 ) {
         qDebug()<<"cnode:"<<cnode<<" index:"<<cnode_index<<" totsl size:"<<m_PatchList.size();
@@ -449,7 +464,7 @@ ChartBase *Quilt::GetNextChart()
         }
     }
 
-    m_bbusy = false;
+
     return pret;
 }
 
@@ -459,10 +474,9 @@ ChartBase *Quilt::GetNextSmallerScaleChart()
     
     if( !ChartData->IsValid() ) return NULL;
     
-    if( m_bbusy )
-        return NULL;
+    if( m_bbusy )    return NULL;
     
-    m_bbusy = true;
+    BusyPair chk(&m_bbusy);
     ChartBase *pret = NULL;
     if( cnode && cnode_index >= 0 ) {
         int i = cnode_index - 1;
@@ -481,8 +495,7 @@ ChartBase *Quilt::GetNextSmallerScaleChart()
         if( cnode && cnode->b_Valid )
             pret = ChartData->OpenChartFromDB(cnode->dbIndex, FULL_INIT );
     }
-    
-    m_bbusy = false;
+
     return pret;
 }
 
@@ -490,10 +503,9 @@ ChartBase *Quilt::GetLargestScaleChart()
 {
     if( !ChartData ) return NULL;
 
-    if( m_bbusy )
-        return NULL;
+    if( m_bbusy )         return NULL;
 
-    m_bbusy = true;
+    BusyPair chk(&m_bbusy);
     ChartBase *pret = NULL;
     if(m_PatchList.size() > 0)
     {
@@ -501,7 +513,6 @@ ChartBase *Quilt::GetLargestScaleChart()
         if( cnode ) pret = ChartData->OpenChartFromDB( cnode->dbIndex, FULL_INIT );
     }
 
-    m_bbusy = false;
     return pret;
 }
 
@@ -627,11 +638,9 @@ bool Quilt::IsQuiltVector( void )
     if( m_bbusy )
         return false;
 
-    m_bbusy = true;
+   BusyPair chk(&m_bbusy);
 
     bool ret = false;
-    if(m_PatchList.size() == 0) return false;
-
     int i = 0;
     while( i < m_PatchList.size() ) {
         PatchListNode cnode = m_PatchList[i];
@@ -649,7 +658,6 @@ bool Quilt::IsQuiltVector( void )
         i++;
     }
 
-    m_bbusy = false;
     return ret;
 }
 
@@ -658,7 +666,7 @@ bool Quilt::DoesQuiltContainPlugins( void )
     if( m_bbusy )
         return false;
     
-    m_bbusy = true;
+    BusyPair chk(&m_bbusy);
     
     bool ret = false;
 
@@ -680,7 +688,6 @@ bool Quilt::DoesQuiltContainPlugins( void )
         }
         i++;
     }
-    m_bbusy = false;
     return ret;
 }
 
@@ -689,7 +696,7 @@ int Quilt::GetChartdbIndexAtPix( ViewPort &VPoint, zchxPoint p )
     if( m_bbusy )
         return -1;
 
-    m_bbusy = true;
+    BusyPair chk(&m_bbusy);
 
     double lat, lon;
     VPoint.GetLLFromPix( p, &lat, &lon );
@@ -705,7 +712,6 @@ int Quilt::GetChartdbIndexAtPix( ViewPort &VPoint, zchxPoint p )
         }
     }
 
-    m_bbusy = false;
     return ret;
 }
 
@@ -714,7 +720,7 @@ ChartBase *Quilt::GetChartAtPix( ViewPort &VPoint, const zchxPoint& p )
     if( m_bbusy )
         return NULL;
 
-    m_bbusy = true;
+    BusyPair chk(&m_bbusy);
 
     double lat, lon;
     VPoint.GetLLFromPix( p, &lat, &lon );
@@ -733,7 +739,6 @@ ChartBase *Quilt::GetChartAtPix( ViewPort &VPoint, const zchxPoint& p )
             }
     }
 
-    m_bbusy = false;
     return pret;
 }
 
@@ -742,7 +747,7 @@ ChartBase *Quilt::GetOverlayChartAtPix( ViewPort &VPoint, const zchxPoint& p )
     if( m_bbusy )
         return NULL;
 
-    m_bbusy = true;
+    BusyPair chk(&m_bbusy);
 
     double lat, lon;
     VPoint.GetLLFromPix( p, &lat, &lon );
@@ -761,7 +766,6 @@ ChartBase *Quilt::GetOverlayChartAtPix( ViewPort &VPoint, const zchxPoint& p )
         }
     }
 
-    m_bbusy = false;
     return pret;
 }
 
@@ -787,7 +791,7 @@ std::vector<int> Quilt::GetQuiltIndexArray( void )
     if( m_bbusy )
         return ret;
 
-    m_bbusy = true;
+    BusyPair chk(&m_bbusy);
 
     for(int i=0; i<m_PatchList.size(); i++)
     {
@@ -795,7 +799,6 @@ std::vector<int> Quilt::GetQuiltIndexArray( void )
         ret.push_back( pqp->dbIndex );
     }
 
-    m_bbusy = false;
 
     return ret;
 }
@@ -1494,7 +1497,7 @@ ChartBase *Quilt::GetRefChart()
 
 void Quilt::UnlockQuilt()
 {
-    Q_ASSERT(m_bbusy == false);
+    if(m_bbusy) return;
     ChartData->UnLockCache();
     // unlocked only charts owned by the Quilt
     for(unsigned int ir = 0; ir < m_pcandidate_array->count(); ir++ ) {
@@ -1520,7 +1523,7 @@ bool Quilt::Compose( const ViewPort &vp_in )
 
     // XXX call before setting m_bbusy for wxASSERT in UnlockQuilt
     UnlockQuilt();
-    m_bbusy = true;
+    BusyPair chk(&m_bbusy);
 
     ViewPort vp_local = vp_in;                   // need a non-const copy
 
@@ -2295,8 +2298,6 @@ bool Quilt::Compose( const ViewPort &vp_in )
     }
 
     m_xa_hash = xa_hash;
-
-    m_bbusy = false;
     return true;
 }
 

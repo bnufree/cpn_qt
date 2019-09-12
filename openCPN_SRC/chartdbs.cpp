@@ -464,7 +464,7 @@ bool ChartTableEntry::Read(const ChartDatabase *pDb, FileReadWrite &is)
         for (cp = path; (*cp = (char)is.GetC()) != 0; cp++);
         pFullPath = (char *)malloc(cp - path + 1);
         strncpy(pFullPath, path, cp - path + 1);
-        qDebug("  Chart %s", pFullPath);
+//        qDebug("  Chart %s", pFullPath);
         
         //  Create and populate the helper members
         m_pfilename = new QString;
@@ -2060,9 +2060,8 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
 
         if( pprog && ( ( ifile % nFileProgressQuantum ) == 0 ) )
         {
-//            pprog->setValue(static_cast<int>( ifile * rFileProgressRatio ));
-            pprog->setValue(ifile+1);
-            pprog->setLabelText(full_name );
+//            pprog->setValue(static_cast<int>( (ifile+1) * rFileProgressRatio ));
+//            pprog->setLabelText(full_name );
         }
 
         ChartTableEntry *pnewChart = NULL;
@@ -2167,7 +2166,7 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
         {
             if(0 == b_add_msg)
             {
-                qDebug("   Adding chart file: %s", msg_fn.toUtf8().data());
+//                qDebug("   Adding chart file: %s", msg_fn.toUtf8().data());
             }
             collision_map[file_name] = active_chartTable.count();
             active_chartTable.append(pnewChart);
@@ -2181,6 +2180,7 @@ int ChartDatabase::SearchDirAndAddCharts(QString& dir_name_base,
             //                    ZCHX_LOGMSG(QString::Format(_T("   Not adding chart file: %s"), msg_fn.c_str()));
         }
     }
+    if(pprog) pprog->setValue(100);
 
     m_nentries = active_chartTable.count();
 
@@ -2508,7 +2508,7 @@ ChartTableEntry* ChartDatabase::CreateChartTableEntry(const QString &filePath, C
 {
     QString msg_fn(filePath);
     msg_fn.replace("%", "%%");
-    qDebug("Loading chart data for %s", msg_fn.toUtf8().data());
+//    qDebug("Loading chart data for %s", msg_fn.toUtf8().data());
 
     ChartBase *pch = GetChart(filePath.toUtf8().data(), chart_desc);
     if (pch == NULL) {
