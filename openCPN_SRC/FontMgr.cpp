@@ -215,17 +215,17 @@ int FontMgr::GetNumFonts( void ) const
 
 const QString & FontMgr::GetConfigString( int i ) const
 {
-    m_fontlist[i].m_configstring;
+    return m_fontlist[i].m_configstring;
 }
 
 const QString & FontMgr::GetDialogString( int i ) const
 {
-    m_fontlist[i].m_dialogstring;
+    return m_fontlist[i].m_dialogstring;
 }
 
 const QString & FontMgr::GetNativeDesc( int i ) const
 {
-    m_fontlist[i].m_nativeInfo;
+    return m_fontlist[i].m_nativeInfo;
 }
 
 QString FontMgr::GetFullConfigDesc( int i ) const
