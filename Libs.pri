@@ -18,7 +18,7 @@ defineReplace(qtLibraryName) {
 
 #根据不同的编译清空生成不同的输出路径
 CONFIG(release, debug|release) {
-  DEFINES *= RELEASE _RELEASE NDEBUG
+  DEFINES *= RELEASE _RELEASE NDEBUG QT_MESSAGELOGCONTEXT
   CONFIG_NAME = Release
 } else {
   DEFINES *= DEBUG _DEBUG
