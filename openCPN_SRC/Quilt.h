@@ -146,7 +146,7 @@ public:
     void Invalidate( void )
     {
         m_bcomposed = false;
-        m_vp_quilt.Invalidate();
+        m_vp_quilt.invalidate();
         m_zout_dbindex = -1;
 
         //  Quilting of skewed raster charts is allowed for OpenGL only

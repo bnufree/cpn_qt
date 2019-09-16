@@ -1192,7 +1192,7 @@ bool glTextureManager::TextureCrunch(double factor)
 //        for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
             ChartCanvas *cc = /*g_canvasArray.at(i)*/gFrame->GetPrimaryCanvas();
             if(cc){ 
-                if( cc->GetVP().b_quilt )          // quilted
+                if( cc->GetVP().quilt() )          // quilted
                 {
                         if( cc->m_pQuilt->IsComposed() &&
                             !cc->m_pQuilt->IsChartInQuilt( chart_full_path ) ) {
@@ -1253,7 +1253,7 @@ bool glTextureManager::FactoryCrunch(double factor)
             ChartCanvas *cc = /*g_canvasArray.at(i);*/gFrame->GetPrimaryCanvas();
             if(cc){
                 
-                if( cc->GetVP().b_quilt )          // quilted
+                if( cc->GetVP().quilt())          // quilted
                 {
                     if( cc->m_pQuilt->IsComposed() &&
                         !cc->m_pQuilt->IsChartInQuilt( chart_full_path ) ) {

@@ -100,48 +100,88 @@ class ViewPort
             void SetBoxes(void);
 
 //  Accessors
-            void Invalidate() { bValid = false; }
-            void Validate() { bValid = true; }
-            bool IsValid() const { return bValid; }
+            void        invalidate() { mValid = false; }
+            void        validate() { mValid = true; }
+            bool        isValid() const { return mValid; }
 
-            void SetRotationAngle(double angle_rad) { rotation = angle_rad;}
-            void SetProjectionType(int type){ m_projection_type = type; }
+            void        setProjectionType(int type){ mProjectionType = type; }
+            int         projectType() const {return mProjectionType;}
 
-            LLBBox &GetBBox() { return vpBBox; }
+            LLBBox      getBBox() const { return mVpBBox; }
+            LLBBox*     getBBOXPtr() {return &mVpBBox;}
+            void        setBBoxDirect( const LLBBox &bbox ) { mVpBBox = bbox; }
+            void        setBBoxDirect( double latmin, double lonmin, double latmax, double lonmax);
 
-            void SetBBoxDirect( const LLBBox &bbox ) { vpBBox = bbox; }
-            void SetBBoxDirect( double latmin, double lonmin, double latmax, double lonmax);
+            void        InvalidateTransformCache() { mLat0Cache = NAN; }
 
-            void InvalidateTransformCache() { lat0_cache = NAN; }
+            void        setLat(double lat) {mLat = lat;}
+            double      lat() const {return mLat;}
+            void        setLon(double lat) {mLon = lat;}
+            double      lon() const {return mLon;}
+
+            void        setViewScalePPM(double ppm) {mViewScalePPM = ppm;}
+            double      viewScalePPM() const {return mViewScalePPM;}
+
+            void        setSkew(double val) {mSkew = val;}
+            double      skew() const {return mSkew;}
+
+            void    setRotation(double val) {mRotation = val;}
+            double  rotation() const {return mRotation;}
+
+            void    setTilt(double val) {mTilt = val;}
+            double  tilt() const {return mTilt;}
+
+            void    setChartScale(double val) {mChartScale = val;}
+            double  chartScale() const {return mChartScale;}
+            void    setRefScale(double val) {mRefScale = val;}
+            double  refScale() const {return mRefScale;}
+
+            void    setPixWidth(double val) {mPixWidth = val;}
+            double  pixWidth() const {return mPixWidth;}
+            void    setPixHeight(double val) {mPixHeight = val;}
+            double  pixHeight() const {return mPixHeight;}
+
+            void    setQuilt(bool val) {mQuilt = val;}
+            bool    quilt() const {return mQuilt;}
+
+            void    setFullScreenQuilt(bool val) {mFullScreenQuilt = val;}
+            bool    fullScreenQuilt() const {return mFullScreenQuilt;}
+
+            void    setMercatorProjectionOverrie(bool val) {mMercatorProjectionOverride = val;}
+            bool    mercatorProjectionOverride() const {return mMercatorProjectionOverride;}
+
+            void    setRvRect(const QRect& rect) {mRvRect = rect;}
+            QRect   rvRect() const {return mRvRect;}
+
+
             
-//  Generic
-            double   clat;                   // center point
-            double   clon;
-            double   view_scale_ppm;
-            double   skew;
-            double   rotation;
-            double   tilt;  // For perspective view
+private:
+            double   mLat;                   // center point
+            double   mLon;
+            double   mViewScalePPM;
+            double   mSkew;
+            double   mRotation;
+            double   mTilt;  // For perspective view
 
-            double    chart_scale;            // conventional chart displayed scale
-            double    ref_scale;              //  the nominal scale of the "reference chart" for this view
+            double    mChartScale;            // conventional chart displayed scale
+            double    mRefScale;              //  the nominal scale of the "reference chart" for this view
 
-            int      pix_width;
-            int      pix_height;
+            int      mPixWidth;
+            int      mPixHeight;
 
-            bool     b_quilt;
-            bool     b_FullScreenQuilt;
+            bool     mQuilt;
+            bool     mFullScreenQuilt;
 
-            int      m_projection_type;
-            bool     b_MercatorProjectionOverride;
-            QRect   rv_rect;
+            int      mProjectionType;
+            bool     mMercatorProjectionOverride;
+            QRect    mRvRect;
 
-      private:
-            LLBBox   vpBBox;                // An un-skewed rectangular lat/lon bounding box
-                                            // which contains the entire vieport
-
-            bool     bValid;                 // This VP is valid
-
-            double lat0_cache, cache0, cache1;
+private:
+            LLBBox      mVpBBox;                // An un-skewed rectangular lat/lon bounding box // which contains the entire vieport
+            bool        mValid;                 // This VP is valid
+            double      mLat0Cache;
+            double      mCache0;
+            double      mCache1;
 };
 
 

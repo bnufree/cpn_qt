@@ -282,7 +282,7 @@ bool ChartDummy::RenderViewOnDC(QPainter* dc, const ViewPort& VPoint)
 {
     if( m_pBM  && m_pBM->isOK())
     {
-        if((m_pBM->GetWidth() != VPoint.pix_width) || (m_pBM->GetHeight() != VPoint.pix_height))
+        if((m_pBM->GetWidth() != VPoint.pixWidth()) || (m_pBM->GetHeight() != VPoint.pixHeight()))
         {
             delete m_pBM;
             m_pBM = NULL;
@@ -293,8 +293,8 @@ bool ChartDummy::RenderViewOnDC(QPainter* dc, const ViewPort& VPoint)
         m_pBM =NULL;
     }
 
-    if( VPoint.pix_width && VPoint.pix_height ) {
-        if(NULL == m_pBM) m_pBM = new wxBitmap(VPoint.pix_width, VPoint.pix_height);
+    if( VPoint.pixWidth() && VPoint.pixHeight() ) {
+        if(NULL == m_pBM) m_pBM = new wxBitmap(VPoint.pixWidth(), VPoint.pixHeight());
 
         dc->drawPixmap(0, 0, *(m_pBM->GetHandle()));
         //        dc.SetBackground(*wxBLACK_BRUSH);
@@ -2431,9 +2431,9 @@ ThumbData *ChartBaseBSB::GetThumbData(int tnx, int tny, float lat, float lon)
     //    Using a temporary synthetic ViewPort and source rectangle,
     //    calculate the ships position on the thumbnail
     ViewPort tvp;
-    tvp.pix_width = tnx;
-    tvp.pix_height = tny;
-    tvp.view_scale_ppm = GetPPM() / div_factor;
+    tvp.setPixWidth(tnx);
+    tvp.setPixHeight(tny);
+    tvp.setViewScalePPM(GetPPM() / div_factor);
     QRect trex = Rsrc;
     Rsrc.moveTo(0, 0);
     latlong_to_pix_vp(lat, lon, pixx, pixy, tvp);
@@ -2462,9 +2462,9 @@ bool ChartBaseBSB::UpdateThumbData(double lat, double lon)
     //    Using a temporary synthetic ViewPort and source rectangle,
     //    calculate the ships position on the thumbnail
     ViewPort tvp;
-    tvp.pix_width =  pThumbData->Thumb_Size_X;
-    tvp.pix_height =  pThumbData->Thumb_Size_Y;
-    tvp.view_scale_ppm = GetPPM() / div_factor;
+    tvp.setPixWidth(pThumbData->Thumb_Size_X);
+    tvp.setPixHeight(pThumbData->Thumb_Size_Y);
+    tvp.setViewScalePPM(GetPPM() / div_factor);
     QRect trex = Rsrc;
     Rsrc.moveTo(0,0);
     latlong_to_pix_vp(lat, lon, pixx_test, pixy_test, tvp);
@@ -2495,7 +2495,7 @@ int ChartBaseBSB::vp_pix_to_latlong(ViewPort& vp, double pixx, double pixy, doub
 {
     if(bHaveEmbeddedGeoref)
     {
-        double raster_scale = GetPPM() / vp.view_scale_ppm;
+        double raster_scale = GetPPM() / vp.viewScalePPM();
 
         double px = pixx*raster_scale + Rsrc.x();
         double py = pixy*raster_scale + Rsrc.y();
@@ -2520,17 +2520,17 @@ int ChartBaseBSB::vp_pix_to_latlong(ViewPort& vp, double pixx, double pixy, doub
         {
             //      Use Projected Polynomial algorithm
 
-            double raster_scale = GetPPM() / vp.view_scale_ppm;
+            double raster_scale = GetPPM() / vp.viewScalePPM();
 
             //      Apply poly solution to vp center point
             double easting, northing;
-            toTM(vp.clat + m_lat_datum_adjust, vp.clon + m_lon_datum_adjust, m_proj_lat, m_proj_lon, &easting, &northing);
+            toTM(vp.lat() + m_lat_datum_adjust, vp.lon() + m_lon_datum_adjust, m_proj_lat, m_proj_lon, &easting, &northing);
             double xc = polytrans( cPoints.wpx, easting, northing );
             double yc = polytrans( cPoints.wpy, easting, northing );
 
             //    convert screen pixels to chart pixmap relative
-            double px = xc + (pixx- (vp.pix_width / 2))*raster_scale;
-            double py = yc + (pixy- (vp.pix_height / 2))*raster_scale;
+            double px = xc + (pixx- (vp.pixWidth() / 2))*raster_scale;
+            double py = yc + (pixy- (vp.pixHeight() / 2))*raster_scale;
 
             //    Apply polynomial solution to chart relative pixels to get e/n
             double east  = polytrans( cPoints.pwx, px, py );
@@ -2554,17 +2554,17 @@ int ChartBaseBSB::vp_pix_to_latlong(ViewPort& vp, double pixx, double pixy, doub
         {
             //      Use Projected Polynomial algorithm
 
-            double raster_scale = GetPPM() / vp.view_scale_ppm;
+            double raster_scale = GetPPM() / vp.viewScalePPM();
 
             //      Apply poly solution to vp center point
             double easting, northing;
-            toSM_ECC(vp.clat + m_lat_datum_adjust, vp.clon + m_lon_datum_adjust, m_proj_lat, m_proj_lon, &easting, &northing);
+            toSM_ECC(vp.lat() + m_lat_datum_adjust, vp.lon() + m_lon_datum_adjust, m_proj_lat, m_proj_lon, &easting, &northing);
             double xc = polytrans( cPoints.wpx, easting, northing );
             double yc = polytrans( cPoints.wpy, easting, northing );
 
             //    convert screen pixels to chart pixmap relative
-            double px = xc + (pixx- (vp.pix_width / 2))*raster_scale;
-            double py = yc + (pixy- (vp.pix_height / 2))*raster_scale;
+            double px = xc + (pixx- (vp.pixWidth() / 2))*raster_scale;
+            double py = yc + (pixy- (vp.pixHeight() / 2))*raster_scale;
 
             //    Apply polynomial solution to chart relative pixels to get e/n
             double east  = polytrans( cPoints.pwx, px, py );
@@ -2581,24 +2581,24 @@ int ChartBaseBSB::vp_pix_to_latlong(ViewPort& vp, double pixx, double pixy, doub
             slon = slon_p;
             slat = slat_p;
 
-            //                  qDebug("vp.clon  %g    xc  %g   px   %g   east  %g  \n", vp.clon, xc, px, east);
+            //                  qDebug("vp.lon()  %g    xc  %g   px   %g   east  %g  \n", vp.lon(), xc, px, east);
 
         }
         else if(m_projection == PROJECTION_POLYCONIC)
         {
             //      Use Projected Polynomial algorithm
 
-            double raster_scale = GetPPM() / vp.view_scale_ppm;
+            double raster_scale = GetPPM() / vp.viewScalePPM();
 
             //      Apply poly solution to vp center point
             double easting, northing;
-            toPOLY(vp.clat + m_lat_datum_adjust, vp.clon + m_lon_datum_adjust, m_proj_lat, m_proj_lon, &easting, &northing);
+            toPOLY(vp.lat() + m_lat_datum_adjust, vp.lon() + m_lon_datum_adjust, m_proj_lat, m_proj_lon, &easting, &northing);
             double xc = polytrans( cPoints.wpx, easting, northing );
             double yc = polytrans( cPoints.wpy, easting, northing );
 
             //    convert screen pixels to chart pixmap relative
-            double px = xc + (pixx- (vp.pix_width / 2))*raster_scale;
-            double py = yc + (pixy- (vp.pix_height / 2))*raster_scale;
+            double px = xc + (pixx- (vp.pixWidth() / 2))*raster_scale;
+            double py = yc + (pixy- (vp.pixHeight() / 2))*raster_scale;
 
             //    Apply polynomial solution to chart relative pixels to get e/n
             double east  = polytrans( cPoints.pwx, px, py );
@@ -2619,16 +2619,16 @@ int ChartBaseBSB::vp_pix_to_latlong(ViewPort& vp, double pixx, double pixy, doub
         else
         {
             // Use a Mercator estimator, with Eccentricity corrrection applied
-            int dx = pixx - ( vp.pix_width  / 2 );
-            int dy = ( vp.pix_height / 2 ) - pixy;
+            int dx = pixx - ( vp.pixWidth()  / 2 );
+            int dy = ( vp.pixHeight() / 2 ) - pixy;
 
-            xp = ( dx * cos ( vp.skew ) ) - ( dy * sin ( vp.skew ) );
-            yp = ( dy * cos ( vp.skew ) ) + ( dx * sin ( vp.skew ) );
+            xp = ( dx * cos ( vp.skew() ) ) - ( dy * sin ( vp.skew() ) );
+            yp = ( dy * cos ( vp.skew() ) ) + ( dx * sin ( vp.skew() ) );
 
-            double d_east = xp / vp.view_scale_ppm;
-            double d_north = yp / vp.view_scale_ppm;
+            double d_east = xp / vp.viewScalePPM();
+            double d_north = yp / vp.viewScalePPM();
 
-            fromSM_ECC ( d_east, d_north, vp.clat, vp.clon, &slat, &slon );
+            fromSM_ECC ( d_east, d_north, vp.lat(), vp.lon(), &slat, &slon );
         }
 
         *plat = slat;
@@ -2667,7 +2667,7 @@ int ChartBaseBSB::latlong_to_pix_vp(double lat, double lon, double &pixx, double
             double xd = polytrans( wpx, lonp, alat );
             double yd = polytrans( wpy, lonp, alat );
 
-            double raster_scale = GetPPM() / vp.view_scale_ppm;
+            double raster_scale = GetPPM() / vp.viewScalePPM();
 
             pixx = (xd - Rsrc.x()) / raster_scale;
             pixy = (yd - Rsrc.y()) / raster_scale;
@@ -2682,7 +2682,7 @@ int ChartBaseBSB::latlong_to_pix_vp(double lat, double lon, double &pixx, double
 
         //  Make sure lon and lon0 are same phase
         /*
-          if((xlon * vp.clon) < 0.)
+          if((xlon * vp.lon()) < 0.)
           {
                 if(xlon < 0.)
                       xlon += 360.;
@@ -2690,9 +2690,9 @@ int ChartBaseBSB::latlong_to_pix_vp(double lat, double lon, double &pixx, double
                       xlon -= 360.;
           }
 
-          if(fabs(xlon - vp.clon) > 180.)
+          if(fabs(xlon - vp.lon()) > 180.)
           {
-                if(xlon > vp.clon)
+                if(xlon > vp.lon())
                       xlon -= 360.;
                 else
                       xlon += 360.;
@@ -2715,15 +2715,15 @@ int ChartBaseBSB::latlong_to_pix_vp(double lat, double lon, double &pixx, double
             double yd = polytrans( cPoints.wpy, easting, northing );
 
             //      Apply poly solution to vp center point
-            toTM(vp.clat + m_lat_datum_adjust, vp.clon + m_lon_datum_adjust, m_proj_lat, m_proj_lon, &easting, &northing);
+            toTM(vp.lat() + m_lat_datum_adjust, vp.lon() + m_lon_datum_adjust, m_proj_lat, m_proj_lon, &easting, &northing);
             double xc = polytrans( cPoints.wpx, easting, northing );
             double yc = polytrans( cPoints.wpy, easting, northing );
 
             //      Calculate target point relative to vp center
-            double raster_scale = GetPPM() / vp.view_scale_ppm;
+            double raster_scale = GetPPM() / vp.viewScalePPM();
 
-            double xs = xc - vp.pix_width  * raster_scale / 2;
-            double ys = yc - vp.pix_height * raster_scale / 2;
+            double xs = xc - vp.pixWidth()  * raster_scale / 2;
+            double ys = yc - vp.pixHeight() * raster_scale / 2;
 
             pixx = (xd - xs) / raster_scale;
             pixy = (yd - ys) / raster_scale;
@@ -2746,18 +2746,18 @@ int ChartBaseBSB::latlong_to_pix_vp(double lat, double lon, double &pixx, double
             double yd = polytrans( cPoints.wpy, easting, northing );
 
             //      Apply poly solution to vp center point
-            double xlonc = vp.clon;
+            double xlonc = vp.lon();
             AdjustLongitude(xlonc);
 
-            toSM_ECC(vp.clat + m_lat_datum_adjust, xlonc + m_lon_datum_adjust, m_proj_lat, m_proj_lon, &easting, &northing);
+            toSM_ECC(vp.lat() + m_lat_datum_adjust, xlonc + m_lon_datum_adjust, m_proj_lat, m_proj_lon, &easting, &northing);
             double xc = polytrans( cPoints.wpx, easting, northing );
             double yc = polytrans( cPoints.wpy, easting, northing );
 
             //      Calculate target point relative to vp center
-            double raster_scale = GetPPM() / vp.view_scale_ppm;
+            double raster_scale = GetPPM() / vp.viewScalePPM();
 
-            double xs = xc - vp.pix_width  * raster_scale / 2;
-            double ys = yc - vp.pix_height * raster_scale / 2;
+            double xs = xc - vp.pixWidth()  * raster_scale / 2;
+            double ys = yc - vp.pixHeight() * raster_scale / 2;
 
             pixx = (xd - xs) / raster_scale;
             pixy = (yd - ys) / raster_scale;
@@ -2779,17 +2779,17 @@ int ChartBaseBSB::latlong_to_pix_vp(double lat, double lon, double &pixx, double
             double yd = polytrans( cPoints.wpy, easting, northing );
 
             //      Apply poly solution to vp center point
-            double xlonc = AdjustLongitude(vp.clon);
+            double xlonc = AdjustLongitude(vp.lon());
 
-            toPOLY(vp.clat + m_lat_datum_adjust, xlonc + m_lon_datum_adjust, m_proj_lat, m_proj_lon, &easting, &northing);
+            toPOLY(vp.lat() + m_lat_datum_adjust, xlonc + m_lon_datum_adjust, m_proj_lat, m_proj_lon, &easting, &northing);
             double xc = polytrans( cPoints.wpx, easting, northing );
             double yc = polytrans( cPoints.wpy, easting, northing );
 
             //      Calculate target point relative to vp center
-            double raster_scale = GetPPM() / vp.view_scale_ppm;
+            double raster_scale = GetPPM() / vp.viewScalePPM();
 
-            double xs = xc - vp.pix_width  * raster_scale / 2;
-            double ys = yc - vp.pix_height * raster_scale / 2;
+            double xs = xc - vp.pixWidth()  * raster_scale / 2;
+            double ys = yc - vp.pixHeight() * raster_scale / 2;
 
             pixx = (xd - xs) / raster_scale;
             pixy = (yd - ys) / raster_scale;
@@ -2797,16 +2797,16 @@ int ChartBaseBSB::latlong_to_pix_vp(double lat, double lon, double &pixx, double
         }
         else
         {
-            toSM_ECC(lat, xlon, vp.clat, vp.clon, &easting, &northing);
+            toSM_ECC(lat, xlon, vp.lat(), vp.lon(), &easting, &northing);
 
-            double epix = easting  * vp.view_scale_ppm;
-            double npix = northing * vp.view_scale_ppm;
+            double epix = easting  * vp.viewScalePPM();
+            double npix = northing * vp.viewScalePPM();
 
-            double dx = epix * cos ( vp.skew ) + npix * sin ( vp.skew );
-            double dy = npix * cos ( vp.skew ) - epix * sin ( vp.skew );
+            double dx = epix * cos ( vp.skew() ) + npix * sin ( vp.skew() );
+            double dy = npix * cos ( vp.skew() ) - epix * sin ( vp.skew() );
 
-            pixx = ( (double)vp.pix_width  / 2 ) + dx;
-            pixy = ( (double)vp.pix_height / 2 ) - dy;
+            pixx = ( (double)vp.pixWidth()  / 2 ) + dx;
+            pixy = ( (double)vp.pixHeight() / 2 ) - dy;
         }
         return 0;
     }
@@ -2977,15 +2977,15 @@ void ChartBaseBSB::ComputeSourceRectangle(const ViewPort &vp, QRect *pSourceRect
 {
     m_raster_scale_factor = GetRasterScaleFactor(vp);
     double xd, yd;
-    latlong_to_chartpix(vp.clat, vp.clon, xd, yd);
+    latlong_to_chartpix(vp.lat(), vp.lon(), xd, yd);
 
     QPointF pos, size;
 
-    pos.setX(xd - (vp.pix_width  * m_raster_scale_factor / 2));
-    pos.setY(yd - (vp.pix_height * m_raster_scale_factor / 2));
+    pos.setX(xd - (vp.pixWidth()  * m_raster_scale_factor / 2));
+    pos.setY(yd - (vp.pixHeight() * m_raster_scale_factor / 2));
 
-    size.setX(vp.pix_width  * m_raster_scale_factor);
-    size.setY(vp.pix_height * m_raster_scale_factor);
+    size.setX(vp.pixWidth()  * m_raster_scale_factor);
+    size.setY(vp.pixHeight() * m_raster_scale_factor);
 
     *pSourceRect = QRect(qRound(pos.x()), qRound(pos.y()), qRound(size.x()), qRound(size.y()));
 }
@@ -2994,7 +2994,7 @@ void ChartBaseBSB::ComputeSourceRectangle(const ViewPort &vp, QRect *pSourceRect
 double ChartBaseBSB::GetRasterScaleFactor(const ViewPort &vp)
 {
     //      This funny contortion is necessary to allow scale factors < 1, i.e. overzoom
-    return (qRound(100000 * GetPPM() / vp.view_scale_ppm)) / 100000.;
+    return (qRound(100000 * GetPPM() / vp.viewScalePPM())) / 100000.;
 }
 
 void ChartBaseBSB::SetVPRasterParms(const ViewPort &vpt)
@@ -3010,9 +3010,9 @@ void ChartBaseBSB::SetVPRasterParms(const ViewPort &vpt)
     else
     {
         double to_lat, to_lon;
-        MolodenskyTransform (vpt.clat, vpt.clon, &to_lat, &to_lon, m_datum_index, DATUM_INDEX_WGS84);
-        m_lon_datum_adjust = -(to_lon - vpt.clon);
-        m_lat_datum_adjust = -(to_lat - vpt.clat);
+        MolodenskyTransform (vpt.lat(), vpt.lon(), &to_lat, &to_lon, m_datum_index, DATUM_INDEX_WGS84);
+        m_lon_datum_adjust = -(to_lon - vpt.lon());
+        m_lat_datum_adjust = -(to_lat - vpt.lat());
         if(m_b_apply_dtm)
         {
             m_lon_datum_adjust -= m_dtm_lon / 3600.;
@@ -3022,23 +3022,23 @@ void ChartBaseBSB::SetVPRasterParms(const ViewPort &vpt)
 
     ComputeSourceRectangle(vpt, &Rsrc);
 
-    if(vpt.IsValid())
+    if(vpt.isValid())
         m_vp_render_last = vpt;
 
 }
 
 bool ChartBaseBSB::AdjustVP(ViewPort &vp_last, ViewPort &vp_proposed)
 {
-    bool bInside = G_FloatPtInPolygon ( ( MyFlPoint * ) GetCOVRTableHead ( 0 ), GetCOVRTablenPoints ( 0 ), vp_proposed.clon, vp_proposed.clat );
+    bool bInside = G_FloatPtInPolygon ( ( MyFlPoint * ) GetCOVRTableHead ( 0 ), GetCOVRTablenPoints ( 0 ), vp_proposed.lon(), vp_proposed.lat() );
     if(!bInside)
         return false;
 
     ViewPort vp_save = vp_proposed;                 // save a copy
 
     int ret_val = 0;
-    double binary_scale_factor = GetPPM() / vp_proposed.view_scale_ppm;
+    double binary_scale_factor = GetPPM() / vp_proposed.viewScalePPM();
 
-    if(vp_last.IsValid())
+    if(vp_last.isValid())
     {
         //    We only need to adjust the VP if the cache is valid and potentially usable, i.e. the scale factor is integer...
         //    The objective here is to ensure that the VP center falls on an exact pixel boundary within the cache
@@ -3053,11 +3053,11 @@ bool ChartBaseBSB::AdjustVP(ViewPort &vp_last, ViewPort &vp_proposed)
 
             double pixx, pixy;
             double lon_adj, lat_adj;
-            latlong_to_pix_vp(vp_proposed.clat, vp_proposed.clon, pixx, pixy, vp_proposed);
+            latlong_to_pix_vp(vp_proposed.lat(), vp_proposed.lon(), pixx, pixy, vp_proposed);
             vp_pix_to_latlong(vp_proposed, pixx, pixy, &lat_adj, &lon_adj);
 
-            vp_proposed.clat = lat_adj;
-            vp_proposed.clon = lon_adj;
+            vp_proposed.setLat(lat_adj);
+            vp_proposed.setLon(lon_adj);
             ret_val = 1;
         }
     }
@@ -3099,16 +3099,16 @@ void ChartBaseBSB::GetValidCanvasRegion(const ViewPort& VPoint, OCPNRegion *pVal
 {
     SetVPRasterParms(VPoint);
 
-    double raster_scale =  VPoint.view_scale_ppm / GetPPM();
+    double raster_scale =  VPoint.viewScalePPM() / GetPPM();
 
     int rxl, rxr;
     int ryb, ryt;
 
-    rxl = qMax(int(-Rsrc.x() * raster_scale), VPoint.rv_rect.x());
-    rxr = qMin(int((Size_X - Rsrc.x()) * raster_scale), VPoint.rv_rect.width() + VPoint.rv_rect.x());
+    rxl = qMax(int(-Rsrc.x() * raster_scale), VPoint.rvRect().x());
+    rxr = qMin(int((Size_X - Rsrc.x()) * raster_scale), VPoint.rvRect().width() + VPoint.rvRect().x());
 
-    ryt = qMax(int(-Rsrc.y() * raster_scale), VPoint.rv_rect.y());
-    ryb = qMin(int((Size_Y - Rsrc.y()) * raster_scale), VPoint.rv_rect.height() + VPoint.rv_rect.y());
+    ryt = qMax(int(-Rsrc.y() * raster_scale), VPoint.rvRect().y());
+    ryb = qMin(int((Size_Y - Rsrc.y()) * raster_scale), VPoint.rvRect().height() + VPoint.rvRect().y());
 
 
 
@@ -3372,7 +3372,7 @@ bool ChartBaseBSB::RenderViewOnDC(QPainter* dc, const ViewPort& VPoint)
 {
     SetVPRasterParms(VPoint);
 
-    OCPNRegion rgn(0,0,VPoint.pix_width, VPoint.pix_height);
+    OCPNRegion rgn(0,0,VPoint.pixWidth(), VPoint.pixHeight());
 
     bool bsame_region = (rgn == m_last_region);          // only want to do this once
 
@@ -3398,7 +3398,7 @@ bool ChartBaseBSB::RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint, co
 {
     SetVPRasterParms(VPoint);
 
-    QRect dest(0,0,VPoint.pix_width, VPoint.pix_height);
+    QRect dest(0,0,VPoint.pixWidth(), VPoint.pixHeight());
     //      double factor = ((double)Rsrc.width)/((double)dest.width);
     double factor = GetRasterScaleFactor(VPoint);
     if(m_b_cdebug)
@@ -3415,10 +3415,10 @@ bool ChartBaseBSB::RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint, co
     }
 
     //    Invalidate the cache if the scale has changed or the viewport size has changed....
-    if((fabs(m_cached_scale_ppm - VPoint.view_scale_ppm) > 1e-9) || (m_last_vprect != dest))
+    if((fabs(m_cached_scale_ppm - VPoint.viewScalePPM()) > 1e-9) || (m_last_vprect != dest))
     {
         cached_image_ok = false;
-        m_vp_render_last.Invalidate();
+        m_vp_render_last.invalidate();
     }
     /*
       if(pPixCache)
@@ -3433,7 +3433,7 @@ bool ChartBaseBSB::RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint, co
             pPixCache = new PixelCache(dest.width, dest.height, BPP);
 */
 
-    m_cached_scale_ppm = VPoint.view_scale_ppm;
+    m_cached_scale_ppm = VPoint.viewScalePPM();
     m_last_vprect = dest;
 
 
@@ -3562,7 +3562,7 @@ bool ChartBaseBSB::RenderRegionViewOnDC(QPainter* dc, const ViewPort& VPoint, co
 
     //     A performance enhancement.....
     ScaleTypeEnum scale_type_zoom = RENDER_HIDEF;
-    double binary_scale_factor = VPoint.view_scale_ppm / GetPPM();
+    double binary_scale_factor = VPoint.viewScalePPM() / GetPPM();
     if(binary_scale_factor < .20)
         scale_type_zoom = RENDER_LODEF;
 
@@ -3856,9 +3856,9 @@ bool ChartBaseBSB::GetAndScaleData(unsigned char *ppn, size_t data_size, QRect& 
 
 
             double xd, yd;
-            latlong_to_chartpix(m_vp_render_last.clat, m_vp_render_last.clon, xd, yd);
-            double xrd = xd - (m_vp_render_last.pix_width  * m_raster_scale_factor / 2);
-            double yrd = yd - (m_vp_render_last.pix_height * m_raster_scale_factor / 2);
+            latlong_to_chartpix(m_vp_render_last.lat(), m_vp_render_last.lon(), xd, yd);
+            double xrd = xd - (m_vp_render_last.pixWidth()  * m_raster_scale_factor / 2);
+            double yrd = yd - (m_vp_render_last.pixHeight() * m_raster_scale_factor / 2);
             double x_vernier = (xrd - qRound(xrd));
             double y_vernier = (yrd - qRound(yrd));
             int x_vernier_i =  (int)qRound(x_vernier / m_raster_scale_factor);
@@ -5202,12 +5202,12 @@ int   ChartBaseBSB::AnalyzeRefpoints(bool b_testSolution)
 #if 0
     // Alternate Skew verification
     ViewPort vps;
-    vps.clat = pRefTable[0].latr;
-    vps.clon = pRefTable[0].lonr;
-    vps.view_scale_ppm = m_ppm_avg;
+    vps.lat() = pRefTable[0].latr;
+    vps.lon() = pRefTable[0].lonr;
+    vps.viewScalePPM() = m_ppm_avg;
     vps.skew = 0.;
-    vps.pix_width = 1000;
-    vps.pix_height = 1000;
+    vps.pixWidth() = 1000;
+    vps.pixHeight() = 1000;
 
     int x1, y1, x2, y2;
     latlong_to_pix_vp(latmin, (lonmax + lonmin)/2., x1, y1, vps);
@@ -5229,13 +5229,13 @@ int   ChartBaseBSB::AnalyzeRefpoints(bool b_testSolution)
 
     // Do a last little test using a synthetic ViewPort of nominal size.....
     ViewPort vp;
-    vp.clat = pRefTable[0].latr;
-    vp.clon = pRefTable[0].lonr;
-    vp.view_scale_ppm = m_ppm_avg;
-    vp.skew = 0.;
-    vp.pix_width = 1000;
-    vp.pix_height = 1000;
-    //        vp.rv_rect = QRect(0,0, vp.pix_width, vp.pix_height);
+    vp.setLat(pRefTable[0].latr);
+    vp.setLon(pRefTable[0].lonr);
+    vp.setViewScalePPM(m_ppm_avg);
+    vp.setSkew(0.);
+    vp.setPixWidth(1000);
+    vp.setPixHeight(1000);
+    //        vp.rv_rect = QRect(0,0, vp.pixWidth(), vp.pixHeight());
     SetVPRasterParms(vp);
 
 
@@ -5250,8 +5250,8 @@ int   ChartBaseBSB::AnalyzeRefpoints(bool b_testSolution)
 
     for(i=0 ; i<nRefpoint ; i++)
     {
-        px = (int)(vp.pix_width/2 + pRefTable[i].xr) - pxref;
-        py = (int)(vp.pix_height/2 + pRefTable[i].yr) - pyref;
+        px = (int)(vp.pixWidth()/2 + pRefTable[i].xr) - pxref;
+        py = (int)(vp.pixHeight()/2 + pRefTable[i].yr) - pyref;
 
         vp_pix_to_latlong(vp, px, py, &elt, &elg);
 
@@ -5315,8 +5315,8 @@ int   ChartBaseBSB::AnalyzeRefpoints(bool b_testSolution)
 
         for(i=0 ; i<nRefpoint ; i++)
         {
-            px = (int)(vp.pix_width/2 + pRefTable[i].xr) - pxref;
-            py = (int)(vp.pix_height/2 + pRefTable[i].yr) - pyref;
+            px = (int)(vp.pixWidth()/2 + pRefTable[i].xr) - pxref;
+            py = (int)(vp.pixHeight()/2 + pRefTable[i].yr) - pyref;
 
             vp_pix_to_latlong(vp, px, py, &elt, &elg);
 

@@ -326,19 +326,19 @@ void s57chart::GetValidCanvasRegion( const ViewPort& VPoint, OCPNRegion *pValidR
     double easting, northing;
     double epix, npix;
 
-    toSM( m_FullExtent.SLAT, m_FullExtent.WLON, VPoint.clat, VPoint.clon, &easting, &northing );
-    epix = easting * VPoint.view_scale_ppm;
-    npix = northing * VPoint.view_scale_ppm;
+    toSM( m_FullExtent.SLAT, m_FullExtent.WLON, VPoint.lat(), VPoint.lon(), &easting, &northing );
+    epix = easting * VPoint.viewScalePPM();
+    npix = northing * VPoint.viewScalePPM();
 
-    rxl = (int) round((VPoint.pix_width / 2) + epix);
-    ryb = (int) round((VPoint.pix_height / 2) - npix);
+    rxl = (int) round((VPoint.pixWidth() / 2) + epix);
+    ryb = (int) round((VPoint.pixHeight() / 2) - npix);
 
-    toSM( m_FullExtent.NLAT, m_FullExtent.ELON, VPoint.clat, VPoint.clon, &easting, &northing );
-    epix = easting * VPoint.view_scale_ppm;
-    npix = northing * VPoint.view_scale_ppm;
+    toSM( m_FullExtent.NLAT, m_FullExtent.ELON, VPoint.lat(), VPoint.lon(), &easting, &northing );
+    epix = easting * VPoint.viewScalePPM();
+    npix = northing * VPoint.viewScalePPM();
 
-    rxr = (int) round((VPoint.pix_width / 2) + epix);
-    ryt = (int) round((VPoint.pix_height / 2) - npix);
+    rxr = (int) round((VPoint.pixWidth() / 2) + epix);
+    ryt = (int) round((VPoint.pixHeight() / 2) - npix);
 
     pValidRegion->Clear();
     pValidRegion->Union( rxl, ryt, rxr - rxl, ryb - ryt );
@@ -551,21 +551,21 @@ void s57chart::GetPointPix( ObjRazRules *rzRules, zchxPointF *en, zchxPoint *r, 
 
 void s57chart::GetPixPoint( int pixx, int pixy, double *plat, double *plon, ViewPort *vpt )
 {
-    if(vpt->m_projection_type != PROJECTION_MERCATOR)
+    if(vpt->projectType() != PROJECTION_MERCATOR)
         printf("s57chart unhandled projection\n");
 
     //    Use Mercator estimator
-    int dx = pixx - ( vpt->pix_width / 2 );
-    int dy = ( vpt->pix_height / 2 ) - pixy;
+    int dx = pixx - ( vpt->pixWidth() / 2 );
+    int dy = ( vpt->pixHeight() / 2 ) - pixy;
 
-    double xp = ( dx * cos( vpt->skew ) ) - ( dy * sin( vpt->skew ) );
-    double yp = ( dy * cos( vpt->skew ) ) + ( dx * sin( vpt->skew ) );
+    double xp = ( dx * cos( vpt->skew() ) ) - ( dy * sin( vpt->skew() ) );
+    double yp = ( dy * cos( vpt->skew() ) ) + ( dx * sin( vpt->skew() ) );
 
-    double d_east = xp / vpt->view_scale_ppm;
-    double d_north = yp / vpt->view_scale_ppm;
+    double d_east = xp / vpt->viewScalePPM();
+    double d_north = yp / vpt->viewScalePPM();
 
     double slat, slon;
-    fromSM( d_east, d_north, vpt->clat, vpt->clon, &slat, &slon );
+    fromSM( d_east, d_north, vpt->lat(), vpt->lon(), &slat, &slon );
 
     *plat = slat;
     *plon = slon;
@@ -579,11 +579,11 @@ void s57chart::GetPixPoint( int pixx, int pixy, double *plat, double *plon, View
 void s57chart::SetVPParms( const ViewPort &vpt )
 {
     //  Set up local SM rendering constants
-    m_pixx_vp_center = vpt.pix_width / 2.0;
-    m_pixy_vp_center = vpt.pix_height / 2.0;
-    m_view_scale_ppm = vpt.view_scale_ppm;
+    m_pixx_vp_center = vpt.pixWidth() / 2.0;
+    m_pixy_vp_center = vpt.pixHeight() / 2.0;
+    m_view_scale_ppm = vpt.viewScalePPM();
 
-    toSM( vpt.clat, vpt.clon, ref_lat, ref_lon, &m_easting_vp_center, &m_northing_vp_center );
+    toSM( vpt.lat(), vpt.lon(), ref_lat, ref_lon, &m_easting_vp_center, &m_northing_vp_center );
 
     vp_transform.easting_vp_center = m_easting_vp_center;
     vp_transform.northing_vp_center = m_northing_vp_center;
@@ -594,33 +594,33 @@ bool s57chart::AdjustVP( ViewPort &vp_last, ViewPort &vp_proposed )
     if( IsCacheValid() ) {
 
         //      If this viewpoint is same scale as last...
-        if( vp_last.view_scale_ppm == vp_proposed.view_scale_ppm ) {
+        if( vp_last.viewScalePPM() == vp_proposed.viewScalePPM() ) {
 
             double prev_easting_c, prev_northing_c;
-            toSM( vp_last.clat, vp_last.clon, ref_lat, ref_lon, &prev_easting_c, &prev_northing_c );
+            toSM( vp_last.lat(), vp_last.lon(), ref_lat, ref_lon, &prev_easting_c, &prev_northing_c );
 
             double easting_c, northing_c;
-            toSM( vp_proposed.clat, vp_proposed.clon, ref_lat, ref_lon, &easting_c, &northing_c );
+            toSM( vp_proposed.lat(), vp_proposed.lon(), ref_lat, ref_lon, &easting_c, &northing_c );
 
             //  then require this viewport to be exact integral pixel difference from last
-            //  adjusting clat/clat and SM accordingly
+            //  adjusting lat()/lat() and SM accordingly
 
-            double delta_pix_x = ( easting_c - prev_easting_c ) * vp_proposed.view_scale_ppm;
+            double delta_pix_x = ( easting_c - prev_easting_c ) * vp_proposed.viewScalePPM();
             int dpix_x = (int) round ( delta_pix_x );
             double dpx = dpix_x;
 
-            double delta_pix_y = ( northing_c - prev_northing_c ) * vp_proposed.view_scale_ppm;
+            double delta_pix_y = ( northing_c - prev_northing_c ) * vp_proposed.viewScalePPM();
             int dpix_y = (int) round ( delta_pix_y );
             double dpy = dpix_y;
 
-            double c_east_d = ( dpx / vp_proposed.view_scale_ppm ) + prev_easting_c;
-            double c_north_d = ( dpy / vp_proposed.view_scale_ppm ) + prev_northing_c;
+            double c_east_d = ( dpx / vp_proposed.viewScalePPM() ) + prev_easting_c;
+            double c_north_d = ( dpy / vp_proposed.viewScalePPM() ) + prev_northing_c;
 
             double xlat, xlon;
             fromSM( c_east_d, c_north_d, ref_lat, ref_lon, &xlat, &xlon );
 
-            vp_proposed.clon = xlon;
-            vp_proposed.clat = xlat;
+            vp_proposed.setLon(xlon);
+            vp_proposed.setLat(xlat);
 
             return true;
         }
@@ -633,13 +633,13 @@ bool s57chart::AdjustVP( ViewPort &vp_last, ViewPort &vp_proposed )
  bool s57chart::IsRenderDelta(ViewPort &vp_last, ViewPort &vp_proposed)
  {
  double last_center_easting, last_center_northing, this_center_easting, this_center_northing;
- toSM ( vp_proposed.clat, vp_proposed.clon, ref_lat, ref_lon, &this_center_easting, &this_center_northing );
- toSM ( vp_last.clat,     vp_last.clon,     ref_lat, ref_lon, &last_center_easting, &last_center_northing );
+ toSM ( vp_proposed.lat(), vp_proposed.lon(), ref_lat, ref_lon, &this_center_easting, &this_center_northing );
+ toSM ( vp_last.lat(),     vp_last.lon(),     ref_lat, ref_lon, &last_center_easting, &last_center_northing );
 
- int dx = (int)round((last_center_easting  - this_center_easting)  * vp_proposed.view_scale_ppm);
- int dy = (int)round((last_center_northing - this_center_northing) * vp_proposed.view_scale_ppm);
+ int dx = (int)round((last_center_easting  - this_center_easting)  * vp_proposed.viewScalePPM());
+ int dy = (int)round((last_center_northing - this_center_northing) * vp_proposed.viewScalePPM());
 
- return((dx !=  0) || (dy != 0) || !(IsCacheValid()) || (vp_proposed.view_scale_ppm != vp_last.view_scale_ppm));
+ return((dx !=  0) || (dy != 0) || !(IsCacheValid()) || (vp_proposed.viewScalePPM() != vp_last.viewScalePPM()));
  }
  */
 
@@ -1531,7 +1531,7 @@ bool s57chart::DoRenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint,
 
     }
 
-    if( VPoint.view_scale_ppm != m_last_vp.view_scale_ppm ) {
+    if( VPoint.viewScalePPM() != m_last_vp.viewScalePPM() ) {
         ResetPointBBoxes( m_last_vp, VPoint );
     }
 
@@ -1820,7 +1820,7 @@ bool s57chart::DoRenderRegionViewOnDC( QPainter* dc, const ViewPort& VPoint,
         SetSafetyContour();
     }
 
-    if( VPoint.view_scale_ppm != m_last_vp.view_scale_ppm ) {
+    if( VPoint.viewScalePPM() != m_last_vp.viewScalePPM() ) {
         ResetPointBBoxes( m_last_vp, VPoint );
     }
 
@@ -1828,19 +1828,19 @@ bool s57chart::DoRenderRegionViewOnDC( QPainter* dc, const ViewPort& VPoint,
 
     bool bnew_view = DoRenderViewOnDC( dc, VPoint, DC_RENDER_ONLY, force_new_view );
 
-    //    If quilting, we need to return a cloned bitmap instead of the original golden item
+    //    If quilting, we need to return a lon()ed bitmap instead of the original golden item
     if( VPoint.b_quilt ) {
-        if( m_pCloneBM ) {
-            if( ( m_pCloneBM->GetWidth() != VPoint.pix_width )
-                    || ( m_pCloneBM->GetHeight() != VPoint.pix_height ) ) {
-                m_pCloneBM.reset();
+        if( m_plon()eBM ) {
+            if( ( m_plon()eBM->GetWidth() != VPoint.pixWidth() )
+                    || ( m_plon()eBM->GetHeight() != VPoint.pixHeight() ) ) {
+                m_plon()eBM.reset();
             }
         }
-        if( nullptr == m_pCloneBM )
-            m_pCloneBM.reset(new wxBitmap( VPoint.pix_width, VPoint.pix_height, -1 ));
+        if( nullptr == m_plon()eBM )
+            m_plon()eBM.reset(new wxBitmap( VPoint.pixWidth(), VPoint.pixHeight(), -1 ));
 
-        wxMemoryDC dc_clone;
-        dc_clone.SelectObject( *m_pCloneBM );
+        wxMemoryDC dc_lon()e;
+        dc_lon()e.SelectObject( *m_plon()eBM );
 
 #ifdef ocpnUSE_DIBSECTION
         ocpnMemDC memdc, dc_org;
@@ -1854,11 +1854,11 @@ bool s57chart::DoRenderRegionViewOnDC( QPainter* dc, const ViewPort& VPoint,
         OCPNRegionIterator upd( Region ); // get the requested rect list
         while( upd.HaveRects() ) {
             wxRect rect = upd.GetRect();
-            dc_clone.Blit( rect.x, rect.y, rect.width, rect.height, &dc_org, rect.x, rect.y );
+            dc_lon()e.Blit( rect.x, rect.y, rect.width, rect.height, &dc_org, rect.x, rect.y );
             upd.NextRect();
         }
 
-        dc_clone.SelectObject( wxNullBitmap );
+        dc_lon()e.SelectObject( wxNullBitmap );
         dc_org.SelectObject( wxNullBitmap );
 
         //    Create a mask
@@ -1870,10 +1870,10 @@ bool s57chart::DoRenderRegionViewOnDC( QPainter* dc, const ViewPort& VPoint,
             nodat_sub = wxColour( nodat.Blue(), nodat.Green(), nodat.Red() );
 #endif
             // Mask is owned by the bitmap.
-            m_pCloneBM->SetMask( new wxMask( *m_pCloneBM, nodat_sub ) );
+            m_plon()eBM->SetMask( new wxMask( *m_plon()eBM, nodat_sub ) );
         }
 
-        dc.SelectObject( *m_pCloneBM );
+        dc.SelectObject( *m_plon()eBM );
     } else
         pDIB->SelectIntoDC( dc );
 
@@ -1930,12 +1930,12 @@ bool s57chart::DoRenderViewOnDC( QPainter* dc, const ViewPort& VPoint, RenderTyp
     if( ps52plib->GetPLIBColorScheme() != m_lastColorScheme ) bReallyNew = true;
     m_lastColorScheme = ps52plib->GetPLIBColorScheme();
 
-    if( VPoint.view_scale_ppm != m_last_vp.view_scale_ppm ) bReallyNew = true;
+    if( VPoint.viewScalePPM() != m_last_vp.viewScalePPM() ) bReallyNew = true;
 
     //      If the scale is very small, do not use the cache to avoid harmonic difficulties...
     if( VPoint.chart_scale > 1e8 ) bReallyNew = true;
 
-    wxRect dest( 0, 0, VPoint.pix_width, VPoint.pix_height );
+    wxRect dest( 0, 0, VPoint.pixWidth(), VPoint.pixHeight() );
     if( m_last_vprect != dest ) bReallyNew = true;
     m_last_vprect = dest;
 
@@ -1952,30 +1952,30 @@ bool s57chart::DoRenderViewOnDC( QPainter* dc, const ViewPort& VPoint, RenderTyp
 
     //      Calculate the desired rectangle in the last cached image space
     if( m_last_vp.IsValid() ) {
-        easting_ul = m_easting_vp_center - ( ( VPoint.pix_width / 2 ) / m_view_scale_ppm );
-        northing_ul = m_northing_vp_center + ( ( VPoint.pix_height / 2 ) / m_view_scale_ppm );
-        easting_lr = easting_ul + ( VPoint.pix_width / m_view_scale_ppm );
-        northing_lr = northing_ul - ( VPoint.pix_height / m_view_scale_ppm );
+        easting_ul = m_easting_vp_center - ( ( VPoint.pixWidth() / 2 ) / m_viewScalePPM() );
+        northing_ul = m_northing_vp_center + ( ( VPoint.pixHeight() / 2 ) / m_viewScalePPM() );
+        easting_lr = easting_ul + ( VPoint.pixWidth() / m_viewScalePPM() );
+        northing_lr = northing_ul - ( VPoint.pixHeight() / m_viewScalePPM() );
 
         double last_easting_vp_center, last_northing_vp_center;
-        toSM( m_last_vp.clat, m_last_vp.clon, ref_lat, ref_lon, &last_easting_vp_center,
+        toSM( m_last_vp.lat(), m_last_vp.lon(), ref_lat, ref_lon, &last_easting_vp_center,
               &last_northing_vp_center );
 
         prev_easting_ul = last_easting_vp_center
-                - ( ( m_last_vp.pix_width / 2 ) / m_view_scale_ppm );
+                - ( ( m_last_vp.pixWidth() / 2 ) / m_viewScalePPM() );
         prev_northing_ul = last_northing_vp_center
-                + ( ( m_last_vp.pix_height / 2 ) / m_view_scale_ppm );
-        prev_easting_lr = easting_ul + ( m_last_vp.pix_width / m_view_scale_ppm );
-        prev_northing_lr = northing_ul - ( m_last_vp.pix_height / m_view_scale_ppm );
+                + ( ( m_last_vp.pixHeight() / 2 ) / m_viewScalePPM() );
+        prev_easting_lr = easting_ul + ( m_last_vp.pixWidth() / m_viewScalePPM() );
+        prev_northing_lr = northing_ul - ( m_last_vp.pixHeight() / m_viewScalePPM() );
 
-        double dx = ( easting_ul - prev_easting_ul ) * m_view_scale_ppm;
-        double dy = ( prev_northing_ul - northing_ul ) * m_view_scale_ppm;
+        double dx = ( easting_ul - prev_easting_ul ) * m_viewScalePPM();
+        double dy = ( prev_northing_ul - northing_ul ) * m_viewScalePPM();
 
-        rul.x = (int) round((easting_ul - prev_easting_ul) * m_view_scale_ppm);
-        rul.y = (int) round((prev_northing_ul - northing_ul) * m_view_scale_ppm);
+        rul.x = (int) round((easting_ul - prev_easting_ul) * m_viewScalePPM());
+        rul.y = (int) round((prev_northing_ul - northing_ul) * m_viewScalePPM());
 
-        rlr.x = (int) round((easting_lr - prev_easting_ul) * m_view_scale_ppm);
-        rlr.y = (int) round((prev_northing_ul - northing_lr) * m_view_scale_ppm);
+        rlr.x = (int) round((easting_lr - prev_easting_ul) * m_viewScalePPM());
+        rlr.y = (int) round((prev_northing_ul - northing_lr) * m_viewScalePPM());
 
         if( ( fabs( dx - wxRound( dx ) ) > 1e-5 ) || ( fabs( dy - wxRound( dy ) ) > 1e-5 ) ) {
             if( g_bDebugS57 ) printf(
@@ -2003,7 +2003,7 @@ bool s57chart::DoRenderViewOnDC( QPainter* dc, const ViewPort& VPoint, RenderTyp
 
     //      Using regions, calculate re-usable area of pDIB
 
-    OCPNRegion rgn_last( 0, 0, VPoint.pix_width, VPoint.pix_height );
+    OCPNRegion rgn_last( 0, 0, VPoint.pixWidth(), VPoint.pixHeight() );
     OCPNRegion rgn_new( rul.x, rul.y, rlr.x - rul.x, rlr.y - rul.y );
     rgn_last.Intersect( rgn_new );            // intersection is reusable portion
 
@@ -2029,7 +2029,7 @@ bool s57chart::DoRenderViewOnDC( QPainter* dc, const ViewPort& VPoint, RenderTyp
         pDIB->SelectIntoDC( dc_last );
 
         ocpnMemDC dc_new;
-        PixelCache *pDIBNew = new PixelCache( VPoint.pix_width, VPoint.pix_height, BPP );
+        PixelCache *pDIBNew = new PixelCache( VPoint.pixWidth(), VPoint.pixHeight(), BPP );
         pDIBNew->SelectIntoDC( dc_new );
 
         //        printf("reuse blit %d %d %d %d %d %d\n",desx, desy, wu, hu,  srcx, srcy);
@@ -2037,7 +2037,7 @@ bool s57chart::DoRenderViewOnDC( QPainter* dc, const ViewPort& VPoint, RenderTyp
 
         //        Ask the plib to adjust the persistent text rectangle list for this canvas shift
         //        This ensures that, on pans, the list stays in registration with the new text renders to come
-        ps52plib->AdjustTextList( desx - srcx, desy - srcy, VPoint.pix_width, VPoint.pix_height );
+        ps52plib->AdjustTextList( desx - srcx, desy - srcy, VPoint.pixWidth(), VPoint.pixHeight() );
 
         dc_new.SelectObject( wxNullBitmap );
         dc_last.SelectObject( wxNullBitmap );
@@ -2049,7 +2049,7 @@ bool s57chart::DoRenderViewOnDC( QPainter* dc, const ViewPort& VPoint, RenderTyp
 
         pDIB->SelectIntoDC( dc );
 
-        OCPNRegion rgn_delta( 0, 0, VPoint.pix_width, VPoint.pix_height );
+        OCPNRegion rgn_delta( 0, 0, VPoint.pixWidth(), VPoint.pixHeight() );
         OCPNRegion rgn_reused( desx, desy, wu, hu );
         rgn_delta.Subtract( rgn_reused );
 
@@ -2062,15 +2062,15 @@ bool s57chart::DoRenderViewOnDC( QPainter* dc, const ViewPort& VPoint, RenderTyp
             ViewPort temp_vp = VPoint;
             double temp_lon_left, temp_lat_bot, temp_lon_right, temp_lat_top;
 
-            double temp_northing_ul = prev_northing_ul - ( rul.y / m_view_scale_ppm )
-                    - ( rect.y / m_view_scale_ppm );
-            double temp_easting_ul = prev_easting_ul + ( rul.x / m_view_scale_ppm )
-                    + ( rect.x / m_view_scale_ppm );
+            double temp_northing_ul = prev_northing_ul - ( rul.y / m_viewScalePPM() )
+                    - ( rect.y / m_viewScalePPM() );
+            double temp_easting_ul = prev_easting_ul + ( rul.x / m_viewScalePPM() )
+                    + ( rect.x / m_viewScalePPM() );
             fromSM( temp_easting_ul, temp_northing_ul, ref_lat, ref_lon, &temp_lat_top,
                     &temp_lon_left );
 
-            double temp_northing_lr = temp_northing_ul - ( rect.height / m_view_scale_ppm );
-            double temp_easting_lr = temp_easting_ul + ( rect.width / m_view_scale_ppm );
+            double temp_northing_lr = temp_northing_ul - ( rect.height / m_viewScalePPM() );
+            double temp_easting_lr = temp_easting_ul + ( rect.width / m_viewScalePPM() );
             fromSM( temp_easting_lr, temp_northing_lr, ref_lat, ref_lon, &temp_lat_bot,
                     &temp_lon_right );
 
@@ -2101,9 +2101,9 @@ bool s57chart::DoRenderViewOnDC( QPainter* dc, const ViewPort& VPoint, RenderTyp
     }
 
     else if( bNewVP || (nullptr == pDIB )) {
-        pDIB.reset(new PixelCache( VPoint.pix_width, VPoint.pix_height, ZCHXBPP ));     // destination
+        pDIB.reset(new PixelCache( VPoint.pixWidth(), VPoint.pixHeight(), ZCHXBPP ));     // destination
 
-        wxRect full_rect( 0, 0, VPoint.pix_width, VPoint.pix_height );
+        wxRect full_rect( 0, 0, VPoint.pixWidth(), VPoint.pixHeight() );
         pDIB->SelectIntoDC( dc );
 
         //        Clear the text declutter list
@@ -2846,25 +2846,25 @@ bool s57chart::BuildThumbnail( const QString &bmpname )
     //      Set up a private ViewPort
     ViewPort vp;
 
-    vp.clon = ( m_FullExtent.ELON + m_FullExtent.WLON ) / 2.;
-    vp.clat = ( m_FullExtent.NLAT + m_FullExtent.SLAT ) / 2.;
+    vp.setLon((m_FullExtent.ELON + m_FullExtent.WLON ) / 2.);
+    vp.setLat((m_FullExtent.NLAT + m_FullExtent.SLAT ) / 2.);
 
     float ext_max =
             fmax((m_FullExtent.NLAT - m_FullExtent.SLAT), (m_FullExtent.ELON - m_FullExtent.WLON));
 
-    vp.view_scale_ppm = ( S57_THUMB_SIZE / ext_max ) / ( 1852 * 60 );
+    vp.setViewScalePPM((S57_THUMB_SIZE / ext_max ) / ( 1852 * 60 ));
 
-    vp.pix_height = S57_THUMB_SIZE;
-    vp.pix_width = S57_THUMB_SIZE;
+    vp.setPixHeight(S57_THUMB_SIZE);
+    vp.setPixWidth(S57_THUMB_SIZE);
 
-    vp.m_projection_type = PROJECTION_MERCATOR;
+    vp.setProjectionType( PROJECTION_MERCATOR );
 
-    vp.GetBBox().Set( m_FullExtent.SLAT, m_FullExtent.WLON,
+    vp.getBBOXPtr()->Set( m_FullExtent.SLAT, m_FullExtent.WLON,
                       m_FullExtent.NLAT, m_FullExtent.ELON );
 
-    vp.chart_scale = 10000000 - 1;
-    vp.ref_scale = vp.chart_scale;
-    vp.Validate();
+    vp.setChartScale(10000000 - 1);
+    vp.setRefScale(vp.chartScale());
+    vp.validate();
 
     // cause a clean new render
     pDIB.reset();
@@ -2959,17 +2959,17 @@ bool s57chart::BuildThumbnail( const QString &bmpname )
     //       delete psave_viz;
     free( psave_viz );
 
-    //      Clone pDIB into pThumbData;
-    wxBitmap bmp( vp.pix_width, vp.pix_height/*,  ZCHXBPP*/);
+    //      lon()e pDIB into pThumbData;
+    wxBitmap bmp( vp.pixWidth(), vp.pixHeight()/*,  ZCHXBPP*/);
 
-    wxMemoryDC dc_clone;
-    dc_clone.SelectObject( bmp );
+    wxMemoryDC dc_lon()e;
+    dc_lon()e.SelectObject( bmp );
 
     pDIB->SelectIntoDC( dc_org );
 
-    dc_clone.Blit( 0, 0, vp.pix_width, vp.pix_height, (wxDC *) &dc_org, 0, 0 );
+    dc_lon()e.Blit( 0, 0, vp.pixWidth(), vp.pixHeight(), (wxDC *) &dc_org, 0, 0 );
 
-    dc_clone.SelectObject( wxNullBitmap );
+    dc_lon()e.SelectObject( wxNullBitmap );
     dc_org.SelectObject( wxNullBitmap );
 
     //   Save the file
@@ -4189,7 +4189,7 @@ void s57chart::ResetPointBBoxes( const ViewPort &vp_last, const ViewPort &vp_thi
     ObjRazRules *top;
     ObjRazRules *nxx;
 
-    double d = vp_last.view_scale_ppm / vp_this.view_scale_ppm;
+    double d = vp_last.viewScalePPM() / vp_this.viewScalePPM();
 
     for( int i = 0; i < PRIO_NUM; ++i ) {
         for( int j = 0; j < 2; ++j ) {
@@ -5812,8 +5812,8 @@ void s57_DrawExtendedLightSectors( ocpnDC& dc, ViewPort& viewport, std::vector<s
             rangePx /= 3.0;
             if( rangeScale == 0.0 ) {
                 rangeScale = 1.0;
-                if( rangePx > viewport.pix_height / 3 ) {
-                    rangeScale *= (viewport.pix_height / 3) / rangePx;
+                if( rangePx > viewport.pixHeight() / 3 ) {
+                    rangeScale *= (viewport.pixHeight() / 3) / rangePx;
                 }
             }
 
@@ -5825,8 +5825,8 @@ void s57_DrawExtendedLightSectors( ocpnDC& dc, ViewPort& viewport, std::vector<s
             dc.SetPen(arcpen );
 
             float angle1, angle2;
-            angle1 = -(sectorlegs[i].sector2 + 90.0) - viewport.rotation * 180.0 / PI;
-            angle2 = -(sectorlegs[i].sector1 + 90.0) - viewport.rotation * 180.0 / PI;
+            angle1 = -(sectorlegs[i].sector2 + 90.0) - viewport.rotation() * 180.0 / PI;
+            angle2 = -(sectorlegs[i].sector1 + 90.0) - viewport.rotation() * 180.0 / PI;
             if( angle1 > angle2 ) {
                 angle2 += 360.0;
             }
@@ -5947,7 +5947,7 @@ bool s57_CheckExtendedLightSectors( ChartCanvas *cc, int mx, int my, ViewPort& v
     if( /*target_plugin_chart || */Chs57  )
     {
         // Go get the array of all objects at the cursor lat/lon
-        float selectRadius = 16 / ( viewport.view_scale_ppm * 1852 * 60 );
+        float selectRadius = 16 / ( viewport.viewScalePPM() * 1852 * 60 );
 
         ListOfObjRazRules* rule_list = NULL;
         //        ListOfPI_S57Obj* pi_rule_list = NULL;

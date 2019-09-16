@@ -641,17 +641,17 @@ void glTexFactory::PrepareTiles(const ViewPort &vp, bool use_norm_vp, ChartBase 
       return;
 
     // detect changing north/south polar
-    if(vp.m_projection_type == PROJECTION_POLAR) {
-        bool north = vp.clat > 0;
+    if(vp.projectType() == PROJECTION_POLAR) {
+        bool north = vp.lat() > 0;
         if(m_north != north)
             m_prepared_projection_type = 0;
         m_north = north;
     }
 
-    if(vp.m_projection_type == m_prepared_projection_type)
+    if(vp.projectType() == m_prepared_projection_type)
         return;
 
-    m_prepared_projection_type = vp.m_projection_type;
+    m_prepared_projection_type = vp.projectType();
 
     double native_scale;
     
@@ -670,7 +670,7 @@ void glTexFactory::PrepareTiles(const ViewPort &vp, bool use_norm_vp, ChartBase 
     // This is a very simplistic algorithm to determine split count, could be greatly improved
 
     double xsplits, ysplits;
-    switch(vp.m_projection_type) {
+    switch(vp.projectType()) {
     case PROJECTION_POLAR:
     case PROJECTION_STEREOGRAPHIC:
     case PROJECTION_ORTHOGRAPHIC:
@@ -680,7 +680,7 @@ void glTexFactory::PrepareTiles(const ViewPort &vp, bool use_norm_vp, ChartBase 
 //        xsplits /= (1 << base_level); // split less zoomed out
         
         // split more near poles
-        if(vp.m_projection_type == PROJECTION_ORTHOGRAPHIC) {
+        if(vp.projectType() == PROJECTION_ORTHOGRAPHIC) {
             Extent e;
             pChartBSB->GetChartExtent(&e);
             xsplits = xsplits * qMax(fabsf(e.NLAT), fabsf(e.SLAT)) / 90;

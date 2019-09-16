@@ -200,10 +200,10 @@ public slots:
       void SetupCanvasQuiltMode( void );
       void ApplyCanvasConfig(canvasConfig *pcc);
       
-      void SetVPRotation(double angle){ VPoint.rotation = angle; }
-      double GetVPRotation(void) { return GetVP().rotation; }
-      double GetVPSkew(void) { return GetVP().skew; }
-      double GetVPTilt(void) { return GetVP().tilt; }
+      void SetVPRotation(double angle){ GetVP().setRotation(angle); }
+      double GetVPRotation(void) { return GetVP().rotation(); }
+      double GetVPSkew(void) { return GetVP().skew(); }
+      double GetVPTilt(void) { return GetVP().tilt(); }
       void ClearbFollow(void);
       void SetbFollow(void);
       void TogglebFollow( void );
@@ -244,8 +244,8 @@ public slots:
       //    Accessors
       int GetCanvasWidth(){ return m_canvas_width;}
       int GetCanvasHeight(){ return m_canvas_height;}
-      float GetVPScale(){return GetVP().view_scale_ppm;}
-      float GetVPChartScale(){return GetVP().chart_scale;}
+      float GetVPScale(){return GetVP().viewScalePPM();}
+      float GetVPChartScale(){return GetVP().chartScale();}
       double GetCanvasScaleFactor(){return m_canvas_scale_factor;}
       double GetCanvasTrueScale(){return m_true_scale_ppm;}
       double GetAbsoluteMinScalePpm(){ return m_absolute_min_scale_ppm; }
