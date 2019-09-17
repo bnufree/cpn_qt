@@ -304,37 +304,6 @@ QDialog                *g_pcurtain;
 // Define a constructor for my canvas
 ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
 {
-#if 0
-    /开始初始化地图数据
-        qDebug()<<"start init db data now";
-        pInit_Chart_Dir = new QString(zchxFuncUtil::getDataDir());
-        qDebug()<<"init chart dir:"<<pInit_Chart_Dir;
-        g_pGroupArray = new ChartGroupArray;
-        //获取数据文件
-        ChartListFileName = QString("%1/CHRTLIST.DAT").arg(zchxFuncUtil::getDataDir());
-        qDebug()<<"chart list file name:"<<ChartListFileName;
-        //      Establish the GSHHS Dataset location
-        gDefaultWorldMapLocation = QString("%1/gshhs/").arg(zchxFuncUtil::getDataDir());
-        qDebug()<<"default world map location:"<<gDefaultWorldMapLocation;
-        if( gWorldMapLocation.isEmpty() ) {
-            qDebug()<<"word map location is empty, reset to default.";
-            gWorldMapLocation = gDefaultWorldMapLocation;
-        }
-        qDebug()<<"world map location:"<<gWorldMapLocation;
-        //   Build the initial chart dir array
-        ArrayOfCDI ChartDirArray;
-        ZCHX_CFG_INS->LoadChartDirArray( ChartDirArray );
-
-        if( !ChartDirArray.count() )
-        {
-            if(QFile::exists(ChartListFileName )) QFile::remove(ChartListFileName );
-        }
-
-        ChartData = new ChartDB( );
-        if (!ChartData->LoadBinary(ChartListFileName, ChartDirArray)) {
-            g_bNeedDBUpdate = true;
-        }
-#endif
     parent_frame = ( zchxMapMainWindow * ) frame;       // save a pointer to parent
     m_canvasIndex = canvasIndex;
     gMainCanvas = this;
@@ -356,7 +325,7 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     m_bAppendingRoute = false;          // was true in MSW, why??
     pThumbDIBShow = NULL;
     m_bzooming = false;
-    m_b_paint_enable = true;
+    m_b_paint_enable = false;
     m_routeState = 0;
     
     pss_overlay_bmp = NULL;
@@ -424,112 +393,194 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     SetQuiltMode(true);
     
     SetupGlCanvas( );
-    /*
-#ifdef ocpnUSE_GL
-    if ( !g_bdisable_opengl )
-    {
-        if(g_bopengl){
-            ZCHX_LOGMSG( _T("Creating glChartCanvas") );
-            m_glcc = new glChartCanvas(this);
-
-        // We use one context for all GL windows, so that textures etc will be automatically shared
-            if(IsPrimaryCanvas()){
-                QGLContext *pctx = new QGLContext(m_glcc);
-                m_glcc->SetContext(pctx);
-                g_pGLcontext = pctx;                // Save a copy of the common context
-            }
-            else{
-#ifdef __WXOSX__
-                m_glcc->SetContext(new QGLContext(m_glcc, g_pGLcontext));
-#else
-                m_glcc->SetContext(g_pGLcontext);   // If not primary canvas, use the saved common context
-#endif
-            }
-        }
-    }
-#endif
-*/
     singleClickEventIsValid = false;
 
     //    Build the cursors
 
+
+    m_panx = m_pany = 0;
+    m_panspeed = 0;
+
+    m_curtrack_timer_msec = 10;
+
+    m_wheelzoom_stop_oneshot = 0;
+    m_last_wheel_dir = 0;
+    
+    m_rollover_popup_timer_msec = 20;
+    
+    m_b_rot_hidef = true;
+    
+    proute_bm = NULL;
+    m_prot_bm = NULL;
+
+    m_bCourseUp = false;
+    m_bLookAhead = false;
+    
+    // Set some benign initial values
+
+    m_cs = GLOBAL_COLOR_SCHEME_DAY;
+    VPoint.setLat(0);
+    VPoint.setLon(0);
+    VPoint.setViewScalePPM(1);
+    VPoint.invalidate();
+
+    m_canvas_scale_factor = 1.;
+
+    m_canvas_width = 1000;
+
+    m_overzoomTextWidth = 0;
+    m_overzoomTextHeight = 0;
+
+    //    Create the default world chart
+    pWorldBackgroundChart = new GSHHSChart;
+
+    //    Create the default depth unit emboss maps
+    m_pEM_Feet = NULL;
+    m_pEM_Meters = NULL;
+    m_pEM_Fathoms = NULL;
+
+
+    mDisplsyTimer = new QTimer(this);
+    mDisplsyTimer->setInterval(5000);
+    connect(mDisplsyTimer, SIGNAL(timeout()), this, SLOT(update()));
+//    mDisplsyTimer->start();
+//    setMouseTracking(true);
+    setFocusPolicy(Qt::ClickFocus);
+}
+
+void ChartCanvas::slotInitEcidsAsDelayed()
+{
+    //   Build the initial chart dir array
+    ArrayOfCDI ChartDirArray;
+    ZCHX_CFG_INS->LoadChartDirArray( ChartDirArray );
+
+    if( !ChartDirArray.count() )
+    {
+        if(QFile::exists(ChartListFileName )) QFile::remove(ChartListFileName );
+    }
+
+    if(!ChartData)  ChartData = new ChartDB( );
+    if (!ChartData->LoadBinary(ChartListFileName, ChartDirArray))
+    {
+        g_bNeedDBUpdate = true;
+    }
+    //  Verify any saved chart database startup index
+    if(g_restore_dbindex >= 0)
+    {
+        if(ChartData->GetChartTableEntries() == 0)
+        {
+            g_restore_dbindex = -1;
+        } else if(g_restore_dbindex > (ChartData->GetChartTableEntries()-1))
+        {
+            g_restore_dbindex = 0;
+        }
+    }
+
+    //  Apply the inital Group Array structure to the chart data base
+    ChartData->ApplyGroupArray( g_pGroupArray );
+    DoChartUpdate();
+    mEcdisWidget->ReloadVP();                  // once more, and good to go
+    OCPNPlatform::Initialize_4( );
+    mEcdisWidget->GetglCanvas()->setUpdateAvailable(true);
+    mEcdisWidget->startUpdate();
+}
+
+void ChartCanvas::initBeforeUpdateMap()
+{
+    gFrame = this;
+    g_Main_thread = QThread::currentThread();
+    g_Platform = new OCPNPlatform;
+    pInit_Chart_Dir = new QString();
+    g_pGroupArray = new ChartGroupArray;
+    ZCHX_CFG_INS->loadMyConfig();
+    g_Platform->applyExpertMode(g_bUIexpert);
+    g_StyleManager = new ocpnStyle::StyleManager();
+    g_StyleManager->SetStyle("MUI_flat");
+    if( !g_StyleManager->IsOK() ) {
+        QString logFile = QApplication::applicationDirPath() + QString("/log/opencpn.log");
+        QString msg = ("Failed to initialize the user interface. ");
+        msg.append("OpenCPN cannot start. ");
+        msg.append("The necessary configuration files were not found. ");
+        msg.append("See the log file at ").append(logFile).append(" for details.").append("\n\n");
+        QMessageBox::warning(0, "Failed to initialize the user interface. ", msg);
+        exit( EXIT_FAILURE );
+    }
+    if(g_useMUI){
+        ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
+        style->chartStatusWindowTransparent = true;
+    }
+
+    g_display_size_mm = fmax(100.0, g_Platform->GetDisplaySizeMM());
+    qDebug("Detected display size (horizontal): %d mm", (int) g_display_size_mm);
+    // User override....
+    if((g_config_display_size_mm > 0) &&(g_config_display_size_manual)){
+        g_display_size_mm = g_config_display_size_mm;
+        qDebug("Display size (horizontal) config override: %d mm", (int) g_display_size_mm);
+        g_Platform->SetDisplaySizeMM(g_display_size_mm);
+    }
+
+    // Instantiate and initialize the Config Manager
+//    ConfigMgr::Get();
+
+    //  Validate OpenGL functionality, if selected
+    g_bdisable_opengl = false;
+    if(g_bdisable_opengl) g_bopengl = false;
+    zchxFuncUtil::getMemoryStatus(&g_mem_total, &g_mem_initial);
+    if( 0 == g_memCacheLimit ) g_memCacheLimit = (int) ( g_mem_total * 0.5 );
+    g_memCacheLimit = fmin(g_memCacheLimit, 1024 * 1024); // math in kBytes, Max is 1 GB
+
+//      Establish location and name of chart database
+    ChartListFileName = ChartListFileName = QString("%1/CHRTLIST.DAT").arg(zchxFuncUtil::getDataDir());
+//      Establish guessed location of chart tree
+    if( pInit_Chart_Dir->isEmpty() )
+    {
+        pInit_Chart_Dir->append(zchxFuncUtil::getDataDir());
+    }
+
+//      Establish the GSHHS Dataset location
+    gDefaultWorldMapLocation = "gshhs";
+    gDefaultWorldMapLocation.insert(0, QString("%1/").arg(zchxFuncUtil::getDataDir()));
+//    gDefaultWorldMapLocation.Append( wxFileName::GetPathSeparator() );
+    if( gWorldMapLocation.isEmpty() || !(QDir(gWorldMapLocation).exists()) ) {
+        gWorldMapLocation = gDefaultWorldMapLocation;
+    }
+    qDebug()<<gWorldMapLocation<<gDefaultWorldMapLocation;
+    g_Platform->Initialize_2();
+    InitializeUserColors();
+    //  Do those platform specific initialization things that need gFrame
+    g_Platform->Initialize_3();
+
+
+    //  Clear the cache, and thus close all charts to avoid memory leaks
+    if(ChartData) ChartData->PurgeCache();
+
+    //更新视窗的配置
+    canvasConfig *config = new canvasConfig();
+    config->LoadFromLegacyConfig(ZCHX_CFG_INS);
+    config->canvas = mEcdisWidget;
+
+    // Verify that glCanvas is ready, if necessary
+    if(g_bopengl){
+        if(!mEcdisWidget->GetglCanvas())
+            mEcdisWidget->SetupGlCanvas();
+    }
+    config->iLat = 37.123456;
+    config->iLon = 127.123456;
+
+    mEcdisWidget->SetDisplaySizeMM(g_display_size_mm);
+
+    mEcdisWidget->ApplyCanvasConfig(config);
+
+    //            cc->SetToolbarPosition(wxPoint( g_maintoolbar_x, g_maintoolbar_y ));
+    mEcdisWidget->ConfigureChartBar();
+    mEcdisWidget->SetColorScheme( global_color_scheme );
+    mEcdisWidget->GetCompass()->SetScaleFactor(g_compass_scalefactor);
+    mEcdisWidget->SetShowGPS( true );
+}
+
+void ChartCanvas::buildStyle()
+{
     ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
-
-#if !defined(__WXMSW__) && !defined(__WXQT__)
-
-    QImage ICursorLeft = style->GetIcon( _T("left") ).ConvertToImage();
-    QImage ICursorRight = style->GetIcon( _T("right") ).ConvertToImage();
-    QImage ICursorUp = style->GetIcon( _T("up") ).ConvertToImage();
-    QImage ICursorDown = style->GetIcon( _T("down") ).ConvertToImage();
-    QImage ICursorPencil = style->GetIcon( _T("pencil") ).ConvertToImage();
-    QImage ICursorCross = style->GetIcon( _T("cross") ).ConvertToImage();
-
-    //#if wxCHECK_VERSION(2, 8, 12)
-    //#else
-    ICursorLeft.ConvertAlphaToMask(128);
-    ICursorRight.ConvertAlphaToMask(128);
-    ICursorUp.ConvertAlphaToMask(128);
-    ICursorDown.ConvertAlphaToMask(128);
-    ICursorPencil.ConvertAlphaToMask(10);
-    ICursorCross.ConvertAlphaToMask(10);
-    //#endif
-
-    if ( ICursorLeft.Ok() )
-    {
-        ICursorLeft.SetOption ( QImage_OPTION_CUR_HOTSPOT_X, 0 );
-        ICursorLeft.SetOption ( QImage_OPTION_CUR_HOTSPOT_Y, 15 );
-        pCursorLeft = new QCursor ( ICursorLeft );
-    }
-    else
-        pCursorLeft = new QCursor ( QCursor_ARROW );
-
-    if ( ICursorRight.Ok() )
-    {
-        ICursorRight.SetOption ( QImage_OPTION_CUR_HOTSPOT_X, 31 );
-        ICursorRight.SetOption ( QImage_OPTION_CUR_HOTSPOT_Y, 15 );
-        pCursorRight = new QCursor ( ICursorRight );
-    }
-    else
-        pCursorRight = new QCursor ( QCursor_ARROW );
-
-    if ( ICursorUp.Ok() )
-    {
-        ICursorUp.SetOption ( QImage_OPTION_CUR_HOTSPOT_X, 15 );
-        ICursorUp.SetOption ( QImage_OPTION_CUR_HOTSPOT_Y, 0 );
-        pCursorUp = new QCursor ( ICursorUp );
-    }
-    else
-        pCursorUp = new QCursor ( QCursor_ARROW );
-
-    if ( ICursorDown.Ok() )
-    {
-        ICursorDown.SetOption ( QImage_OPTION_CUR_HOTSPOT_X, 15 );
-        ICursorDown.SetOption ( QImage_OPTION_CUR_HOTSPOT_Y, 31 );
-        pCursorDown = new QCursor ( ICursorDown );
-    }
-    else
-        pCursorDown = new QCursor ( QCursor_ARROW );
-
-    if ( ICursorPencil.Ok() )
-    {
-        ICursorPencil.SetOption ( QImage_OPTION_CUR_HOTSPOT_X, 0 );
-        ICursorPencil.SetOption ( QImage_OPTION_CUR_HOTSPOT_Y, 16);
-        pCursorPencil = new QCursor ( ICursorPencil );
-    }
-    else
-        pCursorPencil = new QCursor ( QCursor_ARROW );
-
-    if ( ICursorCross.Ok() )
-    {
-        ICursorCross.SetOption ( QImage_OPTION_CUR_HOTSPOT_X, 13 );
-        ICursorCross.SetOption ( QImage_OPTION_CUR_HOTSPOT_Y, 12);
-        pCursorCross = new QCursor ( ICursorCross );
-    }
-    else
-        pCursorCross = new QCursor ( QCursor_ARROW );
-
-#else
-
     QImage ICursorLeft = style->GetIcon(("left") ).ConvertToImage();
     QImage ICursorRight = style->GetIcon( ("right") ).ConvertToImage();
     QImage ICursorUp = style->GetIcon( ("up") ).ConvertToImage();
@@ -579,52 +630,10 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     } else
         pCursorCross = new QCursor( Qt::ArrowCursor );
 
-#endif      // MSW, X11
     pCursorArrow = new QCursor( Qt::ArrowCursor );
     pPlugIn_Cursor = NULL;
 
     SetCursor( *pCursorArrow );
-
-    m_panx = m_pany = 0;
-    m_panspeed = 0;
-
-    m_curtrack_timer_msec = 10;
-
-    m_wheelzoom_stop_oneshot = 0;
-    m_last_wheel_dir = 0;
-    
-    m_rollover_popup_timer_msec = 20;
-    
-    m_b_rot_hidef = true;
-    
-    proute_bm = NULL;
-    m_prot_bm = NULL;
-
-    m_bCourseUp = false;
-    m_bLookAhead = false;
-    
-    // Set some benign initial values
-
-    m_cs = GLOBAL_COLOR_SCHEME_DAY;
-    VPoint.setLat(0);
-    VPoint.setLon(0);
-    VPoint.setViewScalePPM(1);
-    VPoint.invalidate();
-
-    m_canvas_scale_factor = 1.;
-
-    m_canvas_width = 1000;
-
-    m_overzoomTextWidth = 0;
-    m_overzoomTextHeight = 0;
-
-    //    Create the default world chart
-    pWorldBackgroundChart = new GSHHSChart;
-
-    //    Create the default depth unit emboss maps
-    m_pEM_Feet = NULL;
-    m_pEM_Meters = NULL;
-    m_pEM_Fathoms = NULL;
 
     CreateDepthUnitEmbossMaps( GLOBAL_COLOR_SCHEME_DAY );
 
@@ -640,14 +649,14 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
 
 
 //    m_pBrightPopup = NULL;
-    
+
 #ifdef ocpnUSE_GL
     if ( !g_bdisable_opengl )
         m_pQuilt->EnableHighDefinitionZoom( true );
-#endif    
+#endif
 
     m_pgridFont = FontMgr::Get().FindOrCreateFont( 8, "Arial", QFont::StyleNormal, QFont::Weight::Normal, false);
-    
+
     m_Piano = new Piano(this);
 
     m_bShowCompassWin = g_bShowCompassWin;
@@ -656,12 +665,8 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     m_Compass->SetScaleFactor(g_compass_scalefactor);
     m_Compass->Show(m_bShowCompassWin);
 
-    mDisplsyTimer = new QTimer(this);
-    mDisplsyTimer->setInterval(5000);
-    connect(mDisplsyTimer, SIGNAL(timeout()), this, SLOT(update()));
-//    mDisplsyTimer->start();
-//    setMouseTracking(true);
-    setFocusPolicy(Qt::ClickFocus);
+    m_b_paint_enable = true;
+
 }
 
 void ChartCanvas::startUpdate()
@@ -2653,7 +2658,7 @@ void ChartCanvas::ToggleCourseUp( )
 
     //DoCOGSet();
     UpdateGPSCompassStatusBox( true );
-    gFrame->DoChartUpdate();
+    DoCanvasUpdate();
 }
 
 bool ChartCanvas::DoCanvasCOGSet( double cog )
@@ -3485,7 +3490,7 @@ void ChartCanvas::DoRotateCanvas( double rotation )
 
     SetVPRotation( rotation );
     UpdateGPSCompassStatusBox( true );
-    parent_frame->UpdateRotationState( VPoint.rotation());
+    DoCanvasUpdate();
 }
 
 void ChartCanvas::DoRotateCanvasWithDegree(double rotation)
@@ -5194,6 +5199,8 @@ static void onSoundFinished( void* ptr )
 
 void ChartCanvas::resizeEvent(QResizeEvent * event )
 {
+    qDebug()<<"chart resize:"<<event->size();
+    return;
     m_canvas_width = event->size().width();
     m_canvas_height = event->size().height();
     //    Get some canvas metrics

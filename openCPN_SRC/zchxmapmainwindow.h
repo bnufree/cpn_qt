@@ -40,7 +40,6 @@ public:
     ColorScheme GetColorScheme();
     void ToggleColorScheme();
     bool DoChartUpdate( void );
-    void UpdateRotationState( double rotation );
     void SetChartUpdatePeriod();
     ChartCanvas *GetPrimaryCanvas();
 //    QWidget* getGlChartCanvas();
@@ -83,15 +82,15 @@ public slots:
     void    slotRotateDegree(double angle);
     void    slotRoateRad(double rad);
 private slots:
-    void    slotInitEcidsAsDelayed();
+//    void    slotInitEcidsAsDelayed();
     void    slotRotate();
 protected:
     void    resizeEvent(QResizeEvent* e);
 
 private:
     QAction* addCustomAction(QMenu* menu, const QString &text, const QObject *receiver, const char* slot, bool check = false, const QVariant& data = QVariant());
-    void     initBeforeCreateCanvas();
-    void     CreateCanvasLayout();
+//    void     initBeforeCreateCanvas();
+//    void     CreateCanvasLayout();
 private slots:
     void    slotOnFrameTimer1Out();
 

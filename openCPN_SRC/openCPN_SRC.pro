@@ -109,7 +109,8 @@ SOURCES += \
     ogrs57layer.cpp \
     CanvasOptions.cpp \
     glwidget.cpp \
-    CanvasConfig.cpp
+    CanvasConfig.cpp \
+    zchxmaploadworker.cpp
 
 
 
@@ -175,7 +176,8 @@ HEADERS += \
     CanvasOptions.h \
     glwidget.h \
     CanvasConfig.h \
-    chartbase.h
+    chartbase.h \
+    zchxmaploadworker.h
 
 FORMS += \
     zchxoptionsdlg.ui \

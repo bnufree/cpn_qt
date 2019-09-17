@@ -135,6 +135,10 @@ public:
       void Scroll(int dx, int dy);
       void SetAlertString( QString str){ m_alertString = str;}
       QString GetAlertString(){ return m_alertString; }
+private slots:
+      void buildStyle();
+      void initBeforeUpdateMap();
+      void slotInitEcidsAsDelayed();
 
 protected:
       //    Methods

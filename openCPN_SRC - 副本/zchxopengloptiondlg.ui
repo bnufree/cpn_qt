@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>zchxOpenGlOptionDlg</class>
+ <widget class="QDialog" name="zchxOpenGlOptionDlg">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>451</width>
+    <height>275</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>OpenGL Options</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" colspan="4">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Texture Settings</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Texture Cache</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Miscellaneous</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="4" colspan="2">
+    <widget class="QCheckBox" name="m_cbPolygonSmoothing">
+     <property name="text">
+      <string>Polygon Smoothing</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="4" colspan="2">
+    <widget class="QCheckBox" name="m_cbLineSmoothing">
+     <property name="text">
+      <string>Line Smoothing</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="4" colspan="2">
+    <widget class="QCheckBox" name="m_cbShowFPS">
+     <property name="text">
+      <string>Show FPS</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="4" colspan="3">
+    <widget class="QPushButton" name="btnRebuild">
+     <property name="text">
+      <string>Rebuild Texture Cache</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="4" colspan="3">
+    <widget class="QPushButton" name="btnClear">
+     <property name="text">
+      <string>Clear Texture Cache</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="4" colspan="2">
+    <widget class="QLabel" name="m_cacheSize">
+     <property name="text">
+      <string>Size:123M</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="4" colspan="3">
+    <widget class="QLabel" name="m_memorySize">
+     <property name="text">
+      <string>Texture Memory Size (MB)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="4">
+    <widget class="QPushButton" name="OK">
+     <property name="text">
+      <string>OK</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="4" colspan="3">
+    <widget class="QCheckBox" name="m_cbTextureCompression">
+     <property name="text">
+      <string>Texture Compression</string>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="7">
+    <widget class="QPushButton" name="Cancel">
+     <property name="text">
+      <string>Cancel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="7">
+    <widget class="QSpinBox" name="m_sTextureMemorySize">
+     <property name="minimum">
+      <number>1</number>
+     </property>
+     <property name="maximum">
+      <number>16384</number>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="4" colspan="4">
+    <widget class="QCheckBox" name="m_cbSoftwareGL">
+     <property name="text">
+      <string>Software OpenGL (restart OpenCPN)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="4" colspan="3">
+    <widget class="QCheckBox" name="m_cbUseAcceleratedPanning">
+     <property name="text">
+      <string>Use Accelerated Panning</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="4">
+    <widget class="QCheckBox" name="m_cbTextureCompressionCaching">
+     <property name="text">
+      <string>Texture Compression Caching</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
