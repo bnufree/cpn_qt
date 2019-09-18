@@ -62,7 +62,6 @@ extern bool    g_oz_vector_scale;
 extern float g_ChartScaleFactorExp;
 extern int g_chart_zoom_modifier_vector;
 extern zchxConfig*      g_config;
-extern OCPNPlatform*        g_Platform;
 
 
 float g_scaminScale;
@@ -132,9 +131,8 @@ const char *MyPLIBCSVGetField( const char * pszFilename, const char * pszKeyFiel
 QString GetS57AttributeDecode( QString& att, int ival )
 {
     QString ret_val = "";
-    if(!g_Platform) return ret_val;
     
-    QString s57data_dir = QString("%1/s57data").arg(g_Platform->GetDataDir());
+    QString s57data_dir = QString("%1/s57data").arg(zchxFuncUtil::getDataDir());
     if( !s57data_dir.length() ) return ret_val;
 
     //  Get the attribute code from the acronym
@@ -1137,7 +1135,7 @@ int s52plib::S52_load_Plib( const QString& PLib, bool b_forceLegacy )
         ( *_cond_sym )[index] = (Rule *) ( condTable[i].condInst );
     }
 
-    QString s57data_dir = g_Platform->GetDataDir();
+    QString s57data_dir = zchxFuncUtil::getDataDir();
     s57data_dir += "/s57data";
     
     QString oc_file( s57data_dir );

@@ -41,7 +41,6 @@
 
 //extern PlugInManager    *g_pi_manager;
 extern QString         gWorldMapLocation;
-extern OCPNPlatform*        g_Platform;
 
 static int s_dbVersion;                         //    Database version currently in use at runtime
 //  Needed for ChartTableEntry::GetChartType() only

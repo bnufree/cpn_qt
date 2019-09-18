@@ -12,7 +12,6 @@
 
 extern      zchxGLOptions                       g_GLOptions;
 extern      bool                                g_bGlExpert;
-extern      bool                                g_bOpenGL;
 /*extern*/      GLuint                              g_raster_format = GL_RGB;
 extern      bool                                g_bShowFPS;
 extern      zchxMapMainWindow                   *gFrame;
@@ -36,7 +35,7 @@ zchxOpenGlOptionDlg::zchxOpenGlOptionDlg(QWidget *parent) :
         ui->m_cbTextureCompression->setText(tr("Texture Compression with Caching"));
     }
     ui->btnRebuild->setEnabled(g_GLOptions.m_bTextureCompressionCaching);
-    if (!g_bOpenGL || g_raster_format == GL_RGB)
+    if (g_raster_format == GL_RGB)
     {
         ui->btnRebuild->setEnabled(false);
     }
@@ -144,7 +143,7 @@ void zchxOpenGlOptionDlg::OnButtonRebuild()
 
 void zchxOpenGlOptionDlg::OnButtonClear()
 {
-  if (g_bOpenGL && g_glTextureManager)
+  if (g_glTextureManager)
   {
       Qt::CursorShape old_shape = cursor().shape();
       //busy

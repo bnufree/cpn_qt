@@ -18,8 +18,6 @@ extern  bool            g_bShowMenuBar;
 extern  bool            g_bShowCompassWin;
 extern  bool            g_bShowChartBar;
 extern  double          g_display_size_mm;
-extern  double          g_config_display_size_mm;
-extern  bool            g_config_display_size_manual;
 extern  bool            g_bskew_comp;
 extern  bool            g_bresponsive;
 extern  bool            g_bAutoHideToolbar;
@@ -39,10 +37,8 @@ extern  int             g_ChartScaleFactor;
 extern  int             g_ShipScaleFactor;
 extern  float           g_ChartScaleFactorExp;
 extern  float           g_ShipScaleFactorExp;
-extern  bool            g_bopengl;
 extern  int             g_cm93_zoom_factor;
 extern  int             g_nDepthUnitDisplay;
-//extern OCPNPlatform     *g_Platform;
 extern s52plib          *ps52plib;
 extern  zchxMapMainWindow   *gFrame;
 extern  zchxGLOptions    g_GLOptions;
@@ -89,7 +85,7 @@ zchxOptionsDlg::zchxOptionsDlg(QWidget *parent) :
         }
         item->setData(Qt::UserRole, QVariant::fromValue(ChartDirArray[i]));
     }
-    ui->pOpenGL->setChecked(g_bopengl);
+    ui->pOpenGL->setChecked(true);
 
     //更新S52显示的obj对象
     if(!ps52plib) LoadS57();
@@ -135,7 +131,7 @@ void zchxOptionsDlg::on_bOpenGL_clicked()
             g_GLOptions.m_bTextureCompressionCaching = dlg->GetTextureCompression();
         }
 #if 0
-        if (g_bopengl && g_glTextureManager && g_GLOptions.m_bTextureCompression != dlg.GetTextureCompression()) {
+        if (g_glTextureManager && g_GLOptions.m_bTextureCompression != dlg.GetTextureCompression()) {
             // new g_GLoptions setting is needed in callees
             g_GLOptions.m_bTextureCompression = dlg.GetTextureCompression();
 
@@ -235,11 +231,6 @@ void zchxOptionsDlg::processApply(bool apply)
     g_bShowCompassWin = ui->pShowCompassWin->isChecked();
     g_bShowChartBar = ui->pShowChartBar->isChecked();
 
-    QString screenmm = ui->pScreenMM->text().trimmed();
-    long mm = screenmm.toLongLong();
-    g_config_display_size_mm = mm > 0 ? mm : -1;
-    g_config_display_size_manual = ui->pRBSizeManual->isChecked();
-    ;
 
     g_bskew_comp = ui->pSkewComp->isChecked();
     g_bresponsive = ui->pResponsive->isChecked();
@@ -267,8 +258,6 @@ void zchxOptionsDlg::processApply(bool apply)
     g_ChartScaleFactorExp = zchxFuncUtil::getChartScaleFactorExp(g_ChartScaleFactor);
     g_ShipScaleFactor = ui->m_pSlider_Ship_Factor->value();
     g_ShipScaleFactorExp = zchxFuncUtil::getChartScaleFactorExp(g_ShipScaleFactor);
-    if (g_bopengl != ui->pOpenGL->isChecked()) m_returnChanges |= GL_CHANGED;
-    g_bopengl = ui->pOpenGL->isChecked();
 
     g_cm93_zoom_factor = ui->m_pSlider_CM93_Zoom->value();
     g_nDepthUnitDisplay = ui->pDepthUnitSelect->currentData().toInt();

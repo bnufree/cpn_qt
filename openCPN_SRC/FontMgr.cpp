@@ -33,7 +33,6 @@
 
 
 extern QString g_locale;
-extern OCPNPlatform     *g_Platform;
 extern bool g_bresponsive;
 
 extern QString s_locale;
@@ -476,7 +475,7 @@ QFont FontMgr::getSacledFontDefaultSize(const QString &item, int default_size)
         //      Adjust font size to be no smaller than xx mm actual size
         double scaled_font_size = dFont.pointSize();
 
-        double points_per_mm  = zchxFuncUtil::getFontPointsperPixel() * g_Platform->GetDisplayDPmm();
+        double points_per_mm  = zchxFuncUtil::getFontPointsperPixel() * OCPNPlatform::instance()->GetDisplayDPmm();
         double min_scaled_font_size = 3 * points_per_mm;    // smaller than 3 mm is unreadable
         int nscaled_font_size = fmax( qRound(scaled_font_size), min_scaled_font_size );
 

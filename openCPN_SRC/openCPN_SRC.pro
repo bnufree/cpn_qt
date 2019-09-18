@@ -98,7 +98,6 @@ SOURCES += \
     pugixml.cpp \
     ocpndc.cpp \
     gshhs.cpp \
-    piano.cpp \
     compass.cpp \
     ChInfoWin.cpp \
     Osenc.cpp \
@@ -168,7 +167,6 @@ HEADERS += \
     pugixml.hpp \
     ocpndc.h \
     gshhs.h \
-    piano.h \
     compass.h \
     ChInfoWin.h \
     Osenc.h \

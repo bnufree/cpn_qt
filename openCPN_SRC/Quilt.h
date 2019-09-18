@@ -29,8 +29,6 @@
 #include "OCPNRegion.h"
 #include "chcanv.h"
 
-extern bool g_bopengl;
-
 struct ChartTableEntry;
 
 class QuiltPatch
@@ -150,9 +148,9 @@ public:
         m_zout_dbindex = -1;
 
         //  Quilting of skewed raster charts is allowed for OpenGL only
-        m_bquiltskew = g_bopengl;
+        m_bquiltskew = true;
         //  Quilting of different projections is allowed for OpenGL only
-        m_bquiltanyproj = g_bopengl;
+        m_bquiltanyproj = true;
     }
     void AdjustQuiltVP( ViewPort &vp_last, ViewPort &vp_proposed );
 

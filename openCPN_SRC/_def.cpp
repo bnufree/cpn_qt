@@ -12,7 +12,6 @@
 #include "OCPNPlatform.h"
 #include "chartdb.h"
 
- OCPNPlatform                   *g_Platform = NULL;
  zchxMapMainWindow              *gFrame = NULL;
 
  double                         g_ChartNotRenderScaleFactor;
@@ -28,7 +27,6 @@
  bool             g_bShowTrue, g_bShowMag;
  double           g_UserVar;
  bool             g_bShowStatusBar;
- bool             g_bUIexpert;
  bool             g_bFullscreen;
  int              g_nDepthUnitDisplay;
  QString         g_csv_locn;
@@ -48,8 +46,6 @@
  bool             g_bShowDepthUnits;
  bool             g_bAutoAnchorMark;
  bool             g_bskew_comp;
- bool             g_bopengl;
- bool             g_bdisable_opengl;
  bool             g_bSoftwareGL;
  bool             g_bShowFPS;
  bool             g_bsmoothpanzoom;
@@ -286,7 +282,6 @@ int                     g_navobjbackups;
  bool             g_bGarminHostUpload;
  QString         g_uploadConnection;
 
- ocpnStyle::StyleManager* g_StyleManager = NULL;
  QStringList    TideCurrentDataSet;
  QString         g_TCData_Dir;
 
@@ -308,8 +303,6 @@ int                     g_navobjbackups;
 
  bool             g_bAdvanceRouteWaypointOnArrivalOnly;
  double           g_display_size_mm;
- double           g_config_display_size_mm;
- bool             g_config_display_size_manual;
 
  float            g_selection_radius_mm = 2.0;
  float            g_selection_radius_touch_mm = 10.0;
@@ -358,7 +351,6 @@ bool                    g_bLayersLoaded;
  QThread                   *g_Main_thread = 0;
  float                     g_compass_scalefactor;
 int                Usercolortable_index;
-bool                g_bOpenGL = true;
 bool                                g_bGlExpert = false;
 float                     g_toolbar_scalefactor;
 bool                    g_bFirstRun;

@@ -49,8 +49,10 @@ extern QString getQtStyleSheet( void );
 
 class OCPNPlatform
 {
-public:    
+private:
     OCPNPlatform();
+public:
+    static OCPNPlatform* instance();
     ~OCPNPlatform();
 
     //获取核心数
@@ -71,8 +73,6 @@ public:
     
 
     void SetDefaultOptions( void );
-
-    void applyExpertMode(bool mode);
     
 //--------------------------------------------------------------------------
 //      Platform Display Support
@@ -97,11 +97,7 @@ public:
     double m_pt_per_pixel;
 //--------------------------------------------------------------------------
 //      Per-Platform file/directory support
-//--------------------------------------------------------------------------
-    QString GetAppDir();
-    QString GetDataDir();
-    QString GetPluginDir();
-    QString GetPathSeparator();
+//----------------------
     QString GetConfigFileName();
     QString GetSupplementalLicenseString();
     QString NormalizePath(const QString &full_path); //Adapt for portable use
@@ -116,6 +112,20 @@ public:
     bool IsGLCapable();
 private:
     void initSystemInfo();
+
+private:
+    static OCPNPlatform     *minstance;
+
+    class MGarbage
+    {
+    public:
+        ~MGarbage()
+        {
+            if (OCPNPlatform::minstance)
+                delete OCPNPlatform::minstance;
+        }
+    };
+    static MGarbage Garbage;
 
 private:
     bool        GetWindowsMonitorSize( int& width, int& height);

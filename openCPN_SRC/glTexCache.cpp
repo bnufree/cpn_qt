@@ -50,7 +50,6 @@
 #include "lz4/lz4.h"
 #include "lz4/lz4hc.h"
 
-extern bool g_bopengl;
 extern bool g_bDebugOGL;
 extern long g_tex_mem_used;
 extern int g_mipmap_max_level;

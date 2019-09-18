@@ -43,7 +43,6 @@ extern int g_chart_zoom_modifier;
 extern int g_chart_zoom_modifier_vector;
 extern bool g_fog_overzoom;
 extern double  g_overzoom_emphasis_base;
-extern bool g_bopengl;
 
 //      We define and use this one Macro in this module
 //      Reason:  some compilers refuse to inline "GetChartTableEntry()"
@@ -243,9 +242,9 @@ Quilt::Quilt( ChartCanvas *parent)
     m_zout_type = -1;
 
     //  Quilting of skewed raster charts is allowed for OpenGL only
-    m_bquiltskew = g_bopengl;
+    m_bquiltskew = true;
     //  Quilting of different projections is allowed for OpenGL only
-    m_bquiltanyproj = g_bopengl;
+    m_bquiltanyproj = true;
     m_extended_stack_array.clear();
 }
 
@@ -931,7 +930,7 @@ int Quilt::AdjustRefOnZoom( bool b_zin, ChartFamilyEnum family,  ChartTypeEnum t
     //  Since this rule is mainly for preservation of performance,
     //  we can also allow fullscreen reference chart selection if opengl is active
     
-    bool b_allow_fullscreen_ref = (family == CHART_FAMILY_VECTOR) || b_zin || g_bopengl;
+    bool b_allow_fullscreen_ref = (family == CHART_FAMILY_VECTOR) || b_zin || true;
 
     //  Walk the extended chart array, capturing data
     for(size_t i=0 ; i < m_extended_stack_array.size() ; i++){

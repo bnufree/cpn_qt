@@ -65,18 +65,15 @@ void appendOSDirSlash( QString* pString );
 //#endif
 
 
-extern OCPNPlatform              *g_Platform;
 extern bool                      g_bFirstRun;
 extern bool                      g_bUpgradeInProcess;
 
 extern int                       quitflag;
 extern zchxMapMainWindow                   *gFrame;
 
-//extern ocpnStyle::StyleManager* g_StyleManager;
 
 extern bool                      g_bshowToolbar;
 extern bool                      g_bBasicMenus;
-extern bool                      g_bUIexpert;
 
 extern bool                      g_bshowToolbar;
 extern bool                      g_bBasicMenus;
@@ -168,8 +165,6 @@ extern int                       g_lastClientRecty;
 extern int                       g_lastClientRectw;
 extern int                       g_lastClientRecth;
 extern double                    g_display_size_mm;
-extern double                    g_config_display_size_mm;
-extern bool                      g_config_display_size_manual;
 
 extern float                     g_selection_radius_mm;
 extern float                     g_selection_radius_touch_mm;
@@ -179,8 +174,6 @@ extern double                   g_PlanSpeed;
 extern bool                     g_bFullScreenQuilt;
 extern bool                     g_bQuiltEnable;
 extern bool                     g_bskew_comp;
-
-extern bool                     g_bopengl;
 extern bool                     g_btouch;
 extern bool                     g_bresponsive;
 extern bool                     g_bShowStatusBar;
@@ -204,10 +197,17 @@ extern int                      g_default_font_size;
 extern int                       options_lastPage;
 
 
-
+OCPNPlatform* OCPNPlatform::minstance = 0;
+OCPNPlatform::MGarbage OCPNPlatform::Garbage;
 
 
 //  OCPN Platform implementation
+
+OCPNPlatform* OCPNPlatform::instance()
+{
+    if(!minstance) minstance = new OCPNPlatform();
+    return minstance;
+}
 
 OCPNPlatform::OCPNPlatform() : mOldShape(Qt::ArrowCursor)
 {
@@ -255,8 +255,6 @@ void OCPNPlatform::Initialize_3( void )
     // Try to automatically switch to guaranteed usable GL mode on an OCPN upgrade or fresh install
 
     if( (g_bFirstRun || g_bUpgradeInProcess) && bcapable){
-        g_bopengl = true;
-        
         // Set up visually nice options
         g_GLOptions.m_bUseAcceleratedPanning = true;
         g_GLOptions.m_bTextureCompression = true;
@@ -466,15 +464,6 @@ void OCPNPlatform::SetDefaultOptions( void )
 }
 
 
-void OCPNPlatform::applyExpertMode(bool mode)
-{
-#ifdef __OCPN__ANDROID__
-    g_bshowToolbar = mode;               // no toolbar unless in exprt mode
-    g_bBasicMenus = !mode;              //  simplified context menus in basic mode
-#endif
-
-}
-        
     
 QString OCPNPlatform::GetSupplementalLicenseString()
 {
@@ -491,45 +480,13 @@ QString OCPNPlatform::GetSupplementalLicenseString()
 
 
 
-QString OCPNPlatform::GetAppDir()
-{
-    return QApplication::applicationDirPath();
-}
-
-QString OCPNPlatform::GetDataDir()
-{
-    QString data_dir = QString("%1/map_data").arg(GetAppDir());
-    QDir dir(data_dir);
-    if(!dir.exists()) dir.mkpath(data_dir);
-    return data_dir;
-}
-
-QString OCPNPlatform::GetPathSeparator()
-{
-#ifdef __MSVC__
-    return "\\";
-#else
-    return "/";
-#endif
-}
-
-
-
-QString OCPNPlatform::GetPluginDir()
-{
-    QString plugin_dir = QString("%1/plugin").arg(GetDataDir());
-    QDir dir(plugin_dir);
-    if(!dir.exists()) dir.mkpath(plugin_dir);
-    return plugin_dir;
-}
-
 QString OCPNPlatform::NormalizePath(const QString &full_path) {
     return full_path;
 }
 
 QString OCPNPlatform::GetConfigFileName()
 {
-    return QString("%1/opencpn.ini").arg(GetDataDir());
+    return QString("%1/opencpn.ini").arg(zchxFuncUtil::getDataDir());
 }
 
 

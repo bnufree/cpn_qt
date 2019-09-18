@@ -70,8 +70,6 @@ private:
 #include "glTexCache.h"
 #include "gshhs.h"
 #include "OCPNPlatform.h"
-//#include "toolbar.h"
-#include "piano.h"
 //#include "tcmgr.h"
 #include "compass.h"
 #include "FontMgr.h"
@@ -114,14 +112,10 @@ extern "C" void glOrthof(float left,  float right,  float bottom,  float top,  f
 
 extern zchxMapMainWindow *gFrame;
 extern s52plib *ps52plib;
-extern bool g_bopengl;
 extern bool g_bDebugOGL;
 extern bool g_bShowFPS;
 extern bool g_bSoftwareGL;
 extern bool g_btouch;
-extern OCPNPlatform *g_Platform;
-//extern ocpnFloatingToolbarDialog *g_MainToolbar;
-extern ocpnStyle::StyleManager* g_StyleManager;
 extern bool             g_bShowChartBar;
 extern Piano           *g_Piano;
 extern glTextureManager   *g_glTextureManager;
@@ -1156,7 +1150,6 @@ void glChartCanvas::paintGL()
     glPopMatrix();
 #else
     if(!m_pcontext) return;
-    if(!g_bopengl) return;
     if(!mIsUpdateAvailable) return;
     makeCurrent();
     
@@ -1896,14 +1889,6 @@ void glChartCanvas::DrawFloatingOverlayObjects( ocpnDC &dc )
     g_overlayCanvas = m_pParentCanvas;
     m_pParentCanvas->ScaleBarDraw( dc );
     s57_DrawExtendedLightSectors( dc, m_pParentCanvas->VPoint, m_pParentCanvas->extendedSectorLegs );
-}
-
-void glChartCanvas::DrawChartBar( ocpnDC &dc )
-{
-    if(m_pParentCanvas->GetPiano())
-    {
-        m_pParentCanvas->GetPiano()->DrawGL(m_pParentCanvas->size().height() - m_pParentCanvas->GetPiano()->GetHeight());
-    }
 }
 
 void glChartCanvas::DrawQuiting()
@@ -3028,7 +3013,7 @@ void glChartCanvas::Render()
             if(VPoint.quilt() && m_pParentCanvas->m_pQuilt->IsQuiltVector() &&
                 ( m_cache_vp.viewScalePPM() != VPoint.viewScalePPM() || m_cache_vp.rotation() != VPoint.rotation()))
             {
-                    g_Platform->ShowBusySpinner();
+                    OCPNPlatform::instance()->ShowBusySpinner();
                     busy = true;
             }
             
@@ -3210,7 +3195,7 @@ void glChartCanvas::Render()
             ( s_glBindFramebuffer )( GL_FRAMEBUFFER_EXT, 0 );
 
             if(busy)
-                g_Platform->HideBusySpinner();
+                OCPNPlatform::instance()->HideBusySpinner();
         
         } // newview
 
@@ -3347,19 +3332,6 @@ void glChartCanvas::Render()
             ChartMBTiles *pcmbt = dynamic_cast<ChartMBTiles*>( chart );
             if(pcmbt){
                 pcmbt->RenderRegionViewOnGL(m_pcontext, vp, screen_region, screenLLRegion);
-                
-                //Light up the piano key if the chart was rendered
-                std::vector<int>  piano_active_array_tiles = m_pParentCanvas->m_Piano->GetActiveKeyArray();
-                bool bfound = false;
-            
-                if(std::find(piano_active_array_tiles.begin(), piano_active_array_tiles.end(), *rit) != piano_active_array_tiles.end()) {
-                    bfound = true;
-                }
-
-                if(!bfound){
-                    piano_active_array_tiles.push_back( *rit );
-                    m_pParentCanvas->m_Piano->SetActiveKeyArray( piano_active_array_tiles );
-                }
             }
         }
     }
@@ -3468,9 +3440,6 @@ void glChartCanvas::Render()
     
     
 #endif
-    // render the chart bar
-    if(g_bShowChartBar)
-        DrawChartBar(gldc);
 
     if (m_pParentCanvas->m_Compass)
         m_pParentCanvas->m_Compass->Paint(gldc);

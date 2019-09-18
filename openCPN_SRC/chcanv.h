@@ -135,10 +135,12 @@ public:
       void Scroll(int dx, int dy);
       void SetAlertString( QString str){ m_alertString = str;}
       QString GetAlertString(){ return m_alertString; }
+      bool UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName );
 private slots:
       void buildStyle();
       void initBeforeUpdateMap();
       void slotInitEcidsAsDelayed();
+
 
 protected:
       //    Methods
@@ -181,7 +183,6 @@ public slots:
       double GetDisplaySizeMM(){ return m_display_size_mm; }
       
       bool SetVPScale(double sc, bool b_refresh = true);
-      bool SetVPProjection(int projection);
       bool SetViewPoint ( double lat, double lon);
       bool SetViewPointByCorners( double latSW, double lonSW, double latNE, double lonNE );
       bool SetViewPoint(double lat, double lon, double scale_ppm, double skew, double rotation,
@@ -232,7 +233,6 @@ public slots:
       void SetQuiltChartHiLiteIndex(int dbIndex);
       int GetQuiltReferenceChartIndex(void);
       double GetBestStartScale(int dbi_hint, const ViewPort &vp);
-      void ConfigureChartBar();
       
 //      int GetNextContextMenuId();
       bool StartTimedMovement( bool stoptimer=true );
@@ -258,8 +258,6 @@ public slots:
       void SetVP(ViewPort &);
       ChartBase* GetChartAtCursor();
       ChartBase* GetOverlayChartAtCursor();
-      Piano *GetPiano(){ return m_Piano; }
-      int GetPianoHeight();
       
       GSHHSChart* GetWorldBackgroundChart() { return pWorldBackgroundChart; }
       void ResetWorldBackgroundChart() { pWorldBackgroundChart->Reset(); }
@@ -310,9 +308,6 @@ public slots:
       ocpnCompass *GetCompass(){ return m_Compass; }
       
       QColor GetFogColor(){ return m_fog_color; }
-      
-      void ShowChartInfoWindow(int x, int dbIndex);
-      void HideChartInfoWindow(void);
     
       void StartMeasureRoute();
       void CancelMeasureRoute();
@@ -323,17 +318,9 @@ public slots:
       double GetBestVPScale( ChartBase *pchart );
       void selectCanvasChartDisplay( int type, int family);
       void RemoveChartFromQuilt( int dbIndex );
-      
-      void HandlePianoClick( int selected_index, int selected_dbIndex );
-      void HandlePianoRClick( int x, int y, int selected_index, int selected_dbIndex );
-      void HandlePianoRollover( int selected_index, int selected_dbIndex );
-      void UpdateCanvasControlBar( void );
-      void FormatPianoKeys( void );
-      void PianoPopupMenu ( int x, int y, int selected_index, int selected_dbIndex );
 
 public slots:
-      void OnPianoMenuDisableChart();
-      void OnPianoMenuEnableChart();
+      void slotStartLoadEcdis();
 public:
       bool IsPianoContextMenuActive(){ return m_piano_ctx_menu != 0; }
       void SetCanvasToolbarItemState( int tool_id, bool state );
@@ -350,7 +337,6 @@ public:
       QCursor    *pCursorCross;
       QCursor    *pPlugIn_Cursor;
       wxBitmap    *pscratch_bm;
-      bool        m_brepaint_piano;
       double      m_cursor_lon, m_cursor_lat;
 //      Undo        *undo;
       QPoint     r_rband;
@@ -672,7 +658,6 @@ private:
       bool        m_bFirstAuto;
       double      m_vLat, m_vLon;
       ChartStack  *m_pCurrentStack;
-      Piano       *m_Piano;
       bool        m_bpersistent_quilt;
       
       QMenu      *m_piano_ctx_menu;

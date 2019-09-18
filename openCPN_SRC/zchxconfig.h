@@ -499,7 +499,7 @@ private:
 private:
     static zchxConfig     *minstance;
 
-    class MGarbage // 它的唯一工作就是在析构函数中删除CSingleton的实例
+    class MGarbage
     {
     public:
         ~MGarbage()
@@ -508,7 +508,7 @@ private:
                 delete zchxConfig::minstance;
         }
     };
-    static MGarbage Garbage; // 定义一个静态成员，在程序结束时，系统会调用它的析构函数
+    static MGarbage Garbage;
 };
 
 #endif // ZCHXCONFIG_H

@@ -182,8 +182,6 @@ protected:
 
     void DrawFloatingOverlayObjects( ocpnDC &dc );
     void DrawGroundedOverlayObjects(ocpnDC &dc, ViewPort &vp);
-
-    void DrawChartBar( ocpnDC &dc );
     void DrawQuiting();
     void DrawCloseMessage(QString msg);
     

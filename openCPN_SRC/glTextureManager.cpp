@@ -71,7 +71,6 @@ extern bool             b_inCompressAllCharts;
 extern zchxMapMainWindow         *gFrame;
 //extern arrayofCanvasPtr  g_canvasArray;
 
-extern OCPNPlatform *g_Platform;
 extern ColorScheme global_color_scheme;
 
 extern PFNGLGETCOMPRESSEDTEXIMAGEPROC s_glGetCompressedTexImage;
@@ -92,7 +91,7 @@ QString CompressedCachePath(const QString& src)
     if(colon >= 0) path.remove(colon, 1);
     
     /* replace path separators with ! */
-    QString separator = g_Platform->GetPathSeparator();
+    QString separator = zchxFuncUtil::separator();
     int pos = 0;
     while( (pos = path.indexOf(separator, pos)) >= 0)
     {
@@ -111,7 +110,7 @@ QString CompressedCachePath(const QString& src)
         sha1_res += s;
     }
 
-    return g_Platform->GetDataDir() + separator + QString("raster_texture_cache") + separator + sha1_res;
+    return zchxFuncUtil::getDataDir() + separator + QString("raster_texture_cache") + separator + sha1_res;
     
 }
 
@@ -658,7 +657,7 @@ glTextureManager::glTextureManager() : QObject(0), m_timer(0)
 {
     // ideally we would use the cpu count -1, and only launch jobs
     // when the idle load average is sufficient (greater than 1)
-    int nCPU =  qMax(1, g_Platform->getCpuCorNum());
+    int nCPU =  qMax(1, OCPNPlatform::instance()->getCpuCorNum());
     if(g_nCPUCount > 0)
         nCPU = g_nCPUCount;
 
