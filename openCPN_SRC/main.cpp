@@ -123,6 +123,8 @@ int main(int argc, char *argv[])
     }
     layout->addWidget(new zchxMapMainWindow);
     win.show();
+    //添加测试菜单
+
 
     return a.exec();
 }

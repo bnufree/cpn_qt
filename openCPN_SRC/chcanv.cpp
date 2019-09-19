@@ -427,7 +427,7 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     m_Compass->Show(m_bShowCompassWin);
 
     mDisplsyTimer = new QTimer(this);
-    mDisplsyTimer->setInterval(5000);
+    mDisplsyTimer->setInterval(1000);
     connect(mDisplsyTimer, SIGNAL(timeout()), this, SLOT(update()));
 //    mDisplsyTimer->start();
 //    setMouseTracking(true);
@@ -1018,24 +1018,6 @@ bool ChartCanvas::DoCanvasUpdate( void )
     int last_nEntry = -1;
     if( m_pCurrentStack )
         last_nEntry = m_pCurrentStack->nEntry;
-    
-    //    Startup case:
-    //    Quilting is enabled, but the last chart seen was not quiltable
-    //    In this case, drop to single chart mode, set persistence flag,
-    //    And open the specified chart
-    //TODO implement this
-    //     if( m_bFirstAuto && ( g_restore_dbindex >= 0 ) ) {
-    //         if( GetQuiltMode() ) {
-    //             if( !IsChartQuiltableRef( g_restore_dbindex ) ) {
-    //                 gFrame->ToggleQuiltMode();
-    //                 m_bpersistent_quilt = true;
-    //                 m_singleChart = NULL;
-    //             }
-    //         }
-    //     }
-    
-    //      If in auto-follow mode, use the current glat,glon to build chart stack.
-    //      Otherwise, use vLat, vLon gotten from click on chart canvas, or other means
     
     if( m_bFollow ) {
         tLat = gLat;
@@ -7013,6 +6995,7 @@ void ChartCanvas::wheelEvent(QWheelEvent * e)
     uint cur = QDateTime::currentDateTime().toTime_t();
     if(cur - time >= 2)
     {
+        qDebug()<<"start wheel:"<<QDateTime::currentDateTime();
         time = cur;
         if(e->delta() > 0)
         {
@@ -7021,6 +7004,8 @@ void ChartCanvas::wheelEvent(QWheelEvent * e)
         {
             ZoomCanvas(0.5, false);
         }
+
+        qDebug()<<"end wheel:"<<QDateTime::currentDateTime();
 
     }
 
