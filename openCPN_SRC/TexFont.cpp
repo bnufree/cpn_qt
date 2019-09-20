@@ -33,6 +33,7 @@
 #include "bitmap.h"
 #include <QPainter>
 #include <QDebug>
+#include <QDateTime>
 
 typedef struct {
     QFont  *key;
@@ -151,18 +152,18 @@ void TexFont::Build( QFont &font, bool blur )
             text.sprintf("%c", i);
 
         dc.drawText(QRect(tgi[i].x, tgi[i].y, tgi[i].width, tgi[i].height), Qt::AlignLeft, text );
-//        qDebug()<<"draw text:"<<text<<QPoint(tgi[i].x, tgi[i].y);
         col++;
     }
     dc.end();
     
     QImage image = tbmp.ConvertToImage();
-//    if(image.byteCount() != 4*tex_w*tex_h)
-//    {
-//        image = image.convertToFormat(QImage::Format::Format_RGB32);
-//    }
-//    tbmp.SaveFile("font.png", "PNG");
-//    if(image.format() != QImage::Format_RGB32) image = image.convertToFormat(QImage::Format_RGB32);
+    if(image.format() != QImage::Format::Format_RGB888)
+    {
+        image = image.convertToFormat(QImage::Format::Format_RGB888);
+    }
+#if 0
+    image.save("font.png", "PNG");
+#endif
     GLuint format, internalformat;
     int stride;
 
@@ -173,24 +174,30 @@ void TexFont::Build( QFont &font, bool blur )
 //    if( m_blur ) image = image.Blur(1);
 
     unsigned char *imgdata = image.bits();
-    if(imgdata){
-        unsigned char *teximage = (unsigned char *) malloc( stride * tex_w * tex_h );
-        for(int j=0; j<tex_h; j++)
+    if(imgdata)
+    {
+
+        unsigned char *teximage = (unsigned char *) malloc( stride * tex_w * tex_h);
+        for(int i = 0; i <tex_w * tex_h; i++ )
         {
-            for( int i = 0; i <tex_w; i++ )
+            for( int k = 0; k < stride; k++ )
             {
-                int index = j*tex_h + i;
-                QColor color = image.pixelColor(i, j);
-                int red = color.red();
-                for( int k = 0; k < stride; k++ )
-                {
-                    teximage[index * stride + k] = red;
-                }
+                teximage[stride + k + i] = imgdata[3*i];
             }
         }
 
-        wxBitmap bitmap((char*)teximage);
-        bitmap.SaveFile("alpha.png", "png");
+//        QByteArray imageByteArray = QByteArray( (const char*)teximage,  image.byteCount() );
+//        uchar*  transData = (unsigned char*)imageByteArray.data();
+#if 0
+        QImage temp(teximage, tex_w, tex_h, QImage::Format_Indexed8);
+        QVector<QRgb>  colorTable;
+        for(int k=0;k<256;++k)
+        {
+            colorTable.push_back( qRgb(k,k,k) );
+        }
+        temp.setColorTable(colorTable);
+        temp.save("result.png", "PNG");
+#endif
 
         Delete();
 

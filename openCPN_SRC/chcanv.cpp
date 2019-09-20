@@ -418,7 +418,7 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
 
     m_pQuilt->EnableHighDefinitionZoom( true );
 
-    m_pgridFont = FontMgr::Get().FindOrCreateFont( 8, "Arial", QFont::StyleNormal, QFont::Weight::Normal, false);
+    m_pgridFont = FontMgr::Get().FindOrCreateFont( 8, "Microsoft Yahei", QFont::StyleNormal, QFont::Weight::Normal, false);
 
     m_bShowCompassWin = g_bShowCompassWin;
 
@@ -4782,7 +4782,7 @@ void ChartCanvas::ScaleBarDraw( ocpnDC& dc )
         //         ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
         //         if (style->chartStatusWindowTransparent)
         //             chartbar_height = 0;
-        int y_origin = m_canvas_height  - 5;
+        int y_origin = m_canvas_height  - 25;
 
         GetCanvasPixPoint( x_origin, y_origin, blat, blon );
         GetCanvasPixPoint( x_origin + m_canvas_width, y_origin, tlat, tlon );
@@ -4808,7 +4808,7 @@ void ChartCanvas::ScaleBarDraw( ocpnDC& dc )
 
         QString s = QString("").sprintf("%g ", dist) + zchxFuncUtil::getUsrDistanceUnit( unit );
         QColor black = GetGlobalColor( "UBLCK"  );
-        QPen pen1 = QPen( black , 3, Qt::SolidLine );
+        QPen pen1 = QPen( black , 1, Qt::SolidLine );
         double rotation = -VPoint.rotation();
 
         ll_gc_ll( blat, blon, rotation * 180 / PI + 90,
