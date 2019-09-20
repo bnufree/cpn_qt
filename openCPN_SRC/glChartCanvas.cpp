@@ -1928,7 +1928,7 @@ void glChartCanvas::DrawCloseMessage(QString msg)
 {
     if(1){
         
-        QFont pfont = FontMgr::Get().FindOrCreateFont(12, "Microsoft YH", QFont::StyleNormal, QFont::Weight::Bold);
+        QFont pfont = FontMgr::Get().FindOrCreateFont(12, "Microsoft YaHei", QFont::StyleNormal, QFont::Weight::Bold);
         
         TexFont texfont;
         

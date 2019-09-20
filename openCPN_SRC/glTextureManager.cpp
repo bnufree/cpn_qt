@@ -1393,9 +1393,9 @@ void glTextureManager::BuildCompressedCache()
     QFont sFont;
     QSize csz = gFrame->rect().size();
     if(csz.width() < 500 || csz.height() < 500)
-        sFont = FontMgr::Get().FindOrCreateFont( 10, "Microsoft YH", QFont::StyleNormal, QFont::Normal);
+        sFont = FontMgr::Get().FindOrCreateFont( 10, "Microsoft YaHei", QFont::StyleNormal, QFont::Normal);
     else
-        sFont = FontMgr::Get().FindOrCreateFont( fontSize, "Microsoft YH", QFont::StyleNormal, QFont::Normal);
+        sFont = FontMgr::Get().FindOrCreateFont( fontSize, "Microsoft YaHei", QFont::StyleNormal, QFont::Normal);
     
     m_progDialog->setFont(sFont );
     

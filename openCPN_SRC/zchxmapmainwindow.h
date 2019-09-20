@@ -58,12 +58,11 @@ public slots:
     void    slotLargeScaleChart();
     void    slotSmallScaleChart();
     //视图
-    void    slotEnableChartQuilting(bool sts);
+    void    slotEnableChartQuilting(bool sts);              //是否Quilt填充
     void    slotShowChartQuilting(bool sts);
-    void    slotShowChartBar(bool sts);
     void    slotShowENCText(bool sts);
     void    slotShowENCLights(bool sts);
-    void    slotShowENCSoundings(bool sts);
+    void    slotShowENCSoundings(bool sts);                 //是否显示水深
     void    slotShowENCAnchoringInfo(bool sts);
     void    slotShowENCDataQuality(bool sts);
     void    slotShowNavObjects(bool sts);
@@ -78,7 +77,6 @@ public slots:
     void    SetGPSCompassScale();
     double  GetMag(double a);
     void    InvalidateAllGL();
-    //用户操作
     void    slotRotateDegree(double angle);
     void    slotRoateRad(double rad);
 private slots:

@@ -186,19 +186,6 @@ void TexFont::Build( QFont &font, bool blur )
             }
         }
 
-//        QByteArray imageByteArray = QByteArray( (const char*)teximage,  image.byteCount() );
-//        uchar*  transData = (unsigned char*)imageByteArray.data();
-#if 0
-        QImage temp(teximage, tex_w, tex_h, QImage::Format_Indexed8);
-        QVector<QRgb>  colorTable;
-        for(int k=0;k<256;++k)
-        {
-            colorTable.push_back( qRgb(k,k,k) );
-        }
-        temp.setColorTable(colorTable);
-        temp.save("result.png", "PNG");
-#endif
-
         Delete();
 
         glGenTextures( 1, &texobj );
@@ -209,8 +196,7 @@ void TexFont::Build( QFont &font, bool blur )
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST/*GL_LINEAR*/ );
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
-        glTexImage2D( GL_TEXTURE_2D, 0, internalformat, tex_w, tex_h, 0,
-                    format, GL_UNSIGNED_BYTE, teximage );
+        glTexImage2D( GL_TEXTURE_2D, 0, internalformat, tex_w, tex_h, 0, format, GL_UNSIGNED_BYTE, teximage );
 
         free(teximage);
     }

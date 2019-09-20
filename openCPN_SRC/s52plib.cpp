@@ -2255,7 +2255,7 @@ int s52plib::RenderT_All( ObjRazRules *rzRules, Rules *rules, ViewPort *vp, bool
                     fontweight = QFont::Weight::Bold;
             }
 
-            QFont *specFont = new QFont("Microsofy YaHei",text->bsize, fontweight );
+            QFont *specFont = new QFont("Microsoft YaHei",text->bsize, fontweight );
             specFont->setStyle(  QFont::Style::StyleNormal);
             
             //Get the width of a single average character in the spec font

@@ -176,8 +176,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
     QMenu* view = this->menuBar()->addMenu(tr("View"));
     addCustomAction(view, tr("Enable Chart Quilting"), this, SLOT(slotEnableChartQuilting(bool)));
     addCustomAction(view, tr("Show Chart Quilting"), this, SLOT(slotShowChartQuilting(bool)));
-    addCustomAction(view, tr("Show ENC Text"), this, SLOT(slotShowChartBar(bool)));
-    addCustomAction(view, tr("Zoom In"), this, SLOT(slotShowENCText(bool)));
+    addCustomAction(view, tr("Show ENC Text"), this, SLOT(slotShowENCText(bool)));
     addCustomAction(view, tr("Show ENC Lights"), this, SLOT(slotShowENCLights(bool)));
     addCustomAction(view, tr("Show ENC Soundings"), this, SLOT(slotShowENCSoundings(bool)));
     addCustomAction(view, tr("Show ENC Anchoring Info"), this, SLOT(slotShowENCAnchoringInfo(bool)));
@@ -423,7 +422,10 @@ void zchxMapMainWindow::slotSmallScaleChart()
 
 void zchxMapMainWindow::slotEnableChartQuilting(bool sts)
 {
-
+    if(mEcdisWidget &&  mEcdisWidget->GetQuiltMode() != sts)
+    {
+        mEcdisWidget->ToggleCanvasQuiltMode();
+    }
 }
 
 void zchxMapMainWindow::slotShowENCAnchoringInfo(bool sts)
@@ -436,19 +438,18 @@ void zchxMapMainWindow::slotShowBuoyLightLabel(bool sts)
 
 }
 
-void zchxMapMainWindow::slotShowChartBar(bool sts)
-{
-
-}
-
 void zchxMapMainWindow::slotShowChartQuilting(bool sts)
 {
-
+    if(!mEcdisWidget) return;
+    if(mEcdisWidget->GetShowOutlines() == sts) return;
+    mEcdisWidget->SetShowOutlines(sts);
+    mEcdisWidget->Refresh(false);
+    mEcdisWidget->InvalidateGL();
 }
 
 void zchxMapMainWindow::slotShowDepth(bool sts)
 {
-
+    slotShowENCSoundings(sts);
 }
 
 void zchxMapMainWindow::slotShowDepthUnit(bool sts)
@@ -473,17 +474,30 @@ void zchxMapMainWindow::slotShowENCLights(bool sts)
 
 void zchxMapMainWindow::slotShowENCSoundings(bool sts)
 {
-
+    if(mEcdisWidget)
+    {
+        if(mEcdisWidget->GetShowENCDepth() != sts)
+        {
+            mEcdisWidget->SetShowENCDepth(sts);
+            mEcdisWidget->ReloadVP();
+        }
+    }
 }
 
 void zchxMapMainWindow::slotShowENCText(bool sts)
 {
-
+    if(!mEcdisWidget) return;
+    if(mEcdisWidget->GetShowENCText() == sts) return;
+    mEcdisWidget->SetShowENCText(sts);
+    mEcdisWidget->ReloadVP();
 }
 
 void zchxMapMainWindow::slotShowGrid(bool sts)
 {
-
+    if(!mEcdisWidget) return;
+    if(mEcdisWidget->GetShowGrid() == sts) return;
+    mEcdisWidget->SetShowGrid(sts);
+//    mEcdisWidget->ReloadVP();
 }
 
 void zchxMapMainWindow::slotShowLightDiscriptions(bool sts)
@@ -1736,6 +1750,7 @@ ColorScheme zchxMapMainWindow::GetColorScheme()
 {
     return global_color_scheme;
 }
+
 
 void zchxMapMainWindow::slotRotateDegree(double angle)
 {
