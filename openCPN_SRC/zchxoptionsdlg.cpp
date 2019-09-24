@@ -10,7 +10,6 @@
 #include "zchxmapmainwindow.h"
 #include "zchxconfig.h"
 #include "zchxopengloptiondlg.h"
-#include "glChartCanvas.h"
 #include "chcanv.h"
 
 extern  bool            g_bShowStatusBar;

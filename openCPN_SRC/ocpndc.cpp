@@ -40,17 +40,15 @@
 #include "wx28compat.h"
 #include "cutil.h"
 
-#ifdef ocpnUSE_GL
-#include "glChartCanvas.h"
+#include "chcanv.h"
 extern zchxGLOptions g_GLOptions;
-#endif
 
 extern float g_GLMinSymbolLineWidth;
 QList<void*> gTesselatorVertices;
 
 //----------------------------------------------------------------------------
 /* pass the dc to the constructor, or NULL to use opengl */
-ocpnDC::ocpnDC( glChartCanvas *canvas ) :
+ocpnDC::ocpnDC( ChartCanvas *canvas ) :
     glcanvas( canvas ), dc( NULL ), m_pen( QPen() ), m_brush( QBrush() )
 {
 #if QUSE_GRAPHICS_CONTEXT

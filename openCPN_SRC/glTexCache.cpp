@@ -32,15 +32,16 @@
 #include "viewport.h"
 #include "glTexCache.h"
 #include "glTextureDescriptor.h"
+#include "glTextureManager.h"
 
 #include "chcanv.h"
-#include "glChartCanvas.h"
 #include "Quilt.h"
 #include "chartbase.h"
 #include "chartimg.h"
 #include "chartdb.h"
 #include "OCPNPlatform.h"
 #include "mipmap/mipmap.h"
+
 
 #ifndef GL_ETC1_RGB8_OES
 #define GL_ETC1_RGB8_OES                                        0x8D64
@@ -703,7 +704,7 @@ void glTexFactory::PrepareTiles(const ViewPort &vp, bool use_norm_vp, ChartBase 
     ViewPort nvp;
     if(use_norm_vp) {
         pChartBSB->chartpix_to_latlong(m_size_X/2, m_size_Y/2, &m_clat, &m_clon);
-        nvp = glChartCanvas::NormalizedViewPort(vp, m_clat, m_clon);
+        nvp = ChartCanvas::NormalizedViewPort(vp, m_clat, m_clon);
     }
 
     //    Using a 2D loop, iterate thru the texture tiles of the chart

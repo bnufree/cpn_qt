@@ -77,7 +77,6 @@ SOURCES += \
     vector2d.cpp \
     viewport.cpp \
     bitmap.cpp \
-    glChartCanvas.cpp \
     bbox.cpp \
     chcanv.cpp \
     Quilt.cpp \
@@ -98,7 +97,7 @@ SOURCES += \
     pugixml.cpp \
     ocpndc.cpp \
     gshhs.cpp \
-    compass.cpp \
+#    compass.cpp \
     ChInfoWin.cpp \
     Osenc.cpp \
     s57classregistrar.cpp \
@@ -148,7 +147,6 @@ HEADERS += \
     vector2D.h \
     viewport.h \
     bitmap.h \
-    glChartCanvas.h \
     bbox.h \
     chcanv.h \
     Quilt.h \
@@ -167,7 +165,7 @@ HEADERS += \
     pugixml.hpp \
     ocpndc.h \
     gshhs.h \
-    compass.h \
+#    compass.h \
     ChInfoWin.h \
     Osenc.h \
     S57ClassRegistrar.h \

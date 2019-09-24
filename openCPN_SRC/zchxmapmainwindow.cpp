@@ -13,7 +13,6 @@
 #include "OCPNPlatform.h"
 #include "S57ClassRegistrar.h"
 #include "s57RegistrarMgr.h"
-#include "glChartCanvas.h"
 #include "SencManager.h"
 //#include "thumbwin.h"
 #include "styles.h"
@@ -24,7 +23,7 @@
 #include <QLabel>
 #include <QMessageBox>
 #include "CanvasConfig.h"
-#include "compass.h"
+//#include "compass.h"
 #include "glwidget.h"
 
 
@@ -200,7 +199,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
     addCustomAction(display, tr("All"), this, SLOT(slotShowDisplayCategory()), false, ColorScheme::GLOBAL_COLOR_SCHEME_NIGHT);
 
     //添加窗口
-    mEcdisWidget = new ChartCanvas(this, 0);
+    mEcdisWidget = new ChartCanvas(this);
     if(!ui->centralwidget->layout())
     {
         ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
@@ -1720,10 +1719,10 @@ void LoadS57()
         // Setup PLIB OpenGL options, if enabled
         extern bool g_b_EnableVBO;
         extern GLenum  g_texture_rectangle_format;
-        ps52plib->SetGLOptions(glChartCanvas::s_b_useStencil,
-                               glChartCanvas::s_b_useStencilAP,
-                               glChartCanvas::s_b_useScissorTest,
-                               glChartCanvas::s_b_useFBO,
+        ps52plib->SetGLOptions(ChartCanvas::s_b_useStencil,
+                               ChartCanvas::s_b_useStencilAP,
+                               ChartCanvas::s_b_useScissorTest,
+                               ChartCanvas::s_b_useFBO,
                                g_b_EnableVBO,
                                g_texture_rectangle_format);
 #endif
