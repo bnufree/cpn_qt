@@ -109,8 +109,6 @@ bool ocpnCompass::MouseEvent( QMouseEvent& event )
     if(!m_shown || !m_rect.contains(event.pos()))
         return false;
 
-    if (event.type() == QEvent::MouseButtonPress && event.button() == Qt::LeftButton)
-        m_parent->ToggleCourseUp( );
     return true;
 }
 

@@ -58,8 +58,16 @@
 #include "SelectItem.h"
 #include "Select.h"
 #include "FontMgr.h"
+//#include "AIS_Decoder.h"
+//#include "AIS_Target_Data.h"
+//#include "AISTargetAlertDialog.h"
+//#include "SendToGpsDlg.h"
 #include "OCPNRegion.h"
 #include "gshhs.h"
+
+#ifdef ocpnUSE_GL
+#include "glChartCanvas.h"
+#endif
 
 #include "cm93.h"                   // for chart outline draw
 #include "s57chart.h"               // for ArrayOfS57Obj
@@ -320,7 +328,7 @@ LLRegion ViewPort::GetLLRegion( const OCPNRegion &region )
     return LLRegion(GetBBox());
 #else    
 
-    if(!ChartCanvas::CanClipViewport(*this))
+    if(!glChartCanvas::CanClipViewport(*this))
         return LLRegion(getBBox());
 
     OCPNRegionIterator it( region );

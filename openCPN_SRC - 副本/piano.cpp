@@ -50,7 +50,6 @@ extern bool g_btouch;
 extern int  g_GUIScaleFactor;
 
 extern Piano                     *g_Piano;
-extern OCPNPlatform              *g_Platform;
 
 extern QColor GetGlobalColor(const QString& str);
 
@@ -908,7 +907,7 @@ int Piano::GetHeight()
         height = fmin(height, 100);     // absolute boundaries
         height = fmax(height, 10);
     }
-    height *= g_Platform->GetDisplayDensityFactor();
+    height *= OCPNPlatform::instance()->GetDisplayDensityFactor();
     
     return height;
 }

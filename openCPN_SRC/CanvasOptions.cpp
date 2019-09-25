@@ -215,15 +215,11 @@ void CanvasOptions::RefreshControlValues( void )
 {
     ChartCanvas *parentCanvas = dynamic_cast<ChartCanvas*> (parentWidget());
     if(!parentCanvas) return;
-    // Navigation Mode
-    pCBNorthUp->setChecked(!parentCanvas->GetCourseUP());
-    pCBCourseUp->setChecked(parentCanvas->GetCourseUP());
-    pCBLookAhead->setChecked(parentCanvas->GetLookahead());
     
     //  Display options
     pCDOQuilting->setChecked(parentCanvas->GetQuiltMode());
     pSDisplayGrid->setChecked(parentCanvas->GetShowGrid());
-    pCDOOutlines->setChecked(parentCanvas->GetShowOutlines());
+//    pCDOOutlines->setChecked(parentCanvas->GetShowOutlines());
     pSDepthUnits->setChecked(parentCanvas->GetShowDepthUnits());
  
     // AIS Options
@@ -317,10 +313,10 @@ void CanvasOptions::UpdateCanvasOptions( void )
         b_needRefresh = true;
     }
     
-    if(pCDOOutlines->isChecked() != parentCanvas->GetShowOutlines()){
-        parentCanvas->SetShowOutlines(pCDOOutlines->isChecked());
-        b_needRefresh = true;
-    }
+//    if(pCDOOutlines->isChecked() != parentCanvas->GetShowOutlines()){
+//        parentCanvas->SetShowOutlines(pCDOOutlines->isChecked());
+//        b_needRefresh = true;
+//    }
     if(pSDepthUnits->isChecked() != parentCanvas->GetShowDepthUnits()){
         parentCanvas->SetShowDepthUnits(pSDepthUnits->isChecked());
         b_needRefresh = true;
@@ -375,18 +371,7 @@ void CanvasOptions::UpdateCanvasOptions( void )
         parentCanvas->SetShowENCAnchor(pCBENCAnchorDetails->isChecked());
         b_needReLoad = true;
     }
-    
-    bool setcourseUp = pCBCourseUp->isChecked();
-    if(setcourseUp != parentCanvas->GetCourseUP()){
-        parentCanvas->ToggleCourseUp();
-        b_needReLoad = true;
-    }
 
-    if(pCBLookAhead->isChecked() != parentCanvas->GetLookahead()){
-        parentCanvas->ToggleLookahead();
-        parentCanvas->UpdateFollowButtonState();
-        b_needReLoad = true;
-    }
     
     int nset = 2;
     switch (parentCanvas->GetENCDisplayCategory()) {
@@ -421,7 +406,7 @@ void CanvasOptions::UpdateCanvasOptions( void )
     }
     else if (b_needRefresh){
         parentCanvas->Refresh(true);
-        parentCanvas->InvalidateGL();
+//        parentCanvas->InvalidateGL();
     }
     
     RefreshControlValues();

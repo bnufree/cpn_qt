@@ -33,8 +33,6 @@
 //#include <wx/glcanvas.h>
 //#endif
 
-extern bool g_bopengl;
-
 #ifdef ocpnUSE_GL
 extern GLenum       g_texture_rectangle_format;
 #endif
@@ -1212,16 +1210,9 @@ int ChartSymbols::LoadRasterFileForColorTable( int tableNo, bool flush )
 {
 
     if( tableNo == rasterSymbolsLoadedColorMapNumber && !flush ){
-        if( g_bopengl) {
-            if(rasterSymbolsTexture)
-                return true;
-#ifdef ocpnUSE_GL            
-            else if( !g_texture_rectangle_format && !rasterSymbols->isNull())
-                return true;
-#endif            
-        }
-        if( !rasterSymbols->isNull())
-            return true;
+        if(rasterSymbolsTexture) return true;
+        else if( !g_texture_rectangle_format && !rasterSymbols->isNull()) return true;
+        if( !rasterSymbols->isNull()) return true;
     }
         
     
@@ -1233,7 +1224,7 @@ int ChartSymbols::LoadRasterFileForColorTable( int tableNo, bool flush )
     if( rasterFileImg.load(filename, /*QBitmap_TYPE_PNG*/"PNG" ) ) {
 #ifdef ocpnUSE_GL
         /* for opengl mode, load the symbols into a texture */
-        if( g_bopengl && g_texture_rectangle_format) {
+        if(g_texture_rectangle_format) {
 
             int w = rasterFileImg.width();
             int h = rasterFileImg.height();

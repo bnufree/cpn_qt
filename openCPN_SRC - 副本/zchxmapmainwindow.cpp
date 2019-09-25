@@ -28,12 +28,11 @@
 #include "glwidget.h"
 
 
-extern      ChartDB                     *ChartData;
+//extern      ChartDB                     *ChartData;
 extern      QThread                     *g_Main_thread;
 //arrayofCanvasPtr            g_canvasArray;
 extern      float                       g_compass_scalefactor;
 extern      int                         g_GUIScaleFactor;
-extern      OCPNPlatform                *g_Platform;
 extern      ColorScheme                 global_color_scheme;
 
 
@@ -52,16 +51,13 @@ extern zchxMapMainWindow*  gFrame;
 extern int                       g_nDepthUnitDisplay;
 
 extern int                       g_nCacheLimit;
-extern int                       g_memCacheLimit;
 //extern ThumbWin                  *pthumbwin;
-extern bool                      g_bopengl;
 extern bool                      g_fog_overzoom;
 extern double                    g_overzoom_emphasis_base;
 extern bool                      g_oz_vector_scale;
 
 extern QString                  ChartListFileName;
 extern QString                  AISTargetNameFileName;
-extern QString                  gWorldMapLocation, gDefaultWorldMapLocation;
 extern bool            g_bShowStatusBar;
 extern bool            g_bShowMenuBar;
 extern bool            g_bShowCompassWin;
@@ -128,7 +124,6 @@ extern bool                      g_bcompression_wait;
 extern QString                  g_locale;
 extern QString                  g_localeOverride;
 extern bool             g_btouch;
-extern bool                      g_bdisable_opengl;
 extern ChartGroupArray           *g_pGroupArray;
 extern int                       g_GroupIndex;
 extern bool                      g_bNeedDBUpdate;
@@ -138,7 +133,6 @@ extern bool                      g_bFullScreenQuilt;
 extern bool                      g_bQuiltEnable;
 extern bool                      g_bQuiltStart;
 extern bool                      g_bquiting;
-extern ocpnStyle::StyleManager*  g_StyleManager;
 extern double                    g_ChartNotRenderScaleFactor;
 std::vector<int>               g_quilt_noshow_index_array;
 extern int                       g_nbrightness;
@@ -147,15 +141,11 @@ extern bool                      bGPSValid;
 extern int                       g_SatsInView;
 extern bool                      g_bSatValid;
 extern bool                        g_bSpaceDropMark;
-extern QString                  *pInit_Chart_Dir;
+
 //extern ChartGroupArray            *g_pGroupArray;
 bool                                g_bNeedDBUpdate;
-QString                             ChartListFileName;
-QString                             gDefaultWorldMapLocation;
 extern bool                         g_useMUI;
 extern bool                         g_bUIexpert;
-int                       g_mem_total, g_mem_used, g_mem_initial;
-extern int                       g_restore_dbindex;
 
 
 
@@ -186,8 +176,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
     QMenu* view = this->menuBar()->addMenu(tr("View"));
     addCustomAction(view, tr("Enable Chart Quilting"), this, SLOT(slotEnableChartQuilting(bool)));
     addCustomAction(view, tr("Show Chart Quilting"), this, SLOT(slotShowChartQuilting(bool)));
-    addCustomAction(view, tr("Show ENC Text"), this, SLOT(slotShowChartBar(bool)));
-    addCustomAction(view, tr("Zoom In"), this, SLOT(slotShowENCText(bool)));
+    addCustomAction(view, tr("Show ENC Text"), this, SLOT(slotShowENCText(bool)));
     addCustomAction(view, tr("Show ENC Lights"), this, SLOT(slotShowENCLights(bool)));
     addCustomAction(view, tr("Show ENC Soundings"), this, SLOT(slotShowENCSoundings(bool)));
     addCustomAction(view, tr("Show ENC Anchoring Info"), this, SLOT(slotShowENCAnchoringInfo(bool)));
@@ -210,12 +199,23 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
     addCustomAction(display, tr("Standard"), this, SLOT(slotShowDisplayCategory()), false, ColorScheme::GLOBAL_COLOR_SCHEME_DUSK);
     addCustomAction(display, tr("All"), this, SLOT(slotShowDisplayCategory()), false, ColorScheme::GLOBAL_COLOR_SCHEME_NIGHT);
 
-    //添加窗口时的初始化
-    initBeforeCreateCanvas();
     //添加窗口
-    CreateCanvasLayout();
+    mEcdisWidget = new ChartCanvas(this, 0);
+    if(!ui->centralwidget->layout())
+    {
+        ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
+    }
+    ui->centralwidget->layout()->addWidget(mEcdisWidget);
+
+    g_Main_thread = QThread::currentThread();
+    gFrame = this;
+
+    //添加窗口时的初始化
+//    initBeforeCreateCanvas();
+    //添加窗口
+//    CreateCanvasLayout();
     //窗口添加完成延时加载地图数据
-    QTimer::singleShot(1000, this, SLOT(slotInitEcidsAsDelayed()));
+//    QTimer::singleShot(1000, this, SLOT(slotInitEcidsAsDelayed()));
 }
 
 zchxMapMainWindow::~zchxMapMainWindow()
@@ -224,107 +224,110 @@ zchxMapMainWindow::~zchxMapMainWindow()
     delete ui;
 }
 
-void zchxMapMainWindow::initBeforeCreateCanvas()
-{
-    gFrame = this;
-    g_Main_thread = QThread::currentThread();
-    g_Platform = new OCPNPlatform;
-    this->setWindowTitle("ZCHX Ecdis");
-    pInit_Chart_Dir = new QString();
-    g_pGroupArray = new ChartGroupArray;
-    ZCHX_CFG_INS->loadMyConfig();
-    g_Platform->applyExpertMode(g_bUIexpert);
-    g_StyleManager = new ocpnStyle::StyleManager();
-    g_StyleManager->SetStyle("MUI_flat");
-    if( !g_StyleManager->IsOK() ) {
-        QString logFile = QApplication::applicationDirPath() + QString("/log/opencpn.log");
-        QString msg = ("Failed to initialize the user interface. ");
-        msg.append("OpenCPN cannot start. ");
-        msg.append("The necessary configuration files were not found. ");
-        msg.append("See the log file at ").append(logFile).append(" for details.").append("\n\n");
-        QMessageBox::warning(0, "Failed to initialize the user interface. ", msg);
-        exit( EXIT_FAILURE );
-    }
-    if(g_useMUI){
-        ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
-        style->chartStatusWindowTransparent = true;
-    }
+//void zchxMapMainWindow::initBeforeCreateCanvas()
+//{
+//    gFrame = this;
+//    g_Main_thread = QThread::currentThread();
+//    g_Platform = new OCPNPlatform;
+//    this->setWindowTitle("ZCHX Ecdis");
+//    pInit_Chart_Dir = new QString();
+//    g_pGroupArray = new ChartGroupArray;
+//    ZCHX_CFG_INS->loadMyConfig();
+//    g_Platform->applyExpertMode(g_bUIexpert);
+//    g_StyleManager = new ocpnStyle::StyleManager();
+//    g_StyleManager->SetStyle("MUI_flat");
+//    if( !g_StyleManager->IsOK() ) {
+//        QString logFile = QApplication::applicationDirPath() + QString("/log/opencpn.log");
+//        QString msg = ("Failed to initialize the user interface. ");
+//        msg.append("OpenCPN cannot start. ");
+//        msg.append("The necessary configuration files were not found. ");
+//        msg.append("See the log file at ").append(logFile).append(" for details.").append("\n\n");
+//        QMessageBox::warning(0, "Failed to initialize the user interface. ", msg);
+//        exit( EXIT_FAILURE );
+//    }
+//    if(g_useMUI){
+//        ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
+//        style->chartStatusWindowTransparent = true;
+//    }
 
-    g_display_size_mm = fmax(100.0, g_Platform->GetDisplaySizeMM());
-    qDebug("Detected display size (horizontal): %d mm", (int) g_display_size_mm);
-    // User override....
-    if((g_config_display_size_mm > 0) &&(g_config_display_size_manual)){
-        g_display_size_mm = g_config_display_size_mm;
-        qDebug("Display size (horizontal) config override: %d mm", (int) g_display_size_mm);
-        g_Platform->SetDisplaySizeMM(g_display_size_mm);
-    }
+//    g_display_size_mm = fmax(100.0, g_Platform->GetDisplaySizeMM());
+//    qDebug("Detected display size (horizontal): %d mm", (int) g_display_size_mm);
+//    // User override....
+//    if((g_config_display_size_mm > 0) &&(g_config_display_size_manual)){
+//        g_display_size_mm = g_config_display_size_mm;
+//        qDebug("Display size (horizontal) config override: %d mm", (int) g_display_size_mm);
+//        g_Platform->SetDisplaySizeMM(g_display_size_mm);
+//    }
 
-    // Instantiate and initialize the Config Manager
-//    ConfigMgr::Get();
+//    // Instantiate and initialize the Config Manager
+////    ConfigMgr::Get();
 
-    //  Validate OpenGL functionality, if selected
-    g_bdisable_opengl = false;
-    if(g_bdisable_opengl) g_bopengl = false;
-    zchxFuncUtil::getMemoryStatus(&g_mem_total, &g_mem_initial);
-    if( 0 == g_memCacheLimit ) g_memCacheLimit = (int) ( g_mem_total * 0.5 );
-    g_memCacheLimit = fmin(g_memCacheLimit, 1024 * 1024); // math in kBytes, Max is 1 GB
+//    //  Validate OpenGL functionality, if selected
+//    g_bdisable_opengl = false;
+//    if(g_bdisable_opengl) g_bopengl = false;
+//    zchxFuncUtil::getMemoryStatus(&g_mem_total, &g_mem_initial);
+//    if( 0 == g_memCacheLimit ) g_memCacheLimit = (int) ( g_mem_total * 0.5 );
+//    g_memCacheLimit = fmin(g_memCacheLimit, 1024 * 1024); // math in kBytes, Max is 1 GB
 
-//      Establish location and name of chart database
-    ChartListFileName = ChartListFileName = QString("%1/CHRTLIST.DAT").arg(zchxFuncUtil::getDataDir());
-//      Establish guessed location of chart tree
-    if( pInit_Chart_Dir->isEmpty() )
-    {
-        pInit_Chart_Dir->append(zchxFuncUtil::getDataDir());
-    }
+////      Establish location and name of chart database
+//    ChartListFileName = ChartListFileName = QString("%1/CHRTLIST.DAT").arg(zchxFuncUtil::getDataDir());
+////      Establish guessed location of chart tree
+//    if( pInit_Chart_Dir->isEmpty() )
+//    {
+//        pInit_Chart_Dir->append(zchxFuncUtil::getDataDir());
+//    }
 
-//      Establish the GSHHS Dataset location
-    gDefaultWorldMapLocation = "gshhs";
-    gDefaultWorldMapLocation.insert(0, QString("%1/").arg(zchxFuncUtil::getDataDir()));
-//    gDefaultWorldMapLocation.Append( wxFileName::GetPathSeparator() );
-    if( gWorldMapLocation.isEmpty() || !(QDir(gWorldMapLocation).exists()) ) {
-        gWorldMapLocation = gDefaultWorldMapLocation;
-    }
-    qDebug()<<gWorldMapLocation<<gDefaultWorldMapLocation;
-    g_Platform->Initialize_2();
-    InitializeUserColors();
-    //  Do those platform specific initialization things that need gFrame
-    g_Platform->Initialize_3();
-}
+////      Establish the GSHHS Dataset location
+//    gDefaultWorldMapLocation = "gshhs";
+//    gDefaultWorldMapLocation.insert(0, QString("%1/").arg(zchxFuncUtil::getDataDir()));
+////    gDefaultWorldMapLocation.Append( wxFileName::GetPathSeparator() );
+//    if( gWorldMapLocation.isEmpty() || !(QDir(gWorldMapLocation).exists()) ) {
+//        gWorldMapLocation = gDefaultWorldMapLocation;
+//    }
+//    qDebug()<<gWorldMapLocation<<gDefaultWorldMapLocation;
+//    g_Platform->Initialize_2();
+//    InitializeUserColors();
+//    //  Do those platform specific initialization things that need gFrame
+//    g_Platform->Initialize_3();
+//}
 
-void zchxMapMainWindow::CreateCanvasLayout()
-{
-    //  Clear the cache, and thus close all charts to avoid memory leaks
-    if(ChartData) ChartData->PurgeCache();
-    mEcdisWidget = new ChartCanvas(this, 0);
-    if(!ui->centralwidget->layout())
-    {
-        ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
-    }
-    ui->centralwidget->layout()->addWidget(mEcdisWidget);
+//void zchxMapMainWindow::CreateCanvasLayout()
+//{
 
-    //更新视窗的配置
-    canvasConfig *config = new canvasConfig();
-    config->LoadFromLegacyConfig(ZCHX_CFG_INS);
-    config->canvas = mEcdisWidget;
+//    mEcdisWidget = new ChartCanvas(this, 0);
+//    if(!ui->centralwidget->layout())
+//    {
+//        ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
+//    }
+//    ui->centralwidget->layout()->addWidget(mEcdisWidget);
+//    return;
 
-    // Verify that glCanvas is ready, if necessary
-    if(g_bopengl){
-        if(!mEcdisWidget->GetglCanvas())
-            mEcdisWidget->SetupGlCanvas();
-    }
-    config->iLat = 37.123456;
-    config->iLon = 127.123456;
+//    //  Clear the cache, and thus close all charts to avoid memory leaks
+//    if(ChartData) ChartData->PurgeCache();
 
-    mEcdisWidget->SetDisplaySizeMM(g_display_size_mm);
+//    //更新视窗的配置
+//    canvasConfig *config = new canvasConfig();
+//    config->LoadFromLegacyConfig(ZCHX_CFG_INS);
+//    config->canvas = mEcdisWidget;
 
-    mEcdisWidget->ApplyCanvasConfig(config);
+//    // Verify that glCanvas is ready, if necessary
+//    if(g_bopengl){
+//        if(!mEcdisWidget->GetglCanvas())
+//            mEcdisWidget->SetupGlCanvas();
+//    }
+//    config->iLat = 37.123456;
+//    config->iLon = 127.123456;
 
-    //            cc->SetToolbarPosition(wxPoint( g_maintoolbar_x, g_maintoolbar_y ));
-    mEcdisWidget->ConfigureChartBar();
-    mEcdisWidget->SetColorScheme( global_color_scheme );
-    mEcdisWidget->GetCompass()->SetScaleFactor(g_compass_scalefactor);
-    mEcdisWidget->SetShowGPS( true );
-}
+//    mEcdisWidget->SetDisplaySizeMM(g_display_size_mm);
+
+//    mEcdisWidget->ApplyCanvasConfig(config);
+
+//    //            cc->SetToolbarPosition(wxPoint( g_maintoolbar_x, g_maintoolbar_y ));
+//    mEcdisWidget->ConfigureChartBar();
+//    mEcdisWidget->SetColorScheme( global_color_scheme );
+//    mEcdisWidget->GetCompass()->SetScaleFactor(g_compass_scalefactor);
+//    mEcdisWidget->SetShowGPS( true );
+//}
 
 void zchxMapMainWindow::resizeEvent(QResizeEvent *e)
 {
@@ -333,42 +336,42 @@ void zchxMapMainWindow::resizeEvent(QResizeEvent *e)
 }
 
 
-void zchxMapMainWindow::slotInitEcidsAsDelayed()
-{
-    //   Build the initial chart dir array
-    ArrayOfCDI ChartDirArray;
-    ZCHX_CFG_INS->LoadChartDirArray( ChartDirArray );
+//void zchxMapMainWindow::slotInitEcidsAsDelayed()
+//{
+//    //   Build the initial chart dir array
+//    ArrayOfCDI ChartDirArray;
+//    ZCHX_CFG_INS->LoadChartDirArray( ChartDirArray );
 
-    if( !ChartDirArray.count() )
-    {
-        if(QFile::exists(ChartListFileName )) QFile::remove(ChartListFileName );
-    }
+//    if( !ChartDirArray.count() )
+//    {
+//        if(QFile::exists(ChartListFileName )) QFile::remove(ChartListFileName );
+//    }
 
-    if(!ChartData)  ChartData = new ChartDB( );
-    if (!ChartData->LoadBinary(ChartListFileName, ChartDirArray))
-    {
-        g_bNeedDBUpdate = true;
-    }
-    //  Verify any saved chart database startup index
-    if(g_restore_dbindex >= 0)
-    {
-        if(ChartData->GetChartTableEntries() == 0)
-        {
-            g_restore_dbindex = -1;
-        } else if(g_restore_dbindex > (ChartData->GetChartTableEntries()-1))
-        {
-            g_restore_dbindex = 0;
-        }
-    }
+//    if(!ChartData)  ChartData = new ChartDB( );
+//    if (!ChartData->LoadBinary(ChartListFileName, ChartDirArray))
+//    {
+//        g_bNeedDBUpdate = true;
+//    }
+//    //  Verify any saved chart database startup index
+//    if(g_restore_dbindex >= 0)
+//    {
+//        if(ChartData->GetChartTableEntries() == 0)
+//        {
+//            g_restore_dbindex = -1;
+//        } else if(g_restore_dbindex > (ChartData->GetChartTableEntries()-1))
+//        {
+//            g_restore_dbindex = 0;
+//        }
+//    }
 
-    //  Apply the inital Group Array structure to the chart data base
-    ChartData->ApplyGroupArray( g_pGroupArray );
-    DoChartUpdate();
-    mEcdisWidget->ReloadVP();                  // once more, and good to go
-    OCPNPlatform::Initialize_4( );
-    mEcdisWidget->GetglCanvas()->setUpdateAvailable(true);
-    mEcdisWidget->startUpdate();
-}
+//    //  Apply the inital Group Array structure to the chart data base
+//    ChartData->ApplyGroupArray( g_pGroupArray );
+//    DoChartUpdate();
+//    mEcdisWidget->ReloadVP();                  // once more, and good to go
+//    OCPNPlatform::Initialize_4( );
+//    mEcdisWidget->GetglCanvas()->setUpdateAvailable(true);
+//    mEcdisWidget->startUpdate();
+//}
 
 void zchxMapMainWindow::slotOpenSettingDlg()
 {
@@ -419,7 +422,10 @@ void zchxMapMainWindow::slotSmallScaleChart()
 
 void zchxMapMainWindow::slotEnableChartQuilting(bool sts)
 {
-
+    if(mEcdisWidget &&  mEcdisWidget->GetQuiltMode() != sts)
+    {
+        mEcdisWidget->ToggleCanvasQuiltMode();
+    }
 }
 
 void zchxMapMainWindow::slotShowENCAnchoringInfo(bool sts)
@@ -432,19 +438,18 @@ void zchxMapMainWindow::slotShowBuoyLightLabel(bool sts)
 
 }
 
-void zchxMapMainWindow::slotShowChartBar(bool sts)
-{
-
-}
-
 void zchxMapMainWindow::slotShowChartQuilting(bool sts)
 {
-
+    if(!mEcdisWidget) return;
+    if(mEcdisWidget->GetShowOutlines() == sts) return;
+    mEcdisWidget->SetShowOutlines(sts);
+    mEcdisWidget->Refresh(false);
+    mEcdisWidget->InvalidateGL();
 }
 
 void zchxMapMainWindow::slotShowDepth(bool sts)
 {
-
+    slotShowENCSoundings(sts);
 }
 
 void zchxMapMainWindow::slotShowDepthUnit(bool sts)
@@ -469,17 +474,30 @@ void zchxMapMainWindow::slotShowENCLights(bool sts)
 
 void zchxMapMainWindow::slotShowENCSoundings(bool sts)
 {
-
+    if(mEcdisWidget)
+    {
+        if(mEcdisWidget->GetShowENCDepth() != sts)
+        {
+            mEcdisWidget->SetShowENCDepth(sts);
+            mEcdisWidget->ReloadVP();
+        }
+    }
 }
 
 void zchxMapMainWindow::slotShowENCText(bool sts)
 {
-
+    if(!mEcdisWidget) return;
+    if(mEcdisWidget->GetShowENCText() == sts) return;
+    mEcdisWidget->SetShowENCText(sts);
+    mEcdisWidget->ReloadVP();
 }
 
 void zchxMapMainWindow::slotShowGrid(bool sts)
 {
-
+    if(!mEcdisWidget) return;
+    if(mEcdisWidget->GetShowGrid() == sts) return;
+    mEcdisWidget->SetShowGrid(sts);
+//    mEcdisWidget->ReloadVP();
 }
 
 void zchxMapMainWindow::slotShowLightDiscriptions(bool sts)
@@ -538,8 +556,8 @@ bool zchxMapMainWindow::ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray )
 
     if( ( rr & VISIT_CHARTS )
             && ( ( rr & CHANGE_CHARTS ) || ( rr & FORCE_UPDATE ) || ( rr & SCAN_UPDATE ) ) ) {
-        if(pNewDirArray){
-            UpdateChartDatabaseInplace( *pNewDirArray, ( ( rr & FORCE_UPDATE ) == FORCE_UPDATE ),  true, ChartListFileName );
+        if(mEcdisWidget){
+            mEcdisWidget->UpdateChartDatabaseInplace( *pNewDirArray, ( ( rr & FORCE_UPDATE ) == FORCE_UPDATE ),  true, ChartListFileName );
 
             b_need_refresh = true;
         }
@@ -1156,68 +1174,6 @@ void zchxMapMainWindow::slotOnFrameTimer1Out()
 }
 
 
-bool zchxMapMainWindow::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName )
-{
-
-    bool b_run = false;
-    // ..For each canvas...
-    if(mEcdisWidget)
-    {
-        mEcdisWidget->InvalidateQuilt();
-        mEcdisWidget->SetQuiltRefChart( -1 );
-        mEcdisWidget->m_singleChart = NULL;
-    }
-    if(ChartData)   ChartData->PurgeCache();
-
-//TODO
-//     delete pCurrentStack;
-//     pCurrentStack = NULL;
-
-    setCursor(g_Platform->ShowBusySpinner());
-
-    QProgressDialog *pprog = nullptr;
-    if( b_prog  && DirArray.count() > 0) {
-        pprog = new QProgressDialog(0);
-        pprog->setRange(0, 100);
-        pprog->setAttribute(Qt::WA_DeleteOnClose);
-        pprog->setWindowTitle("OpenCPN Chart Update");
-        pprog->setLabel(new QLabel(QString("%1\n%2").arg("OpenCPN Chart Update").arg("..........................................................................")));
-        pprog->setCancelButtonText(tr("取消"));
-        pprog->show();
-    }
-    qDebug("Starting chart database Update...");
-    QString gshhg_chart_loc = gWorldMapLocation;
-    gWorldMapLocation.clear();
-    ChartData->Update( DirArray, b_force, pprog );
-    ChartData->SaveBinary(ChartListFileName);
-    qDebug("Finished chart database Update");
-    if( gWorldMapLocation.isEmpty() ) { //Last resort. User might have deleted all GSHHG data, but we still might have the default dataset distributed with OpenCPN or from the package repository...
-       gWorldMapLocation = gDefaultWorldMapLocation;
-       gshhg_chart_loc.clear();
-    }
-
-    if( gWorldMapLocation != gshhg_chart_loc )
-    {
-        if(mEcdisWidget)
-        {
-            mEcdisWidget->ResetWorldBackgroundChart();
-        }
-    }
-
-
-//    delete pprog;
-
-    setCursor(g_Platform->HideBusySpinner());
-    ZCHX_CFG_INS->UpdateChartDirs( DirArray );
-    if(pprog)
-    {
-        delete pprog;
-    }
-
-//    if( b_run ) FrameTimer1.Start( TIMER_GFRAME_1, wxTIMER_CONTINUOUS );
-
-    return true;
-}
 
 
 
@@ -1238,30 +1194,6 @@ bool zchxMapMainWindow::DoChartUpdate( void )
     if(mEcdisWidget) return_val = mEcdisWidget->DoCanvasUpdate();
     return return_val;
 
-}
-
-void zchxMapMainWindow::UpdateRotationState( double rotation )
-{
-//    //  If rotated manually, we switch to NORTHUP
-//    g_bCourseUp = false;
-
-//    if(fabs(rotation) > .001){
-//        SetMenubarItemState( ID_MENU_CHART_COGUP, false );
-//        SetMenubarItemState( ID_MENU_CHART_NORTHUP, true );
-//        if(m_pMenuBar){
-//            m_pMenuBar->SetLabel( ID_MENU_CHART_NORTHUP, _("Rotated Mode") );
-//        }
-//    }
-//    else{
-//        SetMenubarItemState( ID_MENU_CHART_COGUP, g_bCourseUp );
-//        SetMenubarItemState( ID_MENU_CHART_NORTHUP, !g_bCourseUp );
-//        if(m_pMenuBar){
-//            m_pMenuBar->SetLabel( ID_MENU_CHART_NORTHUP, _("North Up Mode") );
-//        }
-//    }
-
-//    UpdateGPSCompassStatusBoxes( true );
-    DoChartUpdate();
 }
 
 ChartCanvas *zchxMapMainWindow::GetPrimaryCanvas()
@@ -1320,7 +1252,7 @@ void zchxMapMainWindow::RefreshAllCanvas( bool bErase)
 
 void zchxMapMainWindow::SetGPSCompassScale()
 {
-    g_compass_scalefactor = g_Platform->GetCompassScaleFactor( g_GUIScaleFactor );
+    g_compass_scalefactor = OCPNPlatform::instance()->GetCompassScaleFactor( g_GUIScaleFactor );
 
 }
 
@@ -1683,12 +1615,12 @@ void LoadS57()
 //    CPLSetErrorHandler( MyCPLErrorHandler );
 
 //      Init the s57 chart object, specifying the location of the required csv files
-    g_csv_locn = g_Platform->GetDataDir();
+    g_csv_locn = zchxFuncUtil::getDataDir();
     g_csv_locn.append(zchxFuncUtil::separator()).append("s57data");
 //      If the config file contains an entry for SENC file prefix, use it.
 //      Otherwise, default to PrivateDataDir
     if( g_SENCPrefix.isEmpty() ) {
-        g_SENCPrefix = g_Platform->GetDataDir();
+        g_SENCPrefix = zchxFuncUtil::getDataDir();
         g_SENCPrefix.append(zchxFuncUtil::separator());
         g_SENCPrefix.append("SENC");
     }
@@ -1725,7 +1657,7 @@ void LoadS57()
     if( !ps52plib->m_bOK ) {
         delete ps52plib;
         QString look_data_dir;
-        look_data_dir.append( g_Platform->GetAppDir());
+        look_data_dir.append( zchxFuncUtil::getAppDir());
         look_data_dir.append(zchxFuncUtil::separator());
         QString tentative_SData_Locn = look_data_dir;
         look_data_dir.append("s57data");
@@ -1749,7 +1681,7 @@ void LoadS57()
         delete ps52plib;
 
         QString look_data_dir;
-        look_data_dir = g_Platform->GetDataDir();
+        look_data_dir = zchxFuncUtil::getDataDir();
         look_data_dir.append(zchxFuncUtil::separator());
         look_data_dir.append("s57data" );
 
@@ -1818,6 +1750,7 @@ ColorScheme zchxMapMainWindow::GetColorScheme()
 {
     return global_color_scheme;
 }
+
 
 void zchxMapMainWindow::slotRotateDegree(double angle)
 {

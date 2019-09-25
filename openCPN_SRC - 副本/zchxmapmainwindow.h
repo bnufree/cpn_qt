@@ -40,7 +40,6 @@ public:
     ColorScheme GetColorScheme();
     void ToggleColorScheme();
     bool DoChartUpdate( void );
-    void UpdateRotationState( double rotation );
     void SetChartUpdatePeriod();
     ChartCanvas *GetPrimaryCanvas();
 //    QWidget* getGlChartCanvas();
@@ -59,12 +58,11 @@ public slots:
     void    slotLargeScaleChart();
     void    slotSmallScaleChart();
     //视图
-    void    slotEnableChartQuilting(bool sts);
+    void    slotEnableChartQuilting(bool sts);              //是否Quilt填充
     void    slotShowChartQuilting(bool sts);
-    void    slotShowChartBar(bool sts);
     void    slotShowENCText(bool sts);
     void    slotShowENCLights(bool sts);
-    void    slotShowENCSoundings(bool sts);
+    void    slotShowENCSoundings(bool sts);                 //是否显示水深
     void    slotShowENCAnchoringInfo(bool sts);
     void    slotShowENCDataQuality(bool sts);
     void    slotShowNavObjects(bool sts);
@@ -79,19 +77,18 @@ public slots:
     void    SetGPSCompassScale();
     double  GetMag(double a);
     void    InvalidateAllGL();
-    //用户操作
     void    slotRotateDegree(double angle);
     void    slotRoateRad(double rad);
 private slots:
-    void    slotInitEcidsAsDelayed();
+//    void    slotInitEcidsAsDelayed();
     void    slotRotate();
 protected:
     void    resizeEvent(QResizeEvent* e);
 
 private:
     QAction* addCustomAction(QMenu* menu, const QString &text, const QObject *receiver, const char* slot, bool check = false, const QVariant& data = QVariant());
-    void     initBeforeCreateCanvas();
-    void     CreateCanvasLayout();
+//    void     initBeforeCreateCanvas();
+//    void     CreateCanvasLayout();
 private slots:
     void    slotOnFrameTimer1Out();
 

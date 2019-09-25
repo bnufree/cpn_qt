@@ -162,8 +162,6 @@ protected:
     void mouseMoveEvent(QMouseEvent* event);
     void mousePressEvent(QMouseEvent* event);
     void mouseReleaseEvent(QMouseEvent* event);
-private:
-    void drawTestTrianlge();
 
 protected:
 
@@ -182,8 +180,6 @@ protected:
 
     void DrawFloatingOverlayObjects( ocpnDC &dc );
     void DrawGroundedOverlayObjects(ocpnDC &dc, ViewPort &vp);
-
-    void DrawChartBar( ocpnDC &dc );
     void DrawQuiting();
     void DrawCloseMessage(QString msg);
     

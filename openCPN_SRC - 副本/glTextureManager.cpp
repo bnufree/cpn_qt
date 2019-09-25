@@ -71,7 +71,6 @@ extern bool             b_inCompressAllCharts;
 extern zchxMapMainWindow         *gFrame;
 //extern arrayofCanvasPtr  g_canvasArray;
 
-extern OCPNPlatform *g_Platform;
 extern ColorScheme global_color_scheme;
 
 extern PFNGLGETCOMPRESSEDTEXIMAGEPROC s_glGetCompressedTexImage;
@@ -92,7 +91,7 @@ QString CompressedCachePath(const QString& src)
     if(colon >= 0) path.remove(colon, 1);
     
     /* replace path separators with ! */
-    QString separator = g_Platform->GetPathSeparator();
+    QString separator = zchxFuncUtil::separator();
     int pos = 0;
     while( (pos = path.indexOf(separator, pos)) >= 0)
     {
@@ -111,7 +110,7 @@ QString CompressedCachePath(const QString& src)
         sha1_res += s;
     }
 
-    return g_Platform->GetDataDir() + separator + QString("raster_texture_cache") + separator + sha1_res;
+    return zchxFuncUtil::getDataDir() + separator + QString("raster_texture_cache") + separator + sha1_res;
     
 }
 
@@ -658,7 +657,7 @@ glTextureManager::glTextureManager() : QObject(0), m_timer(0)
 {
     // ideally we would use the cpu count -1, and only launch jobs
     // when the idle load average is sufficient (greater than 1)
-    int nCPU =  qMax(1, g_Platform->getCpuCorNum());
+    int nCPU =  qMax(1, OCPNPlatform::instance()->getCpuCorNum());
     if(g_nCPUCount > 0)
         nCPU = g_nCPUCount;
 
@@ -1192,7 +1191,7 @@ bool glTextureManager::TextureCrunch(double factor)
 //        for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
             ChartCanvas *cc = /*g_canvasArray.at(i)*/gFrame->GetPrimaryCanvas();
             if(cc){ 
-                if( cc->GetVP().b_quilt )          // quilted
+                if( cc->GetVP().quilt() )          // quilted
                 {
                         if( cc->m_pQuilt->IsComposed() &&
                             !cc->m_pQuilt->IsChartInQuilt( chart_full_path ) ) {
@@ -1253,7 +1252,7 @@ bool glTextureManager::FactoryCrunch(double factor)
             ChartCanvas *cc = /*g_canvasArray.at(i);*/gFrame->GetPrimaryCanvas();
             if(cc){
                 
-                if( cc->GetVP().b_quilt )          // quilted
+                if( cc->GetVP().quilt())          // quilted
                 {
                     if( cc->m_pQuilt->IsComposed() &&
                         !cc->m_pQuilt->IsChartInQuilt( chart_full_path ) ) {
@@ -1394,9 +1393,9 @@ void glTextureManager::BuildCompressedCache()
     QFont sFont;
     QSize csz = gFrame->rect().size();
     if(csz.width() < 500 || csz.height() < 500)
-        sFont = FontMgr::Get().FindOrCreateFont( 10, "Microsoft YH", QFont::StyleNormal, QFont::Normal);
+        sFont = FontMgr::Get().FindOrCreateFont( 10, "Microsoft YaHei", QFont::StyleNormal, QFont::Normal);
     else
-        sFont = FontMgr::Get().FindOrCreateFont( fontSize, "Microsoft YH", QFont::StyleNormal, QFont::Normal);
+        sFont = FontMgr::Get().FindOrCreateFont( fontSize, "Microsoft YaHei", QFont::StyleNormal, QFont::Normal);
     
     m_progDialog->setFont(sFont );
     

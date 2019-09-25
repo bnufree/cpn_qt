@@ -10,11 +10,11 @@
 #include "zchxmapmainwindow.h"
 #include "zchxconfig.h"
 #include "zchxopengloptiondlg.h"
+#include "glChartCanvas.h"
 #include "chcanv.h"
 
 extern  bool            g_bShowStatusBar;
 extern  bool            g_bShowMenuBar;
-extern  bool            g_bShowCompassWin;
 extern  bool            g_bShowChartBar;
 extern  double          g_display_size_mm;
 extern  bool            g_bskew_comp;
@@ -227,7 +227,6 @@ void zchxOptionsDlg::processApply(bool apply)
 
     g_bShowStatusBar = ui->pShowStatusBar->isChecked();
     g_bShowMenuBar = ui->pShowMenuBar->isChecked();
-    g_bShowCompassWin = ui->pShowCompassWin->isChecked();
     g_bShowChartBar = ui->pShowChartBar->isChecked();
 
 

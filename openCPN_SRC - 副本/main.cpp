@@ -12,6 +12,8 @@
 #include "_def.h"
 #include "zchxmapmainwindow.h"
 #include <QPixmapCache>
+#include <QMainWindow>
+#include <QVBoxLayout>
 
 
 #undef QT_MESSAGELOG_FILE
@@ -109,13 +111,20 @@ int main(int argc, char *argv[])
         a.exit(1);
         return 0;
     }
-
-    //make size as 9:16
-//    gFrame = new zchxMapMainWindow();
-//    gFrame->showMaximized();
     QPixmapCache::setCacheLimit(1);
-    zchxMapMainWindow w;
-    w.showMaximized();
+    QMainWindow win;
+    win.resize(800, 600);
+    win.setCentralWidget(new QWidget(&win));
+    QLayout *layout = win.centralWidget()->layout();
+    if(!layout)
+    {
+        layout = new QVBoxLayout;
+        win.centralWidget()->setLayout(layout);
+    }
+    layout->addWidget(new zchxMapMainWindow);
+    win.show();
+    //添加测试菜单
+
 
     return a.exec();
 }

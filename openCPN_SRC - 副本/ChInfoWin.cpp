@@ -29,7 +29,6 @@
 
 
 extern bool g_btouch;
-extern OCPNPlatform  *g_Platform;
 
 extern QColor GetGlobalColor(const QString& str);
 
@@ -97,7 +96,7 @@ void ChInfoWin::FitToChars( int char_width, int char_height )
     QFontMetrics mcs(this->font());
     size.setWidth(mcs.width(list.join("")));
     size.setHeight(mcs.height() * ( char_height + adjust ));
-    size.setWidth(fmin(size.width(), g_Platform->getDisplaySize().width()-10));
+    size.setWidth(fmin(size.width(), OCPNPlatform::instance()->getDisplaySize().width()-10));
     resize(size );
     SetWinSize(size);
 }

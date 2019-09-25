@@ -13,6 +13,7 @@
 #include "OCPNPlatform.h"
 #include "S57ClassRegistrar.h"
 #include "s57RegistrarMgr.h"
+#include "glChartCanvas.h"
 #include "SencManager.h"
 //#include "thumbwin.h"
 #include "styles.h"
@@ -23,7 +24,7 @@
 #include <QLabel>
 #include <QMessageBox>
 #include "CanvasConfig.h"
-//#include "compass.h"
+#include "compass.h"
 #include "glwidget.h"
 
 
@@ -59,7 +60,6 @@ extern QString                  ChartListFileName;
 extern QString                  AISTargetNameFileName;
 extern bool            g_bShowStatusBar;
 extern bool            g_bShowMenuBar;
-extern bool            g_bShowCompassWin;
 extern bool            g_bShowChartBar;
 extern double          g_display_size_mm;
 extern double          g_config_display_size_mm;
@@ -131,7 +131,6 @@ extern bool                      g_bFullscreen;
 extern bool                      g_bFullScreenQuilt;
 extern bool                      g_bQuiltEnable;
 extern bool                      g_bQuiltStart;
-extern bool                      g_bquiting;
 extern double                    g_ChartNotRenderScaleFactor;
 std::vector<int>               g_quilt_noshow_index_array;
 extern int                       g_nbrightness;
@@ -174,7 +173,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
     //视图
     QMenu* view = this->menuBar()->addMenu(tr("View"));
     addCustomAction(view, tr("Enable Chart Quilting"), this, SLOT(slotEnableChartQuilting(bool)));
-    addCustomAction(view, tr("Show Chart Quilting"), this, SLOT(slotShowChartQuilting(bool)));
+    addCustomAction(view, tr("Show Chart Outline"), this, SLOT(slotShowChartOutline(bool)));
     addCustomAction(view, tr("Show ENC Text"), this, SLOT(slotShowENCText(bool)));
     addCustomAction(view, tr("Show ENC Lights"), this, SLOT(slotShowENCLights(bool)));
     addCustomAction(view, tr("Show ENC Soundings"), this, SLOT(slotShowENCSoundings(bool)));
@@ -199,7 +198,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
     addCustomAction(display, tr("All"), this, SLOT(slotShowDisplayCategory()), false, ColorScheme::GLOBAL_COLOR_SCHEME_NIGHT);
 
     //添加窗口
-    mEcdisWidget = new ChartCanvas(this);
+    mEcdisWidget = new ChartCanvas(this, 0);
     if(!ui->centralwidget->layout())
     {
         ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
@@ -437,13 +436,13 @@ void zchxMapMainWindow::slotShowBuoyLightLabel(bool sts)
 
 }
 
-void zchxMapMainWindow::slotShowChartQuilting(bool sts)
+void zchxMapMainWindow::slotShowChartOutline(bool sts)
 {
-    if(!mEcdisWidget) return;
-    if(mEcdisWidget->GetShowOutlines() == sts) return;
-    mEcdisWidget->SetShowOutlines(sts);
+    if(!mEcdisWidget || !mEcdisWidget->GetglCanvas()) return;
+    if(mEcdisWidget->GetglCanvas()->GetShowOutlines() == sts) return;
+    mEcdisWidget->GetglCanvas()->SetShowOutlines(sts);
     mEcdisWidget->Refresh(false);
-    mEcdisWidget->InvalidateGL();
+    mEcdisWidget->GetglCanvas()->Invalidate();
 }
 
 void zchxMapMainWindow::slotShowDepth(bool sts)
@@ -1719,10 +1718,10 @@ void LoadS57()
         // Setup PLIB OpenGL options, if enabled
         extern bool g_b_EnableVBO;
         extern GLenum  g_texture_rectangle_format;
-        ps52plib->SetGLOptions(ChartCanvas::s_b_useStencil,
-                               ChartCanvas::s_b_useStencilAP,
-                               ChartCanvas::s_b_useScissorTest,
-                               ChartCanvas::s_b_useFBO,
+        ps52plib->SetGLOptions(glChartCanvas::s_b_useStencil,
+                               glChartCanvas::s_b_useStencilAP,
+                               glChartCanvas::s_b_useScissorTest,
+                               glChartCanvas::s_b_useFBO,
                                g_b_EnableVBO,
                                g_texture_rectangle_format);
 #endif

@@ -59,7 +59,7 @@ public slots:
     void    slotSmallScaleChart();
     //视图
     void    slotEnableChartQuilting(bool sts);              //是否Quilt填充
-    void    slotShowChartQuilting(bool sts);
+    void    slotShowChartOutline(bool sts);
     void    slotShowENCText(bool sts);
     void    slotShowENCLights(bool sts);
     void    slotShowENCSoundings(bool sts);                 //是否显示水深

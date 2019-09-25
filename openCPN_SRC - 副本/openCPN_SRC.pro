@@ -98,7 +98,6 @@ SOURCES += \
     pugixml.cpp \
     ocpndc.cpp \
     gshhs.cpp \
-    piano.cpp \
     compass.cpp \
     ChInfoWin.cpp \
     Osenc.cpp \
@@ -109,7 +108,8 @@ SOURCES += \
     ogrs57layer.cpp \
     CanvasOptions.cpp \
     glwidget.cpp \
-    CanvasConfig.cpp
+    CanvasConfig.cpp \
+    zchxmaploadworker.cpp
 
 
 
@@ -167,7 +167,6 @@ HEADERS += \
     pugixml.hpp \
     ocpndc.h \
     gshhs.h \
-    piano.h \
     compass.h \
     ChInfoWin.h \
     Osenc.h \
@@ -175,7 +174,8 @@ HEADERS += \
     CanvasOptions.h \
     glwidget.h \
     CanvasConfig.h \
-    chartbase.h
+    chartbase.h \
+    zchxmaploadworker.h
 
 FORMS += \
     zchxoptionsdlg.ui \

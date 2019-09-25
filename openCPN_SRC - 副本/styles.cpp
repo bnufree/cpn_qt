@@ -33,7 +33,6 @@
 #include <QPainter>
 #include <QPixmap>
 
-extern OCPNPlatform     *g_Platform;
 extern QColor GetGlobalColor(const QString& colorName);
 
 using namespace ocpnStyle;
@@ -760,14 +759,22 @@ Style::~Style( void )
     toolIndex.clear();
     iconIndex.clear();
 }
+StyleManager* StyleManager::mInstance = 0;
+StyleManager::MGarbage StyleManager::Garbage;
+
+StyleManager* StyleManager::instance()
+{
+    if(mInstance == 0) mInstance = new StyleManager();
+    return mInstance;
+}
 
 StyleManager::StyleManager(void)
 {
     isOK = false;
     currentStyle = NULL;
-    Init( g_Platform->GetDataDir() + zchxFuncUtil::separator() + ("uidata") + zchxFuncUtil::separator() );
-    Init( g_Platform->GetDataDir() );
-    Init( g_Platform->GetDataDir() + zchxFuncUtil::separator() + ("/.opencpn") + zchxFuncUtil::separator() );
+    Init( zchxFuncUtil::getDataDir() + zchxFuncUtil::separator() + ("uidata") + zchxFuncUtil::separator() );
+    Init( zchxFuncUtil::getDataDir() );
+    Init( zchxFuncUtil::getDataDir() + zchxFuncUtil::separator() + ("/.opencpn") + zchxFuncUtil::separator() );
     SetStyle( ("") );
 #ifdef ocpnUSE_SVG
     qDebug()<<(("Using SVG Icons"));

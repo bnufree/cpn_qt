@@ -70,8 +70,6 @@ private:
 #include "glTexCache.h"
 #include "gshhs.h"
 #include "OCPNPlatform.h"
-//#include "toolbar.h"
-#include "piano.h"
 //#include "tcmgr.h"
 #include "compass.h"
 #include "FontMgr.h"
@@ -114,14 +112,10 @@ extern "C" void glOrthof(float left,  float right,  float bottom,  float top,  f
 
 extern zchxMapMainWindow *gFrame;
 extern s52plib *ps52plib;
-extern bool g_bopengl;
 extern bool g_bDebugOGL;
 extern bool g_bShowFPS;
 extern bool g_bSoftwareGL;
 extern bool g_btouch;
-extern OCPNPlatform *g_Platform;
-//extern ocpnFloatingToolbarDialog *g_MainToolbar;
-extern ocpnStyle::StyleManager* g_StyleManager;
 extern bool             g_bShowChartBar;
 extern Piano           *g_Piano;
 extern glTextureManager   *g_glTextureManager;
@@ -515,22 +509,6 @@ glChartCanvas::glChartCanvas(ChartCanvas* parentCavas) : QGLWidget(/*QGLFormat(Q
 
     m_LRUtime = 0;
     
-
-#ifdef __OCPN__ANDROID__    
-    //  Create/connect a dynamic event handler slot for gesture events
-    Connect( wxEVT_QT_PANGESTURE,
-             (wxObjectEventFunction) (wxEventFunction) &glChartCanvas::OnEvtPanGesture, NULL, this );
-    
-    Connect( wxEVT_QT_PINCHGESTURE,
-             (wxObjectEventFunction) (wxEventFunction) &glChartCanvas::OnEvtPinchGesture, NULL, this );
-
-    Connect( wxEVT_TIMER,
-             (wxObjectEventFunction) (wxEventFunction) &glChartCanvas::onGestureTimerEvent, NULL, this );
-    
-    m_gestureEeventTimer.SetOwner( this, GESTURE_EVENT_TIMER );
-    m_bgestureGuard = false;
-    
-#endif    
 
     if( !g_glTextureManager)
         g_glTextureManager = new glTextureManager;
@@ -1156,7 +1134,6 @@ void glChartCanvas::paintGL()
     glPopMatrix();
 #else
     if(!m_pcontext) return;
-    if(!g_bopengl) return;
     if(!mIsUpdateAvailable) return;
     makeCurrent();
     
@@ -1179,7 +1156,7 @@ void glChartCanvas::paintGL()
     //  If necessary, reconfigure the S52 PLIB
     m_pParentCanvas->UpdateCanvasS52PLIBConfig();
     
-//     if( m_pParentCanvas->VPoint.b_quilt ){          // quilted
+//     if( m_pParentCanvas->VPoint.quilt() ){          // quilted
 //         if( !m_pParentCanvas->m_pQuilt || !m_pParentCanvas->m_pQuilt->IsComposed() ) 
 //             return;  // not ready
 //             
@@ -1203,9 +1180,9 @@ void glChartCanvas::paintGL()
 //   These routines allow reusable coordinates
 bool glChartCanvas::HasNormalizedViewPort(const ViewPort &vp)
 {
-    return vp.m_projection_type == PROJECTION_MERCATOR ||
-        vp.m_projection_type == PROJECTION_POLAR ||
-        vp.m_projection_type == PROJECTION_EQUIRECTANGULAR;
+    return vp.projectType() == PROJECTION_MERCATOR ||
+        vp.projectType() == PROJECTION_POLAR ||
+        vp.projectType() == PROJECTION_EQUIRECTANGULAR;
 }
 
 /* adjust the opengl transformation matrix so that
@@ -1220,30 +1197,30 @@ void glChartCanvas::MultMatrixViewPort(ViewPort &vp, float lat, float lon)
 {
     zchxPointF point;
 
-    switch(vp.m_projection_type) {
+    switch(vp.projectType()) {
     case PROJECTION_MERCATOR:
     case PROJECTION_EQUIRECTANGULAR:
     case PROJECTION_WEB_MERCATOR:
         //m_pParentCanvas->GetDoubleCanvasPointPixVP(vp, lat, lon, &point);
         point = vp.GetDoublePixFromLL(lat, lon);
         glTranslated(point.x, point.y, 0);
-        glScaled(vp.view_scale_ppm/NORM_FACTOR, vp.view_scale_ppm/NORM_FACTOR, 1);
+        glScaled(vp.viewScalePPM()/NORM_FACTOR, vp.viewScalePPM()/NORM_FACTOR, 1);
         break;
 
     case PROJECTION_POLAR:
-        //m_pParentCanvas->GetDoubleCanvasPointPixVP(vp, vp.clat > 0 ? 90 : -90, vp.clon, &point);
-        point = vp.GetDoublePixFromLL(vp.clat > 0 ? 90 : -90, vp.clon);
+        //m_pParentCanvas->GetDoubleCanvasPointPixVP(vp, vp.lat() > 0 ? 90 : -90, vp.lon(), &point);
+        point = vp.GetDoublePixFromLL(vp.lat() > 0 ? 90 : -90, vp.lon());
         glTranslated(point.x, point.y, 0);
-        glRotatef(vp.clon - lon, 0, 0, vp.clat);
-        glScalef(vp.view_scale_ppm/NORM_FACTOR, vp.view_scale_ppm/NORM_FACTOR, 1);
-        glTranslatef(-vp.pix_width/2, -vp.pix_height/2, 0);
+        glRotatef(vp.lon() - lon, 0, 0, vp.lat());
+        glScalef(vp.viewScalePPM()/NORM_FACTOR, vp.viewScalePPM()/NORM_FACTOR, 1);
+        glTranslatef(-vp.pixWidth()/2, -vp.pixHeight()/2, 0);
         break;
 
     default:
         qDebug("ERROR: Unhandled projection\n");
     }
 
-    double rotation = vp.rotation;
+    double rotation = vp.rotation();
 
     if (rotation)
         glRotatef(rotation*180/PI, 0, 0, 1);
@@ -1253,31 +1230,32 @@ ViewPort glChartCanvas::NormalizedViewPort(const ViewPort &vp, float lat, float 
 {
     ViewPort cvp = vp;
 
-    switch(vp.m_projection_type) {
+    switch(vp.projectType()) {
     case PROJECTION_MERCATOR:
     case PROJECTION_EQUIRECTANGULAR:
     case PROJECTION_WEB_MERCATOR:
-        cvp.clat = lat;
+        cvp.setLat(lat);
         break;
 
     case PROJECTION_POLAR:
-        cvp.clat = vp.clat > 0 ? 90 : -90; // either north or south polar
+        cvp.setLat(vp.lat() > 0 ? 90 : -90); // either north or south polar
         break;
 
     default:
         printf("ERROR: Unhandled projection\n");
     }
 
-    cvp.clon = lon;
-    cvp.view_scale_ppm = NORM_FACTOR;
-    cvp.rotation = cvp.skew = 0;
+    cvp.setLon(lon);
+    cvp.setViewScalePPM(NORM_FACTOR);
+    cvp.setRotation(0);
+    cvp.setSkew(0);
     return cvp;
 }
 
 bool glChartCanvas::CanClipViewport(const ViewPort &vp)
 {
-    return vp.m_projection_type == PROJECTION_MERCATOR || vp.m_projection_type == PROJECTION_WEB_MERCATOR ||
-        vp.m_projection_type == PROJECTION_EQUIRECTANGULAR;
+    return vp.projectType() == PROJECTION_MERCATOR || vp.projectType() == PROJECTION_WEB_MERCATOR ||
+        vp.projectType() == PROJECTION_EQUIRECTANGULAR;
 }
 
 ViewPort glChartCanvas::ClippedViewport(const ViewPort &vp, const LLRegion &region)
@@ -1297,16 +1275,16 @@ ViewPort glChartCanvas::ClippedViewport(const ViewPort &vp, const LLRegion &regi
        routines works the same here (with accelerated panning) as it does without, so we
        can adjust the coordinates here */
 
-    if(bbox.GetMaxLon() < cvp.GetBBox().GetMinLon()) {
+    if(bbox.GetMaxLon() < cvp.getBBox().GetMinLon()) {
         bbox.Set(bbox.GetMinLat(), bbox.GetMinLon() + 360,
                  bbox.GetMaxLat(), bbox.GetMaxLon() + 360);
-        cvp.SetBBoxDirect(bbox);
-    } else if(bbox.GetMinLon() > cvp.GetBBox().GetMaxLon()) {
+        cvp.setBBoxDirect(bbox);
+    } else if(bbox.GetMinLon() > cvp.getBBox().GetMaxLon()) {
         bbox.Set(bbox.GetMinLat(), bbox.GetMinLon() - 360,
                  bbox.GetMaxLat(), bbox.GetMaxLon() - 360);
-        cvp.SetBBoxDirect(bbox);
+        cvp.setBBoxDirect(bbox);
     } else
-        cvp.SetBBoxDirect(bbox);
+        cvp.setBBoxDirect(bbox);
 
     return cvp;
 }
@@ -1327,7 +1305,7 @@ void glChartCanvas::DrawStaticRoutesTracksAndWaypoints( ViewPort &vp )
         if(pActiveTrack && pActiveTrack->IsRunning() )
             continue;
 
-        pTrackDraw->Draw( m_pParentCanvas, dc, vp, vp.GetBBox() );
+        pTrackDraw->Draw( m_pParentCanvas, dc, vp, vp.getBBox() );
     }
     
     for(wxRouteListNode *node = pRouteList->GetFirst();
@@ -1349,11 +1327,11 @@ void glChartCanvas::DrawStaticRoutesTracksAndWaypoints( ViewPort &vp )
     }
         
     /* Waypoints not drawn as part of routes, and not being edited */
-    if( vp.GetBBox().GetValid() && pWayPointMan) {
+    if( vp.getBBox().GetValid() && pWayPointMan) {
         for(wxRoutePointListNode *pnode = pWayPointMan->GetWaypointList()->GetFirst(); pnode; pnode = pnode->GetNext() ) {
             RoutePoint *pWP = pnode->GetData();
             if( pWP && (!pWP->m_bRPIsBeingEdited) &&(!pWP->m_bIsInRoute ) )
-                if(vp.GetBBox().ContainsMarge(pWP->m_lat, pWP->m_lon, .5))
+                if(vp.getBBox().ContainsMarge(pWP->m_lat, pWP->m_lon, .5))
                     pWP->DrawGL( vp, m_pParentCanvas );
         }
     }
@@ -1370,7 +1348,7 @@ void glChartCanvas::DrawDynamicRoutesTracksAndWaypoints( ViewPort &vp )
         Track *pTrackDraw = node->GetData();
         ActiveTrack *pActiveTrack = dynamic_cast<ActiveTrack *>(pTrackDraw);
         if(pActiveTrack && pActiveTrack->IsRunning() )
-            pTrackDraw->Draw( m_pParentCanvas, dc, vp, vp.GetBBox() );     // We need Track::Draw() to dynamically render last (ownship) point.
+            pTrackDraw->Draw( m_pParentCanvas, dc, vp, vp.getBBox() );     // We need Track::Draw() to dynamically render last (ownship) point.
     }
     
     for(wxRouteListNode *node = pRouteList->GetFirst(); node; node = node->GetNext() ) {
@@ -1393,7 +1371,7 @@ void glChartCanvas::DrawDynamicRoutesTracksAndWaypoints( ViewPort &vp )
             drawit++;
         
         if(drawit) {
-            const LLBBox &vp_box = vp.GetBBox(), &test_box = pRouteDraw->GetBBox();
+            const LLBBox &vp_box = vp.getBBox(), &test_box = pRouteDraw->getBBox();
             if(!vp_box.IntersectOut(test_box))
                 pRouteDraw->DrawGL( vp, m_pParentCanvas );
         }
@@ -1401,7 +1379,7 @@ void glChartCanvas::DrawDynamicRoutesTracksAndWaypoints( ViewPort &vp )
     
     
     /* Waypoints not drawn as part of routes, which are being edited right now */
-    if( vp.GetBBox().GetValid() && pWayPointMan) {
+    if( vp.getBBox().GetValid() && pWayPointMan) {
         
         for(wxRoutePointListNode *pnode = pWayPointMan->GetWaypointList()->GetFirst(); pnode; pnode = pnode->GetNext() ) {
             RoutePoint *pWP = pnode->GetData();
@@ -1417,7 +1395,7 @@ static void GetLatLonCurveDist(const ViewPort &vp, float &lat_dist, float &lon_d
 {
     // This really could use some more thought, and possibly split at different
     // intervals based on chart skew and other parameters to optimize performance
-    switch(vp.m_projection_type) {
+    switch(vp.projectType()) {
     case PROJECTION_TRANSVERSE_MERCATOR:
         lat_dist = 4,   lon_dist = 1;        break;
     case PROJECTION_POLYCONIC:
@@ -1455,11 +1433,11 @@ void glChartCanvas::RenderChartOutline( int dbIndex, ViewPort &vp )
     if(box.GetLonRange() == 360)
         return;
 
-    LLBBox vpbox = vp.GetBBox();
+    LLBBox vpbox = vp.getBBox();
     
     double lon_bias = 0;
     // chart is outside of viewport lat/lon bounding box
-    if( box.IntersectOutGetBias( vp.GetBBox(), lon_bias ) )
+    if( box.IntersectOutGetBias( vp.getBBox(), lon_bias ) )
         return;
 
     float plylat, plylon;
@@ -1572,8 +1550,8 @@ void glChartCanvas::GridDraw( )
     ViewPort &vp = m_pParentCanvas->GetVP();
 
     // TODO: make minor grid work all the time
-    bool minorgrid = fabs( vp.rotation ) < 0.0001 &&
-        vp.m_projection_type == PROJECTION_MERCATOR;
+    bool minorgrid = fabs( vp.rotation() ) < 0.0001 &&
+        vp.projectType() == PROJECTION_MERCATOR;
 
     double nlat, elon, slat, wlon;
     float lat, lon;
@@ -1591,30 +1569,30 @@ void glChartCanvas::GridDraw( )
         m_gridfont.Build(font);
     }
 
-    w = vp.pix_width;
-    h = vp.pix_height;
+    w = vp.pixWidth();
+    h = vp.pixHeight();
 
-    LLBBox llbbox = vp.GetBBox();
+    LLBBox llbbox = vp.getBBox();
     nlat = llbbox.GetMaxLat();
     slat = llbbox.GetMinLat();
     elon = llbbox.GetMaxLon();
     wlon = llbbox.GetMinLon();
 
     // calculate distance between latitude grid lines
-    CalcGridSpacing( vp.view_scale_ppm, gridlatMajor, gridlatMinor );
-    CalcGridSpacing( vp.view_scale_ppm, gridlonMajor, gridlonMinor );
+    CalcGridSpacing( vp.viewScalePPM(), gridlatMajor, gridlatMinor );
+    CalcGridSpacing( vp.viewScalePPM(), gridlonMajor, gridlonMinor );
 
 
     // if it is known the grid has straight lines it's a bit faster
     bool straight_latitudes =
-        vp.m_projection_type == PROJECTION_MERCATOR ||
-        vp.m_projection_type == PROJECTION_WEB_MERCATOR ||
-        vp.m_projection_type == PROJECTION_EQUIRECTANGULAR;
+        vp.projectType() == PROJECTION_MERCATOR ||
+        vp.projectType() == PROJECTION_WEB_MERCATOR ||
+        vp.projectType() == PROJECTION_EQUIRECTANGULAR;
     bool straight_longitudes =
-        vp.m_projection_type == PROJECTION_MERCATOR ||
-        vp.m_projection_type == PROJECTION_WEB_MERCATOR ||
-        vp.m_projection_type == PROJECTION_POLAR ||
-        vp.m_projection_type == PROJECTION_EQUIRECTANGULAR;
+        vp.projectType() == PROJECTION_MERCATOR ||
+        vp.projectType() == PROJECTION_WEB_MERCATOR ||
+        vp.projectType() == PROJECTION_POLAR ||
+        vp.projectType() == PROJECTION_EQUIRECTANGULAR;
 
     double latmargin;
     if(straight_latitudes)
@@ -1627,7 +1605,7 @@ void glChartCanvas::GridDraw( )
 
     float startlat = ceil( slat / gridlatMajor ) * gridlatMajor;
     float startlon = ceil( wlon / gridlonMajor ) * gridlonMajor;
-    float curved_step = fmin(sqrt(5e-3 / vp.view_scale_ppm), 3);
+    float curved_step = fmin(sqrt(5e-3 / vp.viewScalePPM()), 3);
 
     ocpnDC gldc( this );
     QPen pen( GridColor, g_GLMinSymbolLineWidth, Qt::SolidLine );
@@ -1724,8 +1702,8 @@ void glChartCanvas::GridDraw( )
             zchxPointF r;
             double y1, y2, lat1, lon1, lat2, lon2;
 
-            y1 = 0, y2 = vp.pix_height;
-            double error = vp.pix_width, lasterror;
+            y1 = 0, y2 = vp.pixHeight();
+            double error = vp.pixWidth(), lasterror;
             int maxiters = 10;
             do {
                 m_pParentCanvas->GetCanvasPixPoint(0, y1, lat1, lon1);
@@ -1746,11 +1724,11 @@ void glChartCanvas::GridDraw( )
                     break;
             } while(error > 1 && error < lasterror);
 
-            if(error < 1 && r.y >= 0 && r.y <= vp.pix_height - iy )
+            if(error < 1 && r.y >= 0 && r.y <= vp.pixHeight() - iy )
                 r.x = 0;
             else
                 // just draw at center longitude
-                m_pParentCanvas->GetDoubleCanvasPointPix( lat, vp.clon, r);
+                m_pParentCanvas->GetDoubleCanvasPointPix( lat, vp.lon(), r);
 
             m_gridfont.RenderString(st, r.x, r.y);
         }
@@ -1789,8 +1767,8 @@ void glChartCanvas::GridDraw( )
             zchxPointF r;
             double x1, x2, lat1, lon1, lat2, lon2;
 
-            x1 = 0, x2 = vp.pix_width;
-            double error = vp.pix_height, lasterror;
+            x1 = 0, x2 = vp.pixWidth();
+            double error = vp.pixHeight(), lasterror;
             do {
                 m_pParentCanvas->GetCanvasPixPoint(x1, 0, lat1, lon1);
                 m_pParentCanvas->GetCanvasPixPoint(x2, 0, lat2, lon2);
@@ -1808,11 +1786,11 @@ void glChartCanvas::GridDraw( )
                 error = fabs(r.y);
             } while(error > 1 && error < lasterror);
 
-            if(error < 1 && r.x >= 0 && r.x <= vp.pix_width - ix)
+            if(error < 1 && r.x >= 0 && r.x <= vp.pixWidth() - ix)
                 r.y = 0;
             else
                 // failure, instead just draw the text at center latitude
-                m_pParentCanvas->GetDoubleCanvasPointPix( fmin(fmax(vp.clat, slat), nlat), lon, r);
+                m_pParentCanvas->GetDoubleCanvasPointPix( fmin(fmax(vp.lat(), slat), nlat), lon, r);
 
             m_gridfont.RenderString(st, r.x, r.y);
         }
@@ -1897,14 +1875,6 @@ void glChartCanvas::DrawFloatingOverlayObjects( ocpnDC &dc )
     s57_DrawExtendedLightSectors( dc, m_pParentCanvas->VPoint, m_pParentCanvas->extendedSectorLegs );
 }
 
-void glChartCanvas::DrawChartBar( ocpnDC &dc )
-{
-    if(m_pParentCanvas->GetPiano())
-    {
-        m_pParentCanvas->GetPiano()->DrawGL(m_pParentCanvas->size().height() - m_pParentCanvas->GetPiano()->GetHeight());
-    }
-}
-
 void glChartCanvas::DrawQuiting()
 {
     GLubyte pattern[8][8];
@@ -1942,7 +1912,7 @@ void glChartCanvas::DrawCloseMessage(QString msg)
 {
     if(1){
         
-        QFont pfont = FontMgr::Get().FindOrCreateFont(12, "Microsoft YH", QFont::StyleNormal, QFont::Weight::Normal);
+        QFont pfont = FontMgr::Get().FindOrCreateFont(12, "Microsoft YaHei", QFont::StyleNormal, QFont::Weight::Bold);
         
         TexFont texfont;
         
@@ -1950,8 +1920,8 @@ void glChartCanvas::DrawCloseMessage(QString msg)
         int w, h;
         texfont.GetTextExtent( msg, &w, &h);
         h += 2;
-        int yp = m_pParentCanvas->GetVP().pix_height/2;
-        int xp = (m_pParentCanvas->GetVP().pix_width - w)/2;
+        int yp = m_pParentCanvas->GetVP().pixHeight()/2;
+        int xp = (m_pParentCanvas->GetVP().pixWidth() - w)/2;
         
         glColor3ub( 243, 229, 47 );
         
@@ -1974,13 +1944,13 @@ void glChartCanvas::DrawCloseMessage(QString msg)
 
 void glChartCanvas::RotateToViewPort(const ViewPort &vp)
 {
-    float angle = vp.rotation;
+    float angle = vp.rotation();
 
-    qDebug()<<"current roate:"<<vp.rotation;
+    qDebug()<<"current roate:"<<vp.rotation();
     if( fabs( angle ) > 0.0001 )
     {
         //    Rotations occur around 0,0, so translate to rotate around screen center
-        float xt = vp.pix_width / 2.0, yt = vp.pix_height / 2.0;
+        float xt = vp.pixWidth() / 2.0, yt = vp.pixHeight() / 2.0;
         qDebug()<<"dxy:"<<xt<<yt;
         glTranslatef( xt, yt, 0 );
         glRotatef( angle * 180. / PI, 0, 0, 1 );
@@ -2135,10 +2105,10 @@ void glChartCanvas::SetClipRect(const ViewPort &vp, const QRect &rect, bool b_cl
     /* for some reason this causes an occasional bug in depth mode, I cannot
        seem to solve it yet, so for now: */
     if(s_b_useStencil && s_b_useScissorTest) {
-        QRect vp_rect(0, 0, vp.pix_width, vp.pix_height);
+        QRect vp_rect(0, 0, vp.pixWidth(), vp.pixHeight());
         if(rect != vp_rect) {
             glEnable(GL_SCISSOR_TEST);
-            glScissor(rect.x(), vp.pix_height - rect.height() - rect.y(), rect.width(), rect.height());
+            glScissor(rect.x(), vp.pixHeight() - rect.height() - rect.y(), rect.width(), rect.height());
         }
 
         if(b_clear) {
@@ -2230,7 +2200,7 @@ void glChartCanvas::Invalidate()
 {
     /* should probably use a different flag for this */
 
-    m_pParentCanvas->m_glcc->m_cache_vp.Invalidate();
+    m_pParentCanvas->m_glcc->m_cache_vp.invalidate();
 
 }
 
@@ -2267,7 +2237,7 @@ void glChartCanvas::RenderRasterChartRegionGL( ChartBase *chart, ViewPort &vp, L
     //    This way we can avoid loading much texture memory
 
     int base_level;
-    if(vp.m_projection_type == PROJECTION_MERCATOR &&
+    if(vp.projectType() == PROJECTION_MERCATOR &&
        chart->GetChartProjectionType() == PROJECTION_MERCATOR) {
         double scalefactor = pBSBChart->GetRasterScaleFactor(vp);
         base_level = log(scalefactor) / log(2.0);
@@ -2535,8 +2505,8 @@ void glChartCanvas::RenderQuiltViewGL( ViewPort &vp, const OCPNRegion &rect_regi
             
         if( !rendered_region.Empty() ) {
      
-            int width = vp.pix_width; 
-            int height = vp.pix_height;
+            int width = vp.pixWidth();
+            int height = vp.pixHeight();
                 
             // Use MipMap LOD tweaking to produce a blurred, downsampling effect at reasonable speed.
 
@@ -2683,13 +2653,13 @@ void glChartCanvas::RenderCharts(ocpnDC &dc, const OCPNRegion &rect_region)
     // we need to know this before rendering the chart so we can compute the background region
     // and nodta regions correctly.  I would prefer to just perform this here (or in SetViewPoint)
     // for all vector charts instead of in their render routine, but how to handle quilted cases?
-    if(!vp.b_quilt && m_pParentCanvas->m_singleChart->GetChartType() == CHART_TYPE_CM93COMP)
+    if(!vp.quilt() && m_pParentCanvas->m_singleChart->GetChartType() == CHART_TYPE_CM93COMP)
     {
 //        static_cast<cm93compchart*>( m_pParentCanvas->m_singleChart )->SetVPParms( vp );
     }
         
     LLRegion chart_region;
-    if( !vp.b_quilt && (m_pParentCanvas->m_singleChart->GetChartType() == CHART_TYPE_PLUGIN) ){
+    if( !vp.quilt() && (m_pParentCanvas->m_singleChart->GetChartType() == CHART_TYPE_PLUGIN) ){
         if(m_pParentCanvas->m_singleChart->GetChartFamily() == CHART_FAMILY_RASTER){
             // We do this the hard way, since PlugIn Raster charts do not understand LLRegion yet...
             double ll[8];
@@ -2725,7 +2695,7 @@ void glChartCanvas::RenderCharts(ocpnDC &dc, const OCPNRegion &rect_region)
         }
     }
     else
-        chart_region = vp.b_quilt ? m_pParentCanvas->m_pQuilt->GetFullQuiltRegion() : m_pParentCanvas->m_singleChart->GetValidRegion();
+        chart_region = vp.quilt() ? m_pParentCanvas->m_pQuilt->GetFullQuiltRegion() : m_pParentCanvas->m_singleChart->GetValidRegion();
 
     bool world_view = false;
     for(OCPNRegionIterator upd ( rect_region ); upd.HaveRects(); upd.NextRect()) {
@@ -2740,7 +2710,7 @@ void glChartCanvas::RenderCharts(ocpnDC &dc, const OCPNRegion &rect_region)
         }
     }
 
-    if(vp.b_quilt)
+    if(vp.quilt())
         RenderQuiltViewGL( vp, rect_region );
     else {
         LLRegion region = vp.GetLLRegion(rect_region);
@@ -2814,7 +2784,7 @@ void glChartCanvas::RenderNoDTA(ViewPort &vp, ChartBase *chart)
         LLRegion region(pt->GetnPlyEntries(), pt->GetpPlyTable());
         DrawRegion(vp, region);
     } else {
-        QRect rect(0, 0, vp.pix_width, vp.pix_height);
+        QRect rect(0, 0, vp.pixWidth(), vp.pixHeight());
         int x1 = rect.x, y1 = rect.y, x2 = x1 + rect.width, y2 = y1 + rect.height;
         glBegin( GL_QUADS );
         glVertex2i( x1, y1 );
@@ -2835,38 +2805,39 @@ void glChartCanvas::RenderWorldChart(ocpnDC &dc, ViewPort &vp, QRect &rect, bool
 
     // clear background
     if(!world_view) {
-        if(vp.m_projection_type == PROJECTION_ORTHOGRAPHIC) {
+        if(vp.projectType() == PROJECTION_ORTHOGRAPHIC) {
             // for this projection, if zoomed out far enough that the earth does
             // not fill the viewport we need to first clear the screen black and
             // draw a blue circle representing the earth
 
             ViewPort tvp = vp;
-            tvp.clat = 0, tvp.clon = 0;
-            tvp.rotation = 0;
+            tvp.setLat(0);
+            tvp.setLon(0);
+            tvp.setRotation(0);
             zchxPointF p = tvp.GetDoublePixFromLL( 89.99, 0);
-            float w = ((float)tvp.pix_width)/2, h = ((float)tvp.pix_height)/2;
+            float w = ((float)tvp.pixWidth())/2, h = ((float)tvp.pixHeight())/2;
             double world_r = h - p.y;
             const float pi_ovr100 = float(M_PI)/100;
             if(world_r*world_r < w*w + h*h) {
                 glClear( GL_COLOR_BUFFER_BIT );
 
                 glBegin(GL_TRIANGLE_FAN);
-                float w = ((float)vp.pix_width)/2, h = ((float)vp.pix_height)/2;
+                float w = ((float)vp.pixWidth())/2, h = ((float)vp.pixHeight())/2;
                 for(float theta = 0; theta < 2*M_PI+.01f; theta+=pi_ovr100)
                     glVertex2f(w + world_r*sinf(theta), h + world_r*cosf(theta));
                 glEnd();
 
                 world_view = true;
             }
-        } else if(vp.m_projection_type == PROJECTION_EQUIRECTANGULAR) {
+        } else if(vp.projectType() == PROJECTION_EQUIRECTANGULAR) {
             // for this projection we will draw black outside of the earth (beyond the pole)
             glClear( GL_COLOR_BUFFER_BIT );
 
             zchxPointF p[4] = {
-                vp.GetDoublePixFromLL( 90, vp.clon - 170 ),
-                vp.GetDoublePixFromLL( 90, vp.clon + 170 ),
-                vp.GetDoublePixFromLL(-90, vp.clon + 170 ),
-                vp.GetDoublePixFromLL(-90, vp.clon - 170 )};
+                vp.GetDoublePixFromLL( 90, vp.lon() - 170 ),
+                vp.GetDoublePixFromLL( 90, vp.lon() + 170 ),
+                vp.GetDoublePixFromLL(-90, vp.lon() + 170 ),
+                vp.GetDoublePixFromLL(-90, vp.lon() - 170 )};
 
             glBegin(GL_QUADS);
             for(int i = 0; i<4; i++)
@@ -2916,8 +2887,8 @@ int n_render;
 void glChartCanvas::Render()
 {
     if( !m_bsetup ||
-        ( m_pParentCanvas->VPoint.b_quilt && !m_pParentCanvas->m_pQuilt->IsComposed() ) ||
-        ( !m_pParentCanvas->VPoint.b_quilt && !m_pParentCanvas->m_singleChart ) ) {
+        ( m_pParentCanvas->VPoint.quilt() && !m_pParentCanvas->m_pQuilt->IsComposed() ) ||
+        ( !m_pParentCanvas->VPoint.quilt() && !m_pParentCanvas->m_singleChart ) ) {
 #ifdef __WXGTK__  // for some reason in gtk, a swap is needed here to get an initial screen update
             SwapBuffers();
 #endif
@@ -2953,7 +2924,7 @@ void glChartCanvas::Render()
     gl_height = m_pParentCanvas->GetClientSize().y;
 #endif    
     
-    OCPNRegion screen_region(QRect(0, 0, VPoint.pix_width, VPoint.pix_height));
+    OCPNRegion screen_region(QRect(0, 0, VPoint.pixWidth(), VPoint.pixHeight()));
 
     glViewport( 0, 0, (GLint) gl_width, (GLint) gl_height );
     glMatrixMode (GL_PROJECTION);
@@ -2987,10 +2958,10 @@ void glChartCanvas::Render()
     g_glTextureManager->TextureCrunch(0.8);
 
     //  If we plan to post process the display, don't use accelerated panning
-    double scale_factor = VPoint.ref_scale/VPoint.chart_scale;
+    double scale_factor = VPoint.refScale()/VPoint.chartScale();
     
-    m_bfogit = m_benableFog && g_fog_overzoom && (scale_factor > g_overzoom_emphasis_base) && VPoint.b_quilt;
-    bool scale_it  =  m_benableVScale && g_oz_vector_scale && (scale_factor > g_overzoom_emphasis_base) && VPoint.b_quilt;
+    m_bfogit = m_benableFog && g_fog_overzoom && (scale_factor > g_overzoom_emphasis_base) && VPoint.quilt();
+    bool scale_it  =  m_benableVScale && g_oz_vector_scale && (scale_factor > g_overzoom_emphasis_base) && VPoint.quilt();
     
     bool bpost_hilite = !m_pParentCanvas->m_pQuilt->GetHiliteRegion( ).Empty();
     bool useFBO = false;
@@ -3008,13 +2979,13 @@ void glChartCanvas::Render()
 
         // If the view is the same we do no updates, 
         // cached texture to the framebuffer
-        qDebug()<<"vp roate:"<<m_cache_vp.rotation<<VPoint.rotation;
-        if(    m_cache_vp.view_scale_ppm == VPoint.view_scale_ppm
-               && m_cache_vp.rotation == VPoint.rotation
-               && m_cache_vp.clat == VPoint.clat
-               && m_cache_vp.clon == VPoint.clon
-               && m_cache_vp.IsValid()
-               && m_cache_vp.pix_height == VPoint.pix_height
+        qDebug()<<"vp roate:"<<m_cache_vp.rotation()<<VPoint.rotation();
+        if(    m_cache_vp.viewScalePPM() == VPoint.viewScalePPM()
+               && m_cache_vp.rotation() == VPoint.rotation()
+               && m_cache_vp.lat() == VPoint.lat()
+               && m_cache_vp.lon() == VPoint.lon()
+               && m_cache_vp.isValid()
+               && m_cache_vp.pixHeight() == VPoint.pixHeight()
                && m_cache_current_ch == m_pParentCanvas->m_singleChart ) {
             b_newview = false;
         }
@@ -3023,10 +2994,10 @@ void glChartCanvas::Render()
         if( b_newview ) {
 
             bool busy = false;
-            if(VPoint.b_quilt && m_pParentCanvas->m_pQuilt->IsQuiltVector() &&
-                ( m_cache_vp.view_scale_ppm != VPoint.view_scale_ppm || m_cache_vp.rotation != VPoint.rotation))
+            if(VPoint.quilt() && m_pParentCanvas->m_pQuilt->IsQuiltVector() &&
+                ( m_cache_vp.viewScalePPM() != VPoint.viewScalePPM() || m_cache_vp.rotation() != VPoint.rotation()))
             {
-                    g_Platform->ShowBusySpinner();
+                    OCPNPlatform::instance()->ShowBusySpinner();
                     busy = true;
             }
             
@@ -3035,14 +3006,14 @@ void glChartCanvas::Render()
 
             int dx, dy;
             bool accelerated_pan = false;
-            if( g_GLOptions.m_bUseAcceleratedPanning && m_cache_vp.IsValid()
-                && ( VPoint.m_projection_type == PROJECTION_MERCATOR
-                || VPoint.m_projection_type == PROJECTION_EQUIRECTANGULAR )
-                && m_cache_vp.pix_height == VPoint.pix_height )
+            if( g_GLOptions.m_bUseAcceleratedPanning && m_cache_vp.isValid()
+                && ( VPoint.projectType() == PROJECTION_MERCATOR
+                || VPoint.projectType() == PROJECTION_EQUIRECTANGULAR )
+                && m_cache_vp.pixHeight() == VPoint.pixHeight() )
             {
                 qDebug()<<"!!!!!!!!!!!!!!";
-                zchxPointF c_old = VPoint.GetDoublePixFromLL( VPoint.clat, VPoint.clon );
-                zchxPointF c_new = m_cache_vp.GetDoublePixFromLL( VPoint.clat, VPoint.clon );
+                zchxPointF c_old = VPoint.GetDoublePixFromLL( VPoint.lat(), VPoint.lon() );
+                zchxPointF c_new = m_cache_vp.GetDoublePixFromLL( VPoint.lat(), VPoint.lon() );
 
 //                printf("diff: %f %f\n", c_new.y - c_old.y, c_new.x - c_old.x);
                 dy = qRound(c_new.y - c_old.y);
@@ -3082,15 +3053,15 @@ void glChartCanvas::Render()
                     // add an extra pixel avoid coorindate rounding issues
                     OCPNRegion update_region;
 
-                    if( dy > 0 && dy < VPoint.pix_height)
-                        update_region.Union(QRect( 0, VPoint.pix_height - dy, VPoint.pix_width, dy ));
+                    if( dy > 0 && dy < VPoint.pixHeight())
+                        update_region.Union(QRect( 0, VPoint.pixHeight() - dy, VPoint.pixWidth(), dy ));
                     else if(dy < 0)
-                        update_region.Union(QRect( 0, 0, VPoint.pix_width, -dy ));
+                        update_region.Union(QRect( 0, 0, VPoint.pixWidth(), -dy ));
                             
-                    if( dx > 0 && dx < VPoint.pix_width )
-                        update_region.Union(QRect( VPoint.pix_width - dx, 0, dx, VPoint.pix_height ));
+                    if( dx > 0 && dx < VPoint.pixWidth() )
+                        update_region.Union(QRect( VPoint.pixWidth() - dx, 0, dx, VPoint.pixHeight() ));
                     else if (dx < 0)
-                        update_region.Union(QRect( 0, 0, -dx, VPoint.pix_height ));
+                        update_region.Union(QRect( 0, 0, -dx, VPoint.pixHeight() ));
 
                     RenderCharts(gldc, update_region);
 
@@ -3103,8 +3074,8 @@ void glChartCanvas::Render()
                     // Render the cached texture as quad to FBO(m_blit_tex) with offsets
                     int x1, x2, y1, y2;
 
-                    int ow = VPoint.pix_width - abs( dx );
-                    int oh = VPoint.pix_height - abs( dy );
+                    int ow = VPoint.pixWidth() - abs( dx );
+                    int oh = VPoint.pixHeight() - abs( dy );
                     if( dx > 0 )
                         x1 = dx,  x2 = 0;
                     else
@@ -3146,9 +3117,9 @@ void glChartCanvas::Render()
                             ((m_cache_tex_y - (m_fbo_offsety + sy)) < 50))
                             b_reset = true;
     
-                        if(m_cache_vp.view_scale_ppm != VPoint.view_scale_ppm )
+                        if(m_cache_vp.viewScalePPM() != VPoint.viewScalePPM() )
                             b_reset = true;
-                        if(!m_cache_vp.IsValid())
+                        if(!m_cache_vp.isValid())
                             b_reset = true;
                             
                         if( b_reset ){
@@ -3159,7 +3130,7 @@ void glChartCanvas::Render()
                             
                             m_canvasregion = OCPNRegion( m_fbo_offsetx, m_fbo_offsety, sx, sy );
                             
-//                             if(m_cache_vp.view_scale_ppm != VPoint.view_scale_ppm )
+//                             if(m_cache_vp.viewScalePPM() != VPoint.viewScalePPM() )
 //                                 OCPNPlatform::ShowBusySpinner();
                             
                             RenderCanvasBackingChart(gldc, m_canvasregion);
@@ -3208,14 +3179,14 @@ void glChartCanvas::Render()
             ( s_glBindFramebuffer )( GL_FRAMEBUFFER_EXT, 0 );
 
             if(busy)
-                g_Platform->HideBusySpinner();
+                OCPNPlatform::instance()->HideBusySpinner();
         
         } // newview
 
         useFBO = true;
     }
 
-    if(VPoint.tilt) {
+    if(VPoint.tilt()) {
         glMatrixMode (GL_PROJECTION);
         glLoadIdentity();
 
@@ -3226,7 +3197,7 @@ void glChartCanvas::Render()
 
         glScalef(1, -1, 1);
         glTranslatef(-gl_width/2, -gl_height/2, -gl_width/2);
-        glRotated(VPoint.tilt*180/PI, 1, 0, 0);
+        glRotated(VPoint.tilt()*180/PI, 1, 0, 0);
 
         glGetIntegerv(GL_VIEWPORT, viewport);
         glGetDoublev(GL_PROJECTION_MATRIX, projmatrix);
@@ -3267,14 +3238,14 @@ void glChartCanvas::Render()
         m_cache_vp = VPoint;
         m_cache_current_ch = m_pParentCanvas->m_singleChart;
 
-        if(VPoint.b_quilt)
+        if(VPoint.quilt())
             m_pParentCanvas->m_pQuilt->SetRenderedVP( VPoint );
         
     } else          // useFBO
         RenderCharts(gldc, screen_region);
 
        //  Render the decluttered Text overlay for quilted vector charts, except for CM93 Composite
-    if( VPoint.b_quilt ) {
+    if( VPoint.quilt() ) {
         if(m_pParentCanvas->m_pQuilt->IsQuiltVector() && ps52plib && ps52plib->GetShowS57Text()){
 
             ChartBase *chart = m_pParentCanvas->m_pQuilt->GetRefChart();
@@ -3290,9 +3261,9 @@ void glChartCanvas::Render()
                 
                 // Grow the ViewPort a bit laterally, to minimize "jumping" of text elements at left side of screen
                 ViewPort vpx = VPoint;
-                vpx.BuildExpandedVP(VPoint.pix_width * 12 / 10, VPoint.pix_height);
+                vpx.BuildExpandedVP(VPoint.pixWidth() * 12 / 10, VPoint.pixHeight());
                 
-                OCPNRegion screen_region(QRect(0, 0, VPoint.pix_width, VPoint.pix_height));
+                OCPNRegion screen_region(QRect(0, 0, VPoint.pixWidth(), VPoint.pixHeight()));
                 RenderQuiltViewGLText( vpx, screen_region );
             }
         }
@@ -3304,8 +3275,8 @@ void glChartCanvas::Render()
     std::vector<int> stackIndexArray = m_pParentCanvas->m_pQuilt->GetExtendedStackIndexArray();
     unsigned int im = stackIndexArray.size();
     // XXX should
-    // assert(!VPoint.b_quilt && im == 0)
-    if( VPoint.b_quilt && im > 0 ) {
+    // assert(!VPoint.quilt() && im == 0)
+    if( VPoint.quilt() && im > 0 ) {
         bool regionVPBuilt = false;
         OCPNRegion screen_region;
         LLRegion screenLLRegion;
@@ -3321,14 +3292,17 @@ void glChartCanvas::Render()
             if(cte.GetChartType() == CHART_TYPE_MBTILES){
                 tiles_to_show.push_back(stackIndexArray[is]);
                 if(!regionVPBuilt){
-                    screen_region = OCPNRegion(QRect(0, 0, VPoint.pix_width, VPoint.pix_height));
+                    screen_region = OCPNRegion(QRect(0, 0, VPoint.pixWidth(), VPoint.pixHeight()));
                     screenLLRegion = VPoint.GetLLRegion( screen_region );
                     screenBox = screenLLRegion.GetBox();
 
                     vp = VPoint;
                     zchxPoint p;
-                    p.x = VPoint.pix_width / 2;  p.y = VPoint.pix_height / 2;
-                    VPoint.GetLLFromPix( p, &vp.clat, &vp.clon);
+                    p.x = VPoint.pixWidth() / 2;  p.y = VPoint.pixHeight() / 2;
+                    double lat = 0.0, lon = 0.0;
+                    VPoint.GetLLFromPix( p, &lat, &lon);
+                    vp.setLat(lat);
+                    vp.setLon(lon);
                     
                     regionVPBuilt = true;
                 }
@@ -3342,19 +3316,6 @@ void glChartCanvas::Render()
             ChartMBTiles *pcmbt = dynamic_cast<ChartMBTiles*>( chart );
             if(pcmbt){
                 pcmbt->RenderRegionViewOnGL(m_pcontext, vp, screen_region, screenLLRegion);
-                
-                //Light up the piano key if the chart was rendered
-                std::vector<int>  piano_active_array_tiles = m_pParentCanvas->m_Piano->GetActiveKeyArray();
-                bool bfound = false;
-            
-                if(std::find(piano_active_array_tiles.begin(), piano_active_array_tiles.end(), *rit) != piano_active_array_tiles.end()) {
-                    bfound = true;
-                }
-
-                if(!bfound){
-                    piano_active_array_tiles.push_back( *rit );
-                    m_pParentCanvas->m_Piano->SetActiveKeyArray( piano_active_array_tiles );
-                }
             }
         }
     }
@@ -3399,7 +3360,7 @@ void glChartCanvas::Render()
     DrawFloatingOverlayObjects( gldc );
 
     // from this point on don't use perspective
-    if(VPoint.tilt) {
+    if(VPoint.tilt()) {
         glMatrixMode (GL_PROJECTION);
         glLoadIdentity();
 
@@ -3463,9 +3424,6 @@ void glChartCanvas::Render()
     
     
 #endif
-    // render the chart bar
-    if(g_bShowChartBar)
-        DrawChartBar(gldc);
 
     if (m_pParentCanvas->m_Compass)
         m_pParentCanvas->m_Compass->Paint(gldc);
@@ -3580,8 +3538,8 @@ void glChartCanvas::FastPan(int dx, int dy)
     
     //   ViewPort VPoint = m_pParentCanvas->VPoint;
     //   ViewPort svp = VPoint;
-    //   svp.pix_width = svp.rv_rect.width;
-    //   svp.pix_height = svp.rv_rect.height;
+    //   svp.pixWidth() = svp.rv_rect.width;
+    //   svp.pixHeight() = svp.rv_rect.height;
     
     //   OCPNRegion chart_get_region( 0, 0, m_pParentCanvas->VPoint.rv_rect.width, m_pParentCanvas->VPoint.rv_rect.height );
     
@@ -3717,9 +3675,6 @@ void glChartCanvas::FastPan(int dx, int dy)
     glDisable( g_texture_rectangle_format );
     glBindTexture( g_texture_rectangle_format, 0);
     
-    
-    swapBuffers();
-    
     m_canvasregion.Union(tx0, ty0, sx, sy);
 }
 
@@ -3744,7 +3699,7 @@ void glChartCanvas::RenderGLAlertMessage()
         texfont.GetTextExtent( msg, &w, &h);
         h += 2;
         w += 4;
-        int yp = m_pParentCanvas->VPoint.pix_height - 20 - h;
+        int yp = m_pParentCanvas->VPoint.pixHeight() - 20 - h;
 
         QRect sbr = m_pParentCanvas->GetScaleBarRect();
         int xp = sbr.x()+sbr.width() + 5;
@@ -3898,202 +3853,6 @@ void glChartCanvas::FastZoom(float factor)
              glEnd();
              
          }
-    }
-    
-    swapBuffers();
-}
-
-#ifdef __OCPN__ANDROID__
-
-int panx, pany;
-
-void glChartCanvas::OnEvtPanGesture( wxQT_PanGestureEvent &event)
-{
-   
-    if( m_pParentCanvas->isRouteEditing() || m_pParentCanvas->isMarkEditing() )
-        return;
-    
-    if(m_binPinch)
-        return;
-    if(m_bpinchGuard)
-        return;
-    
-    int x = event.GetOffset().x;
-    int y = event.GetOffset().y;
-    
-    int lx = event.GetLastOffset().x;
-    int ly = event.GetLastOffset().y;
-    
-    int dx = lx - x;
-    int dy = y - ly;
-    
-    switch(event.GetState()){
-        case GestureStarted:
-            if(m_binPan)
-                break;
-            
-            panx = pany = 0;
-            m_binPan = true;
-            break;
-            
-        case GestureUpdated:
-            if(m_binPan){
-                if(!g_GLOptions.m_bUseCanvasPanning || m_bfogit)
-                    m_pParentCanvas->PanCanvas( dx, -dy );
-                else{
-                    FastPan( dx, dy ); 
-                }
-                
-                
-                panx -= dx;
-                pany -= dy;
-                m_pParentCanvas->ClearbFollow();
-            
-            #ifdef __OCPN__ANDROID__
-                androidSetFollowTool(false);
-            #endif        
-            }
-            break;
-            
-        case GestureFinished:
-            if(m_binPan){
-                m_pParentCanvas->PanCanvas( -panx, pany );
-
-            #ifdef __OCPN__ANDROID__
-                androidSetFollowTool(false);
-            #endif        
-            
-            }
-            panx = pany = 0;
-            m_binPan = false;
-            
-            break;
-            
-        case GestureCanceled:
-            m_binPan = false; 
-            break;
-            
-        default:
-            break;
-    }
-    
-    m_bgestureGuard = true;
-    m_gestureEeventTimer.Start(500, wxTIMER_ONE_SHOT);
-    
-}
-
-
-void glChartCanvas::OnEvtPinchGesture( wxQT_PinchGestureEvent &event)
-{
-    
-    float zoom_gain = 1.0;
-    float zoom_val;
-    float total_zoom_val;
-
-    if( event.GetScaleFactor() > 1)
-        zoom_val = ((event.GetScaleFactor() - 1.0) * zoom_gain) + 1.0;
-    else
-        zoom_val = 1.0 - ((1.0 - event.GetScaleFactor()) * zoom_gain);
-
-    if( event.GetTotalScaleFactor() > 1)
-        total_zoom_val = ((event.GetTotalScaleFactor() - 1.0) * zoom_gain) + 1.0;
-    else
-        total_zoom_val = 1.0 - ((1.0 - event.GetTotalScaleFactor()) * zoom_gain);
- 
-    double projected_scale = m_pParentCanvas->GetVP().chart_scale / total_zoom_val;
-    
-    switch(event.GetState()){
-        case GestureStarted:
-            m_binPinch = true;
-            m_binPan = false;   // cancel any tentative pan gesture, in case the "pan cancel" event was lost
-            break;
-            
-        case GestureUpdated:
-            if(g_GLOptions.m_bUseCanvasPanning){
-                
-                if( projected_scale < 3e8)
-                    FastZoom(zoom_val);
-                
-            }
-            break;
-            
-        case GestureFinished:{
-                if( projected_scale < 3e8)
-                    m_pParentCanvas->ZoomCanvas( total_zoom_val, false );
-                else
-                    m_pParentCanvas->ZoomCanvas(m_pParentCanvas->GetVP().chart_scale / 3e8, false);
-            
-             m_binPinch = false;
-             break;
-        }
-            
-        case GestureCanceled:
-            m_binPinch = false;
-            break;
-            
-        default:
-            break;
-    }
-
-    m_bgestureGuard = true;
-    m_bpinchGuard = true;
-    m_gestureEeventTimer.Start(500, wxTIMER_ONE_SHOT);
-    
-}
-
-void glChartCanvas::onGestureTimerEvent(wxTimerEvent &event)
-{
-    //  On some devices, the pan GestureFinished event fails to show up
-    //  Watch for this case, and fix it.....
-    if(m_binPan){
-        m_binPan = false;
-        Invalidate();
-        Update();
-    }
-    m_bgestureGuard = false;
-    m_bpinchGuard = false;
-}
-
-
-#endif
-
-
-void glChartCanvas::drawTestTrianlge()
-{
-    int     xRot = 0;
-    int    yRot = 0;
-    int    zRot = 0;
-    QColor faceColors[4];
-    faceColors[0] = Qt::red;
-    faceColors[1] = Qt::green;
-    faceColors[2] = Qt::blue;
-    faceColors[3] = Qt::yellow;
-
-    static const GLfloat P1[3] = { 0.0, -1.0, +2.0 };
-    static const GLfloat P2[3] = { +1.73205081, -1.0, -1.0 };
-    static const GLfloat P3[3] = { -1.73205081, -1.0, -1.0 };
-    static const GLfloat P4[3] = { 0.0, +2.0, 0.0 };
-
-    static const GLfloat * const coords[4][3] = {
-        { P1, P2, P3 }, { P1, P3, P4 }, { P1, P4, P2 }, { P2, P4, P3 }
-    };
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslatef(0.0, 0.0, -10.0);
-    glRotatef(xRot, 1.0, 0.0, 0.0);
-    glRotatef(yRot, 0.0, 1.0, 0.0);
-    glRotatef(zRot, 0.0, 0.0, 1.0);
-
-    for (int i = 0; i != 4; ++i) {
-        //glLoadName(i);
-        glBegin(GL_TRIANGLES);
-        qglColor(faceColors[i]);
-        for (int j = 0; j < 3; ++j) {
-            glVertex3f(coords[i][j][0], coords[i][j][1],
-                    coords[i][j][2]);
-        }
-        glEnd();
     }
 }
 

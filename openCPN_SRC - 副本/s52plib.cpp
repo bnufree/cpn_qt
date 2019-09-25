@@ -62,7 +62,6 @@ extern bool    g_oz_vector_scale;
 extern float g_ChartScaleFactorExp;
 extern int g_chart_zoom_modifier_vector;
 extern zchxConfig*      g_config;
-extern OCPNPlatform*        g_Platform;
 
 
 float g_scaminScale;
@@ -132,9 +131,8 @@ const char *MyPLIBCSVGetField( const char * pszFilename, const char * pszKeyFiel
 QString GetS57AttributeDecode( QString& att, int ival )
 {
     QString ret_val = "";
-    if(!g_Platform) return ret_val;
     
-    QString s57data_dir = QString("%1/s57data").arg(g_Platform->GetDataDir());
+    QString s57data_dir = QString("%1/s57data").arg(zchxFuncUtil::getDataDir());
     if( !s57data_dir.length() ) return ret_val;
 
     //  Get the attribute code from the acronym
@@ -1137,7 +1135,7 @@ int s52plib::S52_load_Plib( const QString& PLib, bool b_forceLegacy )
         ( *_cond_sym )[index] = (Rule *) ( condTable[i].condInst );
     }
 
-    QString s57data_dir = g_Platform->GetDataDir();
+    QString s57data_dir = zchxFuncUtil::getDataDir();
     s57data_dir += "/s57data";
     
     QString oc_file( s57data_dir );
@@ -1743,10 +1741,10 @@ S52_TextC *s52plib::S52_PL_parseTE( ObjRazRules *rzRules, Rules *rules, char *cm
 
 static void rotate(QRect *r, ViewPort const &vp)
 {
-    float cx = vp.pix_width/2.;
-    float cy = vp.pix_height/2.;
-    float c = cosf(vp.rotation );
-    float s = sinf(vp.rotation );
+    float cx = vp.pixWidth()/2.;
+    float cy = vp.pixHeight()/2.;
+    float c = cosf(vp.rotation() );
+    float s = sinf(vp.rotation() );
     float x = r->x() -cx;
     float y = r->y() -cy;
     r->setX( x*c - y*s +cx);
@@ -1768,10 +1766,10 @@ bool s52plib::RenderText(S52_TextC *ptext, int x, int y, QRect *pRectDrawn,
     int descent = 0;
     int exlead = 0;
     
-    double sfactor = vp->ref_scale/vp->chart_scale;
+    double sfactor = vp->refScale()/vp->chartScale();
     double scale_factor = qMax((sfactor - g_overzoom_emphasis_base)  / 4., 1.);
     
-    if(!g_oz_vector_scale || !vp->b_quilt)
+    if(!g_oz_vector_scale || !vp->quilt())
         scale_factor = 1.0;
     
     //  Place an upper bound on the scaled text size
@@ -1945,9 +1943,9 @@ bool s52plib::RenderText(S52_TextC *ptext, int x, int y, QRect *pRectDrawn,
             int xp = x;
             int yp = y;
 
-            if(fabs(vp->rotation) > 0.01){
-                float c = cosf(-vp->rotation );
-                float s = sinf(-vp->rotation );
+            if(fabs(vp->rotation()) > 0.01){
+                float c = cosf(-vp->rotation() );
+                float s = sinf(-vp->rotation() );
                 float x = xadjust;
                 float y = yadjust;
                 xp += x*c - y*s;
@@ -1988,7 +1986,7 @@ bool s52plib::RenderText(S52_TextC *ptext, int x, int y, QRect *pRectDrawn,
                 glTranslatef(xp, yp, 0);
 
                 /* undo previous rotation to make text level */
-                glRotatef(vp->rotation*180/PI, 0, 0, -1);
+                glRotatef(vp->rotation()*180/PI, 0, 0, -1);
 
 
                 float tx1 = 0, tx2 = draw_width;
@@ -2075,9 +2073,9 @@ bool s52plib::RenderText(S52_TextC *ptext, int x, int y, QRect *pRectDrawn,
         int yp = y;
 
 
-        if(fabs(vp->rotation) > 0.01){
-            float c = cosf(-vp->rotation );
-            float s = sinf(-vp->rotation );
+        if(fabs(vp->rotation()) > 0.01){
+            float c = cosf(-vp->rotation() );
+            float s = sinf(-vp->rotation() );
             float x = xadjust;
             float y = yadjust;
             xadjust =  x*c - y*s;
@@ -2094,7 +2092,7 @@ bool s52plib::RenderText(S52_TextC *ptext, int x, int y, QRect *pRectDrawn,
         pRectDrawn->setHeight( h );
 
         if( bCheckOverlap ) {
-            if(fabs( vp->rotation ) > .01){
+            if(fabs( vp->rotation() ) > .01){
                 rotate(pRectDrawn, *vp );
             }
             if( CheckTextRectList( *pRectDrawn, ptext ) ) bdraw = false;
@@ -2117,7 +2115,7 @@ bool s52plib::RenderText(S52_TextC *ptext, int x, int y, QRect *pRectDrawn,
             glTranslatef(xp, yp, 0);
 
             /* undo previous rotation to make text level */
-            glRotatef(vp->rotation*180/PI, 0, 0, -1);
+            glRotatef(vp->rotation()*180/PI, 0, 0, -1);
 
             f_cache->RenderString(ptext->frmtd);
             glPopMatrix();
@@ -2257,7 +2255,7 @@ int s52plib::RenderT_All( ObjRazRules *rzRules, Rules *rules, ViewPort *vp, bool
                     fontweight = QFont::Weight::Bold;
             }
 
-            QFont *specFont = new QFont("Microsofy YaHei",text->bsize, fontweight );
+            QFont *specFont = new QFont("Microsoft YaHei",text->bsize, fontweight );
             specFont->setStyle(  QFont::Style::StyleNormal);
             
             //Get the width of a single average character in the spec font
@@ -2413,7 +2411,7 @@ bool s52plib::RenderHPGL( ObjRazRules *rzRules, Rule *prule, zchxPoint &r, ViewP
             ){
         // assume the symbol length
         float sym_length = 30;
-        float scaled_length = sym_length / vp->view_scale_ppm;
+        float scaled_length = sym_length / vp->viewScalePPM();
         
         double fac1 = scaled_length / fsf;
         
@@ -2451,7 +2449,7 @@ bool s52plib::RenderHPGL( ObjRazRules *rzRules, Rule *prule, zchxPoint &r, ViewP
     //  Very special case for ATON flare lights at 135 degrees, the standard render angle.
     //  We don't want them to rotate with the viewport.
     if(rzRules->obj->bIsAton && (!strncmp(rzRules->obj->FeatureName, "LIGHTS", 6))  && (fabs(rot_angle - 135.0) < 1.) ){
-        render_angle -= vp->rotation * 180./PI;
+        render_angle -= vp->rotation() * 180./PI;
         
         //  And, due to popular request, we make the flare lights a little bit smaller than S52 specifications
         xscale = xscale * 6. / 7.;
@@ -2566,8 +2564,8 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
     scale_factor *=  g_ChartScaleFactorExp;
     scale_factor *= g_scaminScale;
     
-    if(g_oz_vector_scale && vp->b_quilt){
-        double sfactor = vp->ref_scale/vp->chart_scale;
+    if(g_oz_vector_scale && vp->quilt()){
+        double sfactor = vp->refScale()/vp->chartScale();
         scale_factor = fmax((sfactor - g_overzoom_emphasis_base)  / 4., scale_factor);
         scale_factor = fmin(scale_factor, 20);
     }
@@ -2584,7 +2582,7 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
         
         int scale_dim = qMax(trect.width(), trect.height());
         
-        double scaled_size = scale_dim / vp->view_scale_ppm;
+        double scaled_size = scale_dim / vp->viewScalePPM();
         
         double target_size = 100;               // roughly, meters maximum scaled size for these inland signs
         
@@ -2699,12 +2697,12 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
     LLBBox symbox;
     double latmin, lonmin, latmax, lonmax;
 
-    if(fabs( vp->rotation ) > .01)          // opengl
+    if(fabs( vp->rotation() ) > .01)          // opengl
     {
-        float cx = vp->pix_width/2.;
-        float cy = vp->pix_height/2.;
-        float c = cosf(vp->rotation );
-        float s = sinf(vp->rotation );
+        float cx = vp->pixWidth()/2.;
+        float cy = vp->pixHeight()/2.;
+        float c = cosf(vp->rotation() );
+        float s = sinf(vp->rotation() );
         float x = r.x - pivot_x -cx;
         float y = r.y - pivot_y + b_height -cy;
         GetPixPointSingle( x*c - y*s +cx, x*s + y*c +cy, &latmin, &lonmin, vp );
@@ -2742,11 +2740,11 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
             ty1 /= size.height(), ty2 /= size.height();
         }
 
-        if(fabs( vp->rotation ) > .01){
+        if(fabs( vp->rotation() ) > .01){
             glPushMatrix();
 
             glTranslatef(r.x, r.y, 0);
-            glRotatef(vp->rotation * 180/PI, 0, 0, -1);
+            glRotatef(vp->rotation() * 180/PI, 0, 0, -1);
             glTranslatef(-pivot_x, -pivot_y, 0);
             glScalef(scale_factor, scale_factor, 1);
 
@@ -2792,8 +2790,8 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
 
         glDisable(g_texture_rectangle_format);
     } else { /* this is only for legacy mode, or systems without NPOT textures */
-        float cr = cosf( vp->rotation );
-        float sr = sinf( vp->rotation );
+        float cr = cosf( vp->rotation() );
+        float sr = sinf( vp->rotation() );
         float ddx = pivot_x * cr + pivot_y * sr;
         float ddy = pivot_y * cr - pivot_x * sr;
 
@@ -2801,7 +2799,7 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
 
         //  Since draw pixels is so slow, lets not draw anything we don't have to
         QRect sym_rect(r.x - ddx, r.y - ddy, b_width, b_height);
-        if(vp->rv_rect.intersects(sym_rect) ) {
+        if(vp->rvRect().intersects(sym_rect) ) {
 
             glPushAttrib( GL_SCISSOR_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -2885,20 +2883,20 @@ int s52plib::RenderSY( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 int s52plib::RenderGLLS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 {
     // for now don't use vbo model in non-mercator
-    if(vp->m_projection_type != PROJECTION_MERCATOR)
+    if(vp->projectType() != PROJECTION_MERCATOR)
         return RenderLS(rzRules, rules, vp);
 
     if( !m_benableGLLS )                        // root chart cannot support VBO model, for whatever reason
         return RenderLS(rzRules, rules, vp);
 
-    double scale_factor = vp->ref_scale/vp->chart_scale;
+    double scale_factor = vp->refScale()/vp->chartScale();
     if(scale_factor > 10.0)
         return RenderLS(rzRules, rules, vp);
 
     if( !rzRules->obj->m_chart_context->chart )
         return RenderLS(rzRules, rules, vp);    // this is where S63 PlugIn gets caught
     
-    if(( vp->GetBBox().GetMaxLon() >= 180.) || (vp->GetBBox().GetMinLon() <= -180.))
+    if(( vp->getBBox().GetMaxLon() >= 180.) || (vp->getBBox().GetMinLon() <= -180.))
         return RenderLS(rzRules, rules, vp);    // cm03 has trouble at IDL
     
     bool b_useVBO = false;
@@ -2929,7 +2927,7 @@ int s52plib::RenderGLLS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 #ifdef ocpnUSE_GL
 
     char *str = (char*) rules->INSTstr;
-    LLBBox BBView = vp->GetBBox();
+    LLBBox BBView = vp->getBBox();
 
     //  Allow a little slop in calculating whether a segment
     //  is within the requested Viewport
@@ -3003,8 +3001,8 @@ int s52plib::RenderGLLS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     //  Transform from Simple Mercator (relative to chart reference point) to screen coordinates.
     
     //  First, the VP transform
-    glTranslatef( vp->pix_width / 2, vp->pix_height/2, 0 );
-    glScalef( vp->view_scale_ppm, -vp->view_scale_ppm, 0 );
+    glTranslatef( vp->pixWidth() / 2, vp->pixHeight()/2, 0 );
+    glScalef( vp->viewScalePPM(), -vp->viewScalePPM(), 0 );
     glTranslatef( -rzRules->sm_transform_parms->easting_vp_center, -rzRules->sm_transform_parms->northing_vp_center, 0 );
     
     //  Next, the per-object transform
@@ -3115,9 +3113,9 @@ int s52plib::RenderLS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     QColor color( c->R, c->G, c->B );
     w = atoi( str + 5 ); // Width
 
-    double scale_factor = vp->ref_scale/vp->chart_scale;
+    double scale_factor = vp->refScale()/vp->chartScale();
     double scaled_line_width = fmax((scale_factor - g_overzoom_emphasis_base), 1);
-    bool b_wide_line = g_oz_vector_scale && vp->b_quilt && (scale_factor > g_overzoom_emphasis_base);
+    bool b_wide_line = g_oz_vector_scale && vp->quilt() && (scale_factor > g_overzoom_emphasis_base);
     
     QPen wide_pen(Qt::black);
     QVector<qreal> dashw(2);
@@ -3179,11 +3177,11 @@ int s52plib::RenderLS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
 
     //    Get a true pixel clipping/bounding box from the vp
-    zchxPoint pbb = vp->GetPixFromLL( vp->clat, vp->clon );
-    int xmin_ = pbb.x - (vp->rv_rect.width() / 2) - (4 * scaled_line_width);
-    int xmax_ = xmin_ + vp->rv_rect.width() + (8 * scaled_line_width);
-    int ymin_ = pbb.y - (vp->rv_rect.height() / 2) - (4 * scaled_line_width) ;
-    int ymax_ = ymin_ + vp->rv_rect.height() + (8 * scaled_line_width);
+    zchxPoint pbb = vp->GetPixFromLL( vp->lat(), vp->lon() );
+    int xmin_ = pbb.x - (vp->rvRect().width() / 2) - (4 * scaled_line_width);
+    int xmax_ = xmin_ + vp->rvRect().width() + (8 * scaled_line_width);
+    int ymin_ = pbb.y - (vp->rvRect().height() / 2) - (4 * scaled_line_width) ;
+    int ymax_ = ymin_ + vp->rvRect().height() + (8 * scaled_line_width);
 
     int x0, y0, x1, y1;
 
@@ -3270,9 +3268,9 @@ int s52plib::RenderLSLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     QColor color( c->R, c->G, c->B );
     w = atoi( str + 5 ); // Width
 
-    double scale_factor = vp->ref_scale/vp->chart_scale;
+    double scale_factor = vp->refScale()/vp->chartScale();
     double scaled_line_width = fmax((scale_factor - g_overzoom_emphasis_base), 1);
-    bool b_wide_line = g_oz_vector_scale && vp->b_quilt && (scale_factor > g_overzoom_emphasis_base);
+    bool b_wide_line = g_oz_vector_scale && vp->quilt() && (scale_factor > g_overzoom_emphasis_base);
     
     QPen wide_pen(Qt::black);
     QVector<qreal> dashw(2);
@@ -3327,11 +3325,11 @@ int s52plib::RenderLSLegacy( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     }
 
     //    Get a true pixel clipping/bounding box from the vp
-    zchxPoint pbb = vp->GetPixFromLL( vp->clat, vp->clon );
-    int xmin_ = pbb.x - (vp->rv_rect.width() / 2) - (4 * scaled_line_width);
-    int xmax_ = xmin_ + vp->rv_rect.width() + (8 * scaled_line_width);
-    int ymin_ = pbb.y - (vp->rv_rect.height() / 2) - (4 * scaled_line_width) ;
-    int ymax_ = ymin_ + vp->rv_rect.height() + (8 * scaled_line_width);
+    zchxPoint pbb = vp->GetPixFromLL( vp->lat(), vp->lon() );
+    int xmin_ = pbb.x - (vp->rvRect().width() / 2) - (4 * scaled_line_width);
+    int xmax_ = xmin_ + vp->rvRect().width() + (8 * scaled_line_width);
+    int ymin_ = pbb.y - (vp->rvRect().height() / 2) - (4 * scaled_line_width) ;
+    int ymax_ = ymin_ + vp->rvRect().height() + (8 * scaled_line_width);
 
     int x0, y0, x1, y1;
 
@@ -3466,9 +3464,9 @@ int s52plib::RenderLSPlugIn( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     QColor color( c->R, c->G, c->B );
     w = atoi( str + 5 ); // Width
     
-    double scale_factor = vp->ref_scale/vp->chart_scale;
+    double scale_factor = vp->refScale()/vp->chartScale();
     double scaled_line_width = fmax((scale_factor - g_overzoom_emphasis_base), 1);
-    bool b_wide_line = g_oz_vector_scale && vp->b_quilt && (scale_factor > g_overzoom_emphasis_base);
+    bool b_wide_line = g_oz_vector_scale && vp->quilt() && (scale_factor > g_overzoom_emphasis_base);
     
     QPen wide_pen(Qt::black);
     QVector<qreal> dashw(2);
@@ -3521,11 +3519,11 @@ int s52plib::RenderLSPlugIn( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     
     
     //    Get a true pixel clipping/bounding box from the vp
-    zchxPoint pbb = vp->GetPixFromLL( vp->clat, vp->clon );
-    int xmin_ = pbb.x - (vp->rv_rect.width() / 2) - (4 * scaled_line_width);
-    int xmax_ = xmin_ + vp->rv_rect.width() + (8 * scaled_line_width);
-    int ymin_ = pbb.y - (vp->rv_rect.height() / 2) - (4 * scaled_line_width) ;
-    int ymax_ = ymin_ + vp->rv_rect.height() + (8 * scaled_line_width);
+    zchxPoint pbb = vp->GetPixFromLL( vp->lat(), vp->lon() );
+    int xmin_ = pbb.x - (vp->rvRect().width() / 2) - (4 * scaled_line_width);
+    int xmax_ = xmin_ + vp->rvRect().width() + (8 * scaled_line_width);
+    int ymin_ = pbb.y - (vp->rvRect().height() / 2) - (4 * scaled_line_width) ;
+    int ymax_ = ymin_ + vp->rvRect().height() + (8 * scaled_line_width);
     
     int x0, y0, x1, y1;
     
@@ -3627,7 +3625,7 @@ int s52plib::RenderLC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     S52color *c = getColor( tcolptr + 1 ); // +1 skips "n" in HPGL SPn format
     int w = 1; // arbitrary width
     QColor color( c->R, c->G, c->B );
-    double LOD = 2.0 / vp->view_scale_ppm;              // empirical value, by experiment
+    double LOD = 2.0 / vp->viewScalePPM();              // empirical value, by experiment
     LOD = 0; //qMin(LOD, 10.0);
     
     //  Get the current display priority
@@ -4130,11 +4128,11 @@ void s52plib::draw_lc_poly(QColor &color, int width, zchxPoint *ptp, int npt,
     bool cw = dfSum < 0.;
     
     //    Get a true pixel clipping/bounding box from the vp
-    zchxPoint pbb = vp->GetPixFromLL( vp->clat, vp->clon );
-    int xmin_ = pbb.x - vp->rv_rect.width() / 2;
-    int xmax_ = xmin_ + vp->rv_rect.width();
-    int ymin_ = pbb.y - vp->rv_rect.height() / 2;
-    int ymax_ = ymin_ + vp->rv_rect.height();
+    zchxPoint pbb = vp->GetPixFromLL( vp->lat(), vp->lon() );
+    int xmin_ = pbb.x - vp->rvRect().width() / 2;
+    int xmax_ = xmin_ + vp->rvRect().width();
+    int ymin_ = pbb.y - vp->rvRect().height() / 2;
+    int ymax_ = ymin_ + vp->rvRect().height();
 
     int x0, y0, x1, y1;
     //    Set up the color
@@ -4266,7 +4264,7 @@ int s52plib::RenderMPS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
         return 0;
 
     if( m_bUseSCAMIN ) {
-        if( vp->chart_scale > rzRules->obj->Scamin )
+        if( vp->chartScale() > rzRules->obj->Scamin )
             return 0;
     }
     
@@ -4335,20 +4333,20 @@ int s52plib::RenderMPS( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
     //  We need a private unrotated copy of the Viewport
     ViewPort vp_local = *vp;
-    vp_local.SetRotationAngle( 0. );
+    vp_local.setRotation( 0. );
 
     //  We may be rendering the soundings symbols scaled up, so
     //  adjust the inclusion test bounding box
     
-    double scale_factor = vp->ref_scale/vp->chart_scale;
+    double scale_factor = vp->refScale()/vp->chartScale();
     double box_mult = fmax((scale_factor - g_overzoom_emphasis_base), 1);
     int box_dim = 32 * box_mult;
     
     // We need a pixel bounding rectangle of the passed ViewPort.
     // Very important for partial screen renders, as with dc mode pans or OpenGL FBO operation.
 
-    zchxPoint cr0 = vp_local.GetPixFromLL( vp_local.GetBBox().GetMaxLat(), vp_local.GetBBox().GetMinLon());
-    zchxPoint cr1 = vp_local.GetPixFromLL( vp_local.GetBBox().GetMinLat(), vp_local.GetBBox().GetMaxLon());
+    zchxPoint cr0 = vp_local.GetPixFromLL( vp_local.getBBox().GetMaxLat(), vp_local.getBBox().GetMinLon());
+    zchxPoint cr1 = vp_local.GetPixFromLL( vp_local.getBBox().GetMinLat(), vp_local.getBBox().GetMaxLon());
     QRect clip_rect(cr0.toPoint(), cr1.toPoint());
     
     for( int ip = 0; ip < npt; ip++ ) {
@@ -4483,7 +4481,7 @@ int s52plib::RenderCARC_VBO( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     if(rzRules->obj->Scamin > 10000000){                        // huge (unset) SCAMIN)
         float radius_meters_target = 200;
 
-        float radius_meters = ( radius * canvas_pix_per_mm ) / vp->view_scale_ppm;
+        float radius_meters = ( radius * canvas_pix_per_mm ) / vp->viewScalePPM();
 
         xscale = radius_meters_target / radius_meters;
         xscale = fmin(xscale, 1.0);
@@ -6154,13 +6152,13 @@ inline int s52plib::dda_trap( zchxPoint *segs, int lseg, int rseg, int ytop, int
 void s52plib::RenderToBufferFilledPolygon( ObjRazRules *rzRules, S57Obj *obj, S52color *c,
                                            render_canvas_parms *pb_spec, render_canvas_parms *pPatt_spec, ViewPort *vp )
 {
-    //    LLBBox BBView = vp->GetBBox();
-    LLBBox BBView = vp->GetBBox();
+    //    LLBBox BBView = vp->getBBox();
+    LLBBox BBView = vp->getBBox();
     // please untangle this logic with the logic below
-    if(BBView.GetMaxLon()+180 < vp->clon)
+    if(BBView.GetMaxLon()+180 < vp->lon())
         BBView.Set(BBView.GetMinLat(), BBView.GetMinLon() + 360,
                    BBView.GetMaxLat(), BBView.GetMaxLon() + 360);
-    else if(BBView.GetMinLon()-180 > vp->clon)
+    else if(BBView.GetMinLon()-180 > vp->lon())
         BBView.Set(BBView.GetMinLat(), BBView.GetMinLon() - 360,
                    BBView.GetMaxLat(), BBView.GetMaxLon() - 360);
 
@@ -6300,12 +6298,12 @@ int s52plib::RenderToGLAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
     glColor3ub( c->R, c->G, c->B );
 
-    LLBBox BBView = vp->GetBBox();
+    LLBBox BBView = vp->getBBox();
     // please untangle this logic with the logic below
-    if(BBView.GetMaxLon()+180 < vp->clon)
+    if(BBView.GetMaxLon()+180 < vp->lon())
         BBView.Set(BBView.GetMinLat(), BBView.GetMinLon() + 360,
                    BBView.GetMaxLat(), BBView.GetMaxLon() + 360);
-    else if(BBView.GetMinLon()-180 > vp->clon)
+    else if(BBView.GetMinLon()-180 > vp->lon())
         BBView.Set(BBView.GetMinLat(), BBView.GetMinLon() - 360,
                    BBView.GetMaxLat(), BBView.GetMaxLon() - 360);
 
@@ -6314,7 +6312,7 @@ int s52plib::RenderToGLAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
     double margin = BBView.GetLonRange() * .05;
     BBView.EnLarge( margin );
 
-    bool b_useVBO = m_useVBO && !rzRules->obj->auxParm1 && vp->m_projection_type == PROJECTION_MERCATOR;
+    bool b_useVBO = m_useVBO && !rzRules->obj->auxParm1 && vp->projectType() == PROJECTION_MERCATOR;
     
     if( rzRules->obj->pPolyTessGeo ) {
         
@@ -6325,12 +6323,12 @@ int s52plib::RenderToGLAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
         // We transform from SENC SM vertex data to screen.
 
         //  First, the VP transform
-        if(b_useVBO || vp->m_projection_type == PROJECTION_MERCATOR) {
+        if(b_useVBO || vp->projectType() == PROJECTION_MERCATOR) {
             b_transform = true;
             glPushMatrix();
 
-            glTranslatef( vp->pix_width / 2, vp->pix_height/2, 0 );
-            glScalef( vp->view_scale_ppm, -vp->view_scale_ppm, 0 );
+            glTranslatef( vp->pixWidth() / 2, vp->pixHeight()/2, 0 );
+            glScalef( vp->viewScalePPM(), -vp->viewScalePPM(), 0 );
             glTranslatef( -rzRules->sm_transform_parms->easting_vp_center, -rzRules->sm_transform_parms->northing_vp_center, 0 );
             //  Next, the per-object transform
 
@@ -6498,7 +6496,7 @@ int s52plib::RenderToGLAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
                     glDrawArrays(p_tp->type, 0, p_tp->nVert);
                 }
                 else {
-                    if(vp->m_projection_type == PROJECTION_MERCATOR) {
+                    if(vp->projectType() == PROJECTION_MERCATOR) {
                         glVertexPointer(2, array_gl_type, 2 * array_data_size, p_tp->p_vertex);
                         glDrawArrays(p_tp->type, 0, p_tp->nVert);
                     } else {
@@ -6658,14 +6656,14 @@ void RotateToViewPort(const ViewPort &vp)
 {
     bool g_bskew_comp = true;
     
-    float angle = vp.rotation;
+    float angle = vp.rotation();
     if(g_bskew_comp)
-        angle -= vp.skew;
+        angle -= vp.skew();
     
     if( fabs( angle ) > 0.0001 )
     {
         //    Rotations occur around 0,0, so translate to rotate around screen center
-        float xt = vp.pix_width / 2.0, yt = vp.pix_height / 2.0;
+        float xt = vp.pixWidth() / 2.0, yt = vp.pixHeight() / 2.0;
         
         glTranslatef( xt, yt, 0 );
         glRotatef( angle * 180. / PI, 0, 0, 1 );
@@ -6691,7 +6689,7 @@ int s52plib::RenderToGLAP( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
     GLuint clip_list = 0;
 
-    LLBBox BBView = vp->GetBBox();
+    LLBBox BBView = vp->getBBox();
 
     zchxPoint *ptp;
     if( rzRules->obj->pPolyTessGeo ) {
@@ -6902,10 +6900,10 @@ int s52plib::RenderToGLAP( ObjRazRules *rzRules, Rules *rules, ViewPort *vp )
 
 
     if(w>0 && h>0) {
-        while( yr < vp->pix_height ) {
+        while( yr < vp->pixHeight() ) {
             if( ( (yr + h) >= 0 ) && ( yr <= obj_ymax ) )  {
                 xr = obj_xmin;   //reset
-                while( xr < vp->pix_width ) {
+                while( xr < vp->pixWidth() ) {
                     
                     int xp = xr;
                     if( yc & 1 ) xp += x_stagger_off;
@@ -6966,7 +6964,7 @@ void s52plib::RenderPolytessGL(ObjRazRules *rzRules, ViewPort *vp, double z_clip
 {
 #ifdef ocpnUSE_GL
 
-    LLBBox BBView = vp->GetBBox();
+    LLBBox BBView = vp->getBBox();
 
     //  Allow a little slop in calculating whether a triangle
     //  is within the requested Viewport
@@ -7381,7 +7379,7 @@ render_canvas_parms* s52plib::CreatePatternBufferSpec( ObjRazRules *rzRules, Rul
 int s52plib::RenderToBufferAP( ObjRazRules *rzRules, Rules *rules, ViewPort *vp,
                                render_canvas_parms *pb_spec )
 {
-    if(vp->m_projection_type != PROJECTION_MERCATOR)
+    if(vp->projectType() != PROJECTION_MERCATOR)
         return 1;
 
     QImage Image;
@@ -7420,7 +7418,7 @@ int s52plib::RenderToBufferAP( ObjRazRules *rzRules, Rules *rules, ViewPort *vp,
 int s52plib::RenderToBufferAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp,
                                render_canvas_parms *pb_spec )
 {
-    if(vp->m_projection_type != PROJECTION_MERCATOR)
+    if(vp->projectType() != PROJECTION_MERCATOR)
         return 1;
 
     S52color *c;
@@ -7432,13 +7430,13 @@ int s52plib::RenderToBufferAC( ObjRazRules *rzRules, Rules *rules, ViewPort *vp,
 
     //    At very small scales, the object could be visible on both the left and right sides of the screen.
     //    Identify this case......
-    if( vp->chart_scale > 5e7 ) {
+    if( vp->chartScale() > 5e7 ) {
         //    Does the object hang out over the left side of the VP?
-        if( ( rzRules->obj->BBObj.GetMaxLon() > vp->GetBBox().GetMinLon() )
-                && ( rzRules->obj->BBObj.GetMinLon() < vp->GetBBox().GetMinLon() ) ) {
+        if( ( rzRules->obj->BBObj.GetMaxLon() > vp->getBBox().GetMinLon() )
+                && ( rzRules->obj->BBObj.GetMinLon() < vp->getBBox().GetMinLon() ) ) {
             //    If we add 360 to the objects lons, does it intersect the the right side of the VP?
-            if( ( ( rzRules->obj->BBObj.GetMaxLon() + 360. ) > vp->GetBBox().GetMaxLon() )
-                    && ( ( rzRules->obj->BBObj.GetMinLon() + 360. ) < vp->GetBBox().GetMaxLon() ) ) {
+            if( ( ( rzRules->obj->BBObj.GetMaxLon() + 360. ) > vp->getBBox().GetMaxLon() )
+                    && ( ( rzRules->obj->BBObj.GetMinLon() + 360. ) < vp->getBBox().GetMaxLon() ) ) {
                 //  If so, this area oject should be drawn again, this time for the left side
                 //    Do this by temporarily adjusting the objects rendering offset
                 rzRules->obj->x_origin -= mercator_k0 * WGS84_semimajor_axis_meters * 2.0 * PI;
@@ -7617,7 +7615,7 @@ bool s52plib::ObjectRenderCheckPos( ObjRazRules *rzRules, ViewPort *vp )
         return false;
 
     // Of course, the object must be at least partly visible in the viewport
-    const LLBBox &vpBox = vp->GetBBox(), &testBox = rzRules->obj->BBObj;
+    const LLBBox &vpBox = vp->getBBox(), &testBox = rzRules->obj->BBObj;
 
     if(vpBox.GetMaxLat() < testBox.GetMinLat() || vpBox.GetMinLat() > testBox.GetMaxLat())
         return false;
@@ -7716,7 +7714,7 @@ bool s52plib::ObjectRenderCheckCat( ObjRazRules *rzRules, ViewPort *vp )
             if( ( DISPLAYBASE == rzRules->LUP->DISC ) || ( PRIO_GROUP1 == rzRules->LUP->DPRI ) )
                 b_visible = true;
             else{
-                //                if( vp->chart_scale > rzRules->obj->Scamin ) b_visible = false;
+                //                if( vp->chartScale() > rzRules->obj->Scamin ) b_visible = false;
 
 
                 double zoom_mod = (double)g_chart_zoom_modifier_vector;
@@ -7727,15 +7725,15 @@ bool s52plib::ObjectRenderCheckCat( ObjRazRules *rzRules, ViewPort *vp )
                 mod = qMin(mod, 8.0);
 
                 if(mod > 1){
-                    if( vp->chart_scale  > rzRules->obj->Scamin * mod )
+                    if( vp->chartScale()  > rzRules->obj->Scamin * mod )
                         b_visible = false;                              // definitely invisible
                     else{
                         //  Theoretically invisible, however...
                         //  In the "zoom modified" scale region,
                         //  we render the symbol at reduced size, scaling down to no less than half normal size.
                         
-                        if(vp->chart_scale  > rzRules->obj->Scamin){
-                            double xs = vp->chart_scale - rzRules->obj->Scamin;
+                        if(vp->chartScale()  > rzRules->obj->Scamin){
+                            double xs = vp->chartScale() - rzRules->obj->Scamin;
                             double xl = (rzRules->obj->Scamin * mod) - rzRules->obj->Scamin;
                             g_scaminScale = 1.0 - (0.5 * xs / xl);
                             
@@ -7743,7 +7741,7 @@ bool s52plib::ObjectRenderCheckCat( ObjRazRules *rzRules, ViewPort *vp )
                     }
                 }
                 else{
-                    if(vp->chart_scale  > rzRules->obj->Scamin)
+                    if(vp->chartScale()  > rzRules->obj->Scamin)
                         b_visible = false;
                 }
             }
@@ -7751,7 +7749,7 @@ bool s52plib::ObjectRenderCheckCat( ObjRazRules *rzRules, ViewPort *vp )
             //      On the other hand, $TEXTS features need not really be displayed at all scales, always
             //      To do so makes a very cluttered display
             if( ( !strncmp( rzRules->LUP->OBCL, "$TEXTS", 6 ) )
-                    && ( vp->chart_scale > rzRules->obj->Scamin ) ) b_visible = false;
+                    && ( vp->chartScale() > rzRules->obj->Scamin ) ) b_visible = false;
         }
 
         return b_visible;
@@ -8152,7 +8150,7 @@ bool s52plib::GetPointPixArray( ObjRazRules *rzRules, zchxPointF* pd, zchxPoint 
 
 bool s52plib::GetPointPixSingle( ObjRazRules *rzRules, float north, float east, zchxPoint *r, ViewPort *vp )
 {
-    if(vp->m_projection_type == PROJECTION_MERCATOR) {
+    if(vp->projectType() == PROJECTION_MERCATOR) {
 
         double xr =  rzRules->obj->x_rate;
         double xo =  rzRules->obj->x_origin;
@@ -8160,24 +8158,24 @@ bool s52plib::GetPointPixSingle( ObjRazRules *rzRules, float north, float east, 
         double yo =  rzRules->obj->y_origin;
 
         if(fabs(xo) > 1){                           // cm93 hits this
-            if ( vp->GetBBox().GetMaxLon() >= 180. && rzRules->obj->BBObj.GetMaxLon() < vp->GetBBox().GetMinLon() )
+            if ( vp->getBBox().GetMaxLon() >= 180. && rzRules->obj->BBObj.GetMaxLon() < vp->getBBox().GetMinLon() )
                 xo += mercator_k0 * WGS84_semimajor_axis_meters * 2.0 * PI;
-            else if( (vp->GetBBox().GetMinLon() <= -180. &&
-                      rzRules->obj->BBObj.GetMinLon() > vp->GetBBox().GetMaxLon()) ||
-                     (rzRules->obj->BBObj.GetMaxLon() >= 180 && vp->GetBBox().GetMinLon() <= 0.))
+            else if( (vp->getBBox().GetMinLon() <= -180. &&
+                      rzRules->obj->BBObj.GetMinLon() > vp->getBBox().GetMaxLon()) ||
+                     (rzRules->obj->BBObj.GetMaxLon() >= 180 && vp->getBBox().GetMinLon() <= 0.))
                 xo -= mercator_k0 * WGS84_semimajor_axis_meters * 2.0 * PI;
         }
 
         double valx = ( east * xr ) + xo;
         double valy = ( north * yr ) + yo;
 
-        r->x = roundint(((valx - rzRules->sm_transform_parms->easting_vp_center) * vp->view_scale_ppm) + (vp->pix_width / 2) );
-        r->y = roundint((vp->pix_height/2) - ((valy - rzRules->sm_transform_parms->northing_vp_center) * vp->view_scale_ppm));
+        r->x = roundint(((valx - rzRules->sm_transform_parms->easting_vp_center) * vp->viewScalePPM()) + (vp->pixWidth() / 2) );
+        r->y = roundint((vp->pixHeight()/2) - ((valy - rzRules->sm_transform_parms->northing_vp_center) * vp->viewScalePPM()));
     } else {
         double lat, lon;
         fromSM(east - rzRules->sm_transform_parms->easting_vp_center,
                north - rzRules->sm_transform_parms->northing_vp_center,
-               vp->clat, vp->clon, &lat, &lon);
+               vp->lat(), vp->lon(), &lat, &lon);
 
         *r = vp->GetPixFromLL(north, east);
     }
@@ -8189,7 +8187,7 @@ void s52plib::GetPixPointSingle( int pixx, int pixy, double *plat, double *plon,
 {
 #if 1
     vpt->GetLLFromPix(zchxPoint(pixx, pixy), plat, plon);
-    //    if(*plon < 0 && vpt->clon > 180)
+    //    if(*plon < 0 && vpt->lon() > 180)
     //      *plon += 360;
 #else
     //    Use Mercator estimator
@@ -8203,7 +8201,7 @@ void s52plib::GetPixPointSingle( int pixx, int pixy, double *plat, double *plon,
     double d_north = yp / vpt->view_scale_ppm;
     
     double slat, slon;
-    fromSM( d_east, d_north, vpt->clat, vpt->clon, &slat, &slon );
+    fromSM( d_east, d_north, vpt->lat(), vpt->lon(), &slat, &slon );
     
     *plat = slat;
     *plon = slon;
@@ -8213,10 +8211,10 @@ void s52plib::GetPixPointSingle( int pixx, int pixy, double *plat, double *plon,
 void s52plib::GetPixPointSingleNoRotate( int pixx, int pixy, double *plat, double *plon, ViewPort *vpt )
 {
     if(vpt){
-        double rotation = vpt->rotation;
-        vpt->SetRotationAngle(0);
+        double rotation = vpt->rotation();
+        vpt->setRotation(0);
         vpt->GetLLFromPix(zchxPoint(pixx, pixy), plat, plon);
-        vpt->SetRotationAngle(rotation);
+        vpt->setRotation(rotation);
     }
 }    
 

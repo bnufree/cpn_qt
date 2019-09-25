@@ -179,7 +179,6 @@ int                     g_S57_extradialog_sx, g_S57_extradialog_sy;
  int              g_own_ship_sog_cog_calc_damp_sec;
 
  bool             g_bShowMenuBar;
- bool             g_bShowCompassWin;
 
  s52plib          *ps52plib = 0;
 
@@ -357,7 +356,6 @@ bool                    g_bFirstRun;
 bool                     g_bUpgradeInProcess;
 QString s_locale;
  bool             g_bcompression_wait;
- bool               g_bquiting;
 ChartCanvas      *g_focusCanvas = 0;
  ChartCanvas      *g_overlayCanvas = 0;
 

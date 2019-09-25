@@ -43,7 +43,6 @@ extern int g_chart_zoom_modifier;
 extern int g_chart_zoom_modifier_vector;
 extern bool g_fog_overzoom;
 extern double  g_overzoom_emphasis_base;
-extern bool g_bopengl;
 
 //      We define and use this one Macro in this module
 //      Reason:  some compilers refuse to inline "GetChartTableEntry()"
@@ -243,9 +242,9 @@ Quilt::Quilt( ChartCanvas *parent)
     m_zout_type = -1;
 
     //  Quilting of skewed raster charts is allowed for OpenGL only
-    m_bquiltskew = g_bopengl;
+    m_bquiltskew = true;
     //  Quilting of different projections is allowed for OpenGL only
-    m_bquiltanyproj = g_bopengl;
+    m_bquiltanyproj = true;
     m_extended_stack_array.clear();
 }
 
@@ -266,11 +265,11 @@ Quilt::~Quilt()
 
 bool Quilt::IsVPBlittable( ViewPort &VPoint, int dx, int dy, bool b_allow_vector )
 {
-    if( !m_vp_rendered.IsValid() )
+    if( !m_vp_rendered.isValid() )
         return false;
 
-    zchxPointF p1 = VPoint.GetDoublePixFromLL( m_vp_rendered.clat, m_vp_rendered.clon );
-    zchxPointF p2 = VPoint.GetDoublePixFromLL( VPoint.clat, VPoint.clon );
+    zchxPointF p1 = VPoint.GetDoublePixFromLL( m_vp_rendered.lat(), m_vp_rendered.lon() );
+    zchxPointF p2 = VPoint.GetDoublePixFromLL( VPoint.lat(), VPoint.lon() );
     double deltax = p2.x - p1.x;
     double deltay = p2.y - p1.y;
 
@@ -519,7 +518,7 @@ ChartBase *Quilt::GetLargestScaleChart()
 LLRegion Quilt::GetChartQuiltRegion( const ChartTableEntry &cte, ViewPort &vp )
 {
     LLRegion chart_region;
-    LLRegion screen_region( vp.GetBBox() );
+    LLRegion screen_region( vp.getBBox() );
 
     // Special case for charts which extend around the world, or near to it
     //  Mostly this means cm93....
@@ -529,20 +528,20 @@ LLRegion Quilt::GetChartQuiltRegion( const ChartTableEntry &cte, ViewPort &vp )
         int n_ply_entries = 4;
         float ply[8];
         ply[0] = 80.;
-        ply[1] = vp.GetBBox().GetMinX();
+        ply[1] = vp.getBBox().GetMinX();
         ply[2] = 80.;
-        ply[3] = vp.GetBBox().GetMaxX();
+        ply[3] = vp.getBBox().GetMaxX();
         ply[4] = -80.;
-        ply[5] = vp.GetBBox().GetMaxX();
+        ply[5] = vp.getBBox().GetMaxX();
         ply[6] = -80.;
-        ply[7] = vp.GetBBox().GetMinX();
+        ply[7] = vp.getBBox().GetMinX();
 
 
         OCPNRegion t_region = vp.GetVPRegionIntersect( screen_region, 4, &ply[0],
                                                      cte.GetScale() );
         return t_region;
 */
-        return LLRegion(-80, vp.GetBBox().GetMinLon(), 80, vp.GetBBox().GetMaxLon());
+        return LLRegion(-80, vp.getBBox().GetMinLon(), 80, vp.getBBox().GetMaxLon());
     }
 
     //    If the chart has an aux ply table, use it for finer region precision
@@ -805,17 +804,17 @@ std::vector<int> Quilt::GetQuiltIndexArray( void )
 
 bool Quilt::IsQuiltDelta( ViewPort &vp )
 {
-    if( !m_vp_quilt.IsValid() || !m_bcomposed ) return true;
+    if( !m_vp_quilt.isValid() || !m_bcomposed ) return true;
 
-    if( m_vp_quilt.view_scale_ppm != vp.view_scale_ppm ) return true;
+    if( m_vp_quilt.viewScalePPM() != vp.viewScalePPM() ) return true;
 
-    if( m_vp_quilt.m_projection_type != vp.m_projection_type ) return true;
+    if( m_vp_quilt.projectType() != vp.projectType() ) return true;
 
     //    Has the quilt shifted by more than one pixel in any direction?
     zchxPoint cp_last, cp_this;
 
-    cp_last = m_vp_quilt.GetPixFromLL( vp.clat, vp.clon );
-    cp_this = vp.GetPixFromLL( vp.clat, vp.clon );
+    cp_last = m_vp_quilt.GetPixFromLL( vp.lat(), vp.lon() );
+    cp_this = vp.GetPixFromLL( vp.lat(), vp.lon() );
 
     return ( cp_last != cp_this );
 }
@@ -931,7 +930,7 @@ int Quilt::AdjustRefOnZoom( bool b_zin, ChartFamilyEnum family,  ChartTypeEnum t
     //  Since this rule is mainly for preservation of performance,
     //  we can also allow fullscreen reference chart selection if opengl is active
     
-    bool b_allow_fullscreen_ref = (family == CHART_FAMILY_VECTOR) || b_zin || g_bopengl;
+    bool b_allow_fullscreen_ref = (family == CHART_FAMILY_VECTOR) || b_zin || true;
 
     //  Walk the extended chart array, capturing data
     for(size_t i=0 ; i < m_extended_stack_array.size() ; i++){
@@ -1180,7 +1179,7 @@ bool Quilt::BuildExtendedChartStackAndCandidateArray(int ref_db_index, ViewPort 
     int reference_scale = 1;
     int reference_type = -1;
     int reference_family = -1;
-    int quilt_proj = m_bquiltanyproj ? vp_in.m_projection_type : PROJECTION_UNKNOWN;
+    int quilt_proj = m_bquiltanyproj ? vp_in.projectType() : PROJECTION_UNKNOWN;
 
     if( ref_db_index >= 0 ) {
         const ChartTableEntry &cte_ref = ChartData->GetChartTableEntry( ref_db_index );
@@ -1198,7 +1197,7 @@ bool Quilt::BuildExtendedChartStackAndCandidateArray(int ref_db_index, ViewPort 
 
 //     if( !pCurrentStack ) {
 //         pCurrentStack = new ChartStack;
-//         ChartData->BuildChartStack( pCurrentStack, vp_local.clat, vp_local.clon );
+//         ChartData->BuildChartStack( pCurrentStack, vp_local.lat(), vp_local.lon() );
 //     }
 
     int n_charts = m_parent->GetpCurrentStack()->nEntry;
@@ -1270,7 +1269,7 @@ bool Quilt::BuildExtendedChartStackAndCandidateArray(int ref_db_index, ViewPort 
     //    Again, skipping cm93 for now
     int n_all_charts = ChartData->GetChartTableEntries();
 
-    LLBBox viewbox = vp_local.GetBBox();
+    LLBBox viewbox = vp_local.getBBox();
     int sure_index = -1;
     int sure_index_scale = 0;
 
@@ -1304,7 +1303,7 @@ bool Quilt::BuildExtendedChartStackAndCandidateArray(int ref_db_index, ViewPort 
         //    Calculate zoom factor for this chart
         int candidate_chart_scale = cte.GetScale();
         double chart_native_ppm = m_canvas_scale_factor / (double)candidate_chart_scale;
-        double zoom_factor = vp_in.view_scale_ppm / chart_native_ppm;
+        double zoom_factor = vp_in.viewScalePPM() / chart_native_ppm;
 
         //  Try to guarantee that there is one chart added with scale larger than reference scale
         //    Take note here, and keep track of the smallest scale chart that is larger scale than reference....
@@ -1413,10 +1412,10 @@ bool Quilt::BuildExtendedChartStackAndCandidateArray(int ref_db_index, ViewPort 
 double Quilt::GetBestStartScale(int dbi_ref_hint, const ViewPort &vp_in)
 {
     if( !ChartData )
-        return vp_in.view_scale_ppm;
+        return vp_in.viewScalePPM();
 
     if(ChartData->IsBusy())             // This prevent recursion on chart loads that Yeild()
-        return vp_in.view_scale_ppm;
+        return vp_in.viewScalePPM();
 
     ViewPort vp_local = vp_in;                   // need a non-const copy
 
@@ -1426,14 +1425,14 @@ double Quilt::GetBestStartScale(int dbi_ref_hint, const ViewPort &vp_in)
         //arbitrarily select reference chart as largest scale on current stack
 //         if( !pCurrentStack ) {
 //             pCurrentStack = new ChartStack;
-//             ChartData->BuildChartStack( pCurrentStack, vp_local.clat, vp_local.clon );
+//             ChartData->BuildChartStack( pCurrentStack, vp_local.lat(), vp_local.lon() );
 //         }
         tentative_ref_index = m_parent->GetpCurrentStack()->GetDBIndex(0);
     }
 
     //    As ChartdB data is always in rectilinear space, region calculations need to be done with no VP rotation
-    double saved_vp_rotation = vp_local.rotation;                      // save a copy
-    vp_local.SetRotationAngle( 0. );
+    double saved_vp_rotation = vp_local.rotation();                      // save a copy
+    vp_local.setRotation( 0. );
 
     BuildExtendedChartStackAndCandidateArray(tentative_ref_index, vp_local);
 
@@ -1452,7 +1451,7 @@ double Quilt::GetBestStartScale(int dbi_ref_hint, const ViewPort &vp_in)
         BuildExtendedChartStackAndCandidateArray(tentative_ref_index, vp_local);
     }
 
-    double proposed_scale_onscreen = vp_in.chart_scale;
+    double proposed_scale_onscreen = vp_in.chartScale();
 
     if(m_pcandidate_array->count()){
         m_refchart_dbIndex = tentative_ref_index;
@@ -1539,7 +1538,7 @@ bool Quilt::Compose( const ViewPort &vp_in )
 
     //    Set up the viewport projection type
     if(!m_bquiltanyproj)
-        vp_local.SetProjectionType( m_quilt_proj );
+        vp_local.setProjectionType( m_quilt_proj );
 
     //    As ChartdB data is always in rectilinear space, region calculations need to be done with no VP rotation
 //    double saved_vp_rotation = vp_local.rotation;                      // save a copy
@@ -1621,7 +1620,7 @@ bool Quilt::Compose( const ViewPort &vp_in )
     //    Using Region logic, and starting from the largest scale chart
     //    figuratively "draw" charts until the ViewPort window is completely quilted over
     //    Add only those charts whose scale is smaller than the "reference scale"
-    const LLRegion cvp_region = vp_local.GetLLRegion(QRect(0, 0, vp_local.pix_width, vp_local.pix_height));
+    const LLRegion cvp_region = vp_local.GetLLRegion(QRect(0, 0, vp_local.pixWidth(), vp_local.pixHeight()));
     LLRegion vp_region = cvp_region;
     unsigned int ir;
 
@@ -1639,7 +1638,7 @@ bool Quilt::Compose( const ViewPort &vp_in )
     // Quilted regions can be simplified to reduce the cost of region operations, in this case
     // allow a maximum error of 8 pixels (the rendered display is much better, this is only for composing the quilt)
     const double z = 111274.96299695622; ////WGS84_semimajor_axis_meters * mercator_k0 * DEGREE;
-    double factor = 8.0 / (vp_local.view_scale_ppm * z);
+    double factor = 8.0 / (vp_local.viewScalePPM() * z);
     
     if( pqc_ref ) {
         const ChartTableEntry &cte_ref = ChartData->GetChartTableEntry( m_refchart_dbIndex );
@@ -1864,7 +1863,7 @@ bool Quilt::Compose( const ViewPort &vp_in )
             if( cte.GetChartType() == CHART_TYPE_MBTILES ) continue;
 
             //    Check intersection
-            LLRegion vpck_region( vp_local.GetBBox() );
+            LLRegion vpck_region( vp_local.getBBox() );
 
             //LLRegion chart_region = pqc->GetCandidateRegion();
             LLRegion &chart_region = pqc->GetReducedCandidateRegion(factor);
@@ -2316,7 +2315,7 @@ void Quilt::ComputeRenderRegion( ViewPort &vp, OCPNRegion &chart_region )
         ChartBase *chart = GetFirstChart();
 
         while( chart ) {
-            if( !(chart->GetChartProjectionType() != PROJECTION_MERCATOR && vp.b_MercatorProjectionOverride ) ) {
+            if( !(chart->GetChartProjectionType() != PROJECTION_MERCATOR && vp.projectType() ) ) {
                 QuiltPatch *pqp = GetCurrentPatch();
                 if( pqp->b_Valid  ) {
                     OCPNRegion get_screen_region = vp.GetVPRegionIntersect(chart_region, pqp->ActiveRegion, chart->GetNativeScale());

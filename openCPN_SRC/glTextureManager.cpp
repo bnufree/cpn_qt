@@ -27,8 +27,9 @@
 #include "viewport.h"
 #include "glTexCache.h"
 #include "glTextureDescriptor.h"
-#include "glTextureManager.h"
+
 #include "chcanv.h"
+#include "glChartCanvas.h"
 #include "Quilt.h"
 #include "chartbase.h"
 #include "chartimg.h"

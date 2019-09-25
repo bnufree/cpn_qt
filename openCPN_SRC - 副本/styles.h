@@ -43,6 +43,8 @@ void bmdump(wxBitmap bm, QString name);
 wxBitmap MergeBitmaps( wxBitmap back, wxBitmap front, QSize offset );
 wxBitmap ConvertTo24Bit( QColor bgColor, wxBitmap front );
 
+#define  StyleMgrIns        ocpnStyle::StyleManager::instance()
+
 namespace ocpnStyle {
 
 typedef QHash<QString, int> intHash;
@@ -217,12 +219,14 @@ private:
       bool hasBackground;
 };
 
-class StyleManager {
-public:
+class StyleManager
+{
+private:
       StyleManager(void);
-      ~StyleManager(void);
       StyleManager(const QString & configDir);
-
+public:
+      static StyleManager* instance();
+      ~StyleManager(void);
       bool IsOK() const { return isOK; }
       void Init(const QString & fromPath);
       void SetStyle(QString name);
@@ -230,6 +234,20 @@ public:
       const QString & GetStyleNextInvocation() const { return nextInvocationStyle; }
       Style* GetCurrentStyle();
       QList<Style*> GetArrayOfStyles() { return styles; }
+
+private:
+    static StyleManager     *mInstance;
+
+    class MGarbage
+    {
+    public:
+        ~MGarbage()
+        {
+            if (StyleManager::mInstance)
+                delete StyleManager::mInstance;
+        }
+    };
+    static MGarbage Garbage;
 
 private:
       bool isOK;

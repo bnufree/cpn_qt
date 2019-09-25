@@ -186,7 +186,6 @@ extern bool             g_own_ship_sog_cog_calc;
 extern int              g_own_ship_sog_cog_calc_damp_sec;
 
 extern bool             g_bShowMenuBar;
-extern bool             g_bShowCompassWin;
 
 //extern s52plib          *ps52plib;
 
@@ -473,7 +472,6 @@ int zchxConfig::loadMyConfig()
     g_SkewCompUpdatePeriod = 10;
 
     g_bShowStatusBar = 1;
-    g_bShowCompassWin = 1;
     g_iSoundDeviceIndex = -1;
     g_bFullscreenToolbar = 1;
     g_bTransparentToolbar =  0;
@@ -803,7 +801,6 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     Read("ShowStatusBar", PARAM_BOOL, &g_bShowStatusBar );
     Read("ShowMenuBar", PARAM_BOOL, &g_bShowMenuBar );
     Read("Fullscreen", PARAM_BOOL, &g_bFullscreen );
-    Read("ShowCompassWindow", PARAM_BOOL, &g_bShowCompassWin );
     Read("ShowGrid", PARAM_BOOL, &g_bDisplayGrid );
     Read("PlayShipsBells", PARAM_BOOL, &g_bPlayShipsBells );
     Read("SoundDeviceIndex", PARAM_INT, &g_iSoundDeviceIndex );
@@ -1889,7 +1886,6 @@ void zchxConfig::UpdateSettings()
     Write("ShowMenuBar", g_bShowMenuBar );
     Write("DefaultFontSize", g_default_font_size );
     Write("Fullscreen", g_bFullscreen );
-    Write("ShowCompassWindow", g_bShowCompassWin );
     Write("SetSystemTime", s_bSetSystemTime );
     Write("ShowGrid", g_bDisplayGrid );
     Write("PlayShipsBells", g_bPlayShipsBells );

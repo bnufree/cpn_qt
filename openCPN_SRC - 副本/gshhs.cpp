@@ -232,7 +232,7 @@ fail:
 zchxPointF GetDoublePixFromLL(ViewPort &vp, double lat, double lon)
 {
     zchxPointF p = vp.GetDoublePixFromLL(lat, lon);
-    p.x -= vp.rv_rect.x(), p.y -= vp.rv_rect.y();
+    p.x -= vp.rvRect().x(), p.y -= vp.rvRect().y();
     return p;
 }
 
@@ -411,13 +411,13 @@ void GshhsPolyCell::DrawPolygonFilledGL( contour_list * p, float_2Dpt **pv, int 
                     else // tesselation directly from lat/lon
                         q.x = ccp.y, q.y = ccp.x;
 
-                    if(vp.m_projection_type != PROJECTION_POLAR) {
+                    if(vp.projectType() != PROJECTION_POLAR) {
                         // need to correctly pick +180 or -180 longitude for projections
                         // that have a discontiguous date line
                             
                         if(idl && ccp.x == 180) {
-                            if(vp.m_projection_type == PROJECTION_MERCATOR ||
-                               vp.m_projection_type == PROJECTION_EQUIRECTANGULAR)
+                            if(vp.projectType() == PROJECTION_MERCATOR ||
+                               vp.projectType() == PROJECTION_EQUIRECTANGULAR)
                                 q.x -= 40058986*4096.0; // 360 degrees in normalized viewport
                             else
                                 q.x -= 360; // lat/lon coordinates
@@ -479,8 +479,8 @@ void GshhsPolyCell::drawMapPlain( ocpnDC &pnt, double dx, ViewPort &vp, QColor  
 {
 #ifdef ocpnUSE_GL
 #define NORM_FACTOR 4096.0
-        if(dx && (vp.m_projection_type == PROJECTION_MERCATOR ||
-                  vp.m_projection_type == PROJECTION_EQUIRECTANGULAR)) {
+        if(dx && (vp.projectType() == PROJECTION_MERCATOR ||
+                  vp.projectType() == PROJECTION_EQUIRECTANGULAR)) {
             double ts = 40058986*NORM_FACTOR; /* 360 degrees in normalized viewport */
             glPushMatrix();
             glTranslated(dx > 0 ? ts : -ts, 0, 0);
@@ -794,7 +794,7 @@ void GshhsPolyReader::drawGshhsPolyMapPlain( ocpnDC &pnt, ViewPort &vp, QColor  
     pnt.SetPen( QPen() );
 
     int clonmin, clonmax, clatmax, clatmin;  // cellules visibles
-    LLBBox bbox = vp.GetBBox();
+    LLBBox bbox = vp.getBBox();
     clonmin = bbox.GetMinLon(), clonmax = bbox.GetMaxLon(), clatmin = bbox.GetMinLat(), clatmax = bbox.GetMaxLat();
     if(clatmin <= 0) clatmin--;
     if(clatmax >= 0) clatmax++;
@@ -807,9 +807,9 @@ void GshhsPolyReader::drawGshhsPolyMapPlain( ocpnDC &pnt, ViewPort &vp, QColor  
 #ifdef ocpnUSE_GL
     if(!pnt.GetDC()) { // opengl
         // clear cached data when the projection changes
-        if(vp.m_projection_type != last_rendered_vp.m_projection_type ||
-           (last_rendered_vp.m_projection_type == PROJECTION_POLAR &&
-            last_rendered_vp.clat*vp.clat <= 0)) {
+        if(vp.projectType() != last_rendered_vp.projectType() ||
+           (last_rendered_vp.projectType() == PROJECTION_POLAR &&
+            last_rendered_vp.lat() * vp.lat() <= 0)) {
             last_rendered_vp = vp;
             for(int clon = 0; clon<360; clon++)
                 for(int clat = 0; clat<180; clat++)
@@ -846,8 +846,8 @@ void GshhsPolyReader::drawGshhsPolyMapPlain( ocpnDC &pnt, ViewPort &vp, QColor  
                 bool idl = false;
 
                 // only mercator needs the special idl fixes
-                if(vp.m_projection_type != PROJECTION_MERCATOR &&
-                   vp.m_projection_type != PROJECTION_EQUIRECTANGULAR)
+                if(vp.projectType() != PROJECTION_MERCATOR &&
+                   vp.projectType() != PROJECTION_EQUIRECTANGULAR)
                     dx = 0;
                 else if(pnt.GetDC())// dc
                     dx = clon - clonx;
@@ -857,9 +857,9 @@ void GshhsPolyReader::drawGshhsPolyMapPlain( ocpnDC &pnt, ViewPort &vp, QColor  
                         clonn -= 360;
                         idl = true;
                     }
-                    if(vp.clon - clonn > 180)
+                    if(vp.lon() - clonn > 180)
                         dx = 1;
-                    else if(vp.clon - clonn < -180)
+                    else if(vp.lon() - clonn < -180)
                         dx = -1;
                     else
                         dx = 0;
@@ -884,7 +884,7 @@ void GshhsPolyReader::drawGshhsPolyMapSeaBorders( ocpnDC &pnt, ViewPort &vp )
 {
     if( !fpoly ) return;
     int clonmin, clonmax, clatmax, clatmin;  // cellules visibles
-    LLBBox bbox = vp.GetBBox();
+    LLBBox bbox = vp.getBBox();
     clonmin = bbox.GetMinLon(), clonmax = bbox.GetMaxLon(), clatmin = bbox.GetMinLat(), clatmax = bbox.GetMaxLat();
 
     int dx, clon, clonx, clat;
@@ -1224,7 +1224,7 @@ int GshhsReader::GSHHS_scaledPoints( GshhsPolygon *pol, zchxPoint *pts, double d
 {
     LLBBox box;
     box.Set(pol->south, pol->west + declon, pol->north, pol->east + declon);
-    if(vp.GetBBox().IntersectOut(box) )
+    if(vp.getBBox().IntersectOut(box) )
         return 0;
 
     // Remove small polygons.
@@ -1351,10 +1351,10 @@ int GshhsReader::selectBestQuality( ViewPort &vp )
 {
     int bestQuality = 0;
 
-         if(vp.chart_scale <   500000 && qualityAvailable[4]) bestQuality = 4;
-    else if(vp.chart_scale <  2000000 && qualityAvailable[3]) bestQuality = 3;
-    else if(vp.chart_scale <  8000000 && qualityAvailable[2]) bestQuality = 2;
-    else if(vp.chart_scale < 20000000 && qualityAvailable[1]) bestQuality = 1;
+         if(vp.chartScale() <   500000 && qualityAvailable[4]) bestQuality = 4;
+    else if(vp.chartScale() <  2000000 && qualityAvailable[3]) bestQuality = 3;
+    else if(vp.chartScale() <  8000000 && qualityAvailable[2]) bestQuality = 2;
+    else if(vp.chartScale() < 20000000 && qualityAvailable[1]) bestQuality = 1;
     else if(qualityAvailable[0]) bestQuality = 0;
     else while( !qualityAvailable[bestQuality] && bestQuality <= 4 ) //Find the worst quality actually available and use that (normally we would use crude, but it is missing)
              bestQuality++;

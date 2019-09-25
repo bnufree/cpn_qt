@@ -32,12 +32,10 @@
 #include "dychart.h"
 
 
-extern ocpnStyle::StyleManager* g_StyleManager;
 extern bool bGPSValid;
 bool g_bSatValid;
 int g_SatsInView;
 extern zchxMapMainWindow *gFrame;
-extern bool g_bopengl;
 
 extern QColor GetGlobalColor(const QString& str);
 
@@ -46,7 +44,7 @@ ocpnCompass::ocpnCompass( ChartCanvas *parent, bool bShowGPS)
     m_parent = parent;
     m_bshowGPS = bShowGPS;
     
-     ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
+     ocpnStyle::Style* style = StyleMgrIns->GetCurrentStyle();
      _img_compass = style->GetIcon(("CompassRose") );
      _img_gpsRed = style->GetIcon(("gpsRed") );
 
@@ -80,7 +78,7 @@ void ocpnCompass::Paint( ocpnDC& dc )
 {
     if(m_shown && m_StatBmp.isOK()){
 # if defined(ocpnUSE_GLES) || defined(ocpnUSE_GL)  // GLES does not do ocpnDC::DrawBitmap(), so use texture
-        if(g_bopengl && texobj){
+        if(texobj){
             glBindTexture( GL_TEXTURE_2D, texobj );
             glEnable( GL_TEXTURE_2D );
             
@@ -129,7 +127,7 @@ void ocpnCompass::UpdateStatus( bool bnew )
         
         //  We clear the texture so that any onPaint method will not use a stale texture
 #ifdef ocpnUSE_GLES  
-        if(g_bopengl){
+        if(1){
              if(texobj){
                 glDeleteTextures(1, &texobj);
                 texobj = 0;
@@ -144,7 +142,7 @@ void ocpnCompass::UpdateStatus( bool bnew )
 
 void ocpnCompass::SetScaleFactor( float factor)
 {
-    ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
+    ocpnStyle::Style* style = StyleMgrIns->GetCurrentStyle();
     
     if(factor > 0.1)
         m_scale = factor;
@@ -191,7 +189,7 @@ void ocpnCompass::CreateBmp( bool newColorScheme )
         return;
 
     QString gpsIconName;
-    ocpnStyle::Style* style = g_StyleManager->GetCurrentStyle();
+    ocpnStyle::Style* style = StyleMgrIns->GetCurrentStyle();
 
     // In order to draw a horizontal compass window when the toolbar is vertical, we
     // need to save away the sizes and backgrounds for the two icons.
@@ -377,7 +375,7 @@ void ocpnCompass::CreateBmp( bool newColorScheme )
 
 
 #if defined(ocpnUSE_GLES)   // GLES does not do ocpnDC::DrawBitmap(), so use texture
-    if(g_bopengl){
+    if(1){
         wxImage image = m_StatBmp.ConvertToImage(); 
         unsigned char *imgdata = image.GetData();
         unsigned char *imgalpha = image.GetAlpha();

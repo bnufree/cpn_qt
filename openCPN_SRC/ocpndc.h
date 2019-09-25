@@ -45,12 +45,12 @@ void DrawGLThickLine( float x1, float y1, float x2, float y2, QPen pen, bool b_h
 // ocpnDC
 //----------------------------------------------------------------------------
 
-class ChartCanvas;
+class glChartCanvas;
 
 class ocpnDC
 {
 public:
-     ocpnDC(ChartCanvas* canvas);
+     ocpnDC(glChartCanvas* canvas);
      ocpnDC();
 
      ~ocpnDC();
@@ -109,7 +109,7 @@ protected:
      void GLDrawBlendData(int x, int y, int w, int h,
                           int format, const unsigned char *data);
 
-     ChartCanvas *glcanvas;
+     glChartCanvas *glcanvas;
      QPainter *dc;
      QPen m_pen;
      QBrush m_brush;

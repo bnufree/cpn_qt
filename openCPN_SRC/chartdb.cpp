@@ -30,6 +30,10 @@
 //#include "thumbwin.h"
 #include "mbtiles.h"
 
+#ifdef ocpnUSE_GL
+#include "glChartCanvas.h"
+#endif
+
 #include <stdio.h>
 #include <math.h>
 
@@ -42,7 +46,6 @@
 #include <QDir>
 #include <QRegularExpression>
 #include "zchxmapmainwindow.h"
-#include "glTextureManager.h"
 
 extern ColorScheme GetColorScheme();
 extern void         LoadS57();
@@ -55,7 +58,6 @@ extern int          g_memCacheLimit;
 extern s52plib      *ps52plib;
 extern ChartDB      *ChartData;
 extern zchxMapMainWindow          *gFrame;
-extern glTextureManager*            g_glTextureManager;
 
 
 

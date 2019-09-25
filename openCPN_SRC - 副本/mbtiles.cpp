@@ -760,7 +760,7 @@ void ChartMBTiles::GetValidCanvasRegion(const ViewPort& VPoint, OCPNRegion *pVal
 {
     
     pValidRegion->Clear();
-    pValidRegion->Union(0, 0, VPoint.pix_width, VPoint.pix_height);
+    pValidRegion->Union(0, 0, VPoint.pixWidth(), VPoint.pixHeight());
     return;
 }
 
@@ -919,41 +919,41 @@ zchxPointF ChartMBTiles::GetDoublePixFromLL( ViewPort& vp, double lat, double lo
     double northing = 0;
     double xlon = lon - eps;
     
-    switch( vp.m_projection_type ) {
+    switch( vp.projectType() ) {
         case PROJECTION_MERCATOR:
         case PROJECTION_WEB_MERCATOR:
         default:
             const double z = WGS84_semimajor_axis_meters * mercator_k0;
 
-            easting = (xlon - vp.clon) * DEGREE * z;
+            easting = (xlon - vp.lon()) * DEGREE * z;
 
             // y =.5 ln( (1 + sin t) / (1 - sin t) )
             const double s = sin(lat * DEGREE);
             const double y3 = (.5 * log((1 + s) / (1 - s))) * z;
 
-            const double s0 = sin(vp.clat * DEGREE);
+            const double s0 = sin(vp.lat() * DEGREE);
             const double y30 = (.5 * log((1 + s0) / (1 - s0))) * z;
             northing = y3 - y30;
 
             break;
     }
 
-    double epix = easting * vp.view_scale_ppm;
-    double npix = northing * vp.view_scale_ppm;
+    double epix = easting * vp.viewScalePPM();
+    double npix = northing * vp.viewScalePPM();
     double dxr = epix;
     double dyr = npix;
 
     //    Apply VP Rotation
-    double angle = vp.rotation;
+    double angle = vp.rotation();
 
     if( angle ) {
         dxr = epix * cos( angle ) + npix * sin( angle );
         dyr = npix * cos( angle ) - epix * sin( angle );
     }
 
-    //printf("  gdpll:  %g  %g  %g\n", vp.clon, (vp.pix_width / 2.0 ) + dxr, ( vp.pix_height / 2.0 ) - dyr);
+    //printf("  gdpll:  %g  %g  %g\n", vp.clon, (vp.pixWidth() / 2.0 ) + dxr, ( vp.pixHeight() / 2.0 ) - dyr);
     
-    return zchxPointF(( vp.pix_width / 2.0 ) + dxr, ( vp.pix_height / 2.0 ) - dyr);
+    return zchxPointF(( vp.pixWidth() / 2.0 ) + dxr, ( vp.pixHeight() / 2.0 ) - dyr);
 }
 
 bool ChartMBTiles::RenderTile( mbTileDescriptor *tile, int zoomLevel, const ViewPort& VPoint)
@@ -998,7 +998,7 @@ bool ChartMBTiles::RenderTile( mbTileDescriptor *tile, int zoomLevel, const View
 bool ChartMBTiles::RenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint, const OCPNRegion &RectRegion, const LLRegion &Region)
 {
     // Do not render if significantly underzoomed
-    if( VPoint.chart_scale > (20 * OSM_zoomScale[m_minZoom])){
+    if( VPoint.chartScale() > (20 * OSM_zoomScale[m_minZoom])){
         if(m_nTiles > 500){
             return true;
         }
@@ -1006,7 +1006,7 @@ bool ChartMBTiles::RenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint,
 
     ViewPort vp = VPoint;
 
-    OCPNRegion screen_region(QRect(0, 0, vp.pix_width, vp.pix_height));
+    OCPNRegion screen_region(QRect(0, 0, vp.pixWidth(), vp.pixHeight()));
     LLRegion screenLLRegion = vp.GetLLRegion( screen_region );
     LLBBox screenBox = screenLLRegion.GetBox();
 
@@ -1031,7 +1031,7 @@ bool ChartMBTiles::RenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint,
     
     for(int kz=m_minZoom ; kz <= 19 ; kz++){
         double db_mpp = OSM_zoomMPP[kz];
-        double vp_mpp = 1. / vp.view_scale_ppm;
+        double vp_mpp = 1. / vp.viewScalePPM();
         
         if(db_mpp < vp_mpp * zoomMod){
             viewZoom = kz;
@@ -1040,7 +1040,7 @@ bool ChartMBTiles::RenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint,
     }
     
     viewZoom = fmin(viewZoom, m_maxZoom);
-    //printf("viewZoomCalc: %d  %g   %g\n",  viewZoom, VPoint.view_scale_ppm,  1. / VPoint.view_scale_ppm);
+    //printf("viewZoomCalc: %d  %g   %g\n",  viewZoom, VPoint.viewScalePPM(),  1. / VPoint.viewScalePPM());
 
     int zoomFactor = m_minZoom;
     
@@ -1080,8 +1080,8 @@ bool ChartMBTiles::RenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint,
             leftTile =  long2tilex(-180+eps, zoomFactor);
             rightTile = long2tilex(box.GetMaxLon(), zoomFactor);
             vp = VPoint;
-             if(vp.clon > 0)
-                 vp.clon -= 360;
+             if(vp.lon() > 0)
+                 vp.setLon(vp.lon() -360);
 
         }
         else
@@ -1138,8 +1138,7 @@ bool ChartMBTiles::RenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint,
         // second pass
         if(btwoPass){
             vp = VPoint;
-            if(vp.clon < 0)
-                vp.clon += 360;
+            if(vp.lon() < 0) vp.setLon(vp.lon() + 360);
             
             // Get the tile numbers of the box corners of this render region, at this zoom level
             int topTile =   fmin(tzd->tile_y_max, lat2tiley(box.GetMaxLat(), zoomFactor));
@@ -1198,7 +1197,7 @@ bool ChartMBTiles::RenderRegionViewOnGL(QGLContext *glc, const ViewPort& VPoint,
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
 
-    m_zoomScaleFactor = 2.0 * OSM_zoomMPP[maxrenZoom] * VPoint.view_scale_ppm;
+    m_zoomScaleFactor = 2.0 * OSM_zoomMPP[maxrenZoom] * VPoint.viewScalePPM();
  
     glChartCanvas::DisableClipRegion();
     

@@ -44,7 +44,6 @@
 //    External Static Storage
 //------------------------------------------------------------------------------
 
-extern OCPNPlatform              *g_Platform;
 
 //  Helper utilities
 

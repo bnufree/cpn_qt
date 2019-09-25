@@ -17,7 +17,6 @@
 zchxConfig* zchxConfig::minstance = 0;
 zchxConfig::MGarbage zchxConfig::Garbage;
 
-//extern OCPNPlatform                 *g_Platform;
 extern zchxMapMainWindow          *gFrame;
 
 extern double           g_ChartNotRenderScaleFactor;
@@ -33,7 +32,6 @@ extern int              g_nbrightness;
 extern bool             g_bShowTrue, g_bShowMag;
 extern double           g_UserVar;
 extern bool             g_bShowStatusBar;
-extern bool             g_bUIexpert;
 extern bool             g_bFullscreen;
 extern int              g_nDepthUnitDisplay;
 extern QString         g_csv_locn;
@@ -53,8 +51,6 @@ extern bool             g_bPermanentMOBIcon;
 extern bool             g_bShowDepthUnits;
 extern bool             g_bAutoAnchorMark;
 extern bool             g_bskew_comp;
-extern bool             g_bopengl;
-extern bool             g_bdisable_opengl;
 extern bool             g_bSoftwareGL;
 extern bool             g_bShowFPS;
 extern bool             g_bsmoothpanzoom;
@@ -293,7 +289,6 @@ extern QString         g_GPS_Ident;
 extern bool             g_bGarminHostUpload;
 extern QString         g_uploadConnection;
 
-//extern ocpnStyle::StyleManager* g_StyleManager;
 extern QStringList    TideCurrentDataSet;
 extern QString         g_TCData_Dir;
 
@@ -315,8 +310,6 @@ extern int              g_maxWPNameLength;
 
 extern bool             g_bAdvanceRouteWaypointOnArrivalOnly;
 extern double           g_display_size_mm;
-extern double           g_config_display_size_mm;
-extern bool             g_config_display_size_manual;
 
 extern float            g_selection_radius_mm;
 extern float            g_selection_radius_touch_mm;
@@ -577,8 +570,6 @@ int zchxConfig::loadMyConfig()
         if( g_bInlandEcdis )
             g_bLookAhead=1;
 
-        if ( g_bdisable_opengl )
-            g_bopengl = false;
         if(!g_bGLexpert){
             g_GLOptions.m_iTextureMemorySize = qMax(128, g_GLOptions.m_iTextureMemorySize);
             g_GLOptions.m_bTextureCompressionCaching = g_GLOptions.m_bTextureCompression;
@@ -661,7 +652,6 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
     // Some undocumented values
     Read("ConfigVersionString", PARAM_STRING, &g_config_version_string );
     Read("NavMessageShown", PARAM_INT, &n_NavMessageShown );
-    Read("UIexpert",PARAM_BOOL, &g_bUIexpert );
     Read("UIStyle", PARAM_STRING, &g_uiStyle  );
     Read("NCacheLimit", PARAM_INT, &g_nCacheLimit );
 
@@ -710,12 +700,8 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
 
     if(!bAsTemplate){
         if(size_mm > 0){
-            g_config_display_size_mm = size_mm;
-            if((size_mm > 100) && (size_mm < 2000)){
-                g_display_size_mm = size_mm;
-            }
+            g_display_size_mm = size_mm;
         }
-        Read("DisplaySizeManual", PARAM_BOOL, &g_config_display_size_manual );
     }
 
     Read("GUIScaleFactor", PARAM_INT, &g_GUIScaleFactor );
@@ -775,7 +761,6 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
         Read("GPUTextureDimension", PARAM_INT, &g_GLOptions.m_iTextureDimension );
         Read("GPUTextureMemSize", PARAM_INT, &g_GLOptions.m_iTextureMemorySize );
         Read("DebugOpenGL", PARAM_BOOL, &g_bDebugOGL );
-        Read("OpenGL", PARAM_BOOL, &g_bopengl, true );
         Read("SoftwareGL", PARAM_BOOL, &g_bSoftwareGL, false );
     }
 #endif
@@ -1899,8 +1884,6 @@ void zchxConfig::UpdateSettings()
     Write("NavMessageShown", n_NavMessageShown );
     Write("InlandEcdis", g_bInlandEcdis );
     Write("DarkDecorations", g_bDarkDecorations );
-
-    Write("UIexpert", g_bUIexpert );
     Write("SpaceDropMark", g_bSpaceDropMark );
     Write("ShowStatusBar", g_bShowStatusBar );
     Write("ShowMenuBar", g_bShowMenuBar );
@@ -1936,7 +1919,6 @@ void zchxConfig::UpdateSettings()
     Write("ShowCM93DetailSlider", g_bShowDetailSlider );
 
     Write("SkewToNorthUp", g_bskew_comp );
-    Write("OpenGL", g_bopengl );
     Write("SoftwareGL", g_bSoftwareGL );
     Write("ShowFPS", g_bShowFPS );
 
@@ -2024,10 +2006,6 @@ void zchxConfig::UpdateSettings()
 
     Write("AutoHideToolbar", g_bAutoHideToolbar );
     Write("AutoHideToolbarSecs", g_nAutoHideToolbar );
-
-    Write("DisplaySizeMM", g_config_display_size_mm );
-    Write("DisplaySizeManual", g_config_display_size_manual );
-
     Write("SelectionRadiusMM", g_selection_radius_mm );
     Write("SelectionRadiusTouchMM", g_selection_radius_touch_mm );
 
