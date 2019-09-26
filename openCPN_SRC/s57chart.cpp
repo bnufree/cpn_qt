@@ -5913,7 +5913,7 @@ bool s57_CheckExtendedLightSectors( ChartCanvas *cc, int mx, int my, ViewPort& v
     //    ChartPlugInWrapper *target_plugin_chart = NULL;
     s57chart *Chs57 = NULL;
 
-    ChartBase *target_chart = cc->GetChartAtCursor();
+    ChartBase *target_chart = cc->GetglCanvas()->GetChartAtCursor();
     if( target_chart ){
         if( (target_chart->GetChartType() == CHART_TYPE_PLUGIN) && (target_chart->GetChartFamily() == CHART_FAMILY_VECTOR) )
         {
@@ -5939,8 +5939,8 @@ bool s57_CheckExtendedLightSectors( ChartCanvas *cc, int mx, int my, ViewPort& v
     bool bleading_attribute = false;
 
     int opacity = 100;
-    if( cc->GetColorScheme() == GLOBAL_COLOR_SCHEME_DUSK ) opacity = 50;
-    if( cc->GetColorScheme() == GLOBAL_COLOR_SCHEME_NIGHT) opacity = 20;
+    if( cc->GetglCanvas()->GetColorScheme() == GLOBAL_COLOR_SCHEME_DUSK ) opacity = 50;
+    if( cc->GetglCanvas()->GetColorScheme() == GLOBAL_COLOR_SCHEME_NIGHT) opacity = 20;
 
     int yOpacity = (float)opacity*1.3; // Matched perception of white/yellow with red/green
 

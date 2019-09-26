@@ -33,6 +33,7 @@
 #include <algorithm>
 
 #include "s57chart.h"
+#include "glChartCanvas.h"
 
 
 extern ChartDB *ChartData;
@@ -2128,7 +2129,7 @@ bool Quilt::Compose( const ViewPort &vp_in )
     //  Stop (temporarily) canvas paint events, since some chart loads mught Yield(),
     //  thus causing performance loss on recursion
     //  We will (always??) get a refresh on the new Quilt anyway...
-    m_parent->EnablePaint(false);
+    m_parent->GetglCanvas()->EnablePaint(false);
 
     //  first lock charts already in the cache
     //  otherwise under memory pressure if chart1 and chart2
@@ -2158,7 +2159,7 @@ bool Quilt::Compose( const ViewPort &vp_in )
         }
     }
 
-    m_parent->EnablePaint(true);
+    m_parent->GetglCanvas()->EnablePaint(true);
     //    Build and maintain the array of indexes in this quilt
 
     m_last_index_array = m_index_array;       //save the last one for delta checks

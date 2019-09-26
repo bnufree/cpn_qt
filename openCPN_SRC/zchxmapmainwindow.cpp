@@ -400,12 +400,12 @@ void zchxMapMainWindow::slotLookAheadMode(bool sts)
 
 void zchxMapMainWindow::slotZoomIn()
 {
-     if(mEcdisWidget) mEcdisWidget->ZoomCanvas( 2.0, false );
+     if(mEcdisWidget) mEcdisWidget->GetglCanvas()->Zoom( 2.0, false );
 }
 
 void zchxMapMainWindow::slotZoomOut()
 {
-     if(mEcdisWidget) mEcdisWidget->ZoomCanvas( 0.5, false );
+     if(mEcdisWidget) mEcdisWidget->GetglCanvas()->Zoom( 0.5, false );
 }
 
 void zchxMapMainWindow::slotLargeScaleChart()
@@ -441,7 +441,7 @@ void zchxMapMainWindow::slotShowChartOutline(bool sts)
     if(!mEcdisWidget || !mEcdisWidget->GetglCanvas()) return;
     if(mEcdisWidget->GetglCanvas()->GetShowOutlines() == sts) return;
     mEcdisWidget->GetglCanvas()->SetShowOutlines(sts);
-    mEcdisWidget->Refresh(false);
+    mEcdisWidget->GetglCanvas()->Refresh(false);
     mEcdisWidget->GetglCanvas()->Invalidate();
 }
 
@@ -474,9 +474,9 @@ void zchxMapMainWindow::slotShowENCSoundings(bool sts)
 {
     if(mEcdisWidget)
     {
-        if(mEcdisWidget->GetShowENCDepth() != sts)
+        if(mEcdisWidget->GetglCanvas()->GetShowENCDepth() != sts)
         {
-            mEcdisWidget->SetShowENCDepth(sts);
+            mEcdisWidget->GetglCanvas()->SetShowENCDepth(sts);
             mEcdisWidget->ReloadVP();
         }
     }
@@ -485,16 +485,16 @@ void zchxMapMainWindow::slotShowENCSoundings(bool sts)
 void zchxMapMainWindow::slotShowENCText(bool sts)
 {
     if(!mEcdisWidget) return;
-    if(mEcdisWidget->GetShowENCText() == sts) return;
-    mEcdisWidget->SetShowENCText(sts);
+    if(mEcdisWidget->GetglCanvas()->GetShowENCText() == sts) return;
+    mEcdisWidget->GetglCanvas()->SetShowENCText(sts);
     mEcdisWidget->ReloadVP();
 }
 
 void zchxMapMainWindow::slotShowGrid(bool sts)
 {
     if(!mEcdisWidget) return;
-    if(mEcdisWidget->GetShowGrid() == sts) return;
-    mEcdisWidget->SetShowGrid(sts);
+    if(mEcdisWidget->GetglCanvas()->GetShowGrid() == sts) return;
+    mEcdisWidget->GetglCanvas()->SetShowGrid(sts);
 //    mEcdisWidget->ReloadVP();
 }
 
@@ -555,7 +555,7 @@ bool zchxMapMainWindow::ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray )
     if( ( rr & VISIT_CHARTS )
             && ( ( rr & CHANGE_CHARTS ) || ( rr & FORCE_UPDATE ) || ( rr & SCAN_UPDATE ) ) ) {
         if(mEcdisWidget){
-            mEcdisWidget->UpdateChartDatabaseInplace( *pNewDirArray, ( ( rr & FORCE_UPDATE ) == FORCE_UPDATE ),  true, ChartListFileName );
+            mEcdisWidget->GetglCanvas()->UpdateChartDatabaseInplace( *pNewDirArray, ( ( rr & FORCE_UPDATE ) == FORCE_UPDATE ),  true, ChartListFileName );
 
             b_need_refresh = true;
         }
@@ -1752,12 +1752,12 @@ ColorScheme zchxMapMainWindow::GetColorScheme()
 
 void zchxMapMainWindow::slotRotateDegree(double angle)
 {
-    if(mEcdisWidget) mEcdisWidget->DoRotateCanvasWithDegree(angle);
+    if(mEcdisWidget) mEcdisWidget->GetglCanvas()->RotateDegree(angle);
 }
 
 void zchxMapMainWindow::slotRoateRad(double rad)
 {
-    if(mEcdisWidget) mEcdisWidget->DoRotateCanvas(rad);
+    if(mEcdisWidget) mEcdisWidget->GetglCanvas()->Rotate(rad);
 }
 
 void zchxMapMainWindow::slotRotate()

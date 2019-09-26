@@ -220,7 +220,7 @@ void CanvasOptions::RefreshControlValues( void )
     pCDOQuilting->setChecked(parentCanvas->GetQuiltMode());
     pSDisplayGrid->setChecked(parentCanvas->GetShowGrid());
 //    pCDOOutlines->setChecked(parentCanvas->GetShowOutlines());
-    pSDepthUnits->setChecked(parentCanvas->GetShowDepthUnits());
+//    pSDepthUnits->setChecked(parentCanvas->GetShowDepthUnits());
  
     // AIS Options
 //    pCBShowAIS->setChecked(parentCanvas->GetShowAIS());
@@ -317,10 +317,10 @@ void CanvasOptions::UpdateCanvasOptions( void )
 //        parentCanvas->SetShowOutlines(pCDOOutlines->isChecked());
 //        b_needRefresh = true;
 //    }
-    if(pSDepthUnits->isChecked() != parentCanvas->GetShowDepthUnits()){
-        parentCanvas->SetShowDepthUnits(pSDepthUnits->isChecked());
-        b_needRefresh = true;
-    }
+//    if(pSDepthUnits->isChecked() != parentCanvas->GetShowDepthUnits()){
+//        parentCanvas->SetShowDepthUnits(pSDepthUnits->isChecked());
+//        b_needRefresh = true;
+//    }
 
 //    if(pCBShowAIS->isChecked() != parentCanvas->GetShowAIS()){
 //        parentCanvas->SetShowAIS(pCBShowAIS->isChecked());

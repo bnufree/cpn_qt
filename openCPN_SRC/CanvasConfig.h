@@ -29,7 +29,7 @@
 #include "s52s57.h"
 #include <QSettings>
 
-class ChartCanvas;
+class glChartCanvas;
 
 
 //  Class to encapsulate persistant canvas configuration(s)
@@ -44,7 +44,7 @@ public:
     void LoadFromLegacyConfig( QSettings *conf );
     
     int configIndex;
-    ChartCanvas *canvas;
+    glChartCanvas *canvas;
     double iLat, iLon, iScale, iRotation;
     int DBindex; 
     int GroupID;

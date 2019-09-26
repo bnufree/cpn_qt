@@ -105,7 +105,7 @@ SOURCES += \
     s57reader.cpp \
     s57featuredefns.cpp \
     ogrs57layer.cpp \
-    CanvasOptions.cpp \
+#    CanvasOptions.cpp \
     glwidget.cpp \
     CanvasConfig.cpp \
     zchxmaploadworker.cpp
@@ -169,7 +169,7 @@ HEADERS += \
     ChInfoWin.h \
     Osenc.h \
     S57ClassRegistrar.h \
-    CanvasOptions.h \
+#    CanvasOptions.h \
     glwidget.h \
     CanvasConfig.h \
     chartbase.h \

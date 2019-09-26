@@ -30,34 +30,12 @@
 #include "bbox.h"
 #include "ocpndc.h"
 #include "ocpCursor.h"
-#include "timers.h"
-#include "emboss_data.h"
-#include "S57Sector.h"
 #include "gshhs.h"
 #include <QTimer>
-#include <QPainter>.
 #include <QResizeEvent>
 #include "bitmap.h"
 #include <QWidget>
-#include <QMenu>
 
-
-
-class GSHHSChart;
-//class IDX_entry;
-class ocpnCompass;
-
-//    Useful static routines
-//void ShowAISTargetQueryDialog(wxWindow *parent, int mmsi);
-
-//--------------------------------------------------------
-//    Screen Brightness Control Support Routines
-//
-//--------------------------------------------------------
-
-int InitScreenBrightness(void);
-int RestoreScreenBrightness(void);
-int SetScreenBrightness(int brightness);
 
 
 //    Set up the preferred quilt type
@@ -66,57 +44,11 @@ int SetScreenBrightness(int brightness);
 //----------------------------------------------------------------------------
 //    Forward Declarations
 //----------------------------------------------------------------------------
-      class SelectItem;
-      class wxBoundingBox;
-      class ocpnBitmap;
-      class WVSChart;
-      class ChartBaseBSB;
-      class ChartBase;
-      class S57ObjectTree;
-      class S57ObjectDesc;
-      class RolloverWin;
-      class Quilt;
-      class PixelCache;
-      class ChInfoWin;
-      class glChartCanvas;
-      class ChartStack;
-      class Piano;
-      class canvasConfig;
-      class MUIBar;
 
-      class zchxMapMainWindow;
-
-enum                                //  specify the render behaviour of SetViewPoint()
-{
-    CURRENT_RENDER,                 // use the current render type
-    FORCE_SUBSAMPLE                 // force sub-sampled render, with re-render timer
-};
-
-//          Cursor region enumerator
-enum
-{
-      CENTER,
-      MID_RIGHT,
-      MID_LEFT,
-      MID_TOP,
-      MID_BOT,
-};
-
-typedef enum ownship_state_t
-{
-      SHIP_NORMAL        = 0,
-      SHIP_LOWACCURACY,
-      SHIP_INVALID
-}_ownship_state_t;
-
-enum {
-      ID_S57QUERYTREECTRL =            10000,
-      ID_AISDIALOGOK
-};
-
-enum {
-    ID_PIANO_DISABLE_QUILT_CHART = 32000, ID_PIANO_ENABLE_QUILT_CHART
-};
+class ChartBase;
+class Quilt;
+class glChartCanvas;
+class ChartStack;
 
 
 //----------------------------------------------------------------------------
@@ -131,54 +63,24 @@ public:
       ~ChartCanvas();
 
       void SetupGlCanvas( );
-      void PaintCleanup();
-      void Scroll(int dx, int dy);
-      void SetAlertString( QString str){ m_alertString = str;}
-      QString GetAlertString(){ return m_alertString; }
-      bool UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName );
+
 private slots:
-      void buildStyle();
-      void initBeforeUpdateMap();
+
       void slotInitEcidsAsDelayed();
 
 
 protected:
-      //    Methods
-      void keyPressEvent(QKeyEvent *event);
-      void keyReleaseEvent(QKeyEvent *event);
       void paintEvent(QPaintEvent* event);
-      void focusInEvent(QFocusEvent *){}
-      void focusOutEvent(QFocusEvent *){}
       void resizeEvent(QResizeEvent * event );
-      void mousePressEvent(QMouseEvent *e);
-      void mouseMoveEvent(QMouseEvent *e);
-      void mouseReleaseEvent(QMouseEvent* e);
-      void wheelEvent(QWheelEvent *);
 public slots:
       void startUpdate();
       void stopUpdate();
-//      void OnToolLeftClick();
-      bool MouseEventOverlayWindows( QMouseEvent* event );
-      bool MouseEventChartBar( QMouseEvent* event );
-      bool MouseEventSetup( QMouseEvent* event, bool b_handle_dclick = true );
-      bool MouseEventProcessObjects( QMouseEvent* event );
-      bool MouseEventProcessCanvas( QMouseEvent* event );
-      void SetCanvasCursor( QMouseEvent* event );
-      
-//      void PopupMenuHandler(wxCommandEvent& event);
-      bool IsPrimaryCanvas(){ return (m_canvasIndex == 0); }
       
       double GetCanvasRangeMeters();
       void SetCanvasRangeMeters( double range );
-      
-      void EnablePaint(bool b_enable);
-      virtual bool SetCursor(const QCursor &c);
-      virtual void Refresh( bool eraseBackground = true, const QRect *rect = (const QRect *) NULL );
-      virtual void Update();
 
 //      void LostMouseCapture(wxMouseCaptureLostEvent& event);
-      
-      void CancelMouseRoute();
+
       void SetDisplaySizeMM( double size );
       double GetDisplaySizeMM(){ return m_display_size_mm; }
       
@@ -198,12 +100,12 @@ public slots:
       
       void CheckGroupValid( bool showMessage = true, bool switchGroup0 = true);
 
-      void UpdateCanvasS52PLIBConfig();
 
 
-      void ClearS52PLIBStateHash(){ m_s52StateHash = 0; }
+
+
       void SetupCanvasQuiltMode( void );
-      void ApplyCanvasConfig(canvasConfig *pcc);
+
       
       void SetVPRotation(double angle){ GetVP().setRotation(angle); }
       double GetVPRotation(void) { return GetVP().rotation(); }
@@ -218,8 +120,6 @@ public slots:
       bool GetCanvasPointPixVP( ViewPort &vp, double rlat, double rlon, zchxPoint &r );
       
       void GetCanvasPixPoint(double x, double y, double &lat, double &lon);
-
-      bool IsMeasureActive(){ return m_bMeasure_Active; }
 //      wxBitmap &GetTideBitmap(){ return m_cTideBitmap; }
       
       void UnlockQuilt();
@@ -230,17 +130,11 @@ public slots:
       void SetQuiltChartHiLiteIndex(int dbIndex);
       int GetQuiltReferenceChartIndex(void);
       double GetBestStartScale(int dbi_hint, const ViewPort &vp);
-      
-//      int GetNextContextMenuId();
-      bool StartTimedMovement( bool stoptimer=true );
-      void DoTimedMovement( );
-      void DoMovement( long dt );
       void StopMovement( );
 
-      void SetColorScheme(ColorScheme cs);
-      ColorScheme GetColorScheme(){ return m_cs;}
 
-      void CanvasApplyLocale();
+
+
 
       //    Accessors
       int GetCanvasWidth(){ return m_canvas_width;}
@@ -251,33 +145,26 @@ public slots:
       double GetCanvasTrueScale(){return m_true_scale_ppm;}
       double GetAbsoluteMinScalePpm(){ return m_absolute_min_scale_ppm; }
       ViewPort &GetVP();
-      ViewPort *GetpVP(){ return &VPoint; }
+      ViewPort *GetpVP(){ return &mViewPoint; }
       void SetVP(ViewPort &);
-      ChartBase* GetChartAtCursor();
-      ChartBase* GetOverlayChartAtCursor();
+      ChartBase* GetChartAtPixel(int x, int y);
+      ChartBase* GetOverlayChartAtPixel(int x, int y);
       
-      GSHHSChart* GetWorldBackgroundChart() { return pWorldBackgroundChart; }
-      void ResetWorldBackgroundChart() { pWorldBackgroundChart->Reset(); }
+
 
       double GetPixPerMM(){ return m_pix_per_mm;}
 
-      void SetCursorStatus( double cursor_lat, double cursor_lon );
-      void GetCursorLatLon(double *lat, double *lon);
 
-      bool PanCanvas(double dx, double dy);
-//      void StopAutoPan(void);
 
-      void ZoomCanvas(double factor, bool can_zoom_to_cursor=true, bool stoptimer=true );
-      void DoZoomCanvas(double factor,  bool can_zoom_to_cursor = true);
+      bool Pan(double dx, double dy);
+      void Zoom(double factor,  bool can_zoom_to_cursor = true);
+      bool isZoomNow() const {return m_bzooming;}
+      void Rotate(double rad);
+      void RotateDegree(double deg);
+      void RotateContinus( double dir );
 
-      void RotateCanvas( double dir );
-      void DoRotateCanvas( double rotation );
-      void DoRotateCanvasWithDegree(double rotate);
+
       void DoTiltCanvas( double tilt );
-
-//      void ShowGoToPosition(void);
-      void HideGlobalToolbar();
-      void ShowGlobalToolbar();
 
       ChartBase *GetLargestScaleQuiltChart();
       ChartBase *GetFirstQuiltChart();
@@ -296,14 +183,8 @@ public slots:
       int GetCanvasChartNativeScale();
       int FindClosestCanvasChartdbIndex(int scale);
       void UpdateCanvasOnGroupChange(void);
- 
-      void ShowObjectQueryWindow( int x, int y, float zlat, float zlon);
+
       void UpdateGPSCompassStatusBox( bool b_force_new );
-      
-      QColor GetFogColor(){ return m_fog_color; }
-    
-      void StartMeasureRoute();
-      void CancelMeasureRoute();
 
       bool DoCanvasUpdate( void );
       void SelectQuiltRefdbChart( int db_index, bool b_autoscale = true );
@@ -315,150 +196,27 @@ public slots:
 public slots:
       void slotStartLoadEcdis();
 public:
-      bool IsPianoContextMenuActive(){ return m_piano_ctx_menu != 0; }
-      void SetCanvasToolbarItemState( int tool_id, bool state );
-
-      
-      //Todo build more accessors
-      QCursor    *pCursorPencil;
-      QCursor    *pCursorArrow;
-      QCursor    *pCursorCross;
-      QCursor    *pPlugIn_Cursor;
-      wxBitmap    *pscratch_bm;
-      double      m_cursor_lon, m_cursor_lat;
-//      Undo        *undo;
-      QPoint     r_rband;
-      double      m_prev_rlat;
-      double      m_prev_rlon;
       Quilt       *m_pQuilt;
-      bool        m_bShowNavobjects;
-      int         m_canvasIndex;
       int         m_groupIndex;
-      int          m_routeState;
       ChartBase   *m_singleChart;
       double      m_VPRotate;
-
-      
-
-      
-#ifdef ocpnUSE_GL
       glChartCanvas *GetglCanvas(){ return m_glcc; }
-#endif      
-
       void JaggyCircle(ocpnDC &dc, QPen pen, int x, int y, int radius);
       
       bool CheckEdgePan( int x, int y, bool bdragging, int margin, int delta );
-      bool        m_FinishRouteOnKillFocus;
-      bool        m_bMeasure_Active;
-      bool        m_bMeasure_DistCircle;
-      QString    m_active_upload_port;
-      bool        m_bAppendingRoute;
-      int         m_nMeasureState;
-      zchxMapMainWindow     *parent_frame;
-//      CanvasMenuHandler  *m_canvasMenu;
-      int GetMinAvailableGshhgQuality() { return pWorldBackgroundChart->GetMinAvailableQuality(); }
-      int GetMaxAvailableGshhgQuality() { return pWorldBackgroundChart->GetMaxAvailableQuality(); }
-
-      
       void SelectChartFromStack(int index,  bool bDir = false,  ChartTypeEnum New_Type = CHART_TYPE_DONTCARE, ChartFamilyEnum New_Family = CHART_FAMILY_DONTCARE);
       void SelectdbChart( int dbindex );
-
-      
       void DoCanvasStackDelta( int direction );
-
-      void ProcessNewGUIScale();
-      
-
-      bool GetShowGrid(){ return m_bDisplayGrid; }
-      void SetShowGrid( bool show ){ m_bDisplayGrid = show; }      
-      bool GetShowChartbar(){ return true; }
       void ToggleCanvasQuiltMode( void );
-      
       QString GetScaleText(){ return m_scaleText; }
       int GetScaleValue(){ return m_scaleValue; }
-      
-      bool        m_b_paint_enable;
 
-      bool GetShowENCText(){ return m_encShowText; }
-      void SetShowENCText( bool show );
-      
-      bool GetShowENCDepth(){ return m_encShowDepth; }
-      void SetShowENCDepth( bool show );
-      
-      bool GetShowENCLightDesc(){ return m_encShowLightDesc; }
-      void SetShowENCLightDesc( bool show );
-      
-      bool GetShowENCBuoyLabels(){ return m_encShowBuoyLabels; }
-      void SetShowENCBuoyLabels( bool show );
-
-      bool GetShowENCLights(){ return m_encShowLights; }
-      void SetShowENCLights( bool show );
-      
-      int GetENCDisplayCategory(){ return m_encDisplayCategory; }
-      void SetENCDisplayCategory( int category );
-
-      bool GetShowENCAnchor(){ return m_encShowAnchor; }
-      void SetShowENCAnchor( bool show );
-
-      bool GetShowENCDataQual(){ return m_encShowDataQual; }
-      void SetShowENCDataQual( bool show );
-      
-      QRect GetScaleBarRect(){ return m_scaleBarRect; }
-      void RenderAlertMessage(QPainter* dc, const ViewPort &vp);
 
 private:
       int AdjustQuiltRefChart();
-
-      bool UpdateS52State();
-      
-      void CallPopupMenu( int x, int y );
-      
-      bool IsTempMenuBarEnabled();
-      bool InvokeCanvasMenu(int x, int y, int seltype);
-      
-      ViewPort    VPoint;
-      void        PositionConsole(void);
-      
-      QColor PredColor();
-      QColor ShipColor();
-                               
-      ChInfoWin   *m_pCIWin;
-
-      int         cursor_region;
+      ViewPort    mViewPoint;
       QString    m_scaleText;
       int         m_scaleValue;
-      bool        m_bShowScaleInStatusBar;
-      QRect      bbRect;
-
-      QPoint     LastShipPoint;
-      QPoint     LastPredPoint;
-      bool        m_bDrawingRoute;
-      bool        m_bRouteEditing;
-      bool        m_bMarkEditing;
-	  bool		  m_bRoutePoinDragging;
-      bool        m_bIsInRadius;
-      bool        m_bMayToggleMenuBar;
-
-      SelectItem  *m_pFoundPoint;
-      bool        m_bChartDragging;
-
-      int         m_FoundAIS_MMSI;
-
-      QCursor    *pCursorLeft;
-      QCursor    *pCursorRight;
-      QCursor    *pCursorUp;
-      QCursor    *pCursorDown;
-
-      QCursor    *pCursorUpLeft;
-      QCursor    *pCursorUpRight;
-      QCursor    *pCursorDownLeft;
-      QCursor    *pCursorDownRight;
-
-      int         popx, popy;
-
-      wxBitmap    *pThumbDIBShow;
-      wxBitmap    *pThumbShowing;
-
 
       double       m_canvas_scale_factor;    // converter....
                                              // useage....
@@ -469,169 +227,54 @@ private:
       
       double      m_absolute_min_scale_ppm;
 
-      bool singleClickEventIsValid;
-      QMouseEvent* singleClickEvent;
-
-      std::vector<s57Sector_t> extendedSectorLegs;
-      QFont m_overzoomFont;
-      int m_overzoomTextWidth;
-      int m_overzoomTextHeight;
-
-      //    Methods
-      void OnActivate(/*wxActivateEvent& event*/);
-      void OnSize(QResizeEvent& event);
-      void MouseTimedEvent(QTimerEvent& event);
-      void MouseEvent(QMouseEvent& event);
-//      void ShipDraw(ocpnDC& dc);
-      void DrawArrow(ocpnDC& dc, int x, int y, double rot_angle, double scale);
-      void RotateTimerEvent(QTimerEvent& event);
-      void PanTimerEvent(QTimerEvent& event);
-      void MovementTimerEvent(QTimerEvent& );
-      void MovementStopTimerEvent( QTimerEvent& );
-      void OnCursorTrackTimerEvent(QTimerEvent& event);
-      void GridDraw(ocpnDC& dc); // Display lat/lon Grid in chart display
-      void ScaleBarDraw( ocpnDC& dc );
 
 
-      emboss_data *EmbossDepthScale();
-      emboss_data *CreateEmbossMapData(QFont &font, int width, int height, const QString &str, ColorScheme cs);
-      void CreateDepthUnitEmbossMaps(ColorScheme cs);
+
+
       wxBitmap CreateDimBitmap(wxBitmap &Bitmap, double factor);
-
-      void CreateOZEmbossMapData(ColorScheme cs);
-      void SetOverzoomFont();
-
-//      void CreateCM93OffsetEmbossMapData(ColorScheme cs);
-//      void EmbossCM93Offset ( QPainter *pdc);
-
-      void DrawEmboss ( ocpnDC &dc, emboss_data *pemboss );
-
- 
-      void ShowBrightnessLevelTimedPopup( int brightness, int min, int max );
       
       //    Data
       int         m_canvas_width, m_canvas_height;
 
-      int         xr_margin;                          // chart scroll margins, control cursor, etc.
-      int         xl_margin;
-      int         yt_margin;
-      int         yb_margin;
 
-
-      QPoint     last_drag;
-
-      QPainter  *pmemdc;
-
-      int         m_wheelzoom_stop_oneshot;
-      int         m_last_wheel_dir;
-      QTime       m_wheelstopwatch;
-      double      m_zoom_target;
-      
-      int         m_curtrack_timer_msec;
-      int         m_rollover_popup_timer_msec;
-
-      GSHHSChart  *pWorldBackgroundChart;
-
-      ChartBaseBSB *pCBSB;
-      wxBitmap    *pss_overlay_bmp;
-      wxBitmap      *pss_overlay_mask;
-
-      QRect      ship_draw_rect;
-      QRect      ship_draw_last_rect;
-      QRect      ais_draw_rect;
-      QRect      alert_draw_rect;          // pjotrc 2010.02.22
-
-      wxBitmap    *proute_bm;          // a bitmap and dc used to calculate route bounding box
-
-
-
-//      emboss_data *m_pEM_CM93Offset;	// Flav
 
 
 
       double      m_true_scale_ppm;
 
 
-      ColorScheme m_cs;
+
 
       
       ViewPort    m_cache_vp;
-      wxBitmap    *m_prot_bm;
-      QPoint     m_roffset;
 
-      bool        m_b_rot_hidef;
 
-      double      m_wheel_lat, m_wheel_lon;
-      int         m_wheel_x,m_wheel_y;
 
-      ViewPort    m_bm_cache_vp;
-      wxBitmap    m_working_bm;           // Used to build quilt in OnPaint()
-      wxBitmap    m_cached_chart_bm;      // A cached copy of the fully drawn quilt
-
-      bool        m_bbrightdir;
-      int         m_brightmod;
-
-      bool        m_bzooming, m_bzooming_to_cursor;
+      bool        m_bzooming;
 //      IDX_entry   *m_pIDXCandidate;
       glChartCanvas *m_glcc;
 
 
-      //Smooth movement member variables
-      zchxPoint      m_pan_drag;
-      int         m_panx, m_pany, m_modkeys;
-      double      m_panspeed;
-      bool        m_bmouse_key_mod;
-      double      m_zoom_factor, m_rotation_speed;
-      int         m_mustmove;
 
 
-      QDateTime m_last_movement_time;
 
-
-      bool        m_bsectors_shown;
-      bool        m_bedge_pan;
       double      m_displayed_scale_factor;
+      double      m_zoom_factor;
       
-      QColor    m_fog_color;
+
       bool        m_disable_edge_pan;
-      QFont      m_pgridFont;
-      
-      bool        m_dragoffsetSet;
       
       bool        m_bautofind;
       bool        m_bFirstAuto;
       double      m_vLat, m_vLon;
       ChartStack  *m_pCurrentStack;
       bool        m_bpersistent_quilt;
-      
-      QMenu      *m_piano_ctx_menu;
-      int         menu_selected_dbIndex, menu_selected_index;
-      
-      QRect       m_mainlast_tb_rect;
       int          m_restore_dbindex;
-      int          m_restore_group;
-      bool         m_bDisplayGrid;
-      
-      // S52PLib state storage
-      long         m_s52StateHash;
-      bool         m_encShowText;
-      bool         m_encShowDepth;
-      bool         m_encShowLightDesc;
-      bool         m_encShowBuoyLabels;
-      int          m_encDisplayCategory;
-      bool         m_encShowLights;
-      bool         m_encShowAnchor;
-      bool         m_encShowDataQual;
-      
-      QTimer      m_deferredFocusTimer;
+
       float        m_focus_indicator_pix;
       bool         m_bENCGroup;
-      bool         m_last_TBviz;
 
-      bool         m_MouseDragging;
-      QPoint       last_drag_point;
-      QRect       m_scaleBarRect;
-      QString      m_alertString;
+
       QTimer        *mDisplsyTimer;
 };
 
