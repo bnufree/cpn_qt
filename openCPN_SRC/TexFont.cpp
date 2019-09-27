@@ -176,8 +176,8 @@ void TexFont::Build( QFont &font, bool blur )
     unsigned char *imgdata = image.bits();
     if(imgdata)
     {
-
-        unsigned char *teximage = (unsigned char *) malloc( stride * tex_w * tex_h);
+        QByteArray teximage;
+        teximage.reserve(stride * tex_w * tex_h);
         for(int i = 0; i <tex_w * tex_h; i++ )
         {
             for( int k = 0; k < stride; k++ )
@@ -196,9 +196,7 @@ void TexFont::Build( QFont &font, bool blur )
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST/*GL_LINEAR*/ );
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
-        glTexImage2D( GL_TEXTURE_2D, 0, internalformat, tex_w, tex_h, 0, format, GL_UNSIGNED_BYTE, teximage );
-
-        free(teximage);
+        glTexImage2D( GL_TEXTURE_2D, 0, internalformat, tex_w, tex_h, 0, format, GL_UNSIGNED_BYTE, teximage.data() );
     }
     
     m_built = true;

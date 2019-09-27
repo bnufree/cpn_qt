@@ -217,6 +217,7 @@ bool glChartCanvas::s_b_useFBO;
 
 //static int s_nquickbind;
 
+extern void LoadS57();
 
 /* for debugging */
 static void print_region(OCPNRegion &Region)
@@ -533,14 +534,14 @@ glChartCanvas::glChartCanvas(QWidget* parent) : QGLWidget(parent)
 
     m_LRUtime = 0;
     setFocusPolicy(Qt::StrongFocus);
-    
 
     if( !g_glTextureManager) g_glTextureManager = new glTextureManager;
-    QTimer::singleShot(100, this, SLOT(slotStartLoadEcdis()));
+
     mDisplsyTimer = new QTimer(this);
     mDisplsyTimer->setInterval(1000);
     connect(mDisplsyTimer, SIGNAL(timeout()), this, SLOT(update()));
     mDisplsyTimer->start();
+    QTimer::singleShot(100, this, SLOT(slotStartLoadEcdis()));
 }
 
 glChartCanvas::~glChartCanvas()
@@ -886,7 +887,7 @@ void glChartCanvas::SetupOpenGL()
     msg += m_renderer;
     qDebug()<<msg;
 
-    if( ps52plib ) ps52plib->SetGLRendererString( m_renderer );
+
     
     char version_string[80];
     strncpy( version_string, (char *) glGetString( GL_VERSION ), 79 );
@@ -996,6 +997,12 @@ void glChartCanvas::SetupOpenGL()
 #endif
         
     GetglEntryPoints();
+
+    if(!ps52plib )
+    {
+        LoadS57();
+    }
+    ps52plib->SetGLRendererString( m_renderer );
     
     if( !s_glGenFramebuffers  || !s_glGenRenderbuffers        || !s_glFramebufferTexture2D ||
         !s_glBindFramebuffer  || !s_glFramebufferRenderbuffer || !s_glRenderbufferStorage  ||
@@ -4861,6 +4868,7 @@ void glChartCanvas::slotStartLoadEcdis()
 {
     buildStyle();
     initBeforeUpdateMap();
+    if(!m_bsetup)SetupOpenGL();
     mFrameWork->slotInitEcidsAsDelayed();
 }
 

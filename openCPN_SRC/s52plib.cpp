@@ -2627,8 +2627,7 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
 
         //Instantiate the symbol if necessary
         if( ( prule->pixelPtr == NULL ) || ( prule->parm1 != m_colortable_index ) || b_dump_cache ) {
-            Image = useLegacyRaster ?
-                        RuleXBMToImage( prule ) : ChartSymbols::GetImage( prule->name.SYNM );
+            Image = useLegacyRaster ? RuleXBMToImage( prule ) : ChartSymbols::GetImage( prule->name.SYNM );
 
             // delete any old private data
             ClearRulesCache( prule );
@@ -2679,10 +2678,12 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
                     }
                 }
             }
-#if 1
+#if 0
         QImage temp(e, w, h, QImage::Format_RGBA8888);
         static int index = 1;
-        temp.save(QString("%1.png").arg(index++), "PNG");
+        bool sts = temp.save(QString("%1.png").arg(index++), "PNG");
+        qDebug()<<"save temp image:"<<sts;
+
 #endif
 
             //      Save the bitmap ptr and aux parms in the rule
@@ -2795,29 +2796,32 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
 
         glDisable(g_texture_rectangle_format);
     } else { /* this is only for legacy mode, or systems without NPOT textures */
-        float cr = cosf( vp->rotation() );
-        float sr = sinf( vp->rotation() );
-        float ddx = pivot_x * cr + pivot_y * sr;
-        float ddy = pivot_y * cr - pivot_x * sr;
+        if(prule->pixelPtr != NULL)
+        {
+            float cr = cosf( vp->rotation() );
+            float sr = sinf( vp->rotation() );
+            float ddx = pivot_x * cr + pivot_y * sr;
+            float ddy = pivot_y * cr - pivot_x * sr;
 
-        glColor4f( 1, 1, 1, 1 );
+            glColor4f( 1, 1, 1, 1 );
 
-        //  Since draw pixels is so slow, lets not draw anything we don't have to
-        QRect sym_rect(r.x - ddx, r.y - ddy, b_width, b_height);
-        if(vp->rvRect().intersects(sym_rect) ) {
+            //  Since draw pixels is so slow, lets not draw anything we don't have to
+            QRect sym_rect(r.x - ddx, r.y - ddy, b_width, b_height);
+            if(vp->rvRect().intersects(sym_rect) ) {
 
-            glPushAttrib( GL_SCISSOR_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+                glPushAttrib( GL_SCISSOR_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-            glDisable( GL_SCISSOR_TEST );
-            glDisable( GL_STENCIL_TEST );
-            glDisable( GL_DEPTH_TEST );
+                glDisable( GL_SCISSOR_TEST );
+                glDisable( GL_STENCIL_TEST );
+                glDisable( GL_DEPTH_TEST );
 
-            glRasterPos2f( r.x - ddx, r.y - ddy );
-            glPixelZoom( 1, -1 );
-            glDrawPixels( b_width, b_height, GL_RGBA, GL_UNSIGNED_BYTE, prule->pixelPtr );
-            glPixelZoom( 1, 1 );
+                glRasterPos2f( r.x - ddx, r.y - ddy );
+                glPixelZoom( 1, -1 );
+                glDrawPixels( b_width, b_height, GL_RGBA, GL_UNSIGNED_BYTE, prule->pixelPtr );
+                glPixelZoom( 1, 1 );
 
-            glPopAttrib();
+                glPopAttrib();
+            }
         }
     }
 
