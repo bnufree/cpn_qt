@@ -213,7 +213,7 @@ private:
     bool *mVal;
 };
 
-Quilt::Quilt( ChartCanvas *parent)
+Quilt::Quilt( ChartFrameWork *parent)
 {
 //      m_bEnableRaster = true;
 //      m_bEnableVector = false;;
@@ -439,7 +439,7 @@ ChartBase *Quilt::GetNextChart()
     BusyPair chk(&m_bbusy);
     ChartBase *pret = NULL;
     if( cnode && cnode_index >= 0 ) {
-        qDebug()<<"cnode:"<<cnode<<" index:"<<cnode_index<<" totsl size:"<<m_PatchList.size();
+//        qDebug()<<"cnode:"<<cnode<<" index:"<<cnode_index<<" totsl size:"<<m_PatchList.size();
         int i = cnode_index + 1;
         if( i < m_PatchList.size())
         {
@@ -2129,7 +2129,7 @@ bool Quilt::Compose( const ViewPort &vp_in )
     //  Stop (temporarily) canvas paint events, since some chart loads mught Yield(),
     //  thus causing performance loss on recursion
     //  We will (always??) get a refresh on the new Quilt anyway...
-    m_parent->GetglCanvas()->EnablePaint(false);
+    m_parent->getGL()->EnablePaint(false);
 
     //  first lock charts already in the cache
     //  otherwise under memory pressure if chart1 and chart2
@@ -2159,7 +2159,7 @@ bool Quilt::Compose( const ViewPort &vp_in )
         }
     }
 
-    m_parent->GetglCanvas()->EnablePaint(true);
+    m_parent->getGL()->EnablePaint(true);
     //    Build and maintain the array of indexes in this quilt
 
     m_last_index_array = m_index_array;       //save the last one for delta checks

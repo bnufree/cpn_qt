@@ -10,16 +10,8 @@
 namespace Ui {
 class zchxMapMainWindow;
 }
-class ChartCanvas;
+class glChartCanvas;
 class ChartBase;
-#if 0
-class QTimer;
-class zchxOptionsDlg;
-class zchxConfig;
-class ChartCanvas;
-class ChartDB;
-class OCPNPlatform;
-#endif
 
 
 QColor GetGlobalColor(const QString& colorName);
@@ -38,12 +30,7 @@ public:
     bool    ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray );
     bool    UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName );
     ColorScheme GetColorScheme();
-    void ToggleColorScheme();
-    bool DoChartUpdate( void );
-    void SetChartUpdatePeriod();
-    ChartCanvas *GetPrimaryCanvas();
-//    QWidget* getGlChartCanvas();
-//    double GetBestVPScale( ChartBase *pchart );
+    glChartCanvas* getWidget() {return mEcdisWidget;}
 
 public slots:
     //工具
@@ -73,7 +60,6 @@ public slots:
     void    slotShowBuoyLightLabel(bool sts);
     void    slotShowLightDiscriptions(bool sts);
     void    slotShowDisplayCategory();
-    void    RefreshAllCanvas( bool bErase = true);
     void    SetGPSCompassScale();
     double  GetMag(double a);
     void    InvalidateAllGL();
@@ -87,10 +73,6 @@ protected:
 
 private:
     QAction* addCustomAction(QMenu* menu, const QString &text, const QObject *receiver, const char* slot, bool check = false, const QVariant& data = QVariant());
-//    void     initBeforeCreateCanvas();
-//    void     CreateCanvasLayout();
-private slots:
-    void    slotOnFrameTimer1Out();
 
 private:
     Ui::zchxMapMainWindow *ui;
@@ -98,7 +80,7 @@ private:
     //菜单管理
     QMap<QString, QAction*>     mActionMap;
     //显示窗口
-    ChartCanvas*                mEcdisWidget;
+    glChartCanvas*                mEcdisWidget;
 };
 
 #endif // ZCHXMAPMAINWINDOW_H

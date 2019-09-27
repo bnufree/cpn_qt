@@ -107,7 +107,7 @@ extern ColorScheme       global_color_scheme;
 extern int               g_nCPUCount;
 
 extern int                      g_SENC_LOD_pixels;
-extern ChartCanvas                 *gMainCanvas;
+extern ChartFrameWork          *gChartFrameWork;
 
 
 static jmp_buf env_ogrf;                    // the context saved by setjmp();
@@ -1465,7 +1465,7 @@ bool s57chart::RenderOverlayRegionViewOnGL( QGLContext *glc, const ViewPort& VPo
 bool s57chart::RenderRegionViewOnGLNoText( QGLContext *glc, const ViewPort& VPoint,
                                            const OCPNRegion &RectRegion, const LLRegion &Region )
 {
-    qDebug()<<"start render region view";
+//    qDebug()<<"start render region view";
     if(!m_RAZBuilt)
     {
         qDebug()<<"end render region view with no raz build";
@@ -1477,7 +1477,7 @@ bool s57chart::RenderRegionViewOnGLNoText( QGLContext *glc, const ViewPort& VPoi
     bool b_ret =  DoRenderRegionViewOnGL( glc, VPoint, RectRegion, Region, false );
     ps52plib->m_bShowS57Text = b_text;
     
-    qDebug()<<"start render region end normal";
+//    qDebug()<<"start render region end normal";
     return b_ret;
 }
 
@@ -3884,8 +3884,8 @@ int s57chart::BuildRAZFromSENCFile( const QString& FullPath )
     //    Create a hash map of VE_Element pointers as a chart class member
     int n_ve_elements = VEs.size();
 
-    qDebug()<<"vc size:"<<VCs.size()<<" ve size:"<<VEs.size();
-    double scale = gMainCanvas->GetBestVPScale(this);
+//    qDebug()<<"vc size:"<<VCs.size()<<" ve size:"<<VEs.size();
+    double scale = gChartFrameWork->GetBestVPScale(this);
     int nativescale = GetNativeScale();
 
     for( int i = 0; i < n_ve_elements; i++ ) {
@@ -5900,7 +5900,7 @@ void s57_DrawExtendedLightSectors( ocpnDC& dc, ViewPort& viewport, std::vector<s
     }
 }
 
-bool s57_CheckExtendedLightSectors( ChartCanvas *cc, int mx, int my, ViewPort& viewport, std::vector<s57Sector_t>& sectorlegs )
+bool s57_CheckExtendedLightSectors( ChartFrameWork *cc, int mx, int my, ViewPort& viewport, std::vector<s57Sector_t>& sectorlegs )
 {
     if( !cc )  return false;
     
@@ -5913,7 +5913,7 @@ bool s57_CheckExtendedLightSectors( ChartCanvas *cc, int mx, int my, ViewPort& v
     //    ChartPlugInWrapper *target_plugin_chart = NULL;
     s57chart *Chs57 = NULL;
 
-    ChartBase *target_chart = cc->GetglCanvas()->GetChartAtCursor();
+    ChartBase *target_chart = cc->getGL()->GetChartAtCursor();
     if( target_chart ){
         if( (target_chart->GetChartType() == CHART_TYPE_PLUGIN) && (target_chart->GetChartFamily() == CHART_FAMILY_VECTOR) )
         {
@@ -5939,8 +5939,8 @@ bool s57_CheckExtendedLightSectors( ChartCanvas *cc, int mx, int my, ViewPort& v
     bool bleading_attribute = false;
 
     int opacity = 100;
-    if( cc->GetglCanvas()->GetColorScheme() == GLOBAL_COLOR_SCHEME_DUSK ) opacity = 50;
-    if( cc->GetglCanvas()->GetColorScheme() == GLOBAL_COLOR_SCHEME_NIGHT) opacity = 20;
+    if( cc->getGL()->GetColorScheme() == GLOBAL_COLOR_SCHEME_DUSK ) opacity = 50;
+    if( cc->getGL()->GetColorScheme() == GLOBAL_COLOR_SCHEME_NIGHT) opacity = 20;
 
     int yOpacity = (float)opacity*1.3; // Matched perception of white/yellow with red/green
 

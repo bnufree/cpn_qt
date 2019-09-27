@@ -241,7 +241,7 @@ wxBitmap Style::GetIcon(const QString & name, int width, int height, bool bforce
 
 
     Icon* icon = icons[index];
-    qDebug()<<"icon:"<<icon<<icon->name<<icon->iconLoc<<icon->size;
+//    qDebug()<<"icon:"<<icon<<icon->name<<icon->iconLoc<<icon->size;
 
     if( icon->loaded && !bforceReload)
         return icon->icon;
@@ -262,10 +262,10 @@ wxBitmap Style::GetIcon(const QString & name, int width, int height, bool bforce
     {
 #endif // ocpnUSE_SVG
         QRect location( icon->iconLoc, icon->size );
-        graphics->SaveFile("zchxTest.png", "png");
-        qDebug()<<"graphics img size:"<<graphics->GetWidth()<<graphics->GetHeight();
+//        graphics->SaveFile("zchxTest.png", "png");
+//        qDebug()<<"graphics img size:"<<graphics->GetWidth()<<graphics->GetHeight();
         QPixmap res = graphics->GetHandle()->copy(/*QRect(540,100, 32,32)*/location);
-        res.save("copy.png", "png");
+//        res.save("copy.png", "png");
         bm = graphics->GetSubBitmap( location );
         if(retSize != icon->size){
             QImage scaled_image = bm.ConvertToImage();

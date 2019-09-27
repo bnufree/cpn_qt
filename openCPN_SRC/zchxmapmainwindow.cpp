@@ -115,8 +115,6 @@ extern float                     g_toolbar_scalefactor;
 extern int                     g_nCPUCount;
 extern bool                        g_bSoftwareGL;
 extern bool                        g_bGLexpert;
-//extern ChartCanvas      *g_focusCanvas;
-//extern ChartCanvas      *g_overlayCanvas;
 bool             b_inCompressAllCharts;
 extern unsigned int     g_canvasConfig;
 extern bool                      g_bcompression_wait;
@@ -172,7 +170,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
     addCustomAction(navigation, tr("Small Scale Chart"), this, SLOT(slotSmallScaleChart()));
     //视图
     QMenu* view = this->menuBar()->addMenu(tr("View"));
-    addCustomAction(view, tr("Enable Chart Quilting"), this, SLOT(slotEnableChartQuilting(bool)));
+//    addCustomAction(view, tr("Enable Chart Quilting"), this, SLOT(slotEnableChartQuilting(bool)));
     addCustomAction(view, tr("Show Chart Outline"), this, SLOT(slotShowChartOutline(bool)));
     addCustomAction(view, tr("Show ENC Text"), this, SLOT(slotShowENCText(bool)));
     addCustomAction(view, tr("Show ENC Lights"), this, SLOT(slotShowENCLights(bool)));
@@ -198,7 +196,7 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
     addCustomAction(display, tr("All"), this, SLOT(slotShowDisplayCategory()), false, ColorScheme::GLOBAL_COLOR_SCHEME_NIGHT);
 
     //添加窗口
-    mEcdisWidget = new ChartCanvas(this, 0);
+    mEcdisWidget = new glChartCanvas(this);
     if(!ui->centralwidget->layout())
     {
         ui->centralwidget->setLayout(new QVBoxLayout(ui->centralwidget));
@@ -207,13 +205,6 @@ zchxMapMainWindow::zchxMapMainWindow(QWidget *parent)
 
     g_Main_thread = QThread::currentThread();
     gFrame = this;
-
-    //添加窗口时的初始化
-//    initBeforeCreateCanvas();
-    //添加窗口
-//    CreateCanvasLayout();
-    //窗口添加完成延时加载地图数据
-//    QTimer::singleShot(1000, this, SLOT(slotInitEcidsAsDelayed()));
 }
 
 zchxMapMainWindow::~zchxMapMainWindow()
@@ -400,12 +391,12 @@ void zchxMapMainWindow::slotLookAheadMode(bool sts)
 
 void zchxMapMainWindow::slotZoomIn()
 {
-     if(mEcdisWidget) mEcdisWidget->GetglCanvas()->Zoom( 2.0, false );
+     if(mEcdisWidget) mEcdisWidget->Zoom( 2.0, false );
 }
 
 void zchxMapMainWindow::slotZoomOut()
 {
-     if(mEcdisWidget) mEcdisWidget->GetglCanvas()->Zoom( 0.5, false );
+     if(mEcdisWidget) mEcdisWidget->Zoom( 0.5, false );
 }
 
 void zchxMapMainWindow::slotLargeScaleChart()
@@ -438,11 +429,10 @@ void zchxMapMainWindow::slotShowBuoyLightLabel(bool sts)
 
 void zchxMapMainWindow::slotShowChartOutline(bool sts)
 {
-    if(!mEcdisWidget || !mEcdisWidget->GetglCanvas()) return;
-    if(mEcdisWidget->GetglCanvas()->GetShowOutlines() == sts) return;
-    mEcdisWidget->GetglCanvas()->SetShowOutlines(sts);
-    mEcdisWidget->GetglCanvas()->Refresh(false);
-    mEcdisWidget->GetglCanvas()->Invalidate();
+    if(!mEcdisWidget) return;
+    if(mEcdisWidget->GetShowOutlines() == sts) return;
+    mEcdisWidget->SetShowOutlines(sts);
+
 }
 
 void zchxMapMainWindow::slotShowDepth(bool sts)
@@ -472,30 +462,24 @@ void zchxMapMainWindow::slotShowENCLights(bool sts)
 
 void zchxMapMainWindow::slotShowENCSoundings(bool sts)
 {
-    if(mEcdisWidget)
+    if(mEcdisWidget && mEcdisWidget->GetShowENCDepth() != sts)
     {
-        if(mEcdisWidget->GetglCanvas()->GetShowENCDepth() != sts)
-        {
-            mEcdisWidget->GetglCanvas()->SetShowENCDepth(sts);
-            mEcdisWidget->ReloadVP();
-        }
+        mEcdisWidget->SetShowENCDepth(sts);
     }
 }
 
 void zchxMapMainWindow::slotShowENCText(bool sts)
 {
     if(!mEcdisWidget) return;
-    if(mEcdisWidget->GetglCanvas()->GetShowENCText() == sts) return;
-    mEcdisWidget->GetglCanvas()->SetShowENCText(sts);
-    mEcdisWidget->ReloadVP();
+    if(mEcdisWidget->GetShowENCText() == sts) return;
+    mEcdisWidget->SetShowENCText(sts);
 }
 
 void zchxMapMainWindow::slotShowGrid(bool sts)
 {
     if(!mEcdisWidget) return;
-    if(mEcdisWidget->GetglCanvas()->GetShowGrid() == sts) return;
-    mEcdisWidget->GetglCanvas()->SetShowGrid(sts);
-//    mEcdisWidget->ReloadVP();
+    if(mEcdisWidget->GetShowGrid() == sts) return;
+    mEcdisWidget->SetShowGrid(sts);
 }
 
 void zchxMapMainWindow::slotShowLightDiscriptions(bool sts)
@@ -554,698 +538,15 @@ bool zchxMapMainWindow::ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray )
 
     if( ( rr & VISIT_CHARTS )
             && ( ( rr & CHANGE_CHARTS ) || ( rr & FORCE_UPDATE ) || ( rr & SCAN_UPDATE ) ) ) {
-        if(mEcdisWidget){
-            mEcdisWidget->GetglCanvas()->UpdateChartDatabaseInplace( *pNewDirArray, ( ( rr & FORCE_UPDATE ) == FORCE_UPDATE ),  true, ChartListFileName );
+        if(mEcdisWidget)
+        {
+            mEcdisWidget->UpdateChartDatabaseInplace( *pNewDirArray, ( ( rr & FORCE_UPDATE ) == FORCE_UPDATE ),  true, ChartListFileName );
 
             b_need_refresh = true;
         }
     }
-    ZCHX_CFG_INS->UpdateSettings();
-    if(mEcdisWidget) mEcdisWidget->canvasRefreshGroupIndex();
-//    bool ztc = g_bEnableZoomToCursor;     // record the present state
-//    g_bEnableZoomToCursor = false;        // since we don't want to pan to an unknown cursor position
 
-//    //  This is needed to recognise changes in zoom-scale factors
-//    if(mEcdisWidget) mEcdisWidget->DoZoomCanvas(1.0001);
-
-//    g_bEnableZoomToCursor = ztc;
-
-#if 0
-    bool b_groupchange = false;
-    if( ( ( rr & VISIT_CHARTS )
-            && ( ( rr & CHANGE_CHARTS ) || ( rr & FORCE_UPDATE ) || ( rr & SCAN_UPDATE ) ) )
-            || ( rr & GROUPS_CHANGED ) ) {
-        b_groupchange = ScrubGroupArray();
-        ChartData->ApplyGroupArray( g_pGroupArray );
-        RefreshGroupIndices( );
-    }
-
-    if( rr & GROUPS_CHANGED || b_groupchange) {
-        pConfig->DestroyConfigGroups();
-        pConfig->CreateConfigGroups( g_pGroupArray );
-    }
-
-    if( rr & TIDES_CHANGED ) {
-        LoadHarmonics();
-    }
-
-    //  S52_CHANGED is a byproduct of a change in the chart object render scale
-    //  So, applies to RoutePoint icons also
-    if( rr & S52_CHANGED){
-        //  Reload Icons
-        pWayPointMan->ReloadAllIcons( );
-    }
-
-    pConfig->UpdateSettings();
-
-    if( g_pActiveTrack ) {
-        g_pActiveTrack->SetPrecision( g_nTrackPrecision );
-    }
-
-//     if( ( bPrevQuilt != g_bQuiltEnable ) || ( bPrevFullScreenQuilt != g_bFullScreenQuilt ) ) {
-//         GetPrimaryCanvas()->SetQuiltMode( g_bQuiltEnable );
-//         GetPrimaryCanvas()->SetupCanvasQuiltMode();
-//     }
-
-#if 0
-//TODO Not need with per-canvas CourseUp
-    if( g_bCourseUp ) {
-        //    Stuff the COGAvg table in case COGUp is selected
-        double stuff = NAN;
-        if( !std::isnan(gCog) ) stuff = gCog;
-        if( g_COGAvgSec > 0 ) {
-            for( int i = 0; i < g_COGAvgSec; i++ )
-                COGTable[i] = stuff;
-        }
-
-        g_COGAvg = stuff;
-
-        DoCOGSet();
-    }
-#endif
-
-    g_pRouteMan->SetColorScheme(global_color_scheme);           // reloads pens and brushes
-
-    //    Stuff the Filter tables
-    double stuffcog = NAN;
-    double stuffsog = NAN;
-    if( !std::isnan(gCog) ) stuffcog = gCog;
-    if( !std::isnan(gSog) ) stuffsog = gSog;
-
-    for( int i = 0; i < MAX_COGSOG_FILTER_SECONDS; i++ ) {
-        COGFilterTable[i] = stuffcog;
-        SOGFilterTable[i] = stuffsog;
-    }
-
-    SetChartUpdatePeriod( );              // Pick up changes to skew compensator
-
-    if(rr & GL_CHANGED){
-        //    Refresh the chart display, after flushing cache.
-        //      This will allow all charts to recognise new OpenGL configuration, if any
-        b_need_refresh = true;
-    }
-
-    if(rr & S52_CHANGED){
-        b_need_refresh = true;
-    }
-
-#ifdef ocpnUSE_GL
-    if(rr & REBUILD_RASTER_CACHE){
-        if(g_glTextureManager) {
-            GetPrimaryCanvas()->setEnabled(false);
-            g_glTextureManager->BuildCompressedCache();
-            GetPrimaryCanvas()->setEnabled(true);
-        }
-    }
-#endif
-
-    if(g_config_display_size_mm > 0){
-        g_display_size_mm = g_config_display_size_mm;
-    }
-    else{
-        g_display_size_mm = wxMax(100, g_Platform->GetDisplaySizeMM());
-    }
-
-    for(unsigned int i=0 ; i < g_canvasArray.GetCount() ; i++){
-        ChartCanvas *cc = g_canvasArray.Item(i);
-        if(cc)
-            cc->SetDisplaySizeMM( g_display_size_mm );
-    }
-
-    if(g_pi_manager){
-        g_pi_manager->SendBaseConfigToAllPlugIns();
-        int rrt = rr & S52_CHANGED;
-        g_pi_manager->SendS52ConfigToAllPlugIns( rrt == S52_CHANGED);
-    }
-
-
-    if(g_MainToolbar){
-        g_MainToolbar->SetAutoHide(g_bAutoHideToolbar);
-        g_MainToolbar->SetAutoHideTimer(g_nAutoHideToolbar);
-    }
-
-    // Apply any needed updates to each canvas
-    for(unsigned int i=0 ; i < g_canvasArray.GetCount() ; i++){
-        ChartCanvas *cc = g_canvasArray.Item(i);
-        if(cc)
-            cc->ApplyGlobalSettings();
-    }
-
-
-    //    Do a full Refresh, trying to open the last open chart
-//TODO  This got move up a level.  FIX ANDROID codepath
-#if 0
-    if(b_need_refresh){
-        int index_hint = ChartData->FinddbIndex( chart_file_name );
-        if( -1 == index_hint )
-            b_autofind = true;
-        ChartsRefresh( );
-    }
-#endif
-
-    //  The zoom-scale factor may have changed
-    //  so, trigger a recalculation of the reference chart
-
-    bool ztc = g_bEnableZoomToCursor;     // record the present state
-    g_bEnableZoomToCursor = false;        // since we don't want to pan to an unknown cursor position
-
-    //  This is needed to recognise changes in zoom-scale factors
-    GetPrimaryCanvas()->DoZoomCanvas(1.0001);
-
-    g_bEnableZoomToCursor = ztc;
-
-
-    return b_need_refresh;
-#endif
-}
-
-
-
-void zchxMapMainWindow::slotOnFrameTimer1Out()
-{
-#if 0
-    CheckToolbarPosition();
-
-        if( ! g_bPauseTest && (g_unit_test_1 || g_unit_test_2) ) {
-    //            if((0 == ut_index) && GetQuiltMode())
-    //                  ToggleQuiltMode();
-
-            // We use only one canvas for the unit tests, so far...
-            ChartCanvas *cc = GetPrimaryCanvas();
-
-            cc->m_bFollow = false;
-            if( g_MainToolbar && g_MainToolbar->GetToolbar() )
-                g_MainToolbar->GetToolbar()->ToggleTool( ID_FOLLOW, cc->m_bFollow );
-            int ut_index_max = ( ( g_unit_test_1 > 0 ) ? ( g_unit_test_1 - 1 ) : INT_MAX );
-
-            if( ChartData ) {
-                if( g_GroupIndex > 0 ) {
-                    while (ut_index < ChartData->GetChartTableEntries() && !ChartData->IsChartInGroup( ut_index, g_GroupIndex ) ) {
-                        ut_index++;
-                    }
-                }
-                if( ut_index < ChartData->GetChartTableEntries() ) {
-                    // printf("%d / %d\n", ut_index, ChartData->GetChartTableEntries());
-                    const ChartTableEntry *cte = &ChartData->GetChartTableEntry( ut_index );
-
-                    double clat = ( cte->GetLatMax() + cte->GetLatMin() ) / 2;
-                    double clon = ( cte->GetLonMax() + cte->GetLonMin() ) / 2;
-
-                    vLat = clat;
-                    vLon = clon;
-
-                    cc->SetViewPoint( clat, clon );
-
-                    if( cc->GetQuiltMode() ) {
-                        if( cc->IsChartQuiltableRef( ut_index ) )
-                            cc->SelectQuiltRefdbChart( ut_index );
-                    } else
-                        cc->SelectdbChart( ut_index );
-
-                    double ppm; // final ppm scale to use
-                    if (g_unit_test_1) {
-                        ppm = cc->GetCanvasScaleFactor() / cte->GetScale();
-                        ppm /= 2;
-                    }
-                    else {
-                        double rw, rh; // width, height
-                        int ww, wh;    // chart window width, height
-
-                        // width in nm
-                        DistanceBearingMercator( cte->GetLatMin(), cte->GetLonMin(), cte->GetLatMin(),
-                                  cte->GetLonMax(), NULL, &rw );
-
-                        // height in nm
-                        DistanceBearingMercator( cte->GetLatMin(), cte->GetLonMin(), cte->GetLatMax(),
-                                 cte->GetLonMin(), NULL, &rh );
-
-                        cc->GetSize( &ww, &wh );
-                        ppm = wxMin(ww/(rw*1852), wh/(rh*1852)) * ( 100 - fabs( clat ) ) / 90;
-                        ppm = wxMin(ppm, 1.0);
-                    }
-                    cc->SetVPScale( ppm );
-
-                    cc->ReloadVP();
-
-                    ut_index++;
-                    if( ut_index > ut_index_max )
-                        exit(0);
-                }
-                else {
-                    _exit(0);
-                }
-            }
-        }
-        g_tick++;
-
-    //      Listen for quitflag to be set, requesting application close
-        if( quitflag ) {
-            ZCHX_LOGMSG( _T("Got quitflag from SIGNAL") );
-            FrameTimer1.Stop();
-            Close();
-            return;
-        }
-
-        if( bDBUpdateInProgress ) return;
-
-        FrameTimer1.Stop();
-
-        //  If tracking carryover was found in config file, enable tracking as soon as
-        //  GPS become valid
-        if(g_bDeferredStartTrack){
-            if(!g_bTrackActive){
-                if(bGPSValid){
-                    gFrame->TrackOn();
-                    g_bDeferredStartTrack = false;
-                }
-            }
-            else {                                  // tracking has been manually activated
-                g_bDeferredStartTrack = false;
-            }
-        }
-
-    //  Update and check watchdog timer for GPS data source
-        gGPS_Watchdog--;
-        if( gGPS_Watchdog <= 0 ) {
-            bGPSValid = false;
-            if( gGPS_Watchdog == 0  ){
-                QString msg;
-                msg.Printf( _T("   ***GPS Watchdog timeout at Lat:%g   Lon: %g"), gLat, gLon );
-                ZCHX_LOGMSG(msg);
-            }
-            gSog = NAN;
-            gCog = NAN;
-        }
-
-    //  Update and check watchdog timer for Mag Heading data source
-        gHDx_Watchdog--;
-        if( gHDx_Watchdog <= 0 ) {
-            gHdm = NAN;
-            if( g_nNMEADebug && ( gHDx_Watchdog == 0 ) ) ZCHX_LOGMSG(
-                    _T("   ***HDx Watchdog timeout...") );
-        }
-
-    //  Update and check watchdog timer for True Heading data source
-        gHDT_Watchdog--;
-        if( gHDT_Watchdog <= 0 ) {
-            g_bHDT_Rx = false;
-            gHdt = NAN;
-            if( g_nNMEADebug && ( gHDT_Watchdog == 0 ) ) ZCHX_LOGMSG(
-                    _T("   ***HDT Watchdog timeout...") );
-        }
-
-        //  Update and check watchdog timer for Magnetic Variation data source
-        gVAR_Watchdog--;
-        if( gVAR_Watchdog <= 0 ) {
-            g_bVAR_Rx = false;
-            if( g_nNMEADebug && ( gVAR_Watchdog == 0 ) ) ZCHX_LOGMSG(
-                _T("   ***VAR Watchdog timeout...") );
-        }
-        //  Update and check watchdog timer for GSV (Satellite data)
-        gSAT_Watchdog--;
-        if( gSAT_Watchdog <= 0 ) {
-            g_bSatValid = false;
-            g_SatsInView = 0;
-            if( g_nNMEADebug && ( gSAT_Watchdog == 0 ) ) ZCHX_LOGMSG(
-                    _T("   ***SAT Watchdog timeout...") );
-        }
-
-        //    Build and send a Position Fix event to PlugIns
-        if( g_pi_manager )
-        {
-            GenericPosDatEx GPSData;
-            GPSData.kLat = gLat;
-            GPSData.kLon = gLon;
-            GPSData.kCog = gCog;
-            GPSData.kSog = gSog;
-            GPSData.kVar = gVar;
-            GPSData.kHdm = gHdm;
-            GPSData.kHdt = gHdt;
-            GPSData.nSats = g_SatsInView;
-
-            GPSData.FixTime = m_fixtime;
-
-            g_pi_manager->SendPositionFixToAllPlugIns( &GPSData );
-        }
-
-        //   Check for anchorwatch alarms                                 // pjotrc 2010.02.15
-        if( pAnchorWatchPoint1 ) {
-            double dist;
-            double brg;
-            DistanceBearingMercator( pAnchorWatchPoint1->m_lat, pAnchorWatchPoint1->m_lon, gLat, gLon,
-                    &brg, &dist );
-            double d = g_nAWMax;
-            ( pAnchorWatchPoint1->GetName() ).ToDouble( &d );
-            d = AnchorDistFix( d, AnchorPointMinDist, g_nAWMax );
-            bool toofar = false;
-            bool tooclose = false;
-            if( d >= 0.0 ) toofar = ( dist * 1852. > d );
-            if( d < 0.0 ) tooclose = ( dist * 1852 < -d );
-
-            if( tooclose || toofar )
-                AnchorAlertOn1 = true;
-            else
-                AnchorAlertOn1 = false;
-        } else
-            AnchorAlertOn1 = false;
-
-        if( pAnchorWatchPoint2 ) {
-            double dist;
-            double brg;
-            DistanceBearingMercator( pAnchorWatchPoint2->m_lat, pAnchorWatchPoint2->m_lon, gLat, gLon,
-                    &brg, &dist );
-
-            double d = g_nAWMax;
-            ( pAnchorWatchPoint2->GetName() ).ToDouble( &d );
-            d = AnchorDistFix( d, AnchorPointMinDist, g_nAWMax );
-            bool toofar = false;
-            bool tooclose = false;
-            if( d >= 0 ) toofar = ( dist * 1852. > d );
-            if( d < 0 ) tooclose = ( dist * 1852 < -d );
-
-            if( tooclose || toofar ) AnchorAlertOn2 = true;
-            else
-                AnchorAlertOn2 = false;
-        } else
-            AnchorAlertOn2 = false;
-
-        if( (pAnchorWatchPoint1 || pAnchorWatchPoint2) && !bGPSValid )
-            AnchorAlertOn1 = true;
-
-    //  Send current nav status data to log file on every half hour   // pjotrc 2010.02.09
-
-        wxDateTime lognow = wxDateTime::Now();   // pjotrc 2010.02.09
-        int hourLOC = lognow.GetHour();
-        int minuteLOC = lognow.GetMinute();
-        lognow.MakeGMT();
-        int minuteUTC = lognow.GetMinute();
-        int second = lognow.GetSecond();
-
-        wxTimeSpan logspan = lognow.Subtract( g_loglast_time );
-        if( ( logspan.IsLongerThan( wxTimeSpan( 0, 30, 0, 0 ) ) ) || ( minuteUTC == 0 )
-                || ( minuteUTC == 30 ) ) {
-            if( logspan.IsLongerThan( wxTimeSpan( 0, 1, 0, 0 ) ) ) {
-                QString day = lognow.FormatISODate();
-                QString utc = lognow.FormatISOTime();
-                QString navmsg = _T("LOGBOOK:  ");
-                navmsg += day;
-                navmsg += _T(" ");
-                navmsg += utc;
-                navmsg += _T(" UTC ");
-
-                if( bGPSValid ) {
-                    QString data;
-                    data.Printf( _T(" GPS Lat %10.5f Lon %10.5f "), gLat, gLon );
-                    navmsg += data;
-
-                    QString cog;
-                    if( std::isnan(gCog) ) cog.Printf( _T("COG ----- ") );
-                    else
-                        cog.Printf( _T("COG %10.5f "), gCog );
-
-                    QString sog;
-                    if( std::isnan(gSog) ) sog.Printf( _T("SOG -----  ") );
-                    else
-                        sog.Printf( _T("SOG %6.2f ") + getUsrSpeedUnit(), toUsrSpeed( gSog ) );
-
-                    navmsg += cog;
-                    navmsg += sog;
-                } else {
-                    QString data;
-                    data.Printf( _T(" DR Lat %10.5f Lon %10.5f"), gLat, gLon );
-                    navmsg += data;
-                }
-                ZCHX_LOGMSG( navmsg );
-                g_loglast_time = lognow;
-
-                int bells = ( hourLOC % 4 ) * 2;     // 2 bells each hour
-                if( minuteLOC != 0 ) bells++;       // + 1 bell on 30 minutes
-                if( !bells ) bells = 8;     // 0 is 8 bells
-
-                if( g_bPlayShipsBells && ( ( minuteLOC == 0 ) || ( minuteLOC == 30 ) ) ) {
-                    m_BellsToPlay = bells;
-                    wxCommandEvent ev(BELLS_PLAYED_EVTYPE);
-                    wxPostEvent(this, ev);
-                }
-            }
-        }
-
-        if( ShouldRestartTrack() )
-            TrackDailyRestart();
-
-        if(g_bSleep){
-            FrameTimer1.Start( TIMER_GFRAME_1, wxTIMER_CONTINUOUS );
-            return;
-        }
-
-    //      Update the Toolbar Status windows and lower status bar the first time watchdog times out
-        if( ( gGPS_Watchdog == 0 ) || ( gSAT_Watchdog == 0 ) ) {
-            QString sogcog( _T("SOG --- ") + getUsrSpeedUnit() + + _T("     ") + _T(" COG ---\u00B0") );
-            if( GetStatusBar() ) SetStatusText( sogcog, STAT_FIELD_SOGCOG );
-
-            gCog = 0.0;                                 // say speed is zero to kill ownship predictor
-        }
-
-    //TODO
-    //  Not needed?
-    #if 0
-    #if !defined(__WXGTK__) && !defined(__WXQT__)
-        {
-            double cursor_lat, cursor_lon;
-            GetPrimaryCanvas()->GetCursorLatLon( &cursor_lat, &cursor_lon );
-            GetPrimaryCanvas()->SetCursorStatus(cursor_lat, cursor_lon);
-        }
-    #endif
-    #endif
-
-    //      Update the chart database and displayed chart
-        bool bnew_view = false;
-
-    //    Do the chart update based on the global update period currently set
-    //    If in COG UP mode, the chart update is handled by COG Update timer
-        if( /*!g_bCourseUp &&*/ (0 != g_ChartUpdatePeriod ) ) {
-            if (0 == m_ChartUpdatePeriod--) {
-                bnew_view = DoChartUpdate();
-                m_ChartUpdatePeriod = g_ChartUpdatePeriod;
-            }
-        }
-
-        nBlinkerTick++;
-
-        // For each canvas....
-        for(unsigned int i=0 ; i < g_canvasArray.GetCount() ; i++){
-            ChartCanvas *cc = g_canvasArray.Item(i);
-            if(cc){
-
-                cc->DrawBlinkObjects();
-
-    //      Update the active route, if any
-                if( g_pRouteMan->UpdateProgress() ) {
-            //    This RefreshRect will cause any active routepoint to blink
-                    if( g_pRouteMan->GetpActiveRoute() )
-                        cc->RefreshRect( g_blink_rect, false );
-                }
-
-    //  Force own-ship drawing parameters
-                cc->SetOwnShipState( SHIP_NORMAL );
-
-                if( cc->GetQuiltMode() ) {
-                    double erf = cc->GetQuiltMaxErrorFactor();
-                    if( erf > 0.02 )
-                        cc->SetOwnShipState( SHIP_LOWACCURACY );
-                } else {
-                    if( cc->m_singleChart ) {
-                        if( cc->m_singleChart->GetChart_Error_Factor() > 0.02 )
-                            cc->SetOwnShipState( SHIP_LOWACCURACY );
-                    }
-                }
-
-                if( !bGPSValid )
-                    cc->SetOwnShipState( SHIP_INVALID );
-
-                if( bGPSValid != m_last_bGPSValid ) {
-                    if(!g_bopengl)
-                        cc->UpdateShips();
-
-                    bnew_view = true;                  // force a full Refresh()
-                }
-            }
-        }
-
-        m_last_bGPSValid = bGPSValid;
-
-        //    If any PlugIn requested dynamic overlay callbacks, force a full canvas refresh
-        //    thus, ensuring at least 1 Hz. callback.
-        bool brq_dynamic = false;
-        if( g_pi_manager ) {
-            ArrayOfPlugIns *pplugin_array = g_pi_manager->GetPlugInArray();
-            for( unsigned int i = 0; i < pplugin_array->GetCount(); i++ ) {
-                PlugInContainer *pic = pplugin_array->Item( i );
-                if( pic->m_bEnabled && pic->m_bInitState ) {
-                    if( pic->m_cap_flag & WANTS_DYNAMIC_OPENGL_OVERLAY_CALLBACK ) {
-                        brq_dynamic = true;
-                        break;
-                    }
-                }
-            }
-
-            if( brq_dynamic )
-                bnew_view = true;
-        }
-
-
-        //  Make sure we get a redraw and alert sound on AnchorWatch excursions.
-        if(AnchorAlertOn1 || AnchorAlertOn2)
-            bnew_view = true;
-
-        // For each canvas....
-        for(unsigned int i=0 ; i < g_canvasArray.GetCount() ; i++){
-                ChartCanvas *cc = g_canvasArray.Item(i);
-                if(cc){
-
-                    if(g_bopengl) {
-    #ifdef ocpnUSE_GL
-                        if (cc->GetglCanvas()) {
-                            if (m_fixtime - cc->GetglCanvas()->m_last_render_time > 0)
-                                bnew_view = true;
-                        }
-
-                        if( AnyAISTargetsOnscreen( cc, cc->GetVP() ) )
-                            bnew_view = true;
-
-                        if(bnew_view) /* full frame in opengl mode */
-                            cc->Refresh(false);
-    #endif
-                    } else {
-    //  Invalidate the ChartCanvas window appropriately
-    //    In non-follow mode, invalidate the rectangles containing the AIS targets and the ownship, etc...
-    //    In follow mode, if there has already been a full screen refresh, there is no need to check ownship or AIS,
-    //       since they will be always drawn on the full screen paint.
-
-                    if( ( !cc->m_bFollow ) || cc->m_bCourseUp ) {
-                        cc->UpdateShips();
-                        cc->UpdateAIS();
-                        cc->UpdateAlerts();
-                    } else {
-                        if( !bnew_view ) {                   // There has not been a Refresh() yet.....
-                            cc->UpdateAIS();
-                            cc->UpdateAlerts();
-                        }
-                    }
-                }
-            }
-        }
-
-        if( g_pais_query_dialog_active && g_pais_query_dialog_active->IsShown() )
-            g_pais_query_dialog_active->UpdateText();
-
-        // Refresh AIS target list every 5 seconds to avoid blinking
-        if( g_pAISTargetList && ( 0 == ( g_tick % ( 5 ) ) ) )
-            g_pAISTargetList->UpdateAISTargetList();
-
-        //  Pick up any change Toolbar status displays
-        UpdateGPSCompassStatusBoxes();
-        UpdateAISTool();
-
-        if( console && console->IsShown() ) {
-    //            console->Raise();
-            console->RefreshConsoleData();
-        }
-
-        //  This little hack fixes a problem seen with some UniChrome OpenGL drivers
-        //  We need a deferred resize to get glDrawPixels() to work right.
-        //  So we set a trigger to generate a resize after 5 seconds....
-        //  See the "UniChrome" hack elsewhere
-        if( m_bdefer_resize ) {
-            if( 0 == ( g_tick % ( 5 ) ) ) {
-                printf( "___RESIZE\n" );
-                SetSize( m_defer_size );
-                g_pauimgr->Update();
-                m_bdefer_resize = false;
-            }
-        }
-        if (g_unit_test_2)
-            FrameTimer1.Start( TIMER_GFRAME_1*3, wxTIMER_CONTINUOUS );
-        else
-            FrameTimer1.Start( TIMER_GFRAME_1, wxTIMER_CONTINUOUS );
-#endif
-}
-
-
-
-
-
-void zchxMapMainWindow::ToggleColorScheme()
-{
-//    ColorScheme s = GetColorScheme();
-//    int is = (int) s;
-//    is++;
-//    s = (ColorScheme) is;
-//    if( s == N_COLOR_SCHEMES ) s = GLOBAL_COLOR_SCHEME_RGB;
-
-//    SetAndApplyColorScheme( s );
-}
-
-bool zchxMapMainWindow::DoChartUpdate( void )
-{
-    bool return_val = false;
-    if(mEcdisWidget) return_val = mEcdisWidget->DoCanvasUpdate();
-    return return_val;
-
-}
-
-ChartCanvas *zchxMapMainWindow::GetPrimaryCanvas()
-{
-    return mEcdisWidget;
-}
-
-void zchxMapMainWindow::SetChartUpdatePeriod( )
-{
-//    //    Set the chart update period based upon chart skew and skew compensator
-
-//    g_ChartUpdatePeriod = 0;            // General default
-
-//    // In non-GL, singlele-chart mode, rotation of skewed charts is very slow
-//    //  So we need to use a slower update time constant to preserve adequate UI performance
-//    bool bskewdc = false;
-//        for(unsigned int i=0 ; i < g_canvasArray.GetCount() ; i++){
-//            ChartCanvas *cc = g_canvasArray.Item(i);
-//            if(cc){
-//                if( !g_bopengl && !cc->GetVP().b_quilt){
-//                    if ( fabs(cc->GetVP().skew) > 0.0001)
-//                        bskewdc = true;
-//                }
-//                if(cc->m_bFollow)
-//                    g_ChartUpdatePeriod = 1;
-//            }
-//        }
-
-//    if (bskewdc)
-//        g_ChartUpdatePeriod = g_SkewCompUpdatePeriod;
-
-
-//    m_ChartUpdatePeriod = g_ChartUpdatePeriod;
-}
-
-//double zchxMapMainWindow::GetBestVPScale( ChartBase *pchart )
-//{
-//    return GetPrimaryCanvas()->GetBestVPScale( pchart );
-//}
-
-void zchxMapMainWindow::RefreshAllCanvas( bool bErase)
-{
-    if(mEcdisWidget)
-    {
-        mEcdisWidget->DoCanvasUpdate();
-        mEcdisWidget->ReloadVP();                  // once more, and good to go
-    }
-    // For each canvas
-//    for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
-//        ChartCanvas *cc = g_canvasArray.at(i);
-//        if(cc){
-//            cc->Refresh( bErase );
-//        }
-//    }
+//    if(mEcdisWidget) mEcdisWidget->canvasRefreshGroupIndex();
 }
 
 void zchxMapMainWindow::SetGPSCompassScale()
@@ -1709,9 +1010,7 @@ void LoadS57()
 
         ZCHX_CFG_INS->LoadS57Config();
         ps52plib->SetPLIBColorScheme( global_color_scheme );
-
-        if(gFrame->GetPrimaryCanvas() )
-            ps52plib->SetPPMM( gFrame->GetPrimaryCanvas()->GetPixPerMM() );
+        ps52plib->SetPPMM( gFrame->getWidget()->GetPixPerMM() );
 
 #ifdef ocpnUSE_GL
 
@@ -1752,12 +1051,12 @@ ColorScheme zchxMapMainWindow::GetColorScheme()
 
 void zchxMapMainWindow::slotRotateDegree(double angle)
 {
-    if(mEcdisWidget) mEcdisWidget->GetglCanvas()->RotateDegree(angle);
+    if(mEcdisWidget) mEcdisWidget->RotateDegree(angle);
 }
 
 void zchxMapMainWindow::slotRoateRad(double rad)
 {
-    if(mEcdisWidget) mEcdisWidget->GetglCanvas()->Rotate(rad);
+    if(mEcdisWidget) mEcdisWidget->Rotate(rad);
 }
 
 void zchxMapMainWindow::slotRotate()

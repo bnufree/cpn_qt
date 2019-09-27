@@ -54,27 +54,23 @@ class ChartStack;
 //----------------------------------------------------------------------------
 // ChartCanvas
 //----------------------------------------------------------------------------
-class ChartCanvas: public QWidget
+class ChartFrameWork : public QObject
 {
     Q_OBJECT
      friend class glChartCanvas;
 public:
-      ChartCanvas(QWidget *frame, int canvasIndex);
-      ~ChartCanvas();
+      ChartFrameWork(glChartCanvas* parent);
+      ~ChartFrameWork();
+      glChartCanvas* getGL() {return mGLCC;}
 
-      void SetupGlCanvas( );
-
-private slots:
+public slots:
 
       void slotInitEcidsAsDelayed();
+      void slotResize(int width, int height);
 
 
-protected:
-      void paintEvent(QPaintEvent* event);
-      void resizeEvent(QResizeEvent * event );
 public slots:
-      void startUpdate();
-      void stopUpdate();
+
       
       double GetCanvasRangeMeters();
       void SetCanvasRangeMeters( double range );
@@ -194,13 +190,12 @@ public slots:
       void RemoveChartFromQuilt( int dbIndex );
 
 public slots:
-      void slotStartLoadEcdis();
+
 public:
-      Quilt       *m_pQuilt;
-      int         m_groupIndex;
-      ChartBase   *m_singleChart;
-      double      m_VPRotate;
-      glChartCanvas *GetglCanvas(){ return m_glcc; }
+      Quilt         *m_pQuilt;
+      int           m_groupIndex;
+      ChartBase     *m_singleChart;
+      double        m_VPRotate;
       void JaggyCircle(ocpnDC &dc, QPen pen, int x, int y, int radius);
       
       bool CheckEdgePan( int x, int y, bool bdragging, int margin, int delta );
@@ -251,13 +246,6 @@ private:
 
 
       bool        m_bzooming;
-//      IDX_entry   *m_pIDXCandidate;
-      glChartCanvas *m_glcc;
-
-
-
-
-
       double      m_displayed_scale_factor;
       double      m_zoom_factor;
       
@@ -273,9 +261,11 @@ private:
 
       float        m_focus_indicator_pix;
       bool         m_bENCGroup;
+      glChartCanvas*  mGLCC;
 
 
-      QTimer        *mDisplsyTimer;
+
+
 };
 
 QString minutesToHoursDays(float timeInMinutes);

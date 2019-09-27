@@ -59,7 +59,6 @@
 #include "CanvasConfig.h"
 //#include "CanvasOptions.h"
 #include "mbtiles.h"
-#include "glChartCanvas.h"
 #include "zchxmapmainwindow.h"
 
 #include "cm93.h"                   // for chart outline draw
@@ -75,6 +74,7 @@
 #include "glwidget.h"
 #include <QVBoxLayout>
 #include <QProgressDialog>
+#include "glChartCanvas.h"
 
 
 extern float  g_ChartScaleFactorExp;
@@ -240,26 +240,20 @@ QGLContext             *g_pGLcontext;   //shared common context
 extern unsigned int     g_canvasConfig;
 extern QString         g_lastPluginMessage;
 
-extern ChartCanvas      *g_focusCanvas;
-extern ChartCanvas      *g_overlayCanvas;
-
 extern float            g_toolbar_scalefactor;
 extern SENCThreadManager *g_SencThreadManager;
-
-ChartCanvas                 *gMainCanvas = 0;
 extern s57RegistrarMgr          *m_pRegistrarMan;
 
 // "Curtain" mode parameters
 QDialog                *g_pcurtain;
+ChartFrameWork          *gChartFrameWork = 0;
 
 
 
 // Define a constructor for my canvas
-ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
+ChartFrameWork::ChartFrameWork( glChartCanvas *frame ) : QObject(0) , mGLCC(frame)
 {
-    gMainCanvas = this;
-    //    SetBackgroundColour ( QColor(0,0,0) );
-    //    SetBackgroundStyle ( wxBG_STYLE_CUSTOM );  // on WXMSW, this prevents flashing on color scheme change
+    gChartFrameWork = this;
 
     m_groupIndex = 0;
     m_bzooming = false;
@@ -276,8 +270,6 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     m_zoom_factor = 1;
 
     mViewPoint.invalidate();
-
-    m_glcc = NULL;
     m_focus_indicator_pix = 1;
 
     m_pCurrentStack = NULL;
@@ -287,8 +279,6 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     m_restore_dbindex = 0;
     SetQuiltMode(true);
     
-    SetupGlCanvas( );
-    
     // Set some benign initial values
 
 
@@ -296,36 +286,13 @@ ChartCanvas::ChartCanvas ( QWidget *frame, int canvasIndex ) : QWidget(frame)
     mViewPoint.setLon(0);
     mViewPoint.setViewScalePPM(1);
     mViewPoint.invalidate();
-
     m_canvas_scale_factor = 1.;
-
     m_canvas_width = 1000;
-
-
-
-
-
-
     m_pQuilt->EnableHighDefinitionZoom( true );
 
-
-    mDisplsyTimer = new QTimer(this);
-    mDisplsyTimer->setInterval(1000);
-    connect(mDisplsyTimer, SIGNAL(timeout()), this, SLOT(update()));
-//    mDisplsyTimer->start();
-//    setMouseTracking(true);
-//    setFocusPolicy(Qt::ClickFocus);
-    QTimer::singleShot(2000, this, SLOT(slotStartLoadEcdis()));
 }
 
-void ChartCanvas::slotStartLoadEcdis()
-{
-    if(m_glcc)m_glcc->buildStyle();
-    if(m_glcc)m_glcc->initBeforeUpdateMap();
-    slotInitEcidsAsDelayed();
-}
-
-void ChartCanvas::slotInitEcidsAsDelayed()
+void ChartFrameWork::slotInitEcidsAsDelayed()
 {
     //读取配置文件中保存的地图数据目录
     ArrayOfCDI ChartDirArray;
@@ -356,56 +323,17 @@ void ChartCanvas::slotInitEcidsAsDelayed()
     DoCanvasUpdate();
     ReloadVP();                  // once more, and good to go
     OCPNPlatform::Initialize_4( );
-    GetglCanvas()->setUpdateAvailable(true);
-    startUpdate();
 }
 
 
 
-
-void ChartCanvas::startUpdate()
+ChartFrameWork::~ChartFrameWork()
 {
-    if(mDisplsyTimer) mDisplsyTimer->start();
-}
-
-void ChartCanvas::stopUpdate()
-{
-    if(mDisplsyTimer) mDisplsyTimer->stop();
-}
-
-ChartCanvas::~ChartCanvas()
-{
-
-
-    delete m_glcc;
-//    delete g_pGLcontext;
-
     delete m_pQuilt;
 }
 
 
-
-void ChartCanvas::SetupGlCanvas( )
-{
-    QLayout *lay = this->layout();
-    if(!lay)
-    {
-        lay = new QVBoxLayout(this);
-        this->setLayout(lay);
-    }
-    qDebug("Creating glChartCanvas");
-    m_glcc = new glChartCanvas( this);
-    lay->addWidget(m_glcc);
-
-    // We use one context for all GL windows, so that textures etc will be automatically shared
-        QGLContext *pctx = m_glcc->context();
-        g_pGLcontext = pctx;                // Save a copy of the common context
-}
-
-
-
-
-void ChartCanvas::CheckGroupValid( bool showMessage, bool switchGroup0)
+void ChartFrameWork::CheckGroupValid( bool showMessage, bool switchGroup0)
 {
     bool groupOK = CheckGroup( m_groupIndex );
     
@@ -422,12 +350,12 @@ extern bool     g_bPreserveScaleOnX;
 /*extern*/ ChartDummy *pDummyChart;
 extern int      g_sticky_chart;
 
-void ChartCanvas::canvasRefreshGroupIndex( void )
+void ChartFrameWork::canvasRefreshGroupIndex( void )
 {
     SetGroupIndex(m_groupIndex);
 }
 
-void ChartCanvas::SetGroupIndex( int index, bool autoSwitch )
+void ChartFrameWork::SetGroupIndex( int index, bool autoSwitch )
 {
     int new_index = index;
     if( index > (int) g_pGroupArray->count() )
@@ -511,7 +439,7 @@ void ChartCanvas::SetGroupIndex( int index, bool autoSwitch )
     }
 }
 
-bool ChartCanvas::CheckGroup( int igroup )
+bool ChartFrameWork::CheckGroup( int igroup )
 {
     if(!ChartData)
         return true;                            //  Not known yet...
@@ -549,7 +477,7 @@ bool ChartCanvas::CheckGroup( int igroup )
 }
 
 
-void ChartCanvas::canvasChartsRefresh( int dbi_hint )
+void ChartFrameWork::canvasChartsRefresh( int dbi_hint )
 {
     if( !ChartData )
         return;
@@ -617,12 +545,10 @@ void ChartCanvas::canvasChartsRefresh( int dbi_hint )
     ReloadVP();
 
     UpdateGPSCompassStatusBox( true );
-    
-    if(m_glcc) m_glcc->setCursor( Qt::ArrowCursor );
 }
 
 
-bool ChartCanvas::DoCanvasUpdate( void )
+bool ChartFrameWork::DoCanvasUpdate( void )
 {
     
     double tLat, tLon;           // Chart Stack location
@@ -935,20 +861,14 @@ update_finish:
     //  But don't duplicate a Refresh() done by SetViewPoint()
     if( bNewChart && !bNewView )
     {
-        if(m_glcc) m_glcc->Refresh( false );
+        if(mGLCC) mGLCC->Refresh( false );
     }
-
-#ifdef ocpnUSE_GL
-    // If a new chart, need to invalidate gl viewport for refresh
-    // so the fbo gets flushed
-    if(m_glcc && bNewChart)
-        GetglCanvas()->Invalidate();
-#endif
+    if(mGLCC && bNewChart) mGLCC->Invalidate();
 
     return bNewChart | bNewView;
 }
 
-void ChartCanvas::SelectQuiltRefdbChart( int db_index, bool b_autoscale )
+void ChartFrameWork::SelectQuiltRefdbChart( int db_index, bool b_autoscale )
 {
     if( m_pCurrentStack )
         m_pCurrentStack->SetCurrentEntryFromdbIndex( db_index );
@@ -969,7 +889,7 @@ void ChartCanvas::SelectQuiltRefdbChart( int db_index, bool b_autoscale )
         SetQuiltRefChart( -1 );
 }
 
-void ChartCanvas::SelectQuiltRefChart( int selected_index )
+void ChartFrameWork::SelectQuiltRefChart( int selected_index )
 {
     std::vector<int>  piano_chart_index_array = GetQuiltExtendedStackdbIndexArray();
     int current_db_index = piano_chart_index_array[selected_index];
@@ -977,7 +897,7 @@ void ChartCanvas::SelectQuiltRefChart( int selected_index )
     SelectQuiltRefdbChart( current_db_index );
 }
 
-double ChartCanvas::GetBestVPScale( ChartBase *pchart )
+double ChartFrameWork::GetBestVPScale( ChartBase *pchart )
 {
     if( pchart ) {
         double proposed_scale_onscreen = GetCanvasScaleFactor() / GetVPScale();
@@ -1015,7 +935,7 @@ double ChartCanvas::GetBestVPScale( ChartBase *pchart )
         return 1.0;
 }
 
-void ChartCanvas::SetupCanvasQuiltMode( void )
+void ChartFrameWork::SetupCanvasQuiltMode( void )
 {
     
     if( GetQuiltMode() )                               // going to quilt mode
@@ -1134,22 +1054,18 @@ void ChartCanvas::SetupCanvasQuiltMode( void )
     
 }
 
-double ChartCanvas::GetCanvasRangeMeters()
+double ChartFrameWork::GetCanvasRangeMeters()
 {
-    int wid = width();
-    int hei = height();
-    int minDimension =  fmin(wid, hei);
+    int minDimension =  fmin(m_canvas_width, m_canvas_height);
     
     double range  = (minDimension / GetVP().viewScalePPM())/2;
     range *= cos(GetVP().lat() *PI/180.);
     return range;
 }
 
-void ChartCanvas::SetCanvasRangeMeters( double range )
+void ChartFrameWork::SetCanvasRangeMeters( double range )
 {
-    int wid = width();
-    int hei = height();
-    int minDimension =  fmin(wid, hei);
+    int minDimension =  fmin(m_canvas_width, m_canvas_height);
     
     double scale_ppm = minDimension / (range / cos(GetVP().lat() *PI/180.));
     SetVPScale( scale_ppm / 2 );
@@ -1157,11 +1073,11 @@ void ChartCanvas::SetCanvasRangeMeters( double range )
 }
 
 
-void ChartCanvas::SetDisplaySizeMM( double size )
+void ChartFrameWork::SetDisplaySizeMM( double size )
 {
     m_display_size_mm = size;
     
-    int sx = width(), sy = height();
+    int sx = m_canvas_width, sy = m_canvas_height;
     
     double max_physical = fmax(sx, sy);
     
@@ -1178,7 +1094,7 @@ void ChartCanvas::SetDisplaySizeMM( double size )
 
 }
 
-int ChartCanvas::GetCanvasChartNativeScale()
+int ChartFrameWork::GetCanvasChartNativeScale()
 {
     int ret = 1;
     if( !mViewPoint.quilt() ) {
@@ -1190,7 +1106,7 @@ int ChartCanvas::GetCanvasChartNativeScale()
 
 }
 
-ChartBase* ChartCanvas::GetChartAtPixel(int x, int y)
+ChartBase* ChartFrameWork::GetChartAtPixel(int x, int y)
 {
     ChartBase* target_chart;
     if( m_singleChart && ( m_singleChart->GetChartFamily() == CHART_FAMILY_VECTOR ) )
@@ -1211,7 +1127,7 @@ ChartBase* ChartCanvas::GetChartAtPixel(int x, int y)
     return target_chart;
 }
 
-ChartBase* ChartCanvas::GetOverlayChartAtPixel(int x, int y)
+ChartBase* ChartFrameWork::GetOverlayChartAtPixel(int x, int y)
 {
     ChartBase* target_chart;
     if( mViewPoint.quilt() )
@@ -1225,7 +1141,7 @@ ChartBase* ChartCanvas::GetOverlayChartAtPixel(int x, int y)
     return target_chart;
 }
 
-int ChartCanvas::FindClosestCanvasChartdbIndex( int scale )
+int ChartFrameWork::FindClosestCanvasChartdbIndex( int scale )
 {
     int new_dbIndex = -1;
     if( !mViewPoint.quilt() ) {
@@ -1259,120 +1175,120 @@ int ChartCanvas::FindClosestCanvasChartdbIndex( int scale )
 }
 
 
-bool ChartCanvas::IsQuiltDelta()
+bool ChartFrameWork::IsQuiltDelta()
 {
     return m_pQuilt->IsQuiltDelta( mViewPoint );
 }
 
-void ChartCanvas::UnlockQuilt()
+void ChartFrameWork::UnlockQuilt()
 {
     m_pQuilt->UnlockQuilt();
 }
 
-std::vector<int>  ChartCanvas::GetQuiltIndexArray( void )
+std::vector<int>  ChartFrameWork::GetQuiltIndexArray( void )
 {
     return m_pQuilt->GetQuiltIndexArray();;
 }
 
-void ChartCanvas::SetQuiltMode( bool quilt )
+void ChartFrameWork::SetQuiltMode( bool quilt )
 {
     mViewPoint.setQuilt(quilt);
     mViewPoint.setFullScreenQuilt(g_bFullScreenQuilt);
 }
 
-bool ChartCanvas::GetQuiltMode( void )
+bool ChartFrameWork::GetQuiltMode( void )
 {
     return mViewPoint.quilt();
 }
 
-int ChartCanvas::GetQuiltReferenceChartIndex(void)
+int ChartFrameWork::GetQuiltReferenceChartIndex(void)
 {
     return m_pQuilt->GetRefChartdbIndex();
 }
 
-void ChartCanvas::InvalidateAllQuiltPatchs( void )
+void ChartFrameWork::InvalidateAllQuiltPatchs( void )
 {
     m_pQuilt->InvalidateAllQuiltPatchs();
 }
 
-ChartBase *ChartCanvas::GetLargestScaleQuiltChart()
+ChartBase *ChartFrameWork::GetLargestScaleQuiltChart()
 {
     return m_pQuilt->GetLargestScaleChart();
 }
 
-ChartBase *ChartCanvas::GetFirstQuiltChart()
+ChartBase *ChartFrameWork::GetFirstQuiltChart()
 {
     return m_pQuilt->GetFirstChart();
 }
 
-ChartBase *ChartCanvas::GetNextQuiltChart()
+ChartBase *ChartFrameWork::GetNextQuiltChart()
 {
     return m_pQuilt->GetNextChart();
 }
 
-int ChartCanvas::GetQuiltChartCount()
+int ChartFrameWork::GetQuiltChartCount()
 {
     return m_pQuilt->GetnCharts();
 }
 
-void ChartCanvas::SetQuiltChartHiLiteIndex( int dbIndex )
+void ChartFrameWork::SetQuiltChartHiLiteIndex( int dbIndex )
 {
     m_pQuilt->SetHiliteIndex( dbIndex );
 }
 
-std::vector<int>  ChartCanvas::GetQuiltCandidatedbIndexArray( bool flag1, bool flag2 )
+std::vector<int>  ChartFrameWork::GetQuiltCandidatedbIndexArray( bool flag1, bool flag2 )
 {
     return m_pQuilt->GetCandidatedbIndexArray( flag1, flag2 );
 }
 
-int ChartCanvas::GetQuiltRefChartdbIndex( void )
+int ChartFrameWork::GetQuiltRefChartdbIndex( void )
 {
     return m_pQuilt->GetRefChartdbIndex();
 }
 
-std::vector<int>  ChartCanvas::GetQuiltExtendedStackdbIndexArray()
+std::vector<int>  ChartFrameWork::GetQuiltExtendedStackdbIndexArray()
 {
     return m_pQuilt->GetExtendedStackIndexArray();
 }
 
-std::vector<int>  ChartCanvas::GetQuiltEclipsedStackdbIndexArray()
+std::vector<int>  ChartFrameWork::GetQuiltEclipsedStackdbIndexArray()
 {
     return m_pQuilt->GetEclipsedStackIndexArray();
 }
 
-void ChartCanvas::InvalidateQuilt( void )
+void ChartFrameWork::InvalidateQuilt( void )
 {
     return m_pQuilt->Invalidate();
 }
 
-double ChartCanvas::GetQuiltMaxErrorFactor()
+double ChartFrameWork::GetQuiltMaxErrorFactor()
 {
     return m_pQuilt->GetMaxErrorFactor();
 }
 
-bool ChartCanvas::IsChartQuiltableRef( int db_index )
+bool ChartFrameWork::IsChartQuiltableRef( int db_index )
 {
     return m_pQuilt->IsChartQuiltableRef( db_index );
 }
 
-bool ChartCanvas::IsChartLargeEnoughToRender( ChartBase* chart, ViewPort& vp )
+bool ChartFrameWork::IsChartLargeEnoughToRender( ChartBase* chart, ViewPort& vp )
 {
     double chartMaxScale = chart->GetNormalScaleMax( GetCanvasScaleFactor(), GetCanvasWidth() );
     return ( chartMaxScale*g_ChartNotRenderScaleFactor > vp.chartScale() );
 }
 
 
-ViewPort &ChartCanvas::GetVP()
+ViewPort &ChartFrameWork::GetVP()
 {
     return mViewPoint;
 }
 
-void ChartCanvas::SetVP(ViewPort &vp)
+void ChartFrameWork::SetVP(ViewPort &vp)
 {
     mViewPoint = vp;
 }
 
-// void ChartCanvas::SetFocus()
+// void ChartFrameWork::SetFocus()
 // {
 //     printf("set %d\n", m_canvasIndex);
 //     //wxWindow:SetFocus();
@@ -1384,13 +1300,13 @@ void ChartCanvas::SetVP(ViewPort &vp)
 
 
 
-void ChartCanvas::StopMovement( )
+void ChartFrameWork::StopMovement( )
 {
     m_zoom_factor = 1;
 }
 
 
-wxBitmap ChartCanvas::CreateDimBitmap( wxBitmap &Bitmap, double factor )
+wxBitmap ChartFrameWork::CreateDimBitmap( wxBitmap &Bitmap, double factor )
 {
     QImage img = Bitmap.ConvertToImage();
     int sx = img.width();
@@ -1497,12 +1413,12 @@ QString minutesToHoursDays(float timeInMinutes)
 
 
 
-void ChartCanvas::GetDoubleCanvasPointPix( double rlat, double rlon, zchxPointF &r )
+void ChartFrameWork::GetDoubleCanvasPointPix( double rlat, double rlon, zchxPointF &r )
 {
     return GetDoubleCanvasPointPixVP( GetVP(), rlat, rlon, r );
 }
 
-void ChartCanvas::GetDoubleCanvasPointPixVP( ViewPort &vp, double rlat, double rlon, zchxPointF &r )
+void ChartFrameWork::GetDoubleCanvasPointPixVP( ViewPort &vp, double rlat, double rlon, zchxPointF &r )
 {
     r = vp.GetDoublePixFromLL( rlat, rlon );
 }
@@ -1510,12 +1426,12 @@ void ChartCanvas::GetDoubleCanvasPointPixVP( ViewPort &vp, double rlat, double r
 
 // This routine might be deleted and all of the rendering improved
 // to have floating point accuracy
-bool ChartCanvas::GetCanvasPointPix( double rlat, double rlon, zchxPoint &r )
+bool ChartFrameWork::GetCanvasPointPix( double rlat, double rlon, zchxPoint &r )
 {
     return GetCanvasPointPixVP( GetVP(), rlat, rlon, r);
 }
 
-bool ChartCanvas::GetCanvasPointPixVP( ViewPort &vp, double rlat, double rlon, zchxPoint &r )
+bool ChartFrameWork::GetCanvasPointPixVP( ViewPort &vp, double rlat, double rlon, zchxPoint &r )
 {
     zchxPointF p;
     GetDoubleCanvasPointPixVP(vp, rlat, rlon, p);
@@ -1532,12 +1448,12 @@ bool ChartCanvas::GetCanvasPointPixVP( ViewPort &vp, double rlat, double rlon, z
 }
 
 
-void ChartCanvas::GetCanvasPixPoint( double x, double y, double &lat, double &lon )
+void ChartFrameWork::GetCanvasPixPoint( double x, double y, double &lat, double &lon )
 {
     GetVP().GetLLFromPix( zchxPointF( x, y ), &lat, &lon );
 }
 
-bool ChartCanvas::Pan( double dx, double dy )
+bool ChartFrameWork::Pan( double dx, double dy )
 {
     if( !ChartData ) return false;
 
@@ -1594,12 +1510,12 @@ bool ChartCanvas::Pan( double dx, double dy )
             }
         }
     }
-    m_glcc->Refresh( false );
+    mGLCC->Refresh( false );
     return true;
 }
 
 
-void ChartCanvas::Zoom( double factor,  bool can_zoom_to_cursor )
+void ChartFrameWork::Zoom( double factor,  bool can_zoom_to_cursor )
 {
     // possible on startup
     if( !ChartData )
@@ -1620,8 +1536,8 @@ void ChartCanvas::Zoom( double factor,  bool can_zoom_to_cursor )
     double old_ppm = GetVP().viewScalePPM();
 
     //  Capture current cursor position for zoom to cursor
-    double zlat = m_glcc->getCurLat();
-    double zlon = m_glcc->getCurLon();
+    double zlat = mGLCC->getCurLat();
+    double zlon = mGLCC->getCurLon();
 
     double proposed_scale_onscreen = GetVP().chartScale() / factor; // GetCanvasScaleFactor() / ( GetVPScale() * factor );
     bool b_do_zoom = false;
@@ -1727,7 +1643,7 @@ void ChartCanvas::Zoom( double factor,  bool can_zoom_to_cursor )
 
             zchxPoint r;
             GetCanvasPointPix( zlat, zlon, r );
-            Pan( r.x - m_glcc->getCurPosX(), r.y - m_glcc->getCurPosY() );  // this will give the Refresh()
+            Pan( r.x - mGLCC->getCurPosX(), r.y - mGLCC->getCurPosY() );  // this will give the Refresh()
 
             //ClearbFollow();      // update the follow flag
         }
@@ -1740,7 +1656,7 @@ void ChartCanvas::Zoom( double factor,  bool can_zoom_to_cursor )
     
 }
 
-void ChartCanvas::RotateContinus( double dir )
+void ChartFrameWork::RotateContinus( double dir )
 {
 
     double speed = dir*10;
@@ -1749,7 +1665,7 @@ void ChartCanvas::RotateContinus( double dir )
     Rotate(mViewPoint.rotation() + PI/180 * speed);
 }
 
-void ChartCanvas::Rotate( double rotation )
+void ChartFrameWork::Rotate( double rotation )
 {
     while(rotation < 0) rotation += 2*PI;
     while(rotation > 2*PI) rotation -= 2*PI;
@@ -1762,12 +1678,12 @@ void ChartCanvas::Rotate( double rotation )
     DoCanvasUpdate();
 }
 
-void ChartCanvas::RotateDegree(double rotation)
+void ChartFrameWork::RotateDegree(double rotation)
 {
     Rotate(PI/180 * rotation);
 }
 
-void ChartCanvas::DoTiltCanvas( double tilt )
+void ChartFrameWork::DoTiltCanvas( double tilt )
 {
     while(tilt < 0) tilt = 0;
     while(tilt > .95) tilt = .95;
@@ -1776,10 +1692,10 @@ void ChartCanvas::DoTiltCanvas( double tilt )
         return;
 
     mViewPoint.setTilt(tilt);
-    m_glcc->Refresh( false );
+    mGLCC->Refresh( false );
 }
 
-void ChartCanvas::JumpToPosition( double lat, double lon, double scale_ppm )
+void ChartFrameWork::JumpToPosition( double lat, double lon, double scale_ppm )
 {
     if (lon > 180.0)
         lon -= 360.0;
@@ -1806,19 +1722,16 @@ void ChartCanvas::JumpToPosition( double lat, double lon, double scale_ppm )
 
 
 
-void ChartCanvas::ReloadVP( bool b_adjust )
+void ChartFrameWork::ReloadVP( bool b_adjust )
 {
 
     LoadVP( mViewPoint, b_adjust );
 }
 
-void ChartCanvas::LoadVP( ViewPort &vp, bool b_adjust )
+void ChartFrameWork::LoadVP( ViewPort &vp, bool b_adjust )
 {
-    if( m_glcc ) {
-        m_glcc->Invalidate();
-        if( m_glcc->size() != size() ) {
-            m_glcc->resize(size() );
-        }
+    if( mGLCC ) {
+        mGLCC->Invalidate();
     }
     else
     {
@@ -1839,14 +1752,14 @@ void ChartCanvas::LoadVP( ViewPort &vp, bool b_adjust )
 
 }
 
-void ChartCanvas::SetQuiltRefChart( int dbIndex )
+void ChartFrameWork::SetQuiltRefChart( int dbIndex )
 {
     m_pQuilt->SetReferenceChart( dbIndex );
     mViewPoint.invalidate();
     m_pQuilt->Invalidate();
 }
 
-double ChartCanvas::GetBestStartScale(int dbi_hint, const ViewPort &vp)
+double ChartFrameWork::GetBestStartScale(int dbi_hint, const ViewPort &vp)
 {
     return m_pQuilt->GetBestStartScale(dbi_hint, vp);
 }
@@ -1854,7 +1767,7 @@ double ChartCanvas::GetBestStartScale(int dbi_hint, const ViewPort &vp)
 
 //      Verify and adjust the current reference chart,
 //      so that it will not lead to excessive overzoom or underzoom onscreen
-int ChartCanvas::AdjustQuiltRefChart()
+int ChartFrameWork::AdjustQuiltRefChart()
 {
     int ret = -1;
     Q_ASSERT(m_pQuilt);
@@ -1928,7 +1841,7 @@ int ChartCanvas::AdjustQuiltRefChart()
 }
 
 
-void ChartCanvas::UpdateCanvasOnGroupChange( void )
+void ChartFrameWork::UpdateCanvasOnGroupChange( void )
 {
     delete m_pCurrentStack;
     m_pCurrentStack = NULL;
@@ -1939,7 +1852,7 @@ void ChartCanvas::UpdateCanvasOnGroupChange( void )
     m_pQuilt->Compose( mViewPoint );
 }
 
-bool ChartCanvas::SetViewPointByCorners( double latSW, double lonSW, double latNE, double lonNE )
+bool ChartFrameWork::SetViewPointByCorners( double latSW, double lonSW, double latNE, double lonNE )
 {
     // Center Point
     double latc = (latSW + latNE)/2.0;
@@ -1957,18 +1870,18 @@ bool ChartCanvas::SetViewPointByCorners( double latSW, double lonSW, double latN
     return SetViewPoint( latc, lonc, scale_ppm, mViewPoint.skew(), mViewPoint.rotation() );
 }
 
-bool ChartCanvas::SetVPScale( double scale, bool refresh )
+bool ChartFrameWork::SetVPScale( double scale, bool refresh )
 {
     return SetViewPoint( mViewPoint.lat(), mViewPoint.lon(), scale, mViewPoint.skew(), mViewPoint.rotation(),
                          mViewPoint.projectType(), true, refresh );
 }
 
-bool ChartCanvas::SetViewPoint( double lat, double lon )
+bool ChartFrameWork::SetViewPoint( double lat, double lon )
 {
     return SetViewPoint( lat, lon, mViewPoint.viewScalePPM(), mViewPoint.skew(), mViewPoint.rotation() );
 }
 
-bool ChartCanvas::SetViewPoint( double lat, double lon, double scale_ppm, double skew,
+bool ChartFrameWork::SetViewPoint( double lat, double lon, double scale_ppm, double skew,
                                 double rotation, int projection, bool b_adjust, bool b_refresh )
 {
     bool b_ret = false;
@@ -2025,7 +1938,7 @@ bool ChartCanvas::SetViewPoint( double lat, double lon, double scale_ppm, double
     //  Has the Viewport scale changed?  If so, invalidate the vp
     if( last_vp.viewScalePPM() != scale_ppm ) {
         m_cache_vp.invalidate();
-        if(m_glcc) m_glcc->Invalidate();
+        if(mGLCC) mGLCC->Invalidate();
     }
 
     //  A preliminary value, may be tweaked below
@@ -2036,17 +1949,15 @@ bool ChartCanvas::SetViewPoint( double lat, double lon, double scale_ppm, double
 
     const zchxPoint pt(QCursor::pos());
     //获取当前窗口在屏幕坐标的位置
-    QWidget* parent = this->parentWidget();
-    QPoint widget_pos = this->pos();
+    QWidget* parent = mGLCC->parentWidget();
+    QPoint widget_pos = mGLCC->pos();
     if(parent) widget_pos = parent->mapToGlobal(widget_pos);
     int mouseX = pt.x - widget_pos.x();
     int mouseY = pt.y - widget_pos.y();
     if( (mouseX > 0) && (mouseX < mViewPoint.pixWidth()) && (mouseY > 0) && (mouseY < mViewPoint.pixHeight())){
         double lat, lon;
         GetCanvasPixPoint( mouseX, mouseY, lat, lon );
-        m_glcc->setCurLL(lat, lon);
-//        if(g_pi_manager)
-//            g_pi_manager->SendCursorLatLonToAllPlugIns( lat,lon );
+        mGLCC->setCurLL(lat, lon);
     }
     
     if( !mViewPoint.quilt() && m_singleChart ) {
@@ -2059,7 +1970,7 @@ bool ChartCanvas::SetViewPoint( double lat, double lon, double scale_ppm, double
 
         // If there is a sensible change in the chart render, refresh the whole screen
         if( ( !m_cache_vp.isValid() ) || ( m_cache_vp.viewScalePPM() != mViewPoint.viewScalePPM() ) ) {
-            m_glcc->Refresh( false );
+            mGLCC->Refresh( false );
             b_ret = true;
         } else {
             zchxPoint cp_last, cp_this;
@@ -2067,7 +1978,7 @@ bool ChartCanvas::SetViewPoint( double lat, double lon, double scale_ppm, double
             GetCanvasPointPix( mViewPoint.lat(), mViewPoint.lon(), cp_this );
 
             if( cp_last != cp_this ) {
-                m_glcc->Refresh( false );
+                mGLCC->Refresh( false );
                 b_ret = true;
             }
         }
@@ -2215,7 +2126,7 @@ bool ChartCanvas::SetViewPoint( double lat, double lon, double scale_ppm, double
                 ChartData->PurgeCacheUnusedCharts( 0.7 );
 
                 if(b_refresh)
-                    m_glcc->Refresh( false );
+                    mGLCC->Refresh( false );
 
                 b_ret = true;
             }
@@ -2226,7 +2137,7 @@ bool ChartCanvas::SetViewPoint( double lat, double lon, double scale_ppm, double
     //  Has the Viewport projection changed?  If so, invalidate the vp
     if( last_vp.projectType() != mViewPoint.projectType() ) {
         m_cache_vp.invalidate();
-        if(m_glcc) m_glcc->Invalidate();
+        if(mGLCC) mGLCC->Invalidate();
     }
 
 
@@ -2369,7 +2280,7 @@ bool ChartCanvas::SetViewPoint( double lat, double lon, double scale_ppm, double
 
 
 
-/* @ChartCanvas::CalcGridSpacing
+/* @ChartFrameWork::CalcGridSpacing
  **
  ** Calculate the major and minor spacing between the lat/lon grid
  **
@@ -2411,7 +2322,7 @@ void CalcGridSpacing( float view_scale_ppm, float& MajorSpacing, float&MinorSpac
     MinorSpacing = lltab[tabi][2]; // minor latitude distance
     return;
 }
-/* @ChartCanvas::CalcGridText *************************************
+/* @ChartFrameWork::CalcGridText *************************************
  **
  ** Calculates text to display at the major grid lines
  **
@@ -2458,7 +2369,7 @@ QString CalcGridText( float latlon, float spacing, bool bPostfix )
     return ret;
 }
 
-/* @ChartCanvas::GridDraw *****************************************
+/* @ChartFrameWork::GridDraw *****************************************
  **
  ** Draws major and minor Lat/Lon Grid on the chart
  ** - distance between Grid-lm ines are calculated automatic
@@ -2471,7 +2382,7 @@ QString CalcGridText( float latlon, float spacing, bool bPostfix )
  ************************************************************************/
 
 
-void ChartCanvas::JaggyCircle( ocpnDC &dc, QPen pen, int x, int y, int radius )
+void ChartFrameWork::JaggyCircle( ocpnDC &dc, QPen pen, int x, int y, int radius )
 {
     //    Constants?
     double da_min = 2.;
@@ -2530,17 +2441,10 @@ static void onSoundFinished( void* ptr )
 }
 
 
-
-
-//void ChartCanvas::OnActivate( wxActivateEvent& event )
-//{
-//    ReloadVP();
-//}
-
-void ChartCanvas::resizeEvent(QResizeEvent * event )
+void ChartFrameWork::slotResize(int width, int height)
 {
-    m_canvas_width = event->size().width();
-    m_canvas_height = event->size().height();
+    m_canvas_width = width;
+    m_canvas_height = height;
     //    Get some canvas metrics
 
     //          Rescale to current value, in order to rebuild mViewPoint data structures
@@ -2560,17 +2464,13 @@ void ChartCanvas::resizeEvent(QResizeEvent * event )
     mViewPoint.setPixHeight(m_canvas_height);
     //  Rescale again, to capture all the changes for new canvas size
     SetVPScale( GetVPScale() );
-    if( m_glcc ) {
-        m_glcc->resize(event->size() );
-    }
-    //  Invalidate the whole window
     ReloadVP();
 }
 
 
 
 
-bool ChartCanvas::CheckEdgePan( int x, int y, bool bdragging, int margin, int delta )
+bool ChartFrameWork::CheckEdgePan( int x, int y, bool bdragging, int margin, int delta )
 {
     if(m_disable_edge_pan)
         return false;
@@ -2602,82 +2502,11 @@ bool ChartCanvas::CheckEdgePan( int x, int y, bool bdragging, int margin, int de
         pan_y = pan_delta;
     }
 
-    //    Of course, if dragging, and the mouse left button is not down, we must stop the event injection
-//    if( bdragging ) {
-//        if( !g_btouch )
-//        {
-//            wxMouseState state = ::wxGetMouseState();
-//            if( !state.LeftDown() )
-//                bft = false;
-//        }
-//    }
-//    if( ( bft ) && !pPanTimer->IsRunning() ) {
-//        PanCanvas( pan_x, pan_y );
-//        pPanTimer->Start( pan_timer_set, QTimer_ONE_SHOT );
-//        return true;
-//    }
-
-//    //    This mouse event must not be due to pan timer event injector
-//    //    Mouse is out of the pan zone, so prevent any orphan event injection
-//    if( ( !bft ) && pPanTimer->IsRunning() ) {
-//        pPanTimer->Stop();
-//    }
-
     return ( false );
 }
 
-int s_in_update;
-void ChartCanvas::paintEvent(QPaintEvent *event)
-{
 
-    //GetToolbar()->Show( m_bToolbarEnable );
-    
-    //  Paint updates may have been externally disabled (temporarily, to avoid Yield() recursion performance loss)
-    //  It is important that the wxPaintDC is built, even if we elect to not process this paint message.
-    //  Otherwise, the paint message may not be removed from the message queue, esp on Windows. (FS#1213)
-    //  This would lead to a deadlock condition in ::wxYield()
-
-
-    
-    //  If necessary, reconfigure the S52 PLIB
-//    UpdateCanvasS52PLIBConfig();
-
-    if( m_glcc ) {
-        if( !s_in_update ) {          // no recursion allowed, seen on lo-spec Mac
-            s_in_update++;
-            m_glcc->update();
-            s_in_update--;
-        }
-
-        return;
-    }
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void ChartCanvas::ToggleCanvasQuiltMode( void )
+void ChartFrameWork::ToggleCanvasQuiltMode( void )
 {
     bool cur_mode = GetQuiltMode();
 
@@ -2693,8 +2522,8 @@ void ChartCanvas::ToggleCanvasQuiltMode( void )
     if( cur_mode != GetQuiltMode() ){
         SetupCanvasQuiltMode();
         DoCanvasUpdate();
-        if(m_glcc) m_glcc->Invalidate();
-        m_glcc->Refresh();
+        if(mGLCC) mGLCC->Invalidate();
+        mGLCC->Refresh();
     }
     //  TODO What to do about this?
     //g_bQuiltEnable = GetQuiltMode();
@@ -2702,12 +2531,9 @@ void ChartCanvas::ToggleCanvasQuiltMode( void )
     // Recycle the S52 PLIB so that vector charts will flush caches and re-render
     if(ps52plib)
         ps52plib->GenerateStateHash();
-
-//    if( GetMUIBar() && GetMUIBar()->GetCanvasOptions())
-//        GetMUIBar()->GetCanvasOptions()->RefreshControlValues();
 }
 
-void ChartCanvas::DoCanvasStackDelta( int direction )
+void ChartFrameWork::DoCanvasStackDelta( int direction )
 {
     if( !GetQuiltMode() ) {
         int current_stack_index = GetpCurrentStack()->CurrentStackEntry;
@@ -2792,7 +2618,7 @@ void ChartCanvas::DoCanvasStackDelta( int direction )
 //
 //--------------------------------------------------------------------------------------------------------
 
-//void ChartCanvas::OnToolLeftClick( wxCommandEvent& event )
+//void ChartFrameWork::OnToolLeftClick( wxCommandEvent& event )
 //{
 //    //  Handle the per-canvas toolbar clicks here
     
@@ -2887,17 +2713,17 @@ extern bool    g_bAllowShowScaled;
 //
 //---------------------------------------------------------------------------------
 
-void ChartCanvas::UpdateGPSCompassStatusBox( bool b_force_new )
+void ChartFrameWork::UpdateGPSCompassStatusBox( bool b_force_new )
 {
     
     if( b_force_new)
-        m_glcc->Refresh();
+        mGLCC->Refresh();
 
 }
 
 
 
-void ChartCanvas::SelectChartFromStack( int index, bool bDir, ChartTypeEnum New_Type,
+void ChartFrameWork::SelectChartFromStack( int index, bool bDir, ChartTypeEnum New_Type,
                                         ChartFamilyEnum New_Family )
 {
     if( !GetpCurrentStack() ) return;
@@ -2950,7 +2776,7 @@ void ChartCanvas::SelectChartFromStack( int index, bool bDir, ChartTypeEnum New_
         return;
 }
 
-void ChartCanvas::SelectdbChart( int dbindex )
+void ChartFrameWork::SelectdbChart( int dbindex )
 {
     if( !GetpCurrentStack() ) return;
     if( !ChartData ) return;
@@ -2991,7 +2817,7 @@ void ChartCanvas::SelectdbChart( int dbindex )
 }
 
 
-void ChartCanvas::selectCanvasChartDisplay( int type, int family)
+void ChartFrameWork::selectCanvasChartDisplay( int type, int family)
 {
     double target_scale = GetVP().viewScalePPM();
     
@@ -3057,7 +2883,7 @@ void ChartCanvas::selectCanvasChartDisplay( int type, int family)
 }
 
 
-void ChartCanvas::RemoveChartFromQuilt( int dbIndex )
+void ChartFrameWork::RemoveChartFromQuilt( int dbIndex )
 {
     //    Remove the item from the list (if it appears) to avoid multiple addition
     for( unsigned int i = 0; i < g_quilt_noshow_index_array.size(); i++ ) {
@@ -3081,7 +2907,7 @@ void ChartCanvas::RemoveChartFromQuilt( int dbIndex )
 
 
 
-//wxRect ChartCanvas::GetMUIBarRect()
+//wxRect ChartFrameWork::GetMUIBarRect()
 //{
 //    wxRect rv;
 //    if(m_muiBar){

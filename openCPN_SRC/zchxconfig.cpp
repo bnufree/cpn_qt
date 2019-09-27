@@ -1084,9 +1084,6 @@ int zchxConfig::LoadMyConfigRaw( bool bAsTemplate )
 
         if( fabs( lat ) < 90.0 ) gLat = lat;
 
-        s.sprintf("Setting Ownship Lat/Lon %g, %g", gLat, gLon );
-        qDebug()<< s ;
-
     }
     endGroup();
 
@@ -1409,7 +1406,6 @@ bool zchxConfig::LoadChartDirArray( ArrayOfCDI &ChartDirArray )
     //    Chart Directories
     BeginGroup("ChartDirectories" );
     QStringList keys = allKeys();
-    qDebug()<<"sub keys:"<<keys;
     int iDirMax = keys.size();
     if(iDirMax > 0) ChartDirArray.clear();
     int nAdjustChartDirs = 0;

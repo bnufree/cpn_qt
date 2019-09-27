@@ -140,9 +140,9 @@ void SENCThreadManager::startJob()
     if(nRunning){
         QString count;
         count.sprintf("  %ld", ticket_list.size());
-        gFrame->GetPrimaryCanvas()->GetglCanvas()->SetAlertString( "Preparing vector chart  " + count);
+        gFrame->getWidget()->SetAlertString( "Preparing vector chart  " + count);
     }  else{
-        gFrame->GetPrimaryCanvas()->GetglCanvas()->SetAlertString( (""));
+        gFrame->getWidget()->SetAlertString( (""));
     }
 }
 
@@ -202,7 +202,7 @@ void SENCThreadManager::slotRecvSENCThreadFinished()
         emit signalRefreshAllEcids();
     } else if(thread->m_chart)
     {        //有错误的情况,提示错误信息
-        gFrame->GetPrimaryCanvas()->GetglCanvas()->SetAlertString(QString("error occured when prepare chart: %1").arg(thread->m_chart->GetFullPath()));
+        gFrame->getWidget()->SetAlertString(QString("error occured when prepare chart: %1").arg(thread->m_chart->GetFullPath()));
     }
     removeJob(thread->m_ticket);
     delete thread;

@@ -2679,6 +2679,11 @@ bool s52plib::RenderRasterSymbol( ObjRazRules *rzRules, Rule *prule, zchxPoint &
                     }
                 }
             }
+#if 1
+        QImage temp(e, w, h, QImage::Format_RGBA8888);
+        static int index = 1;
+        temp.save(QString("%1.png").arg(index++), "PNG");
+#endif
 
             //      Save the bitmap ptr and aux parms in the rule
             prule->pixelPtr = e;

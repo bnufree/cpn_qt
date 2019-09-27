@@ -81,6 +81,7 @@ bool bthread_debug;
 bool g_throttle_squish;
 
 glTextureManager   *g_glTextureManager = 0;
+extern  ChartFrameWork          *gChartFrameWork;
 
 #include "ssl_sha1/sha1.h"
 
@@ -1186,21 +1187,17 @@ bool glTextureManager::TextureCrunch(double factor)
         
         bGLMemCrunch = g_tex_mem_used > (double)(g_GLOptions.m_iTextureMemorySize * 1024 * 1024) * factor *hysteresis;
         if(!bGLMemCrunch) break;
-
-               // For each canvas
-//        for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
-            ChartCanvas *cc = /*g_canvasArray.at(i)*/gFrame->GetPrimaryCanvas();
-            if(cc){ 
-                if( cc->GetVP().quilt() )          // quilted
+            if(gChartFrameWork){
+                if( gChartFrameWork->GetVP().quilt() )          // quilted
                 {
-                        if( cc->m_pQuilt->IsComposed() &&
-                            !cc->m_pQuilt->IsChartInQuilt( chart_full_path ) ) {
+                        if( gChartFrameWork->m_pQuilt->IsComposed() &&
+                            !gChartFrameWork->m_pQuilt->IsChartInQuilt( chart_full_path ) ) {
                             ptf->DeleteSomeTextures( g_GLOptions.m_iTextureMemorySize * 1024 * 1024 * factor *hysteresis);
                             }
                 }
                 else      // not quilted
                 {
-                    if(cc->m_singleChart->GetFullPath() != chart_full_path)
+                    if(gChartFrameWork->m_singleChart->GetFullPath() != chart_full_path)
                     {
                         ptf->DeleteSomeTextures( g_GLOptions.m_iTextureMemorySize * 1024 * 1024 * factor  *hysteresis);
                     }
@@ -1243,19 +1240,12 @@ bool glTextureManager::FactoryCrunch(double factor)
         if(!ptf)
             continue;
         QString chart_full_path = ptf->GetChartPath();
-        
-        // we better have to find one because glTexFactory keep cache texture open
-        // and ocpn will eventually run out of file descriptors
-        
-        // For each canvas
-//        for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
-            ChartCanvas *cc = /*g_canvasArray.at(i);*/gFrame->GetPrimaryCanvas();
-            if(cc){
+            if(gChartFrameWork){
                 
-                if( cc->GetVP().quilt())          // quilted
+                if( gChartFrameWork->GetVP().quilt())          // quilted
                 {
-                    if( cc->m_pQuilt->IsComposed() &&
-                        !cc->m_pQuilt->IsChartInQuilt( chart_full_path ) ) {
+                    if( gChartFrameWork->m_pQuilt->IsComposed() &&
+                        !gChartFrameWork->m_pQuilt->IsChartInQuilt( chart_full_path ) ) {
                 
                         int lru = ptf->GetLRUTime();
                         if(lru < lru_oldest && !ptf->BackgroundCompressionAsJob()){
@@ -1264,7 +1254,7 @@ bool glTextureManager::FactoryCrunch(double factor)
                         }
                     }
                 } else {
-                    if( cc->m_singleChart->GetFullPath() != chart_full_path) {
+                    if( gChartFrameWork->m_singleChart->GetFullPath() != chart_full_path) {
                         int lru = ptf->GetLRUTime();
                         if(lru < lru_oldest && !ptf->BackgroundCompressionAsJob()){
                             lru_oldest = lru;
@@ -1273,7 +1263,6 @@ bool glTextureManager::FactoryCrunch(double factor)
                     }
                 }
             }
-//        }
     }
                     
     //      Found one?

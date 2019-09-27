@@ -87,7 +87,7 @@ class Quilt
 {
 public:
 
-    Quilt( ChartCanvas *parent);
+    Quilt( ChartFrameWork *parent);
     ~Quilt();
 
     void SetQuiltParameters( double CanvasScaleFactor, int CanvasWidth )
@@ -279,7 +279,7 @@ private:
     
     bool m_bquiltskew;
     bool m_bquiltanyproj;
-    ChartCanvas *m_parent;
+    ChartFrameWork *m_parent;
     
 };
 

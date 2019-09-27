@@ -1146,7 +1146,7 @@ bool ChartSymbols::LoadConfigFile(s52plib* plibArg, const QString & s52ilePath)
 
 #if 1   
     if(m_symbolsDoc.load_file( fullFilePath.toUtf8().data() ) ){
-        qDebug("ChartSymbols loaded from %s", fullFilePath.toUtf8().data());
+//        qDebug("ChartSymbols loaded from %s", fullFilePath.toUtf8().data());
         pugi::xml_node elements = m_symbolsDoc.child("chartsymbols");
         
         for (pugi::xml_node element = elements.first_child(); element; element = element.next_sibling()){

@@ -569,7 +569,7 @@ int Osenc::ingest200(const QString &senc_file_name,
     //     wxBufferedInputStream fpx( fpx_u );
 
     QFile file(senc_file_name);
-    qDebug()<<"file size:"<<file.size();
+//    qDebug()<<"file size:"<<file.size();
 
     //    Sanity check for existence of file
     Osenc_instreamFile fpx;

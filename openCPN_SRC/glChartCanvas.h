@@ -39,7 +39,7 @@
 
 
 class glTexFactory;
-class ChartCanvas;
+class ChartFrameWork;
 class GSHHSChart;
 
 #define GESTURE_EVENT_TIMER 78334
@@ -92,8 +92,7 @@ class glChartCanvas : public QGLWidget
 {
     Q_OBJECT
 public:
-    glChartCanvas(/*QGLContext *ctx,*/ ChartCanvas *parentCavas);
-    void setUpdateAvailable(bool sts) {mIsUpdateAvailable = sts;}
+    glChartCanvas(QWidget *parentCavas);
     static bool CanClipViewport(const ViewPort &vp);
     static ViewPort ClippedViewport(const ViewPort &vp, const LLRegion &region);
 
@@ -153,7 +152,7 @@ public:
     QColor GetBackGroundColor() const;
     //
     bool GetShowOutlines(){ return m_bShowOutlines; }
-    void SetShowOutlines( bool show ){ m_bShowOutlines = show; }
+    void SetShowOutlines( bool show );
     bool GetQuilting() {return m_bQuiting;}
     void SetQuilting(bool sts) {m_bQuiting = sts;}
     bool GetShowDepthUnits(){ return m_bShowDepthUnits; }
@@ -220,9 +219,12 @@ public:
     double      getCurLat() {return m_cursor_lat;}
     double      getCurLon() {return m_cursor_lon;}
     void        setCurLL(double lat, double lon);
+    bool        GetQuiltMode();
+    void        ToggleCanvasQuiltMode();
+    double      GetPixPerMM();
 
 public slots:
-
+    void slotStartLoadEcdis();
 protected:
     void paintGL();
     void resizeGL(int w, int h);
@@ -319,16 +321,8 @@ protected:
     TexFont     m_gridfont;
 
     int		m_LRUtime;
-
-//    GLuint       m_tideTex;
-//    GLuint       m_currentTex;
-//    int          m_tideTexWidth;
-//    int          m_tideTexHeight;
-//    int          m_currentTexWidth;
-//    int          m_currentTexHeight;
     
-    ChartCanvas *m_pParentCanvas;
-    bool            mIsUpdateAvailable;
+    ChartFrameWork  *mFrameWork;
     bool            m_bShowOutlines;
     bool            m_bQuiting;
     bool            m_bShowDepthUnits;
@@ -379,6 +373,7 @@ protected:
     QPoint      last_drag_point;
     bool        mIsLeftDown;
     int         m_modkeys;
+    QTimer        *mDisplsyTimer;
 };
 
 extern void BuildCompressedCache();

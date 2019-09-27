@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
         win.centralWidget()->setLayout(layout);
     }
     layout->addWidget(new zchxMapMainWindow);
-    win.show();
+    win.showMaximized();
     //添加测试菜单
 
 

@@ -356,8 +356,6 @@ bool                    g_bFirstRun;
 bool                     g_bUpgradeInProcess;
 QString s_locale;
  bool             g_bcompression_wait;
-ChartCanvas      *g_focusCanvas = 0;
- ChartCanvas      *g_overlayCanvas = 0;
 
   bool g_b_EnableVBO = false;
   GLenum  g_texture_rectangle_format;

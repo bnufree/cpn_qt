@@ -58,6 +58,7 @@ extern int          g_memCacheLimit;
 extern s52plib      *ps52plib;
 extern ChartDB      *ChartData;
 extern zchxMapMainWindow          *gFrame;
+extern ChartFrameWork              *gChartFrameWork;
 
 
 
@@ -69,7 +70,7 @@ bool G_FloatPtInPolygon(MyFlPoint *rgpts, int wnumpts, float x, float y) ;
 
 int ChartStack::GetCurrentEntrydbIndex(void)
 {
-    qDebug("nEntry = %d, CurrentStackEntry = %d", nEntry, CurrentStackEntry);
+//    qDebug("nEntry = %d, CurrentStackEntry = %d", nEntry, CurrentStackEntry);
     if(nEntry /*&& b_valid*/)
         return DBIndex[CurrentStackEntry];
     else
@@ -78,7 +79,7 @@ int ChartStack::GetCurrentEntrydbIndex(void)
 
 void ChartStack::SetCurrentEntryFromdbIndex(int current_db_index)
 {
-    qDebug("nEntry = %d, CurrentStackEntry = %d, current_db_index = %d", nEntry, CurrentStackEntry, current_db_index);
+//    qDebug("nEntry = %d, CurrentStackEntry = %d, current_db_index = %d", nEntry, CurrentStackEntry, current_db_index);
     for(int i=0 ; i < nEntry ; i++)
     {
         if (current_db_index == DBIndex[i])
@@ -87,12 +88,12 @@ void ChartStack::SetCurrentEntryFromdbIndex(int current_db_index)
             break;
         }
     }
-    qDebug("nEntry = %d, CurrentStackEntry = %d, current_db_index = %d", nEntry, CurrentStackEntry, current_db_index);
+//    qDebug("nEntry = %d, CurrentStackEntry = %d, current_db_index = %d", nEntry, CurrentStackEntry, current_db_index);
 }
 
 int ChartStack::GetDBIndex(int stack_index)
 {
-    qDebug("nEntry = %d, stack_index = %d, max_stack = %d", nEntry, stack_index, MAXSTACK);
+//    qDebug("nEntry = %d, stack_index = %d, max_stack = %d", nEntry, stack_index, MAXSTACK);
     if((stack_index >= 0) && (stack_index < nEntry) && (stack_index < MAXSTACK))
         return DBIndex[stack_index];
     else
@@ -101,7 +102,7 @@ int ChartStack::GetDBIndex(int stack_index)
 
 void ChartStack::SetDBIndex(int stack_index, int db_index)
 {
-    qDebug("nEntry = %d, stack_index = %d, db_index = %d", nEntry, stack_index, db_index);
+//    qDebug("nEntry = %d, stack_index = %d, db_index = %d", nEntry, stack_index, db_index);
       if((stack_index >= 0) && (stack_index < nEntry) && (stack_index < MAXSTACK))
             DBIndex[stack_index] = db_index;
 }
@@ -1126,9 +1127,9 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
     ChartTypeEnum chart_type = (ChartTypeEnum)cte.GetChartType();
     ChartFamilyEnum chart_family = (ChartFamilyEnum)cte.GetChartFamily();
 
-    QString msg1;
-    msg1.sprintf("OpenChartUsingCache:  type %d  ", chart_type);
-    qDebug()<<(msg1 + ChartFullPath);
+//    QString msg1;
+//    msg1.sprintf("OpenChartUsingCache:  type %d  ", chart_type);
+//    qDebug()<<(msg1 + ChartFullPath);
 
     if(cte.GetLatMax() > 90.0)          // Chart has been disabled...
         return NULL;
@@ -1157,9 +1158,9 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
 
         if(bInCache)
         {
-            QString msg;
-            msg.sprintf("OpenChartUsingCache, IN cache: cache size: %d\n", (int)pChartCache->count());
-            qDebug()<<msg;
+//            QString msg;
+//            msg.sprintf("OpenChartUsingCache, IN cache: cache size: %d\n", (int)pChartCache->count());
+//            qDebug()<<msg;
             if(FULL_INIT == init_flag)                            // asking for full init?
             {
                 if(Ch->IsReadyToRender())
@@ -1203,8 +1204,8 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
                     int mem_used;
                     zchxFuncUtil::getMemoryStatus(0, &mem_used);
 
-                    qDebug("OpenChartUsingCache, NOT in cache:   cache size: %d",  (int)pChartCache->count());
-                    qDebug("   OpenChartUsingCache:  type %d  %s ", chart_type, ChartFullPath.toUtf8().data());
+//                    qDebug("OpenChartUsingCache, NOT in cache:   cache size: %d",  (int)pChartCache->count());
+//                    qDebug("   OpenChartUsingCache:  type %d  %s ", chart_type, ChartFullPath.toUtf8().data());
 
                     if((mem_used > g_memCacheLimit * 8 / 10) && (pChartCache->count() > 2)) {
                         QString msg("Removing oldest chart from cache: ");
@@ -1250,7 +1251,7 @@ ChartBase *ChartDB::OpenChartUsingCache(int dbindex, ChartInitFlag init_flag)
 
     if(!bInCache)                    // not in cache
     {
-        qDebug("Creating new chart");
+//        qDebug("Creating new chart");
 
 #if 0
 
@@ -1577,20 +1578,9 @@ bool ChartDB::isSingleChart(ChartBase *chart)
 {
    if (chart == nullptr)
        return false;
-
-   ChartCanvas * cc = gFrame->GetPrimaryCanvas();
-   if(cc && cc->m_singleChart == chart){
+   if(gChartFrameWork && gChartFrameWork->m_singleChart == chart){
       return true;
    }
-#if 0
-   // ..For each canvas...
-   for(unsigned int i=0 ; i < g_canvasArray.count() ; i++){
-      ChartCanvas *cc = g_canvasArray.at(i);
-      if(cc && cc->m_singleChart == chart){
-         return true;
-      }
-   }
-#endif
    return false;
 }
 

@@ -348,7 +348,7 @@ void zchxOptionsDlg::processApply(bool apply)
 
 
     m_returnChanges |= GENERIC_CHANGED | VISIT_CHARTS/* | k_vectorcharts | k_charts | m_groups_changed */;
-
+    ZCHX_CFG_INS->UpdateSettings();
     if (/*apply &&*/ gFrame) {
         gFrame->ProcessOptionsDialog(m_returnChanges, m_pWorkDirList);
         m_CurrentDirList = *m_pWorkDirList; // Perform a deep copy back to main database.
@@ -357,8 +357,6 @@ void zchxOptionsDlg::processApply(bool apply)
         //  Their actions have already been accomplished once...
         m_returnChanges &= ~( CHANGE_CHARTS | FORCE_UPDATE | SCAN_UPDATE );
         k_charts = 0;
-
-        gFrame->RefreshAllCanvas();
     }
     setCursor(QCursor(cursor_type));
 }
