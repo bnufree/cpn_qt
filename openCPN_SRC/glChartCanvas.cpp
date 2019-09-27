@@ -499,6 +499,7 @@ glChartCanvas::glChartCanvas(QWidget* parent) : QGLWidget(parent)
     , m_encShowDataQual(false)
     , mIsLeftDown(false)
     , m_MouseDragging(false)
+    , mDBProgressDlg(0)
 {
     m_pcontext = this->context();
     m_pEM_Feet = NULL;
@@ -4345,16 +4346,19 @@ void glChartCanvas::initBeforeUpdateMap()
 bool glChartCanvas::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName )
 {
     bool b_run = false;
-    QProgressDialog *pprog = nullptr;
-    if( b_prog  && DirArray.count() > 0) {
-        pprog = new QProgressDialog(0);
-//        pprog->setRange(0, 100);
-        pprog->setAttribute(Qt::WA_DeleteOnClose);
-        pprog->setWindowTitle(tr("数据更新"));
-        pprog->setLabel(new QLabel(tr("正在更新地图数据,请稍候...")));
-        pprog->setCancelButtonText(tr("取消"));
-        pprog->show();
+    if(!mDBProgressDlg)
+    {
+        if( b_prog  && DirArray.count() > 0) {
+            mDBProgressDlg = new QProgressDialog(0);
+            //        pprog->setRange(0, 100);
+            //        pprog->setAttribute(Qt::WA_DeleteOnClose);
+            mDBProgressDlg->setWindowTitle(tr("数据更新"));
+            mDBProgressDlg->setLabel(new QLabel(tr("正在更新地图数据,请稍候...")));
+            mDBProgressDlg->setCancelButtonText(tr("取消"));
+        }
     }
+
+    if(mDBProgressDlg)mDBProgressDlg->show();
 
     // ..For each canvas...
     mFrameWork->InvalidateQuilt();
@@ -4385,9 +4389,9 @@ bool glChartCanvas::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_for
 
     setCursor(OCPNPlatform::instance()->HideBusySpinner());
     ZCHX_CFG_INS->UpdateChartDirs( DirArray );
-    if(pprog)
+    if(mDBProgressDlg)
     {
-        delete pprog;
+        mDBProgressDlg->hide();
     }
 
     mFrameWork->DoCanvasUpdate();

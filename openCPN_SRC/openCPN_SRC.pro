@@ -31,7 +31,7 @@ DEFINES += ocpnUSE_GL TIXML_USE_STL __WXQT__ ocpnUSE_SVG
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = zchx_cpn
+TARGET = zchx_ecdis
 TARGET = $$qtLibraryName($$TARGET)
 TEMPLATE = app
 #CONFIG += shared dll c++11

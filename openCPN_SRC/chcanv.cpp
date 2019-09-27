@@ -1739,15 +1739,7 @@ void ChartFrameWork::LoadVP( ViewPort &vp, bool b_adjust )
     }
 
     mViewPoint.invalidate();
-
     m_pQuilt->Invalidate();
-
-    //  Make sure that the Selected Group is sensible...
-    //    if( m_groupIndex > (int) g_pGroupArray->count() )
-    //        m_groupIndex = 0;
-    //    if( !CheckGroup( m_groupIndex ) )
-    //        m_groupIndex = 0;
-    
     SetViewPoint( vp.lat(), vp.lon(), vp.viewScalePPM(), vp.skew(), vp.rotation(), vp.projectType(), b_adjust );
 
 }
@@ -2233,42 +2225,6 @@ bool ChartFrameWork::SetViewPoint( double lat, double lon, double scale_ppm, dou
         }
         m_scaleValue = true_scale_display;
         m_scaleText = text;
-//        if(m_muiBar)
-//            m_muiBar->UpdateDynamicValues();
-//        if( m_bShowScaleInStatusBar && parent_frame->GetStatusBar() && (parent_frame->GetStatusBar()->GetFieldsCount() > STAT_FIELD_SCALE) ) {
-//            // Check to see if the text will fit in the StatusBar field...
-//            bool b_noshow = false;
-//            {
-//                int w = 0;
-//                int h;
-//                wxClientDC dc(parent_frame->GetStatusBar());
-//                if( dc.IsOk() ){
-//                    QFont* templateFont = FontMgr::Get().GetFont( _("StatusBar"), 0 );
-//                    dc.SetFont(*templateFont);
-//                    dc.GetTextExtent(text, &w, &h);
-
-
-//                    // If text is too long for the allocated field, try to reduce the text string a bit.
-//                    wxRect rect;
-//                    parent_frame->GetStatusBar()->GetFieldRect(STAT_FIELD_SCALE, rect);
-//                    if(w && w > rect.width){
-//                        text.Printf( _T("%s (%1.1fx)"), _("Scale"), m_displayed_scale_factor );
-//                    }
-                    
-//                    //  Test again...if too big still, then give it up.
-//                    dc.GetTextExtent(text, &w, &h);
-                    
-//                    if(w && w > rect.width){
-//                        b_noshow = true;
-//                    }
-//                }
-//            }
-
-//            if(!b_noshow)
-//                parent_frame->SetStatusText( text, STAT_FIELD_SCALE );
-//        }
-
-
     }
 
     //  Maintain member vLat/vLon

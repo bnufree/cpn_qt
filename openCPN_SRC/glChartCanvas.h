@@ -41,6 +41,7 @@
 class glTexFactory;
 class ChartFrameWork;
 class GSHHSChart;
+class QProgressDialog;
 
 #define GESTURE_EVENT_TIMER 78334
 
@@ -374,6 +375,9 @@ protected:
     bool        mIsLeftDown;
     int         m_modkeys;
     QTimer        *mDisplsyTimer;
+
+    //DB更新的对话框
+    QProgressDialog*            mDBProgressDlg;
 };
 
 extern void BuildCompressedCache();
