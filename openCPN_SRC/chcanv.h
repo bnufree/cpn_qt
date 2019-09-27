@@ -35,6 +35,7 @@
 #include <QResizeEvent>
 #include "bitmap.h"
 #include <QWidget>
+#include <QThread>
 
 
 
@@ -64,9 +65,14 @@ public:
       glChartCanvas* getGL() {return mGLCC;}
 
 public slots:
-
       void slotInitEcidsAsDelayed();
       void slotResize(int width, int height);
+      void slotUpdateChartDatabase(ArrayOfCDI &DirArray, bool b_force, const QString &filename );
+
+signals:
+      void signalUpdateChartDatabase(ArrayOfCDI& cd, bool force_new, const QString& fileName);
+      void signalUpdateChartArrayFinished();
+      void signalResize(int width, int height);
 
 
 public slots:
@@ -262,6 +268,9 @@ private:
       float        m_focus_indicator_pix;
       bool         m_bENCGroup;
       glChartCanvas*  mGLCC;
+
+      //线程化
+      QThread           mWorkThread;
 
 
 

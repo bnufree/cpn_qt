@@ -4359,13 +4359,13 @@ bool glChartCanvas::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_for
     }
 
     if(mDBProgressDlg)mDBProgressDlg->show();
+    setCursor(OCPNPlatform::instance()->ShowBusySpinner());
 
     // ..For each canvas...
     mFrameWork->InvalidateQuilt();
     mFrameWork->SetQuiltRefChart( -1 );
     mFrameWork->m_singleChart = NULL;
     if(ChartData)   ChartData->PurgeCache();
-    setCursor(OCPNPlatform::instance()->ShowBusySpinner());
 
 
     qDebug("Starting chart database Update...");

@@ -115,6 +115,8 @@ extern ChartDB          *ChartData;
 bool             bDBUpdateInProgress;
 extern ColorScheme      global_color_scheme;
 extern int              g_nbrightness;
+extern QString          gWorldMapLocation;
+extern QString          gDefaultWorldMapLocation;
 
 //extern ConsoleCanvas    *console;
 
@@ -254,7 +256,6 @@ ChartFrameWork          *gChartFrameWork = 0;
 ChartFrameWork::ChartFrameWork( glChartCanvas *frame ) : QObject(0) , mGLCC(frame)
 {
     gChartFrameWork = this;
-
     m_groupIndex = 0;
     m_bzooming = false;
     m_disable_edge_pan = false;
@@ -290,6 +291,12 @@ ChartFrameWork::ChartFrameWork( glChartCanvas *frame ) : QObject(0) , mGLCC(fram
     m_canvas_width = 1000;
     m_pQuilt->EnableHighDefinitionZoom( true );
 
+    //开启信号槽
+    qRegisterMetaType<ArrayOfCDI>("ArrayOfCDI&");
+
+    this->moveToThread(&mWorkThread);
+    mWorkThread.start();
+
 }
 
 void ChartFrameWork::slotInitEcidsAsDelayed()
@@ -323,6 +330,38 @@ void ChartFrameWork::slotInitEcidsAsDelayed()
     DoCanvasUpdate();
     ReloadVP();                  // once more, and good to go
     OCPNPlatform::Initialize_4( );
+}
+
+
+void ChartFrameWork::slotUpdateChartDatabase(ArrayOfCDI &DirArray, bool b_force, const QString &filename)
+{
+    // ..For each canvas...
+    InvalidateQuilt();
+    SetQuiltRefChart( -1 );
+    m_singleChart = NULL;
+    if(ChartData)   ChartData->PurgeCache();
+
+    qDebug("Starting chart database Update...");
+    QString gshhg_chart_loc = gWorldMapLocation;
+    gWorldMapLocation.clear();
+    ChartData->Update( DirArray, b_force, 0 );
+    ChartData->SaveBinary(filename);
+    qDebug("Finished chart database Update");
+    if( gWorldMapLocation.isEmpty() ) { //Last resort. User might have deleted all GSHHG data, but we still might have the default dataset distributed with OpenCPN or from the package repository...
+       gWorldMapLocation = gDefaultWorldMapLocation;
+       gshhg_chart_loc.clear();
+    }
+
+    if( gWorldMapLocation != gshhg_chart_loc )
+    {
+        mGLCC->ResetWorldBackgroundChart();
+    }
+    ZCHX_CFG_INS->UpdateChartDirs( DirArray );
+    DoCanvasUpdate();
+    ReloadVP();                  // once more, and good to go
+    Zoom(1.0001);
+
+    emit signalUpdateChartArrayFinished();
 }
 
 
