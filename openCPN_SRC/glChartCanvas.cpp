@@ -754,6 +754,15 @@ void glChartCanvas::keyPressEvent(QKeyEvent *event)
     case Qt::Key_PageDown:
         Zoom( .5, false );
         break;
+    case Qt::Key_O:
+        ToggleChartOutlines();
+        break;
+    case Qt::Key_D:
+        SetShowENCDepth(!GetShowENCDepth());
+        break;
+    case Qt::Key_T:
+        SetShowENCText(!GetShowENCText());
+        break;
     default:
         break;
 
@@ -4350,7 +4359,7 @@ bool glChartCanvas::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_for
     {
         if( b_prog  && DirArray.count() > 0) {
             mDBProgressDlg = new QProgressDialog(0);
-            //        pprog->setRange(0, 100);
+            mDBProgressDlg->setRange(0, 0);
             //        pprog->setAttribute(Qt::WA_DeleteOnClose);
             mDBProgressDlg->setWindowTitle(tr("数据更新"));
             mDBProgressDlg->setLabel(new QLabel(tr("正在更新地图数据,请稍候...")));
@@ -4360,50 +4369,29 @@ bool glChartCanvas::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_for
 
     if(mDBProgressDlg)mDBProgressDlg->show();
     setCursor(OCPNPlatform::instance()->ShowBusySpinner());
+    EnablePaint(false);
+    connect(mFrameWork, SIGNAL(signalUpdateChartArrayFinished()),
+            this, SLOT(slotUpdateChartFinished()));
+    mFrameWork->signalUpdateChartDatabase(DirArray, b_force, ChartListFileName);
+}
 
-    // ..For each canvas...
-    mFrameWork->InvalidateQuilt();
-    mFrameWork->SetQuiltRefChart( -1 );
-    mFrameWork->m_singleChart = NULL;
-    if(ChartData)   ChartData->PurgeCache();
-
-
-    qDebug("Starting chart database Update...");
-    QString gshhg_chart_loc = gWorldMapLocation;
-    gWorldMapLocation.clear();
-    ChartData->Update( DirArray, b_force, 0 );
-    ChartData->SaveBinary(ChartListFileName);
-    qDebug("Finished chart database Update");
-    if( gWorldMapLocation.isEmpty() ) { //Last resort. User might have deleted all GSHHG data, but we still might have the default dataset distributed with OpenCPN or from the package repository...
-       gWorldMapLocation = gDefaultWorldMapLocation;
-       gshhg_chart_loc.clear();
-    }
-
-    if( gWorldMapLocation != gshhg_chart_loc )
-    {
-        ResetWorldBackgroundChart();
-    }
-
-
-//    delete pprog;
-
+void glChartCanvas::slotUpdateChartFinished()
+{
     setCursor(OCPNPlatform::instance()->HideBusySpinner());
-    ZCHX_CFG_INS->UpdateChartDirs( DirArray );
     if(mDBProgressDlg)
     {
         mDBProgressDlg->hide();
     }
+    EnablePaint(true);
 
-    mFrameWork->DoCanvasUpdate();
-    mFrameWork->ReloadVP();                  // once more, and good to go
     Zoom(1.0001);
-    return true;
+//    return true;
 }
 
 void glChartCanvas::ApplyCanvasConfig(canvasConfig *pcc)
 {
-    mFrameWork->SetViewPoint( pcc->iLat, pcc->iLon, pcc->iScale, 0., pcc->iRotation );
     mFrameWork->m_vLat = pcc->iLat;
+    mFrameWork->SetViewPoint(pcc->iLat, pcc->iLon, pcc->iScale, 0., pcc->iRotation );
     mFrameWork->m_vLon = pcc->iLon;
 
     mFrameWork->m_restore_dbindex = pcc->DBindex;

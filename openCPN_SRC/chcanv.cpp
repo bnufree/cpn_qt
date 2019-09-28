@@ -294,6 +294,8 @@ ChartFrameWork::ChartFrameWork( glChartCanvas *frame ) : QObject(0) , mGLCC(fram
     //开启信号槽
     qRegisterMetaType<ArrayOfCDI>("ArrayOfCDI&");
 
+    connect(this, SIGNAL(signalUpdateChartDatabase(ArrayOfCDI&,bool,QString)),
+            this, SLOT(slotUpdateChartDatabase(ArrayOfCDI&,bool,QString)));
     this->moveToThread(&mWorkThread);
     mWorkThread.start();
 
@@ -359,7 +361,6 @@ void ChartFrameWork::slotUpdateChartDatabase(ArrayOfCDI &DirArray, bool b_force,
     ZCHX_CFG_INS->UpdateChartDirs( DirArray );
     DoCanvasUpdate();
     ReloadVP();                  // once more, and good to go
-    Zoom(1.0001);
 
     emit signalUpdateChartArrayFinished();
 }

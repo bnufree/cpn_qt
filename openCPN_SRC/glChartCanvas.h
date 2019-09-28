@@ -226,6 +226,7 @@ public:
 
 public slots:
     void slotStartLoadEcdis();
+    void slotUpdateChartFinished();
 protected:
     void paintGL();
     void resizeGL(int w, int h);
