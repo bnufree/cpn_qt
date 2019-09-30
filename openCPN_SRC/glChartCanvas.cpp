@@ -4352,6 +4352,7 @@ void glChartCanvas::initBeforeUpdateMap()
     SetColorScheme( global_color_scheme );
 }
 
+#include <QPushButton>
 bool glChartCanvas::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName )
 {
     bool b_run = false;
@@ -4359,6 +4360,7 @@ bool glChartCanvas::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_for
     {
         if( b_prog  && DirArray.count() > 0) {
             mDBProgressDlg = new QProgressDialog(0);
+            mDBProgressDlg->setWindowFlags(Qt::FramelessWindowHint);
             mDBProgressDlg->setRange(0, 0);
             //        pprog->setAttribute(Qt::WA_DeleteOnClose);
             mDBProgressDlg->setWindowTitle(tr("数据更新"));
