@@ -79,7 +79,7 @@
 
 extern float  g_ChartScaleFactorExp;
 extern float  g_ShipScaleFactorExp;
-QString                             ChartListFileName;
+QString                             g_chartListFileName;
 extern int                          g_restore_dbindex;
 extern int                       g_memCacheLimit;
 
@@ -310,11 +310,11 @@ void ChartFrameWork::slotInitEcidsAsDelayed()
 
     if( !ChartDirArray.count() )
     {
-        if(QFile::exists(ChartListFileName )) QFile::remove(ChartListFileName );
+        if(QFile::exists(g_chartListFileName )) QFile::remove(g_chartListFileName );
     }
 
     if(!ChartData)  ChartData = new ChartDB( );
-    ChartData->LoadBinary(ChartListFileName, ChartDirArray);
+    ChartData->LoadBinary(g_chartListFileName, ChartDirArray);
     //  Verify any saved chart database startup index
     if(g_restore_dbindex >= 0)
     {
@@ -388,7 +388,7 @@ void ChartFrameWork::CheckGroupValid( bool showMessage, bool switchGroup0)
 //extern bool     g_bLookAhead;
 extern bool     g_bPreserveScaleOnX;
 /*extern*/ ChartDummy *pDummyChart;
-extern int      g_sticky_chart;
+int      g_sticky_chart;
 
 void ChartFrameWork::canvasRefreshGroupIndex( void )
 {

@@ -203,7 +203,7 @@ public:
 
     void SetAlertString( QString str){ m_alertString = str;}
     QString GetAlertString(){ return m_alertString; }
-    bool UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName );
+    bool UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &chartListFileName = QString() );
     void ClearS52PLIBStateHash(){ m_s52StateHash = 0; }
     void ApplyCanvasConfig(canvasConfig *pcc);
     void UpdateCanvasS52PLIBConfig();

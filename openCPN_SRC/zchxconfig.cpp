@@ -2078,7 +2078,7 @@ void zchxConfig::UpdateSettings()
 
     st1.sprintf("%10.4f, %10.4f", gLat, gLon );
     Write("OwnShipLatLon", st1 );
-    Write("nColorScheme", (int) gFrame->GetColorScheme() );
+    Write("nColorScheme", global_color_scheme );
 
     Write("FrameWinX", g_nframewin_x );
     Write("FrameWinY", g_nframewin_y );

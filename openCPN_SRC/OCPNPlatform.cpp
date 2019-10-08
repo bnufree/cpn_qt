@@ -69,7 +69,6 @@ extern bool                      g_bFirstRun;
 extern bool                      g_bUpgradeInProcess;
 
 extern int                       quitflag;
-extern zchxMapMainWindow                   *gFrame;
 
 
 extern bool                      g_bshowToolbar;
@@ -242,7 +241,6 @@ void OCPNPlatform::Initialize_2( void )
     
 }
 
-//  Called from MyApp()::OnInit() just after gFrame is created, so gFrame is available
 void OCPNPlatform::Initialize_3( void )
 {
     
@@ -267,8 +265,6 @@ void OCPNPlatform::Initialize_3( void )
         g_GLOptions.m_GLLineSmoothing = true;
 
     }
-
-    gFrame->SetGPSCompassScale();
 }
 
 //  Called from MyApp() just before end of MyApp::OnInit()
@@ -308,7 +304,6 @@ bool OCPNPlatform::BuildGLCaps( void *pbuf )
 {
 #if 0
     // Investigate OpenGL capabilities
-    gFrame->show();
     QOpenGLWindow *tcanvas = new QOpenGLWindow(new QOpenGLContext);
     tcanvas->show();
     QThread::yieldCurrentThread();

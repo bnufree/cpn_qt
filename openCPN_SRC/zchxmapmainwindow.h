@@ -14,9 +14,6 @@ class glChartCanvas;
 class ChartBase;
 
 
-QColor GetGlobalColor(const QString& colorName);
-void InitializeUserColors( void );
-void DeInitializeUserColors( void );
 
 class zchxMapMainWindow : public QMainWindow
 {
@@ -28,8 +25,6 @@ public:
     void    setActionCheckSts(const QString& action, bool check);
     void    setActionEnableSts(const QString& action, bool check);
     bool    ProcessOptionsDialog( int rr, ArrayOfCDI *pNewDirArray );
-    bool    UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName );
-    ColorScheme GetColorScheme();
     glChartCanvas* getWidget() {return mEcdisWidget;}
 
 public slots:
@@ -60,13 +55,10 @@ public slots:
     void    slotShowBuoyLightLabel(bool sts);
     void    slotShowLightDiscriptions(bool sts);
     void    slotShowDisplayCategory();
-    void    SetGPSCompassScale();
-    double  GetMag(double a);
     void    InvalidateAllGL();
     void    slotRotateDegree(double angle);
     void    slotRoateRad(double rad);
 private slots:
-//    void    slotInitEcidsAsDelayed();
     void    slotRotate();
 protected:
     void    resizeEvent(QResizeEvent* e);

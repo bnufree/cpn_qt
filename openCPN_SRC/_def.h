@@ -434,6 +434,7 @@ public:
     static float getChartScaleFactorExp( float scale_linear );
     static double getFontPointsperPixel();
     static bool isFinite(double val);
+    static double GetMag(double a);
 
 public:
     static double m_pt_per_pixel;
@@ -464,5 +465,10 @@ public:
 
 #define MAX_COG_AVERAGE_SECONDS        60
 #define MAX_COGSOG_FILTER_SECONDS      60
+
+QColor GetGlobalColor(const QString& colorName);
+void InitializeUserColors( void );
+void DeInitializeUserColors( void );
+
 
 #endif // _DEF_H

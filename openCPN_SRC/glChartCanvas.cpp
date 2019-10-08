@@ -125,14 +125,14 @@ extern bool g_btouch;
 extern bool             g_bShowChartBar;
 extern glTextureManager   *g_glTextureManager;
 extern bool             b_inCompressAllCharts;
-extern std::vector<int> g_quilt_noshow_index_array;
+std::vector<int> g_quilt_noshow_index_array;
 
 extern GLenum       g_texture_rectangle_format;
 extern QString                  *pInit_Chart_Dir;
 extern ChartGroupArray  *g_pGroupArray;
 extern double           g_display_size_mm;
 int                       g_mem_total, g_mem_used, g_mem_initial;
-extern QString                             ChartListFileName;
+extern QString                             g_chartListFileName;
 extern QString                  gWorldMapLocation;
 QString gDefaultWorldMapLocation;
 extern int              g_iDistanceFormat;
@@ -4313,7 +4313,7 @@ void glChartCanvas::initBeforeUpdateMap()
     g_memCacheLimit = fmin(g_memCacheLimit, 1024 * 1024); // math in kBytes, Max is 1 GB
 
 //      Establish location and name of chart database
-    ChartListFileName = QString("%1/CHRTLIST.DAT").arg(zchxFuncUtil::getDataDir());
+    g_chartListFileName = QString("%1/CHRTLIST.DAT").arg(zchxFuncUtil::getDataDir());
 //      Establish guessed location of chart tree
     if( pInit_Chart_Dir->isEmpty() )
     {
@@ -4353,8 +4353,10 @@ void glChartCanvas::initBeforeUpdateMap()
 }
 
 #include <QPushButton>
-bool glChartCanvas::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &ChartListFileName )
+bool glChartCanvas::UpdateChartDatabaseInplace( ArrayOfCDI &DirArray, bool b_force, bool b_prog, const QString &chartListFileName )
 {
+    QString ChartListFileName = g_chartListFileName;
+    if(!chartListFileName.isEmpty()) ChartListFileName = chartListFileName;
     bool b_run = false;
     if(!mDBProgressDlg)
     {

@@ -67,7 +67,7 @@ extern int              g_tile_size;
 extern int              g_uncompressed_tile_size;
 extern int              g_nCPUCount;
 
-extern bool             b_inCompressAllCharts;
+bool             b_inCompressAllCharts = false;
 extern zchxMapMainWindow         *gFrame;
 //extern arrayofCanvasPtr  g_canvasArray;
 

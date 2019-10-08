@@ -57,12 +57,9 @@ public:
 
     //获取核心数
     int getCpuCorNum() const {return mCpuCoreNum;}
-    
-//  Per-Platform initialization support
-    //  Called from MyApp() immediately before creation of MyFrame()
+
     void Initialize_2( void );
-    
-    //  Called from MyApp()::OnInit() just after gFrame is created, so gFrame is available
+
     void Initialize_3( void );
 
     //  Called from MyApp() just before end of MyApp::OnInit()
